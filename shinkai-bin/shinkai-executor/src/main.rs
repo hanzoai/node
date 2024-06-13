@@ -1,5 +1,5 @@
 use clap::Parser;
-use shinkai_side_executor::{
+use shinkai_executor::{
     api,
     cli::{Cli, CliArgs},
 };

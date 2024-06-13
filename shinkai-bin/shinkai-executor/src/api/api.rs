@@ -1,5 +1,5 @@
 use serde::Serialize;
-use std::net::SocketAddr;
+use std::{io::Write, net::SocketAddr};
 use tokio::net::TcpListener;
 use warp::{http::StatusCode, Filter};
 
@@ -118,6 +118,11 @@ pub async fn run_api(address: SocketAddr) -> Result<(), Box<dyn std::error::Erro
 
     match try_bind {
         Ok(_) => {
+            match check_and_download_dependencies().await {
+                Ok(_) => {}
+                Err(e) => eprintln!("Error downloading ocrs models: {:?}", e),
+            }
+
             drop(try_bind);
             warp::serve(routes).run(address).await;
             Ok(())
@@ -142,4 +147,44 @@ async fn handle_rejection(err: warp::Rejection) -> Result<impl warp::Reply, warp
         ));
         Ok(warp::reply::with_status(json, StatusCode::INTERNAL_SERVER_ERROR))
     }
+}
+
+async fn check_and_download_dependencies() -> Result<(), Box<dyn std::error::Error>> {
+    let _ = std::fs::create_dir("ocrs");
+
+    let ocrs_models_url = "https://ocrs-models.s3-accelerate.amazonaws.com/";
+    let detection_model = "text-detection.rten";
+    let recognition_model = "text-recognition.rten";
+
+    if !std::path::Path::new(detection_model).exists() {
+        println!("Downloading OCRS model {}", detection_model);
+
+        let client = reqwest::Client::new();
+        let file_data = client
+            .get(format!("{}{}", ocrs_models_url, detection_model))
+            .send()
+            .await?
+            .bytes()
+            .await?;
+
+        let mut file = std::fs::File::create(format!("ocrs/{}", detection_model))?;
+        file.write_all(&file_data)?;
+    }
+
+    if !std::path::Path::new(recognition_model).exists() {
+        println!("Downloading OCRS model {}", recognition_model);
+
+        let client = reqwest::Client::new();
+        let file_data = client
+            .get(format!("{}{}", ocrs_models_url, recognition_model))
+            .send()
+            .await?
+            .bytes()
+            .await?;
+
+        let mut file = std::fs::File::create(format!("ocrs/{}", recognition_model))?;
+        file.write_all(&file_data)?;
+    }
+
+    Ok(())
 }

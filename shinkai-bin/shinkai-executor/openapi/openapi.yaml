@@ -1,6 +1,6 @@
 openapi: 3.0.3
 info:
-  title: Shinkai Side Executor
+  title: Shinkai Executor
   version: 0.1.0
 
 servers:

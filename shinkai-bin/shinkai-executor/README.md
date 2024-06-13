@@ -1,4 +1,4 @@
-# Shinkai Side Executor
+# Shinkai Executor
 
 ## Building the Project
 
@@ -10,7 +10,7 @@ To build the project use the following command:
 cargo build --release
 ```
 
-**Note**: If you encounter linker errors run `cargo clean` in the root and in the side executor project, then rebuild the project.
+**Note**: If you encounter linker errors run `cargo clean` in the root and in the executor project, then rebuild the project.
 
 **Note**: Build the project in release mode or try to prevent running `ocrs` in debug mode since it will be extremely slow.
 
@@ -62,8 +62,7 @@ cargo build --release --no-default-features
 To download models in .rten format run:
 
 ```sh
-cd ocrs
-./download-models.sh
+cd ocrs && ./download-models.sh
 ```
 
 `.rten` files should be downloaded in the `ocrs` folder.

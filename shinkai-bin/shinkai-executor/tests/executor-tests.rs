@@ -1,6 +1,6 @@
 use assert_cmd::prelude::*;
 use reqwest::multipart;
-use shinkai_side_executor::{api, models::dto::VRPackContent};
+use shinkai_executor::{api, models::dto::VRPackContent};
 use shinkai_vector_resources::{
     embedding_generator::RemoteEmbeddingGenerator,
     file_parser::file_parser_types::TextGroup,
@@ -13,13 +13,15 @@ use std::{
 };
 use tokio::runtime::Runtime;
 
+const FILES_DIRECTORY: &str = "../../files";
+
 #[test]
 fn cli_pdf_extract_to_text_groups() -> Result<(), Box<dyn std::error::Error>> {
-    let mut cmd = Command::cargo_bin("shinkai-side-executor")?;
+    let mut cmd = Command::cargo_bin("shinkai-executor")?;
 
     cmd.arg("pdf")
         .arg("extract-to-text-groups")
-        .arg("--file=../files/shinkai_intro.pdf");
+        .arg(format!("--file={}/shinkai_intro.pdf", FILES_DIRECTORY));
 
     assert!(cmd.output().unwrap().status.success());
 
@@ -33,11 +35,11 @@ fn cli_pdf_extract_to_text_groups() -> Result<(), Box<dyn std::error::Error>> {
 
 #[test]
 fn cli_vrkai_generate_from_file() -> Result<(), Box<dyn std::error::Error>> {
-    let mut cmd = Command::cargo_bin("shinkai-side-executor")?;
+    let mut cmd = Command::cargo_bin("shinkai-executor")?;
 
     cmd.arg("vrkai")
         .arg("generate-from-file")
-        .arg("--file=../files/shinkai_intro.pdf");
+        .arg(format!("--file={}/shinkai_intro.pdf", FILES_DIRECTORY));
 
     assert!(cmd.output().unwrap().status.success());
 
@@ -53,11 +55,11 @@ fn cli_vrkai_generate_from_file() -> Result<(), Box<dyn std::error::Error>> {
 
 #[test]
 fn cli_vrkai_vector_search() -> Result<(), Box<dyn std::error::Error>> {
-    let mut cmd = Command::cargo_bin("shinkai-side-executor")?;
+    let mut cmd = Command::cargo_bin("shinkai-executor")?;
 
     cmd.arg("vrkai")
         .arg("vector-search")
-        .arg("-f=../files/shinkai_intro.vrkai")
+        .arg(format!("--file={}/shinkai_intro.vrkai", FILES_DIRECTORY))
         .arg("-n=5")
         .arg("-q=Explain Shinkai Network Manifesto");
 
@@ -72,11 +74,11 @@ fn cli_vrkai_vector_search() -> Result<(), Box<dyn std::error::Error>> {
 
 #[test]
 fn cli_vrkai_view_contents() -> Result<(), Box<dyn std::error::Error>> {
-    let mut cmd = Command::cargo_bin("shinkai-side-executor")?;
+    let mut cmd = Command::cargo_bin("shinkai-executor")?;
 
     cmd.arg("vrkai")
         .arg("view-contents")
-        .arg("--file=../files/shinkai_intro.vrkai");
+        .arg(format!("--file={}/shinkai_intro.vrkai", FILES_DIRECTORY));
 
     assert!(cmd.output().unwrap().status.success());
 
@@ -87,12 +89,12 @@ fn cli_vrkai_view_contents() -> Result<(), Box<dyn std::error::Error>> {
 
 #[test]
 fn cli_vrpack_generate_from_files() -> Result<(), Box<dyn std::error::Error>> {
-    let mut cmd = Command::cargo_bin("shinkai-side-executor")?;
+    let mut cmd = Command::cargo_bin("shinkai-executor")?;
 
     cmd.arg("vrpack")
         .arg("generate-from-files")
-        .arg("--file=../files/shinkai_intro.pdf")
-        .arg("--file=../files/shinkai_welcome.md");
+        .arg(format!("--file={}/shinkai_intro.pdf", FILES_DIRECTORY))
+        .arg(format!("--file={}/shinkai_welcome.md", FILES_DIRECTORY));
 
     assert!(cmd.output().unwrap().status.success());
 
@@ -109,12 +111,12 @@ fn cli_vrpack_generate_from_files() -> Result<(), Box<dyn std::error::Error>> {
 
 #[test]
 fn cli_vrpack_generate_from_vrkais() -> Result<(), Box<dyn std::error::Error>> {
-    let mut cmd = Command::cargo_bin("shinkai-side-executor")?;
+    let mut cmd = Command::cargo_bin("shinkai-executor")?;
 
     cmd.arg("vrpack")
         .arg("generate-from-vrkais")
-        .arg("--file=../files/shinkai_intro.vrkai")
-        .arg("--file=../files/zeko.vrkai");
+        .arg(format!("--file={}/shinkai_intro.vrkai", FILES_DIRECTORY))
+        .arg(format!("--file={}/zeko.vrkai", FILES_DIRECTORY));
 
     assert!(cmd.output().unwrap().status.success());
 
@@ -131,12 +133,12 @@ fn cli_vrpack_generate_from_vrkais() -> Result<(), Box<dyn std::error::Error>> {
 
 #[test]
 fn cli_vrpack_add_vrkais() -> Result<(), Box<dyn std::error::Error>> {
-    let mut cmd = Command::cargo_bin("shinkai-side-executor")?;
+    let mut cmd = Command::cargo_bin("shinkai-executor")?;
 
     cmd.arg("vrpack")
         .arg("add-vrkais")
-        .arg("--file=../files/shinkai_intro.vrpack")
-        .arg("--vrkai-file=../files/zeko.vrkai");
+        .arg(format!("--file={}/shinkai_intro.vrpack", FILES_DIRECTORY))
+        .arg(format!("--vrkai-file={}/zeko.vrkai", FILES_DIRECTORY));
 
     assert!(cmd.output().unwrap().status.success());
 
@@ -153,11 +155,11 @@ fn cli_vrpack_add_vrkais() -> Result<(), Box<dyn std::error::Error>> {
 
 #[test]
 fn cli_vrpack_add_folder() -> Result<(), Box<dyn std::error::Error>> {
-    let mut cmd = Command::cargo_bin("shinkai-side-executor")?;
+    let mut cmd = Command::cargo_bin("shinkai-executor")?;
 
     cmd.arg("vrpack")
         .arg("add-folder")
-        .arg("--file=../files/shinkai_intro.vrpack")
+        .arg(format!("--file={}/shinkai_intro.vrpack", FILES_DIRECTORY))
         .arg("--folder-name=Shinkai folder");
 
     assert!(cmd.output().unwrap().status.success());
@@ -175,11 +177,11 @@ fn cli_vrpack_add_folder() -> Result<(), Box<dyn std::error::Error>> {
 
 #[test]
 fn cli_vrpack_vector_search() -> Result<(), Box<dyn std::error::Error>> {
-    let mut cmd = Command::cargo_bin("shinkai-side-executor")?;
+    let mut cmd = Command::cargo_bin("shinkai-executor")?;
 
     cmd.arg("vrpack")
         .arg("vector-search")
-        .arg("-f=../files/shinkai_intro.vrpack")
+        .arg(format!("--file={}/shinkai_intro.vrpack", FILES_DIRECTORY))
         .arg("-n=5")
         .arg("-q=Explain Shinkai Network Manifesto");
 
@@ -194,11 +196,11 @@ fn cli_vrpack_vector_search() -> Result<(), Box<dyn std::error::Error>> {
 
 #[test]
 fn cli_vrpack_view_contents() -> Result<(), Box<dyn std::error::Error>> {
-    let mut cmd = Command::cargo_bin("shinkai-side-executor")?;
+    let mut cmd = Command::cargo_bin("shinkai-executor")?;
 
     cmd.arg("vrpack")
         .arg("view-contents")
-        .arg("--file=../files/shinkai_intro.vrpack");
+        .arg(format!("--file={}/shinkai_intro.vrpack", FILES_DIRECTORY));
 
     assert!(cmd.output().unwrap().status.success());
 
@@ -218,7 +220,7 @@ fn api_pdf_extract_to_text_groups() -> Result<(), Box<dyn std::error::Error>> {
 
         let abort_handler = server_handle.abort_handle();
 
-        let file = std::fs::read("../files/shinkai_intro.pdf").unwrap();
+        let file = std::fs::read(format!("{}/shinkai_intro.pdf", FILES_DIRECTORY)).unwrap();
         let form_file = multipart::Part::bytes(file).file_name("shinkai_intro.pdf");
         let form = multipart::Form::new().part("file", form_file);
 
@@ -254,7 +256,7 @@ fn api_vrkai_generate_from_file() -> Result<(), Box<dyn std::error::Error>> {
 
         let generator = RemoteEmbeddingGenerator::new_default();
 
-        let file = std::fs::read("../files/shinkai_intro.pdf").unwrap();
+        let file = std::fs::read(format!("{}/shinkai_intro.pdf", FILES_DIRECTORY)).unwrap();
         let form_file = multipart::Part::bytes(file).file_name("shinkai_intro.pdf");
 
         let form = multipart::Form::new()
@@ -294,7 +296,7 @@ fn api_vrkai_vector_search() -> Result<(), Box<dyn std::error::Error>> {
 
         let abort_handler = server_handle.abort_handle();
 
-        let vrkai = std::fs::read_to_string("../files/shinkai_intro.vrkai").unwrap();
+        let vrkai = std::fs::read_to_string(format!("{}/shinkai_intro.vrkai", FILES_DIRECTORY)).unwrap();
         let form = multipart::Form::new()
             .part("encoded_vrkai", multipart::Part::text(vrkai))
             .part("num_of_results", multipart::Part::text("5"))
@@ -333,7 +335,7 @@ fn api_vrkai_view_contents() -> Result<(), Box<dyn std::error::Error>> {
         let abort_handler = server_handle.abort_handle();
 
         // Test valid VRKai
-        let vrkai = std::fs::read_to_string("../files/shinkai_intro.vrkai").unwrap();
+        let vrkai = std::fs::read_to_string(format!("{}/shinkai_intro.vrkai", FILES_DIRECTORY)).unwrap();
         let form = multipart::Form::new().part("encoded_vrkai", multipart::Part::text(vrkai));
 
         let client = reqwest::Client::new();
@@ -381,10 +383,10 @@ fn api_vrpack_generate_from_files() -> Result<(), Box<dyn std::error::Error>> {
 
         let generator = RemoteEmbeddingGenerator::new_default();
 
-        let pdf_file = std::fs::read("../files/shinkai_intro.pdf").unwrap();
+        let pdf_file = std::fs::read(format!("{}/shinkai_intro.pdf", FILES_DIRECTORY)).unwrap();
         let pdf_form_file = multipart::Part::bytes(pdf_file).file_name("shinkai_intro.pdf");
 
-        let md_file = std::fs::read("../files/shinkai_welcome.md").unwrap();
+        let md_file = std::fs::read(format!("{}/shinkai_welcome.md", FILES_DIRECTORY)).unwrap();
         let md_form_file = multipart::Part::bytes(md_file).file_name("shinkai_welcome.md");
 
         let form = multipart::Form::new()
@@ -427,7 +429,7 @@ fn api_vrpack_generate_from_vrkais() -> Result<(), Box<dyn std::error::Error>> {
 
         let abort_handler = server_handle.abort_handle();
 
-        let vrkai_file = std::fs::read("../files/shinkai_intro.vrkai").unwrap();
+        let vrkai_file = std::fs::read(format!("{}/shinkai_intro.vrkai", FILES_DIRECTORY)).unwrap();
         let vrkai_form_file = multipart::Part::bytes(vrkai_file).file_name("shinkai_intro.vrkai");
 
         let form = multipart::Form::new()
@@ -465,9 +467,9 @@ fn api_vrpack_add_vrkais() -> Result<(), Box<dyn std::error::Error>> {
 
         let abort_handler = server_handle.abort_handle();
 
-        let vrpack = std::fs::read_to_string("../files/shinkai_intro.vrpack").unwrap();
+        let vrpack = std::fs::read_to_string(format!("{}/shinkai_intro.vrpack", FILES_DIRECTORY)).unwrap();
 
-        let vrkai = std::fs::read_to_string("../files/zeko.vrkai").unwrap();
+        let vrkai = std::fs::read_to_string(format!("{}/zeko.vrkai", FILES_DIRECTORY)).unwrap();
 
         let form = multipart::Form::new()
             .part("encoded_vrpack", multipart::Part::text(vrpack))
@@ -504,7 +506,7 @@ fn api_vrpack_add_folder() -> Result<(), Box<dyn std::error::Error>> {
 
         let abort_handler = server_handle.abort_handle();
 
-        let vrpack = std::fs::read_to_string("../files/shinkai_intro.vrpack").unwrap();
+        let vrpack = std::fs::read_to_string(format!("{}/shinkai_intro.vrpack", FILES_DIRECTORY)).unwrap();
 
         let form = multipart::Form::new()
             .part("encoded_vrpack", multipart::Part::text(vrpack))
@@ -541,7 +543,7 @@ fn api_vrpack_vector_search() -> Result<(), Box<dyn std::error::Error>> {
 
         let abort_handler = server_handle.abort_handle();
 
-        let vrpack = std::fs::read_to_string("../files/shinkai_intro.vrpack").unwrap();
+        let vrpack = std::fs::read_to_string(format!("{}/shinkai_intro.vrpack", FILES_DIRECTORY)).unwrap();
         let form = multipart::Form::new()
             .part("encoded_vrpack", multipart::Part::text(vrpack))
             .part("num_of_results", multipart::Part::text("5"))
@@ -580,7 +582,7 @@ fn api_vrpack_view_contents() -> Result<(), Box<dyn std::error::Error>> {
         let abort_handler = server_handle.abort_handle();
 
         // Test valid VRKai
-        let vrpack = std::fs::read_to_string("../files/shinkai_intro.vrpack").unwrap();
+        let vrpack = std::fs::read_to_string(format!("{}/shinkai_intro.vrpack", FILES_DIRECTORY)).unwrap();
         let form = multipart::Form::new().part("encoded_vrpack", multipart::Part::text(vrpack));
 
         let client = reqwest::Client::new();
