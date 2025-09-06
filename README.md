@@ -1,12 +1,12 @@
 <h1 align="center">
   <img src="files/icon.png"/><br/>
-  Shinkai Node
+  Hanzo Node
 </h1>
-<p align="center">Shinkai allows you to create AI agents without touching code. Define tasks, schedule actions, and let Shinkai write custom code for you. Native crypto support included.<br/><br/> There is a companion repo called Shinkai Apps which contains the frontend that encapsulates this project, you can find it <a href="https://github.com/dcSpark/shinkai-apps">here</a>.</p><br/>
+<p align="center">Hanzo Node by Hanzo Industries Inc. allows you to create AI agents without touching code. Define tasks, schedule actions, and let Hanzo write custom code for you. Native crypto support included.<br/><br/> There is a companion repo called Hanzo Apps which contains the frontend that encapsulates this project, you can find it <a href="https://github.com/hanzoai/hanzo-apps">here</a>.</p><br/>
 
 ## Documentation
 
-General Documentation: [https://docs.shinkai.com](https://docs.shinkai.com)
+General Documentation: [https://docs.hanzo.ai](https://docs.hanzo.ai)
 
 ## Installation (Local Compilation)
 
@@ -28,9 +28,9 @@ Please refer to the installation instructions for your operating system:
 sh scripts/run_node_localhost.sh
 ```
 
-if you want to restart the node, you can delete the folder `storage` and run the build again. More information at [https://docs.shinkai.com/getting-started](https://docs.shinkai.com/getting-started).
+if you want to restart the node, you can delete the folder `storage` and run the build again. More information at [https://docs.hanzo.ai/getting-started](https://docs.hanzo.ai/getting-started).
 
-### Build Shinkai Rust Node
+### Build Hanzo Rust Node
 
 ```
 cargo build
@@ -59,14 +59,14 @@ The Swagger UI assets are not built by default to avoid network downloads during
 tests. If you want to include them, compile with the `swagger-ui` feature:
 
 ```
-cargo build --features shinkai_node/swagger-ui
+cargo build --features hanzo_node/swagger-ui
 ```
 
 ## Tests
 
 Note: You must run these tests from the root directory of this repo.
 
-### Test Shinkai Rust Node Only
+### Test Hanzo Rust Node Only
 
 Simply use the following to run all rust node tests:
 
@@ -98,4 +98,4 @@ Use `act -j test-wasm -P self-hosted=nektos/act-environments-ubuntu:18.04 --cont
 
 ## Releasing a New Version
 
-When releasing a new version, ensure that you update the `Cargo.toml` of the shinkai-node as well as the `Cargo.toml` of the shinkai-libs/shinkai-http-api library.
+When releasing a new version, ensure that you update the `Cargo.toml` of the hanzo-node as well as the `Cargo.toml` of the hanzo-libs/hanzo-http-api library.

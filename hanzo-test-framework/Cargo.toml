@@ -1,0 +1,24 @@
+[package]
+name = "hanzo_test_framework"
+version = "0.1.0"
+edition = "2021"
+
+
+[lib]
+name = "hanzo_test_framework"
+
+[dependencies]
+tokio = { workspace = true }
+async-channel = { workspace = true }
+anyhow = { workspace = true }
+hanzo_http_api = { workspace = true }
+hanzo_message_primitives = { workspace = true }
+hanzo_embedding = { workspace = true }
+hanzo_sqlite = { workspace = true }
+hanzo_node = { path = "../hanzo-bin/hanzo-node" }
+proc-macro2 = "1"
+quote = "1"
+syn = { version = "2", features = ["full"] }
+tempfile = { workspace = true }
+ed25519-dalek = { workspace = true }
+x25519-dalek = { workspace = true }

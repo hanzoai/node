@@ -1,9 +1,9 @@
 {
-  "id": "shinkai-tool-echo",
-  "name": "Shinkai: Echo",
+  "id": "hanzo-tool-echo",
+  "name": "Hanzo: Echo",
   "description": "Echoes the input message",
-  "author": "Shinkai",
-  "keywords": ["echo", "shinkai"],
+  "author": "Hanzo",
+  "keywords": ["echo", "hanzo"],
   "configurations": {
     "type": "object",
     "properties": {},
