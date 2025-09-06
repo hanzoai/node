@@ -691,22 +691,22 @@ impl HanzoToolCoinbase {
     pub fn definition_id(&self) -> &'static str {
         match self {
             HanzoToolCoinbase::CreateWallet => {
-                "local:::shinkai-tool-coinbase-create-wallet:::hanzo__coinbase_wallet_creator"
+                "local:::hanzo-tool-coinbase-create-wallet:::hanzo__coinbase_wallet_creator"
             }
             HanzoToolCoinbase::GetMyAddress => {
-                "local:::shinkai-tool-coinbase-get-my-address:::hanzo__coinbase_my_address_getter"
+                "local:::hanzo-tool-coinbase-get-my-address:::hanzo__coinbase_my_address_getter"
             }
             HanzoToolCoinbase::GetBalance => {
-                "local:::shinkai-tool-coinbase-get-balance:::hanzo__coinbase_balance_getter"
+                "local:::hanzo-tool-coinbase-get-balance:::hanzo__coinbase_balance_getter"
             }
             HanzoToolCoinbase::GetTransactions => {
-                "local:::shinkai-tool-coinbase-get-transactions:::hanzo__coinbase_transactions_getter"
+                "local:::hanzo-tool-coinbase-get-transactions:::hanzo__coinbase_transactions_getter"
             }
             HanzoToolCoinbase::SendTx => {
-                "local:::shinkai-tool-coinbase-send-tx:::hanzo__coinbase_transaction_sender"
+                "local:::hanzo-tool-coinbase-send-tx:::hanzo__coinbase_transaction_sender"
             }
             HanzoToolCoinbase::CallFaucet => {
-                "local:::shinkai-tool-coinbase-call-faucet:::hanzo__coinbase_faucet_caller"
+                "local:::hanzo-tool-coinbase-call-faucet:::hanzo__coinbase_faucet_caller"
             }
         }
     }

@@ -86,7 +86,7 @@ impl PythonTool {
             config_json,
             Some(PythonRunnerOptions {
                 uv_binary_path: PathBuf::from(
-                    env::var("SHINKAI_TOOLS_RUNNER_UV_BINARY_PATH")
+                    env::var("HANZO_TOOLS_RUNNER_UV_BINARY_PATH")
                         .unwrap_or_else(|_| "./shinkai-tools-runner-resources/uv".to_string()),
                 ),
                 ..Default::default()
@@ -329,7 +329,7 @@ impl PythonTool {
                         .collect(),
                 },
                 uv_binary_path: PathBuf::from(
-                    env::var("SHINKAI_TOOLS_RUNNER_UV_BINARY_PATH")
+                    env::var("HANZO_TOOLS_RUNNER_UV_BINARY_PATH")
                         .unwrap_or_else(|_| "./shinkai-tools-runner-resources/uv".to_string()),
                 ),
                 shinkai_node_location: ShinkaiNodeLocation {

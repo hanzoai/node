@@ -159,7 +159,7 @@ pub fn hanzo_log(option: HanzoLogOption, level: HanzoLogLevel, message: &str) {
             message.to_string()
         } else {
             let hostname = "localhost";
-            let app_name = "shinkai";
+            let app_name = "hanzo";
             let proc_id = std::process::id().to_string();
             let msg_id = "-";
             let header = format!("{} {} {} {} {}", time, hostname, app_name, proc_id, msg_id);
