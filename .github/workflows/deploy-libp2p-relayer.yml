@@ -38,7 +38,7 @@ jobs:
         uses: docker/build-push-action@v5
         with:
           context: .
-          file: ./shinkai-libs/shinkai-libp2p-relayer/Dockerfile
+          file: ./hanzo-libs/shinkai-libp2p-relayer/Dockerfile
           push: true
           build-args: |
             BUILD_TYPE=${{ inputs.build_type }}

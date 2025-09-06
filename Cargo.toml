@@ -1,41 +1,41 @@
 [workspace]
 members = [
-  "shinkai-libs/shinkai-crypto-identities",
-  "shinkai-libs/shinkai-message-primitives",
-  "shinkai-libs/shinkai-libp2p-relayer",
-  "shinkai-libs/shinkai-job-queue-manager",
-  # "shinkai-libs/shinkai-baml",
-  "shinkai-libs/shinkai-fs",
-  "shinkai-libs/shinkai-embedding",
-  "shinkai-libs/shinkai-http-api",
-  "shinkai-libs/shinkai-tools-primitives",
-  "shinkai-libs/shinkai-sqlite",
-  "shinkai-libs/shinkai-non-rust-code",
-  "shinkai-libs/shinkai-mcp",
-  "shinkai-test-framework",
-  "shinkai-test-macro",
-  "shinkai-bin/*",
+  "hanzo-libs/hanzo-crypto-identities",
+  "hanzo-libs/hanzo-message-primitives",
+  "hanzo-libs/hanzo-libp2p-relayer",
+  "hanzo-libs/hanzo-job-queue-manager",
+  # "hanzo-libs/hanzo-baml",
+  "hanzo-libs/hanzo-fs",
+  "hanzo-libs/hanzo-embedding",
+  "hanzo-libs/hanzo-http-api",
+  "hanzo-libs/hanzo-tools-primitives",
+  "hanzo-libs/hanzo-sqlite",
+  "hanzo-libs/hanzo-non-rust-code",
+  "hanzo-libs/hanzo-mcp",
+  "hanzo-test-framework",
+  "hanzo-test-macro",
+  "hanzo-bin/*",
 ]
 resolver = "2"
 
 [workspace.package]
 version = "1.1.8"
 edition = "2021"
-authors = ["Nico Arqueros <nico@shinkai.com>"]
+authors = ["Nico Arqueros <nico@hanzo.com>"]
 
 [workspace.dependencies]
-shinkai_message_primitives = { path = "./shinkai-libs/shinkai-message-primitives" }
-shinkai_crypto_identities = { path = "./shinkai-libs/shinkai-crypto-identities" }
-shinkai_libp2p_relayer = { path = "./shinkai-libs/shinkai-libp2p-relayer" }
-shinkai_job_queue_manager = { path = "./shinkai-libs/shinkai-job-queue-manager" }
-# shinkai_baml = { path = "./shinkai-libs/shinkai-baml" }
-shinkai_http_api = { path = "./shinkai-libs/shinkai-http-api" }
-shinkai_tools_primitives = { path = "./shinkai-libs/shinkai-tools-primitives" }
-shinkai_sqlite = { path = "./shinkai-libs/shinkai-sqlite" }
-shinkai_fs = { path = "./shinkai-libs/shinkai-fs" }
-shinkai_embedding = { path = "./shinkai-libs/shinkai-embedding" }
-shinkai_non_rust_code = { path = "./shinkai-libs/shinkai-non-rust-code" }
-shinkai_mcp = { path = "./shinkai-libs/shinkai-mcp" }
+hanzo_message_primitives = { path = "./hanzo-libs/hanzo-message-primitives" }
+hanzo_crypto_identities = { path = "./hanzo-libs/hanzo-crypto-identities" }
+hanzo_libp2p_relayer = { path = "./hanzo-libs/hanzo-libp2p-relayer" }
+hanzo_job_queue_manager = { path = "./hanzo-libs/hanzo-job-queue-manager" }
+# hanzo_baml = { path = "./hanzo-libs/hanzo-baml" }
+hanzo_http_api = { path = "./hanzo-libs/hanzo-http-api" }
+hanzo_tools_primitives = { path = "./hanzo-libs/hanzo-tools-primitives" }
+hanzo_sqlite = { path = "./hanzo-libs/hanzo-sqlite" }
+hanzo_fs = { path = "./hanzo-libs/hanzo-fs" }
+hanzo_embedding = { path = "./hanzo-libs/hanzo-embedding" }
+hanzo_non_rust_code = { path = "./hanzo-libs/hanzo-non-rust-code" }
+hanzo_mcp = { path = "./hanzo-libs/hanzo-mcp" }
 
 rmcp = { version = "0.6" }
 futures = "0.3.30"

@@ -2206,6 +2206,372 @@ dependencies = [
 ]
 
 [[package]]
+name = "hanzo_crypto_identities"
+version = "1.1.8"
+dependencies = [
+ "chrono",
+ "dashmap",
+ "ed25519-dalek",
+ "hanzo_message_primitives",
+ "hanzo_non_rust_code",
+ "lazy_static",
+ "serde_json",
+ "tempfile",
+ "tokio",
+ "trust-dns-resolver",
+ "x25519-dalek",
+]
+
+[[package]]
+name = "hanzo_embedding"
+version = "1.1.8"
+dependencies = [
+ "async-trait",
+ "bincode",
+ "blake3",
+ "chrono",
+ "csv",
+ "futures",
+ "keyphrases",
+ "lazy_static",
+ "rand 0.8.5",
+ "regex",
+ "reqwest 0.11.27",
+ "serde",
+ "serde_json",
+ "thiserror 2.0.12",
+ "utoipa",
+]
+
+[[package]]
+name = "hanzo_fs"
+version = "1.1.8"
+dependencies = [
+ "async-trait",
+ "bincode",
+ "blake3",
+ "chrono",
+ "comrak",
+ "csv",
+ "futures",
+ "hanzo_embedding",
+ "hanzo_message_primitives",
+ "hanzo_non_rust_code",
+ "hanzo_sqlite",
+ "keyphrases",
+ "lazy_static",
+ "os_path",
+ "rand 0.8.5",
+ "regex",
+ "reqwest 0.11.27",
+ "scraper",
+ "serde",
+ "serde_json",
+ "serial_test",
+ "tempfile",
+ "thiserror 2.0.12",
+ "tokio",
+ "urlencoding",
+ "utoipa",
+ "walkdir",
+]
+
+[[package]]
+name = "hanzo_http_api"
+version = "1.1.8"
+dependencies = [
+ "anyhow",
+ "async-channel",
+ "async-trait",
+ "bytes",
+ "chrono",
+ "ed25519-dalek",
+ "futures",
+ "hanzo_message_primitives",
+ "hanzo_tools_primitives",
+ "hyper 0.14.32",
+ "once_cell",
+ "rand 0.8.5",
+ "reqwest 0.11.27",
+ "rmcp",
+ "rustls 0.23.27",
+ "rustls-pemfile 1.0.4",
+ "serde",
+ "serde_json",
+ "tokio",
+ "tokio-rustls 0.23.4",
+ "tokio-stream",
+ "tokio-tungstenite 0.26.2",
+ "tokio-util",
+ "tracing",
+ "tracing-subscriber",
+ "utoipa",
+ "utoipa-swagger-ui",
+ "uuid",
+ "warp",
+ "x25519-dalek",
+]
+
+[[package]]
+name = "hanzo_job_queue_manager"
+version = "1.1.8"
+dependencies = [
+ "chrono",
+ "hanzo_embedding",
+ "hanzo_message_primitives",
+ "hanzo_sqlite",
+ "serde",
+ "serde_json",
+ "tempfile",
+ "tokio",
+]
+
+[[package]]
+name = "hanzo_libp2p_relayer"
+version = "1.1.8"
+dependencies = [
+ "chrono",
+ "clap 3.2.25",
+ "dashmap",
+ "derivative",
+ "dotenv",
+ "ed25519-dalek",
+ "hanzo_crypto_identities",
+ "hanzo_message_primitives",
+ "hex",
+ "libp2p",
+ "rand 0.8.5",
+ "reqwest 0.11.27",
+ "serde",
+ "serde_json",
+ "tempfile",
+ "thiserror 2.0.12",
+ "tokio",
+ "uuid",
+ "x25519-dalek",
+]
+
+[[package]]
+name = "hanzo_mcp"
+version = "1.1.8"
+dependencies = [
+ "async-trait",
+ "futures",
+ "home",
+ "log",
+ "mockall",
+ "once_cell",
+ "regex",
+ "rmcp",
+ "serde",
+ "serde_json",
+ "strip-ansi-escapes",
+ "thiserror 2.0.12",
+ "tokio",
+ "tokio-test",
+ "tracing",
+]
+
+[[package]]
+name = "hanzo_message_primitives"
+version = "1.1.8"
+dependencies = [
+ "aes-gcm",
+ "async-trait",
+ "base64 0.22.1",
+ "blake3",
+ "chacha20poly1305 0.7.1",
+ "chrono",
+ "ed25519-dalek",
+ "hex",
+ "os_path",
+ "rand 0.8.5",
+ "regex",
+ "rust_decimal",
+ "serde",
+ "serde_json",
+ "serial_test",
+ "tempfile",
+ "thiserror 2.0.12",
+ "tokio",
+ "tracing",
+ "tracing-subscriber",
+ "utoipa",
+ "x25519-dalek",
+]
+
+[[package]]
+name = "hanzo_node"
+version = "1.1.8"
+dependencies = [
+ "aes-gcm",
+ "ai-model-catalog",
+ "anyhow",
+ "async-channel",
+ "async-lock 2.8.0",
+ "async-trait",
+ "base64 0.22.1",
+ "bigdecimal",
+ "bincode",
+ "blake3",
+ "chrono",
+ "clap 3.2.25",
+ "console-subscriber",
+ "cron-parser",
+ "csv",
+ "dashmap",
+ "downcast-rs",
+ "ed25519-dalek",
+ "env_logger",
+ "fs_extra",
+ "futures",
+ "governor",
+ "hanzo_crypto_identities",
+ "hanzo_embedding",
+ "hanzo_fs",
+ "hanzo_http_api",
+ "hanzo_job_queue_manager",
+ "hanzo_libp2p_relayer",
+ "hanzo_mcp",
+ "hanzo_message_primitives",
+ "hanzo_non_rust_code",
+ "hanzo_sqlite",
+ "hanzo_test_framework",
+ "hanzo_test_macro",
+ "hanzo_tools_primitives",
+ "hex",
+ "keyphrases",
+ "lazy_static",
+ "libp2p",
+ "log",
+ "mockito",
+ "ngrok",
+ "once_cell",
+ "open",
+ "r2d2",
+ "r2d2_sqlite",
+ "rand 0.8.5",
+ "rcgen",
+ "regex",
+ "reqwest 0.11.27",
+ "rmcp",
+ "rusqlite",
+ "rust_decimal",
+ "rustls 0.23.27",
+ "serde",
+ "serde_json",
+ "serde_yaml",
+ "sha2",
+ "shinkai_tools_runner",
+ "tempfile",
+ "thiserror 2.0.12",
+ "tokio",
+ "tokio-tungstenite 0.26.2",
+ "tokio-util",
+ "toml",
+ "url",
+ "urlencoding",
+ "utoipa",
+ "uuid",
+ "warp",
+ "x25519-dalek",
+ "zip 2.4.2",
+]
+
+[[package]]
+name = "hanzo_non_rust_code"
+version = "1.1.8"
+dependencies = [
+ "hanzo_message_primitives",
+ "log",
+ "serde",
+ "serde_json",
+ "shinkai_tools_runner",
+ "tempfile",
+ "tokio",
+]
+
+[[package]]
+name = "hanzo_sqlite"
+version = "1.1.8"
+dependencies = [
+ "bincode",
+ "blake3",
+ "bytemuck",
+ "chrono",
+ "ed25519-dalek",
+ "hanzo_embedding",
+ "hanzo_message_primitives",
+ "hanzo_tools_primitives",
+ "hex",
+ "keyphrases",
+ "log",
+ "r2d2",
+ "r2d2_sqlite",
+ "rand 0.8.5",
+ "reqwest 0.11.27",
+ "rusqlite",
+ "rust_decimal",
+ "semver",
+ "serde",
+ "serde_json",
+ "sqlite-vec",
+ "tempfile",
+ "thiserror 2.0.12",
+ "tokio",
+ "x25519-dalek",
+ "zerocopy",
+]
+
+[[package]]
+name = "hanzo_test_framework"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "async-channel",
+ "ed25519-dalek",
+ "hanzo_embedding",
+ "hanzo_http_api",
+ "hanzo_message_primitives",
+ "hanzo_node",
+ "hanzo_sqlite",
+ "proc-macro2",
+ "quote",
+ "syn 2.0.101",
+ "tempfile",
+ "tokio",
+ "x25519-dalek",
+]
+
+[[package]]
+name = "hanzo_test_macro"
+version = "0.1.0"
+dependencies = [
+ "hanzo_test_framework",
+ "proc-macro2",
+ "quote",
+ "syn 2.0.101",
+]
+
+[[package]]
+name = "hanzo_tools_primitives"
+version = "1.1.8"
+dependencies = [
+ "base64 0.22.1",
+ "hanzo_mcp",
+ "hanzo_message_primitives",
+ "log",
+ "once_cell",
+ "regex",
+ "reqwest 0.11.27",
+ "rmcp",
+ "serde",
+ "serde_json",
+ "shinkai_tools_runner",
+ "tokio",
+]
+
+[[package]]
 name = "hashbrown"
 version = "0.12.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -5917,372 +6283,6 @@ name = "shell-words"
 version = "1.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "24188a676b6ae68c3b2cb3a01be17fbf7240ce009799bb56d5b1409051e78fde"
-
-[[package]]
-name = "shinkai_crypto_identities"
-version = "1.1.8"
-dependencies = [
- "chrono",
- "dashmap",
- "ed25519-dalek",
- "lazy_static",
- "serde_json",
- "shinkai_message_primitives",
- "shinkai_non_rust_code",
- "tempfile",
- "tokio",
- "trust-dns-resolver",
- "x25519-dalek",
-]
-
-[[package]]
-name = "shinkai_embedding"
-version = "1.1.8"
-dependencies = [
- "async-trait",
- "bincode",
- "blake3",
- "chrono",
- "csv",
- "futures",
- "keyphrases",
- "lazy_static",
- "rand 0.8.5",
- "regex",
- "reqwest 0.11.27",
- "serde",
- "serde_json",
- "thiserror 2.0.12",
- "utoipa",
-]
-
-[[package]]
-name = "shinkai_fs"
-version = "1.1.8"
-dependencies = [
- "async-trait",
- "bincode",
- "blake3",
- "chrono",
- "comrak",
- "csv",
- "futures",
- "keyphrases",
- "lazy_static",
- "os_path",
- "rand 0.8.5",
- "regex",
- "reqwest 0.11.27",
- "scraper",
- "serde",
- "serde_json",
- "serial_test",
- "shinkai_embedding",
- "shinkai_message_primitives",
- "shinkai_non_rust_code",
- "shinkai_sqlite",
- "tempfile",
- "thiserror 2.0.12",
- "tokio",
- "urlencoding",
- "utoipa",
- "walkdir",
-]
-
-[[package]]
-name = "shinkai_http_api"
-version = "1.1.8"
-dependencies = [
- "anyhow",
- "async-channel",
- "async-trait",
- "bytes",
- "chrono",
- "ed25519-dalek",
- "futures",
- "hyper 0.14.32",
- "once_cell",
- "rand 0.8.5",
- "reqwest 0.11.27",
- "rmcp",
- "rustls 0.23.27",
- "rustls-pemfile 1.0.4",
- "serde",
- "serde_json",
- "shinkai_message_primitives",
- "shinkai_tools_primitives",
- "tokio",
- "tokio-rustls 0.23.4",
- "tokio-stream",
- "tokio-tungstenite 0.26.2",
- "tokio-util",
- "tracing",
- "tracing-subscriber",
- "utoipa",
- "utoipa-swagger-ui",
- "uuid",
- "warp",
- "x25519-dalek",
-]
-
-[[package]]
-name = "shinkai_job_queue_manager"
-version = "1.1.8"
-dependencies = [
- "chrono",
- "serde",
- "serde_json",
- "shinkai_embedding",
- "shinkai_message_primitives",
- "shinkai_sqlite",
- "tempfile",
- "tokio",
-]
-
-[[package]]
-name = "shinkai_libp2p_relayer"
-version = "1.1.8"
-dependencies = [
- "chrono",
- "clap 3.2.25",
- "dashmap",
- "derivative",
- "dotenv",
- "ed25519-dalek",
- "hex",
- "libp2p",
- "rand 0.8.5",
- "reqwest 0.11.27",
- "serde",
- "serde_json",
- "shinkai_crypto_identities",
- "shinkai_message_primitives",
- "tempfile",
- "thiserror 2.0.12",
- "tokio",
- "uuid",
- "x25519-dalek",
-]
-
-[[package]]
-name = "shinkai_mcp"
-version = "1.1.8"
-dependencies = [
- "async-trait",
- "futures",
- "home",
- "log",
- "mockall",
- "once_cell",
- "regex",
- "rmcp",
- "serde",
- "serde_json",
- "strip-ansi-escapes",
- "thiserror 2.0.12",
- "tokio",
- "tokio-test",
- "tracing",
-]
-
-[[package]]
-name = "shinkai_message_primitives"
-version = "1.1.8"
-dependencies = [
- "aes-gcm",
- "async-trait",
- "base64 0.22.1",
- "blake3",
- "chacha20poly1305 0.7.1",
- "chrono",
- "ed25519-dalek",
- "hex",
- "os_path",
- "rand 0.8.5",
- "regex",
- "rust_decimal",
- "serde",
- "serde_json",
- "serial_test",
- "tempfile",
- "thiserror 2.0.12",
- "tokio",
- "tracing",
- "tracing-subscriber",
- "utoipa",
- "x25519-dalek",
-]
-
-[[package]]
-name = "shinkai_node"
-version = "1.1.8"
-dependencies = [
- "aes-gcm",
- "ai-model-catalog",
- "anyhow",
- "async-channel",
- "async-lock 2.8.0",
- "async-trait",
- "base64 0.22.1",
- "bigdecimal",
- "bincode",
- "blake3",
- "chrono",
- "clap 3.2.25",
- "console-subscriber",
- "cron-parser",
- "csv",
- "dashmap",
- "downcast-rs",
- "ed25519-dalek",
- "env_logger",
- "fs_extra",
- "futures",
- "governor",
- "hex",
- "keyphrases",
- "lazy_static",
- "libp2p",
- "log",
- "mockito",
- "ngrok",
- "once_cell",
- "open",
- "r2d2",
- "r2d2_sqlite",
- "rand 0.8.5",
- "rcgen",
- "regex",
- "reqwest 0.11.27",
- "rmcp",
- "rusqlite",
- "rust_decimal",
- "rustls 0.23.27",
- "serde",
- "serde_json",
- "serde_yaml",
- "sha2",
- "shinkai_crypto_identities",
- "shinkai_embedding",
- "shinkai_fs",
- "shinkai_http_api",
- "shinkai_job_queue_manager",
- "shinkai_libp2p_relayer",
- "shinkai_mcp",
- "shinkai_message_primitives",
- "shinkai_non_rust_code",
- "shinkai_sqlite",
- "shinkai_test_framework",
- "shinkai_test_macro",
- "shinkai_tools_primitives",
- "shinkai_tools_runner",
- "tempfile",
- "thiserror 2.0.12",
- "tokio",
- "tokio-tungstenite 0.26.2",
- "tokio-util",
- "toml",
- "url",
- "urlencoding",
- "utoipa",
- "uuid",
- "warp",
- "x25519-dalek",
- "zip 2.4.2",
-]
-
-[[package]]
-name = "shinkai_non_rust_code"
-version = "1.1.8"
-dependencies = [
- "log",
- "serde",
- "serde_json",
- "shinkai_message_primitives",
- "shinkai_tools_runner",
- "tempfile",
- "tokio",
-]
-
-[[package]]
-name = "shinkai_sqlite"
-version = "1.1.8"
-dependencies = [
- "bincode",
- "blake3",
- "bytemuck",
- "chrono",
- "ed25519-dalek",
- "hex",
- "keyphrases",
- "log",
- "r2d2",
- "r2d2_sqlite",
- "rand 0.8.5",
- "reqwest 0.11.27",
- "rusqlite",
- "rust_decimal",
- "semver",
- "serde",
- "serde_json",
- "shinkai_embedding",
- "shinkai_message_primitives",
- "shinkai_tools_primitives",
- "sqlite-vec",
- "tempfile",
- "thiserror 2.0.12",
- "tokio",
- "x25519-dalek",
- "zerocopy",
-]
-
-[[package]]
-name = "shinkai_test_framework"
-version = "0.1.0"
-dependencies = [
- "anyhow",
- "async-channel",
- "ed25519-dalek",
- "proc-macro2",
- "quote",
- "shinkai_embedding",
- "shinkai_http_api",
- "shinkai_message_primitives",
- "shinkai_node",
- "shinkai_sqlite",
- "syn 2.0.101",
- "tempfile",
- "tokio",
- "x25519-dalek",
-]
-
-[[package]]
-name = "shinkai_test_macro"
-version = "0.1.0"
-dependencies = [
- "proc-macro2",
- "quote",
- "shinkai_test_framework",
- "syn 2.0.101",
-]
-
-[[package]]
-name = "shinkai_tools_primitives"
-version = "1.1.8"
-dependencies = [
- "base64 0.22.1",
- "log",
- "once_cell",
- "regex",
- "reqwest 0.11.27",
- "rmcp",
- "serde",
- "serde_json",
- "shinkai_mcp",
- "shinkai_message_primitives",
- "shinkai_tools_runner",
- "tokio",
-]
 
 [[package]]
 name = "shinkai_tools_runner"
