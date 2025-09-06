@@ -372,9 +372,9 @@ impl HanzoRegistry {
         // Check if any of the address_or_proxy_nodes ends with .sepolia-shinkai
         if onchain_identity.address_or_proxy_nodes.iter().any(|node| {
             let node_base = node.split(':').next().unwrap_or(node);
-            node_base.ends_with(".sepolia-shinkai")
-                || node_base.ends_with(".shinkai")
-                || node_base.ends_with(".sep-shinkai")
+            node_base.ends_with(".sepolia-hanzo")
+                || node_base.ends_with(".hanzo")
+                || node_base.ends_with(".sep-hanzo")
         }) {
             // Call the proxy node to get the actual data
             let proxy_identity = onchain_identity.address_or_proxy_nodes.clone();
@@ -419,8 +419,8 @@ mod tests {
             ("https://example.com", "example.com:443"),
             ("example.com:1234", "example.com:1234"),
             (
-                "https://hosting.shinkai.com/by/4G60_4564a10178_node",
-                "hosting.shinkai.com/by/4G60_4564a10178_node:443",
+                "https://hosting.hanzo.ai/by/4G60_4564a10178_node",
+                "hosting.hanzo.ai/by/4G60_4564a10178_node:443",
             ),
         ];
 
@@ -446,7 +446,7 @@ mod tests {
         env::set_var("NODE_STORAGE_PATH", dir.path().to_string_lossy().to_string());
 
         env::set_var(
-            "SHINKAI_TOOLS_RUNNER_DENO_BINARY_PATH",
+            "HANZO_TOOLS_RUNNER_DENO_BINARY_PATH",
             PathBuf::from(env!("CARGO_MANIFEST_DIR"))
                 .join("../../target/debug/shinkai-tools-runner-resources/deno")
                 .to_string_lossy()
@@ -454,7 +454,7 @@ mod tests {
         );
 
         env::set_var(
-            "SHINKAI_TOOLS_RUNNER_UV_BINARY_PATH",
+            "HANZO_TOOLS_RUNNER_UV_BINARY_PATH",
             PathBuf::from(env!("CARGO_MANIFEST_DIR"))
                 .join("../../target/debug/shinkai-tools-runner-resources/uv")
                 .to_string_lossy()

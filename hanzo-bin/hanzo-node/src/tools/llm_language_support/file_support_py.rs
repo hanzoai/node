@@ -31,7 +31,7 @@ pub fn generate_file_support_py(declaration_only: bool) -> String {
             "Home directory path",
         ),
         (
-            "get_shinkai_node_location",
+            "get_hanzo_node_location",
             "Gets the Hanzo Node location URL. This is the URL of the Hanzo Node server.",
             "str",
             vec![],

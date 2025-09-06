@@ -9,15 +9,15 @@ mod test_utils;
 
 fn get_deno_binary_path() -> PathBuf {
     PathBuf::from(
-        env::var("SHINKAI_TOOLS_RUNNER_DENO_BINARY_PATH")
-            .unwrap_or_else(|_| "./shinkai-tools-runner-resources/deno".to_string()),
+        env::var("HANZO_TOOLS_RUNNER_DENO_BINARY_PATH")
+            .unwrap_or_else(|_| "./hanzo-tools-runner-resources/deno".to_string()),
     )
 }
 
 fn get_uv_binary_path() -> PathBuf {
     PathBuf::from(
-        env::var("SHINKAI_TOOLS_RUNNER_UV_BINARY_PATH")
-            .unwrap_or_else(|_| "./shinkai-tools-runner-resources/uv".to_string()),
+        env::var("HANZO_TOOLS_RUNNER_UV_BINARY_PATH")
+            .unwrap_or_else(|_| "./hanzo-tools-runner-resources/uv".to_string()),
     )
 }
 
@@ -53,7 +53,7 @@ pub enum NonRustRuntime {
 }
 
 fn _get_python_binary_path() -> PathBuf {
-    PathBuf::from(env::var("SHINKAI_TOOLS_RUNNER_PYTHON_BINARY_PATH").unwrap_or_else(|_| "python3".to_string()))
+    PathBuf::from(env::var("HANZO_TOOLS_RUNNER_PYTHON_BINARY_PATH").unwrap_or_else(|_| "python3".to_string()))
 }
 
 fn get_python_runner(

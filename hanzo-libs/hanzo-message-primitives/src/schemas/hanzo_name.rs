@@ -49,7 +49,7 @@ impl fmt::Display for HanzoSubidentityType {
 
 impl HanzoName {
     // Define a list of valid endings
-    const VALID_ENDINGS: [&'static str; 4] = [".shinkai", ".sepolia-shinkai", ".arb-sep-shinkai", ".sep-shinkai"];
+    const VALID_ENDINGS: [&'static str; 4] = [".hanzo", ".sepolia-hanzo", ".arb-sep-hanzo", ".sep-hanzo"];
 
     pub fn new(raw_name: String) -> Result<Self, &'static str> {
         let raw_name = Self::correct_node_name(raw_name);
@@ -118,10 +118,10 @@ impl HanzoName {
                 HanzoLogLevel::Info,
                 &format!("Validation error: {}", raw_name),
             );
-            return Err("Node part of the name should start with '@@' and end with a valid ending ('.shinkai', '.arb-sep-shinkai', '.sep-shinkai', etc.).");
+            return Err("Node part of the name should start with '@@' and end with a valid ending ('.hanzo', '.arb-sep-hanzo', '.sep-hanzo', etc.).");
         }
 
-        let node_name_regex = r"^@@[a-zA-Z0-9\_\.]+(\.shinkai|\.arb-sep-shinkai|\.sepolia-shinkai|\.sep-shinkai)$";
+        let node_name_regex = r"^@@[a-zA-Z0-9\_\.]+(\.hanzo|\.arb-sep-hanzo|\.sepolia-hanzo|\.sep-hanzo)$";
         if !Regex::new(node_name_regex).unwrap().is_match(parts[0]) {
             hanzo_log(
                 HanzoLogOption::Identity,
@@ -170,16 +170,16 @@ impl HanzoName {
                 return Err("The fourth part (name after 'agent' or 'device') should be alphanumeric or underscore.");
             }
 
-            if index != 0 && index != 2 && (!re.is_match(part) || part.contains(".shinkai")) {
+            if index != 0 && index != 2 && (!re.is_match(part) || part.contains(".hanzo")) {
                 hanzo_log(
                     HanzoLogOption::Identity,
                     HanzoLogLevel::Info,
                     &format!(
-                        "Name parts should be alphanumeric or underscore and not contain '.shinkai': {}",
+                        "Name parts should be alphanumeric or underscore and not contain '.hanzo': {}",
                         raw_name
                     ),
                 );
-                return Err("Name parts should be alphanumeric or underscore and not contain '.shinkai'.");
+                return Err("Name parts should be alphanumeric or underscore and not contain '.hanzo'.");
             }
         }
 
@@ -456,9 +456,9 @@ impl HanzoName {
             node_name = format!("@@{}", node_name);
         }
 
-        // Check if the node_name ends with any of the valid endings, append ".shinkai" if not
+        // Check if the node_name ends with any of the valid endings, append ".hanzo" if not
         if !Self::VALID_ENDINGS.iter().any(|&ending| node_name.ends_with(ending)) {
-            node_name = format!("{}.shinkai", node_name);
+            node_name = format!("{}.hanzo", node_name);
         }
 
         // Reconstruct the name
@@ -471,7 +471,7 @@ impl HanzoName {
     }
 
     pub fn default_testnet_localhost() -> Self {
-        HanzoName::new("@@localhost.sep-shinkai/main".to_string())
+        HanzoName::new("@@localhost.sep-hanzo/main".to_string())
             .expect("Failed to create default testnet localhost HanzoName")
     }
 }

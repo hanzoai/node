@@ -5,7 +5,11 @@ edition = { workspace = true }
 authors = { workspace = true }
 
 # this makes `cargo run` in the workspace root to run this package
-default-run = "hanzo_node"
+default-run = "hanzod"
+
+[[bin]]
+name = "hanzod"
+path = "src/main.rs"
 
 [build-dependencies]
 shinkai_tools_runner = { workspace = true, features = ["built-in-tools"] }

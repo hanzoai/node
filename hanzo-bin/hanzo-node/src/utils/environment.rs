@@ -106,7 +106,7 @@ pub fn fetch_node_environment() -> NodeEnvironment {
         .parse()
         .expect("Failed to parse IP address");
     let port: u16 = env::var("NODE_PORT")
-        .unwrap_or_else(|_| "9552".to_string())
+        .unwrap_or_else(|_| "3692".to_string())
         .parse()
         .expect("Failed to parse port number");
     let ping_interval: u64 = env::var("PING_INTERVAL_SECS")
@@ -120,7 +120,7 @@ pub fn fetch_node_environment() -> NodeEnvironment {
         .parse()
         .expect("Failed to parse IP address");
     let api_port: u16 = env::var("NODE_API_PORT")
-        .unwrap_or_else(|_| "9550".to_string())
+        .unwrap_or_else(|_| "3690".to_string())
         .parse()
         .expect("Failed to parse port number");
 
