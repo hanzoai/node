@@ -29,13 +29,13 @@ mod tests {
         .internal_metadata_with_inbox(
             "".to_string(),
             "main_profile_node1".to_string(),
-            "inbox::@@node1.shinkai::@@node1.shinkai/main_profile_node1::false".to_string(),
+            "inbox::@@node1.hanzo::@@node1.hanzo/main_profile_node1::false".to_string(),
             EncryptionMethod::None,
             None,
         )
         .external_metadata_with_schedule(
-            "@@node1.shinkai".to_string(),
-            "@@node1.shinkai".to_string(),
+            "@@node1.hanzo".to_string(),
+            "@@node1.hanzo".to_string(),
             "2023-07-02T20:53:34Z".to_string(),
         )
         .build()
@@ -72,13 +72,13 @@ mod tests {
         .internal_metadata_with_inbox(
             "".to_string(),
             "main_profile_node1".to_string(),
-            "inbox::@@node1.shinkai::@@node1.shinkai/main_profile_node1::false".to_string(),
+            "inbox::@@node1.hanzo::@@node1.hanzo/main_profile_node1::false".to_string(),
             EncryptionMethod::None,
             None,
         )
         .external_metadata_with_schedule(
-            "@@node1.shinkai".to_string(),
-            "@@node1.shinkai".to_string(),
+            "@@node1.hanzo".to_string(),
+            "@@node1.hanzo".to_string(),
             "2023-07-02T20:53:34Z".to_string(),
         )
         .build()
@@ -115,13 +115,13 @@ mod tests {
         .internal_metadata_with_inbox(
             "".to_string(),
             "main_profile_node1".to_string(),
-            "inbox::@@node1.shinkai::@@node1.shinkai/main_profile_node1::false".to_string(),
+            "inbox::@@node1.hanzo::@@node1.hanzo/main_profile_node1::false".to_string(),
             EncryptionMethod::DiffieHellmanChaChaPoly1305,
             None,
         )
         .external_metadata_with_schedule(
-            "@@node1.shinkai".to_string(),
-            "@@node1.shinkai".to_string(),
+            "@@node1.hanzo".to_string(),
+            "@@node1.hanzo".to_string(),
             "2023-07-02T20:53:34Z".to_string(),
         )
         .build()

@@ -185,7 +185,7 @@
 //     #[test]
 //     fn test_save_source_file_map() {
 //         let db = setup_test_db();
-//         let profile = HanzoName::new("@@test_user.shinkai/main".to_string()).unwrap();
+//         let profile = HanzoName::new("@@test_user.hanzo/main".to_string()).unwrap();
 //         let resource_id = "test_resource";
 //         let mut source_file_map = SourceFileMap::new(Default::default());
 //         let vr_path = VRPath::new();

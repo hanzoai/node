@@ -43,7 +43,7 @@ pub async fn create_payment(input: Input) -> Result<Output, RunError> {
 //                 description: "Test payment".to_string(),
 //                 network: Network::BaseSepolia,
 //                 max_amount_required: (price_in_raw_usd * 1000000.0).to_string(),
-//                 resource: "https://shinkai.com".to_string(),
+//                 resource: "https://hanzo.com".to_string(),
 //                 mime_type: "".to_string(),
 //                 pay_to: std::env::var("X402_PAY_TO").expect("X402_PAY_TO must be set"),
 //                 max_timeout_seconds: 300,

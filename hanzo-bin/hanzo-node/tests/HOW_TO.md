@@ -1,10 +1,10 @@
-# Shinkai Node Testing Guide
+# Hanzo Node Testing Guide
 
-This document provides guidance on writing and running tests for the Shinkai Node project.
+This document provides guidance on writing and running tests for the Hanzo Node project.
 
 ## Test Structure
 
-Tests in Shinkai Node follow these common patterns:
+Tests in Hanzo Node follow these common patterns:
 
 1. **Setup**: Initialize test environment, create mock servers, and set required variables
 2. **Node Creation**: Create nodes with specific configurations
@@ -72,7 +72,7 @@ assert!(tools_ready, "Default tools should be ready within 20 seconds");
 
 ```rust
 // Create agent name
-let agent_name = ShinkaiName::new(
+let agent_name = HanzoName::new(
     format!(
         "{}/{}/agent/{}",
         identity_name,
@@ -354,7 +354,7 @@ fn simple_job_message_test() {
             {
                 // 5. Register an LLM provider (agent)
                 eprintln!("\n\nRegistering LLM provider");
-                let agent_name = ShinkaiName::new(
+                let agent_name = HanzoName::new(
                     format!("{}/{}/agent/{}", node1_identity_name, node1_profile_name, node1_agent).to_string(),
                 )
                 .unwrap();

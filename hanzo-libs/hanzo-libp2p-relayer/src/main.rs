@@ -12,7 +12,7 @@ async fn main() -> Result<(), LibP2PRelayError> {
 
     let matches = App::new("Hanzo LibP2P Relayer")
         .version(env!("CARGO_PKG_VERSION"))
-        .author("Hanzo Team <team@shinkai.com>")
+        .author("Hanzo Team <team@hanzo.com>")
         .about("Relays LibP2P connections for Hanzo")
         .arg(
             Arg::with_name("port")

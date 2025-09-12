@@ -162,8 +162,8 @@ mod tests {
 
         let invoice_request = InternalInvoiceRequest {
             unique_id: "test_unique_id".to_string(),
-            provider_name: HanzoName::new("@@node1.shinkai/main_profile_node1".to_string()).unwrap(),
-            requester_name: HanzoName::new("@@node2.shinkai/main_profile_node2".to_string()).unwrap(),
+            provider_name: HanzoName::new("@@node1.hanzo/main_profile_node1".to_string()).unwrap(),
+            requester_name: HanzoName::new("@@node2.hanzo/main_profile_node2".to_string()).unwrap(),
             tool_key_name: "test_tool_key_name".to_string(),
             usage_type_inquiry: UsageTypeInquiry::PerUse,
             date_time: chrono::Utc::now(),
@@ -183,8 +183,8 @@ mod tests {
 
         let invoice_request1 = InternalInvoiceRequest {
             unique_id: "test_unique_id1".to_string(),
-            provider_name: HanzoName::new("@@node1.shinkai/main_profile_node1".to_string()).unwrap(),
-            requester_name: HanzoName::new("@@node2.shinkai/main_profile_node2".to_string()).unwrap(),
+            provider_name: HanzoName::new("@@node1.hanzo/main_profile_node1".to_string()).unwrap(),
+            requester_name: HanzoName::new("@@node2.hanzo/main_profile_node2".to_string()).unwrap(),
             tool_key_name: "test_tool_key_name".to_string(),
             usage_type_inquiry: UsageTypeInquiry::PerUse,
             date_time: chrono::Utc::now(),
@@ -193,8 +193,8 @@ mod tests {
 
         let invoice_request2 = InternalInvoiceRequest {
             unique_id: "test_unique_id2".to_string(),
-            provider_name: HanzoName::new("@@node1.shinkai/main_profile_node1".to_string()).unwrap(),
-            requester_name: HanzoName::new("@@node2.shinkai/main_profile_node2".to_string()).unwrap(),
+            provider_name: HanzoName::new("@@node1.hanzo/main_profile_node1".to_string()).unwrap(),
+            requester_name: HanzoName::new("@@node2.hanzo/main_profile_node2".to_string()).unwrap(),
             tool_key_name: "test_tool_key_name".to_string(),
             usage_type_inquiry: UsageTypeInquiry::PerUse,
             date_time: chrono::Utc::now(),
@@ -217,8 +217,8 @@ mod tests {
 
         let invoice_request = InternalInvoiceRequest {
             unique_id: "test_unique_id".to_string(),
-            provider_name: HanzoName::new("@@node1.shinkai/main_profile_node1".to_string()).unwrap(),
-            requester_name: HanzoName::new("@@node2.shinkai/main_profile_node2".to_string()).unwrap(),
+            provider_name: HanzoName::new("@@node1.hanzo/main_profile_node1".to_string()).unwrap(),
+            requester_name: HanzoName::new("@@node2.hanzo/main_profile_node2".to_string()).unwrap(),
             tool_key_name: "test_tool_key_name".to_string(),
             usage_type_inquiry: UsageTypeInquiry::PerUse,
             date_time: chrono::Utc::now(),

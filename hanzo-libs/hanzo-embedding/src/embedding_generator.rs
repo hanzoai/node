@@ -15,7 +15,7 @@ use std::time::Duration;
 // TODO: remove blocking / non-blocking methods
 
 lazy_static! {
-    pub static ref DEFAULT_EMBEDDINGS_SERVER_URL: &'static str = "https://api.shinkai.com/embeddings";
+    pub static ref DEFAULT_EMBEDDINGS_SERVER_URL: &'static str = "https://api.hanzo.com/embeddings";
     pub static ref DEFAULT_EMBEDDINGS_LOCAL_URL: &'static str = "http://localhost:11434/";
 }
 

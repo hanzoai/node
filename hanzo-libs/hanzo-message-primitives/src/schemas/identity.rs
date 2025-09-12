@@ -136,7 +136,7 @@ pub struct StandardIdentity {
 
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct DeviceIdentity {
-    // This would include the profile name e.g. @@Alice.shinkai/profileName/myPhone
+    // This would include the profile name e.g. @@Alice.hanzo/profileName/myPhone
     pub full_identity_name: HanzoName,
     pub node_encryption_public_key: EncryptionPublicKey,
     pub node_signature_public_key: VerifyingKey,

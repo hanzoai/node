@@ -279,10 +279,10 @@ impl RelayManager {
         // Configure identify protocol - use same protocol version as Hanzo nodes
         // Use conservative settings to reduce identify event frequency
         let identify = identify::Behaviour::new(identify::Config::new(
-            "/shinkai/1.0.0".to_string(),
+            "/hanzo/1.0.0".to_string(),
             local_key.public(),
         ).with_agent_version(format!(
-            "shinkai-relayer/{}/{}",
+            "hanzo-relayer/{}/{}",
             relay_node_name,
             env!("CARGO_PKG_VERSION")
         ))
@@ -317,7 +317,7 @@ impl RelayManager {
 
         // Configure request-response behavior with reduced timeout for faster failure detection
         let request_response = request_response::json::Behaviour::new(
-            std::iter::once((libp2p::StreamProtocol::new("/shinkai/message/1.0.0"), request_response::ProtocolSupport::Full)),
+            std::iter::once((libp2p::StreamProtocol::new("/hanzo/message/1.0.0"), request_response::ProtocolSupport::Full)),
             request_response::Config::default()
                 .with_request_timeout(Duration::from_secs(30))
         );
@@ -867,7 +867,7 @@ impl RelayManager {
         agent_version: String,
     ) -> Option<String> {
         // Extract the identity from the agent version
-        let identity = if agent_version.contains("shinkai") || agent_version.contains("node") {
+        let identity = if agent_version.contains("hanzo") || agent_version.contains("node") {
             if let Some(identity_part) = agent_version.split("@@").nth(1) {
                 Some(format!("@@{}", identity_part))
             } else { None }
@@ -1023,7 +1023,7 @@ impl RelayManager {
                                 self.request_tool_offerings(peer_id).await;
                             }
                         } else {
-                            let possible_identity = if info.agent_version.ends_with("shinkai") {
+                            let possible_identity = if info.agent_version.ends_with("hanzo") {
                                 if let Some(identity_part) = info.agent_version.split("@@").nth(1) {
                                     Some(format!("@@{}", identity_part))
                                 } else { None }
@@ -1136,10 +1136,10 @@ impl RelayManager {
                                     let peer_id = request.external_metadata.intra_sender.parse::<PeerId>().unwrap();
                                     request.external_metadata.intra_sender = request.external_metadata.sender.clone();
                                     request.external_metadata.sender = self.config.relay_node_name.clone();
-                                    request.external_metadata.recipient = "@@localhost.sep-shinkai".to_string();
+                                    request.external_metadata.recipient = "@@localhost.sep-hanzo".to_string();
 
                                     // Re-encrypt message for localhost recipient
-                                    self.relay_message_encryption(&mut request, &"@@localhost.sep-shinkai".to_string()).await;
+                                    self.relay_message_encryption(&mut request, &"@@localhost.sep-hanzo".to_string()).await;
 
                                     // Re-sign outer layer with the relay identity key
                                     if let Ok(resigned) = request.sign_outer_layer(&self.config.identity_secret_key) {

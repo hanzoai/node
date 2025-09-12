@@ -30,7 +30,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     // Configure identify
     let identify = identify::Behaviour::new(identify::Config::new(
-        "/shinkai-client/1.0.0".to_string(),
+        "/hanzo-client/1.0.0".to_string(),
         local_key.public(),
     ));
 

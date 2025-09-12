@@ -50,7 +50,7 @@ mod tests {
     async fn test_parse_xlsx() {
         let _dir = testing_create_tempdir_and_set_env_var();
 
-        let xlsx_file_path = path::absolute(Path::new("../shinkai-fs/src/test_data/test.xlsx"))
+        let xlsx_file_path = path::absolute(Path::new("../hanzo-fs/src/test_data/test.xlsx"))
             .unwrap()
             .to_path_buf();
         let rows = parse_xlsx(xlsx_file_path).await.unwrap();
@@ -62,7 +62,7 @@ mod tests {
     async fn test_parse_xls() {
         let _dir = testing_create_tempdir_and_set_env_var();
 
-        let xlsx_file_path = path::absolute(Path::new("../shinkai-fs/src/test_data/test.xls"))
+        let xlsx_file_path = path::absolute(Path::new("../hanzo-fs/src/test_data/test.xls"))
             .unwrap()
             .to_path_buf();
         let rows = parse_xlsx(xlsx_file_path).await.unwrap();

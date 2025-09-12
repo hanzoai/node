@@ -15,7 +15,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     let registry = HanzoRegistry::new(&rpc_url, &contract_address, None).await?;
 
-    let relay_identity = "@@libp2p_relayer.sep-shinkai";
+    let relay_identity = "@@libp2p_relayer.sep-hanzo";
     println!("\n🔍 Resolving identity: {}", relay_identity);
 
     match registry.get_identity_record(relay_identity.to_string(), Some(true)).await {
@@ -53,8 +53,8 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     // Also test the other identities
     let test_identities = [
-        "@@node1_with_libp2p_relayer.sep-shinkai",
-        "@@node2_with_libp2p_relayer.sep-shinkai",
+        "@@node1_with_libp2p_relayer.sep-hanzo",
+        "@@node2_with_libp2p_relayer.sep-hanzo",
     ];
 
     for identity in &test_identities {

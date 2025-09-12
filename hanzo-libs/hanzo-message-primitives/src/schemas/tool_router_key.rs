@@ -176,8 +176,8 @@ impl ToolRouterKey {
     }
 
     /// Converts a normal tool router key to a network router key
-    /// Example: "local:::guillevalin:::echo_function" with node_name "@@guillevalin.sep-shinkai"
-    /// becomes "__guillevalin_sep_shinkai:::guillevalin:::echo_function"
+    /// Example: "local:::guillevalin:::echo_function" with node_name "@@guillevalin.sep-hanzo"
+    /// becomes "__guillevalin_sep_hanzo:::guillevalin:::echo_function"
     pub fn to_network_router_key(key_str: &str, node_name: &str) -> Result<String, String> {
         let key = Self::from_string(key_str)?;
 
@@ -200,13 +200,13 @@ mod tests {
     fn test_tool_router_key_to_string_without_version() {
         let key = ToolRouterKey::new(
             "local".to_string(),
-            "@@official.shinkai".to_string(),
+            "@@official.hanzo".to_string(),
             "concat_strings".to_string(),
             None,
         );
         assert_eq!(
             key.to_string_without_version(),
-            "local:::__official_shinkai:::concat_strings"
+            "local:::__official_hanzo:::concat_strings"
         );
     }
 
@@ -214,25 +214,25 @@ mod tests {
     fn test_tool_router_key_to_string_with_version() {
         let key = ToolRouterKey::new(
             "local".to_string(),
-            "@@official.shinkai".to_string(),
+            "@@official.hanzo".to_string(),
             "concat_strings".to_string(),
             Some("1.0".to_string()),
         );
         assert_eq!(
             key.to_string_with_version(),
-            "local:::__official_shinkai:::concat_strings:::1.0"
+            "local:::__official_hanzo:::concat_strings:::1.0"
         );
     }
 
     #[test]
     fn test_tool_router_key_from_string_without_version() {
-        let key_str = "local:::__official_shinkai:::concat_strings";
+        let key_str = "local:::__official_hanzo:::concat_strings";
         let key = ToolRouterKey::from_string(key_str).unwrap();
         assert_eq!(
             key,
             ToolRouterKey::new(
                 "local".to_string(),
-                "__official_shinkai".to_string(),
+                "__official_hanzo".to_string(),
                 "concat_strings".to_string(),
                 None
             )
@@ -241,13 +241,13 @@ mod tests {
 
     #[test]
     fn test_tool_router_key_from_string_with_version() {
-        let key_str = "local:::__official_shinkai:::concat_strings:::1.0";
+        let key_str = "local:::__official_hanzo:::concat_strings:::1.0";
         let key = ToolRouterKey::from_string(key_str).unwrap();
         assert_eq!(
             key,
             ToolRouterKey::new(
                 "local".to_string(),
-                "__official_shinkai".to_string(),
+                "__official_hanzo".to_string(),
                 "concat_strings".to_string(),
                 Some("1.0".to_string())
             )
@@ -265,8 +265,8 @@ mod tests {
         // Create a ToolRouterKey instance
         let tool_router_key = ToolRouterKey::new(
             "local".to_string(),
-            "@@system.shinkai".to_string(),
-            "shinkai: download pages".to_string(),
+            "@@system.hanzo".to_string(),
+            "hanzo: download pages".to_string(),
             None,
         );
 
@@ -274,7 +274,7 @@ mod tests {
         let router_key_string = tool_router_key.to_string_without_version();
 
         // Expected key format
-        let expected_key = "local:::__system_shinkai:::hanzo__download_pages";
+        let expected_key = "local:::__system_hanzo:::hanzo__download_pages";
 
         // Assert that the generated key matches the expected pattern
         assert_eq!(router_key_string, expected_key);
@@ -284,46 +284,46 @@ mod tests {
     fn test_tool_router_key_no_spaces_in_to_string() {
         let key = ToolRouterKey::new(
             "local".to_string(),
-            "@@system.shinkai".to_string(),
+            "@@system.hanzo".to_string(),
             "versioned_tool".to_string(),
             Some("2.0".to_string()),
         );
         let key_string = key.to_string_without_version();
         eprintln!("key_string: {:?}", key_string);
         assert!(!key_string.contains(' '), "Key string should not contain spaces");
-        assert_eq!(key_string, "local:::__system_shinkai:::versioned_tool");
+        assert_eq!(key_string, "local:::__system_hanzo:::versioned_tool");
     }
 
     #[test]
     fn test_tool_router_key_to_string_with_version_returns_without_version_when_none() {
         let key = ToolRouterKey::new(
             "local".to_string(),
-            "@@official_shinkai".to_string(),
+            "@@official_hanzo".to_string(),
             "concat_strings".to_string(),
             None,
         );
         assert_eq!(
             key.to_string_with_version(),
-            "local:::__official_shinkai:::concat_strings"
+            "local:::__official_hanzo:::concat_strings"
         );
     }
 
     #[test]
     fn test_to_network_router_key() {
         let original_key = "local:::guillevalin:::echo_function";
-        let node_name = "@@guillevalin.sep-shinkai";
+        let node_name = "@@guillevalin.sep-hanzo";
         let network_key = ToolRouterKey::to_network_router_key(original_key, node_name).unwrap();
-        assert_eq!(network_key, "__guillevalin_sep_shinkai:::guillevalin:::echo_function");
+        assert_eq!(network_key, "__guillevalin_sep_hanzo:::guillevalin:::echo_function");
     }
 
     #[test]
     fn test_to_network_router_key_with_version() {
         let original_key = "local:::guillevalin:::echo_function:::1.0";
-        let node_name = "@@guillevalin.sep-shinkai";
+        let node_name = "@@guillevalin.sep-hanzo";
         let network_key = ToolRouterKey::to_network_router_key(original_key, node_name).unwrap();
         assert_eq!(
             network_key,
-            "__guillevalin_sep_shinkai:::guillevalin:::echo_function:::1.0"
+            "__guillevalin_sep_hanzo:::guillevalin:::echo_function:::1.0"
         );
     }
 
@@ -331,14 +331,14 @@ mod tests {
     fn test_to_network_router_key_different_domains() {
         let original_key = "local:::alice:::test_tool";
 
-        // Test with .shinkai domain
-        let node_name1 = "@@alice.sep-shinkai";
+        // Test with .hanzo domain
+        let node_name1 = "@@alice.sep-hanzo";
         let network_key1 = ToolRouterKey::to_network_router_key(original_key, node_name1).unwrap();
-        assert_eq!(network_key1, "__alice_sep_shinkai:::alice:::test_tool");
+        assert_eq!(network_key1, "__alice_sep_hanzo:::alice:::test_tool");
 
-        // Test with .arb-sep-shinkai domain
-        let node_name2 = "@@alice.sep-shinkai";
+        // Test with .arb-sep-hanzo domain
+        let node_name2 = "@@alice.sep-hanzo";
         let network_key2 = ToolRouterKey::to_network_router_key(original_key, node_name2).unwrap();
-        assert_eq!(network_key2, "__alice_sep_shinkai:::alice:::test_tool");
+        assert_eq!(network_key2, "__alice_sep_hanzo:::alice:::test_tool");
     }
 }

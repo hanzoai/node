@@ -1973,7 +1973,7 @@ mod tests {
             description: "Payment for service".to_string(),
             network: Network::BaseSepolia,
             max_amount_required: "1000".to_string(), // 0.001 USDC in atomic units (6 decimals)
-            resource: "https://shinkai.com".to_string(),
+            resource: "https://hanzo.com".to_string(),
             mime_type: "application/json".to_string(),
             pay_to: "0x036CbD53842c5426634e7929541eC2318f3dCF7e".to_string(),
             max_timeout_seconds: 300,
@@ -2002,7 +2002,7 @@ mod tests {
             "Input args should contain 'Hello, world!' message"
         );
 
-        let provider = HanzoName::new("@@agent_provider.sep-shinkai".to_string()).unwrap();
+        let provider = HanzoName::new("@@agent_provider.sep-hanzo".to_string()).unwrap();
         let tool_router_key = ToolRouterKey::new(
             provider.to_string(),
             "Author 3".to_string(),

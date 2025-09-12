@@ -131,7 +131,7 @@ mod tests {
                 description: "Payment for service".to_string(),
                 network: Network::BaseSepolia,
                 max_amount_required: "1000".to_string(), // 0.001 USDC in atomic units (6 decimals)
-                resource: "https://shinkai.com".to_string(),
+                resource: "https://hanzo.com".to_string(),
                 mime_type: "application/json".to_string(),
                 pay_to: "0x036CbD53842c5426634e7929541eC2318f3dCF7e".to_string(),
                 max_timeout_seconds: 300,
@@ -165,7 +165,7 @@ mod tests {
                 description: "Payment for service".to_string(),
                 network: Network::BaseSepolia,
                 max_amount_required: "1000".to_string(), // 0.001 USDC in atomic units (6 decimals)
-                resource: "https://shinkai.com".to_string(),
+                resource: "https://hanzo.com".to_string(),
                 mime_type: "application/json".to_string(),
                 pay_to: "0x036CbD53842c5426634e7929541eC2318f3dCF7e".to_string(),
                 max_timeout_seconds: 300,
@@ -202,7 +202,7 @@ mod tests {
                 description: "Payment for service".to_string(),
                 network: Network::BaseSepolia,
                 max_amount_required: "1000".to_string(), // 0.001 USDC in atomic units (6 decimals)
-                resource: "https://shinkai.com".to_string(),
+                resource: "https://hanzo.com".to_string(),
                 mime_type: "application/json".to_string(),
                 pay_to: "0x036CbD53842c5426634e7929541eC2318f3dCF7e".to_string(),
                 max_timeout_seconds: 300,
@@ -232,7 +232,7 @@ mod tests {
                 description: "Updated payment for service".to_string(),
                 network: Network::BaseSepolia,
                 max_amount_required: "2000".to_string(), // 0.002 USDC in atomic units (6 decimals)
-                resource: "https://shinkai.com".to_string(),
+                resource: "https://hanzo.com".to_string(),
                 mime_type: "application/json".to_string(),
                 pay_to: "0x036CbD53842c5426634e7929541eC2318f3dCF7e".to_string(),
                 max_timeout_seconds: 600,
@@ -267,13 +267,13 @@ mod tests {
     async fn test_get_all_tool_offerings() {
         let manager = setup_test_db();
         let tool_offering1 = HanzoToolOffering {
-            tool_key: "local:::__localhost_sep_shinkai:::tool_key1".to_string(),
+            tool_key: "local:::__localhost_sep_hanzo:::tool_key1".to_string(),
             usage_type: UsageType::PerUse(ToolPrice::Payment(vec![PaymentRequirements {
                 scheme: "exact".to_string(),
                 description: "Payment for service 1".to_string(),
                 network: Network::BaseSepolia,
                 max_amount_required: "1000".to_string(), // 0.001 USDC in atomic units (6 decimals)
-                resource: "https://shinkai.com".to_string(),
+                resource: "https://hanzo.com".to_string(),
                 mime_type: "application/json".to_string(),
                 pay_to: "0x036CbD53842c5426634e7929541eC2318f3dCF7e".to_string(),
                 max_timeout_seconds: 300,
@@ -288,13 +288,13 @@ mod tests {
         };
 
         let tool_offering2 = HanzoToolOffering {
-            tool_key: "local:::__localhost_sep_shinkai:::tool_key2".to_string(),
+            tool_key: "local:::__localhost_sep_hanzo:::tool_key2".to_string(),
             usage_type: UsageType::PerUse(ToolPrice::Payment(vec![PaymentRequirements {
                 scheme: "exact".to_string(),
                 description: "Payment for service 2".to_string(),
                 network: Network::BaseSepolia,
                 max_amount_required: "1000".to_string(), // 0.001 USDC in atomic units (6 decimals)
-                resource: "https://shinkai.com".to_string(),
+                resource: "https://hanzo.com".to_string(),
                 mime_type: "application/json".to_string(),
                 pay_to: "0x036CbD53842c5426634e7929541eC2318f3dCF7e".to_string(),
                 max_timeout_seconds: 300,
@@ -346,7 +346,7 @@ mod tests {
                 description: "Payment for service".to_string(),
                 network: Network::BaseSepolia,
                 max_amount_required: "1000".to_string(),
-                resource: "https://shinkai.com".to_string(),
+                resource: "https://hanzo.com".to_string(),
                 mime_type: "application/json".to_string(),
                 pay_to: "0x036CbD53842c5426634e7929541eC2318f3dCF7e".to_string(),
                 max_timeout_seconds: 300,
@@ -368,8 +368,8 @@ mod tests {
         let invoice = Invoice {
             invoice_id: "test_invoice_id".to_string(),
             parent_message_id: Some("test_parent_id".to_string()),
-            provider_name: HanzoName::new("@@provider.shinkai".to_string()).unwrap(),
-            requester_name: HanzoName::new("@@requester.shinkai".to_string()).unwrap(),
+            provider_name: HanzoName::new("@@provider.hanzo".to_string()).unwrap(),
+            requester_name: HanzoName::new("@@requester.hanzo".to_string()).unwrap(),
             hanzo_offering: tool_offering.clone(),
             expiration_time: Utc::now() + chrono::Duration::hours(12),
             status: InvoiceStatusEnum::Pending,

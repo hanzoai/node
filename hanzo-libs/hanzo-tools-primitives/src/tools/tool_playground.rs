@@ -300,7 +300,7 @@ mod tests {
         {
             "tool_router_key": null,
             "metadata": {
-                "id": "shinkai-tool-coinbase-create-wallet",
+                "id": "hanzo-tool-coinbase-create-wallet",
                 "version": "1.0.0",
                 "name": "Hanzo: Coinbase Wallet Creator",
                 "description": "Tool for creating a Coinbase wallet",
@@ -309,7 +309,7 @@ mod tests {
                     "coinbase",
                     "wallet",
                     "creator",
-                    "shinkai"
+                    "hanzo"
                 ],
                 "configurations": {
                     "type": "object",
@@ -360,7 +360,7 @@ mod tests {
             },
             "job_id": "123",
             "job_id_history": [],
-            "code": "import { shinkaiDownloadPages } from '@shinkai/local-tools'; type CONFIG = {}; type INPUTS = { urls: string[] }; type OUTPUT = { markdowns: string[] }; export async function run(config: CONFIG, inputs: INPUTS): Promise<OUTPUT> { const { urls } = inputs; if (!urls || urls.length === 0) { throw new Error('URL list is required'); } return shinkaiDownloadPages(urls); }",
+            "code": "import { hanzoDownloadPages } from '@hanzo/local-tools'; type CONFIG = {}; type INPUTS = { urls: string[] }; type OUTPUT = { markdowns: string[] }; export async function run(config: CONFIG, inputs: INPUTS): Promise<OUTPUT> { const { urls } = inputs; if (!urls || urls.length === 0) { throw new Error('URL list is required'); } return hanzoDownloadPages(urls); }",
             "language": "Typescript"
         }
         "#;
@@ -372,12 +372,12 @@ mod tests {
         assert_eq!(deserialized.metadata.author, "Hanzo");
         assert_eq!(
             deserialized.metadata.keywords,
-            vec!["coinbase", "wallet", "creator", "shinkai"]
+            vec!["coinbase", "wallet", "creator", "hanzo"]
         );
         assert_eq!(deserialized.tool_router_key, None);
         assert_eq!(deserialized.job_id, "123");
         assert_eq!(deserialized.job_id_history, Vec::<String>::new());
-        assert_eq!(deserialized.code, "import { shinkaiDownloadPages } from '@shinkai/local-tools'; type CONFIG = {}; type INPUTS = { urls: string[] }; type OUTPUT = { markdowns: string[] }; export async function run(config: CONFIG, inputs: INPUTS): Promise<OUTPUT> { const { urls } = inputs; if (!urls || urls.length === 0) { throw new Error('URL list is required'); } return shinkaiDownloadPages(urls); }");
+        assert_eq!(deserialized.code, "import { hanzoDownloadPages } from '@hanzo/local-tools'; type CONFIG = {}; type INPUTS = { urls: string[] }; type OUTPUT = { markdowns: string[] }; export async function run(config: CONFIG, inputs: INPUTS): Promise<OUTPUT> { const { urls } = inputs; if (!urls || urls.length === 0) { throw new Error('URL list is required'); } return hanzoDownloadPages(urls); }");
     }
 
     #[test]
