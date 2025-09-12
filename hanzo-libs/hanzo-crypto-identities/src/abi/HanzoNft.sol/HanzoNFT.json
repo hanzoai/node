@@ -120,7 +120,7 @@
         {
           "name": "",
           "type": "address",
-          "internalType": "contract ShinkaiRegistryInterface"
+          "internalType": "contract HanzoRegistryInterface"
         }
       ],
       "stateMutability": "view"

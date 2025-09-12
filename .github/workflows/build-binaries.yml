@@ -1,4 +1,4 @@
-name: Build shinkai-node binaries
+name: Build hanzo-node binaries
 
 on:
   push:
@@ -51,8 +51,8 @@ jobs:
           EXTENSION: ${{ matrix.arch == 'x86_64-pc-windows-msvc' && '.exe' || '' }}
         run: |
           mkdir files-to-r2
-          cp target/release/shinkai_node${{ env.EXTENSION }} files-to-r2/shinkai-node${{ env.EXTENSION }}
-          cp -r target/release/shinkai-tools-runner-resources files-to-r2/
+          cp target/release/hanzo_node${{ env.EXTENSION }} files-to-r2/hanzo-node${{ env.EXTENSION }}
+          cp -r target/release/hanzo-tools-runner-resources files-to-r2/
           cd ./files-to-r2
           7z a -tzip ${{ env.ZIP_FILE_NAME}} . -sdel
           cp ${{ env.ZIP_FILE_NAME}} latest.zip
@@ -63,9 +63,9 @@ jobs:
           endpoint: https://54bf1bf573b3e6471e574cc4d318db64.r2.cloudflarestorage.com
           aws_key_id: ${{ secrets.R2_ACCESS_KEY_ID }}
           aws_secret_access_key: ${{ secrets.R2_SECRET_ACCESS_KEY }}
-          aws_bucket: shinkai-download
+          aws_bucket: hanzo-download
           source_dir: files-to-r2
-          destination_dir: ./shinkai-node/binaries/production/${{ matrix.arch }}/
+          destination_dir: ./hanzo-node/binaries/production/${{ matrix.arch }}/
 
       - name: Upload bundle to release
         uses: svenstaro/upload-release-action@v2
@@ -74,7 +74,7 @@ jobs:
         with:
           repo_token: ${{ secrets.GITHUB_TOKEN }}
           file: files-to-r2/${{ github.ref_name }}.zip
-          asset_name: shinkai-node-${{ matrix.arch }}.zip
+          asset_name: hanzo-node-${{ matrix.arch }}.zip
           tag: ${{ github.ref }}
           overwrite: true
   build-docker-image:
@@ -106,5 +106,5 @@ jobs:
           build-args: |
             BUILD_TYPE=release
           tags: |
-            dcspark/shinkai-node:${{ github.ref_name }}
-            dcspark/shinkai-node:release-latest
+            dcspark/hanzo-node:${{ github.ref_name }}
+            dcspark/hanzo-node:release-latest

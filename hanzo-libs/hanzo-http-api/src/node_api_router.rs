@@ -137,10 +137,10 @@ pub async fn run_api(
         .allow_headers(vec![
             "Content-Type",
             "Authorization",
-            "x-shinkai-tool-id",
-            "x-shinkai-app-id",
-            "x-shinkai-llm-provider",
-            "x-shinkai-original-tool-router-key",
+            "x-hanzo-tool-id",
+            "x-hanzo-app-id",
+            "x-hanzo-llm-provider",
+            "x-hanzo-original-tool-router-key",
             "ngrok-skip-browser-warning",
         ]);
 

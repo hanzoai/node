@@ -27,8 +27,8 @@ mod tests {
             string_to_encryption_public_key("798cbd64d78c4a0fba338b2a6349634940dc4e5b601db1029e02c41e0fe05679")
                 .unwrap();
 
-        let node_sender = "@@localhost.shinkai".to_string();
-        let node_receiver = "@@localhost.shinkai".to_string();
+        let node_sender = "@@localhost.hanzo".to_string();
+        let node_receiver = "@@localhost.hanzo".to_string();
         let sender_subidentity = "main".to_string();
         let inbox = "jobid_399c5571-3504-4aa7-a291-b1e086c1440c".to_string();
         let message_raw_content = "hello hello, are u there?".to_string();
@@ -74,8 +74,8 @@ mod tests {
         let (my_encryption_sk, _my_encryption_pk) = unsafe_deterministic_encryption_keypair(0);
         let (_, node2_encryption_pk) = unsafe_deterministic_encryption_keypair(1);
 
-        let recipient = "@@other_node.shinkai".to_string();
-        let sender = "@@my_node.shinkai".to_string();
+        let recipient = "@@other_node.hanzo".to_string();
+        let sender = "@@my_node.hanzo".to_string();
         let scheduled_time = "2023-07-02T20:53:34Z".to_string();
 
         let message_result = HanzoMessageBuilder::new(my_encryption_sk, my_identity_sk, node2_encryption_pk)
@@ -99,7 +99,7 @@ mod tests {
             assert_eq!(hanzo_body.internal_metadata.recipient_subidentity, "");
             assert_eq!(
                 hanzo_body.internal_metadata.inbox,
-                "inbox::@@my_node.shinkai::@@other_node.shinkai::false"
+                "inbox::@@my_node.hanzo::@@other_node.hanzo::false"
             );
         }
 
@@ -118,8 +118,8 @@ mod tests {
         let (my_encryption_sk, _my_encryption_pk) = unsafe_deterministic_encryption_keypair(0);
         let (_, node2_encryption_pk) = unsafe_deterministic_encryption_keypair(1);
 
-        let recipient = "@@other_node.shinkai".to_string();
-        let sender = "@@my_node.shinkai".to_string();
+        let recipient = "@@other_node.hanzo".to_string();
+        let sender = "@@my_node.hanzo".to_string();
 
         let message_result = HanzoMessageBuilder::new(my_encryption_sk.clone(), my_identity_sk, node2_encryption_pk)
             .message_raw_content("body content".to_string())
@@ -154,7 +154,7 @@ mod tests {
             assert_eq!(internal_metadata.recipient_subidentity, "");
             assert_eq!(
                 internal_metadata.inbox,
-                "inbox::@@my_node.shinkai::@@other_node.shinkai::false"
+                "inbox::@@my_node.hanzo::@@other_node.hanzo::false"
             );
         }
         let external_metadata = message.external_metadata;
@@ -168,8 +168,8 @@ mod tests {
         let (my_encryption_sk, _my_encryption_pk) = unsafe_deterministic_encryption_keypair(0);
         let (_, node2_encryption_pk) = unsafe_deterministic_encryption_keypair(1);
 
-        let recipient = "@@other_node.shinkai".to_string();
-        let sender = "@@my_node.shinkai".to_string();
+        let recipient = "@@other_node.hanzo".to_string();
+        let sender = "@@my_node.hanzo".to_string();
 
         let message_result = HanzoMessageBuilder::new(my_encryption_sk.clone(), my_identity_sk, node2_encryption_pk)
             .message_raw_content("body content".to_string())
@@ -223,7 +223,7 @@ mod tests {
         let (profile_encryption_sk, _profile_encryption_pk) = unsafe_deterministic_encryption_keypair(1);
         let (_, node2_encryption_pk) = unsafe_deterministic_encryption_keypair(2);
 
-        let recipient = "@@other_node.shinkai".to_string();
+        let recipient = "@@other_node.hanzo".to_string();
         let sender = recipient.clone();
         let sender_subidentity = "main".to_string();
 
@@ -292,7 +292,7 @@ mod tests {
         let (profile_identity_sk, _profile_identity_pk) = unsafe_deterministic_signature_keypair(1);
         let (profile_encryption_sk, _profile_encryption_pk) = unsafe_deterministic_encryption_keypair(1);
 
-        let recipient = "@@other_node.shinkai".to_string();
+        let recipient = "@@other_node.hanzo".to_string();
         let sender = recipient.clone();
         let sender_subidentity = "main".to_string();
 

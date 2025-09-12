@@ -109,9 +109,9 @@ pub fn tool_routes(
         .and(warp::post())
         .and(with_sender(node_commands_sender.clone()))
         .and(warp::header::<String>("authorization"))
-        .and(warp::header::<String>("x-shinkai-tool-id"))
-        .and(warp::header::<String>("x-shinkai-app-id"))
-        .and(warp::header::optional::<String>("x-shinkai-agent-id"))
+        .and(warp::header::<String>("x-hanzo-tool-id"))
+        .and(warp::header::<String>("x-hanzo-app-id"))
+        .and(warp::header::optional::<String>("x-hanzo-agent-id"))
         .and(warp::body::json())
         .and_then(tool_execution_handler);
 
@@ -139,9 +139,9 @@ pub fn tool_routes(
         .and(warp::post())
         .and(with_sender(node_commands_sender.clone()))
         .and(warp::header::<String>("authorization"))
-        .and(warp::header::<String>("x-shinkai-tool-id"))
-        .and(warp::header::<String>("x-shinkai-app-id"))
-        .and(warp::header::optional::<String>("x-shinkai-original-tool-router-key"))
+        .and(warp::header::<String>("x-hanzo-tool-id"))
+        .and(warp::header::<String>("x-hanzo-app-id"))
+        .and(warp::header::optional::<String>("x-hanzo-original-tool-router-key"))
         .and(warp::body::json())
         .and_then(set_playground_tool_handler);
 
@@ -176,9 +176,9 @@ pub fn tool_routes(
         .and(warp::post())
         .and(with_sender(node_commands_sender.clone()))
         .and(warp::header::<String>("authorization"))
-        .and(warp::header::<String>("x-shinkai-tool-id"))
-        .and(warp::header::<String>("x-shinkai-app-id"))
-        .and(warp::header::optional::<String>("x-shinkai-agent-id"))
+        .and(warp::header::<String>("x-hanzo-tool-id"))
+        .and(warp::header::<String>("x-hanzo-app-id"))
+        .and(warp::header::optional::<String>("x-hanzo-agent-id"))
         .and(warp::body::json())
         .and_then(code_execution_handler);
 
@@ -196,7 +196,7 @@ pub fn tool_routes(
         .and(warp::body::json())
         .and_then(tool_implementation_code_update_handler);
 
-    // Resolves shinkai://file URLs to actual file bytes, providing secure access to files in the node's storage
+    // Resolves hanzo://file URLs to actual file bytes, providing secure access to files in the node's storage
     let resolve_hanzo_file_protocol_route = warp::path("resolve_hanzo_file_protocol")
         .and(warp::get())
         .and(with_sender(node_commands_sender.clone()))
@@ -236,8 +236,8 @@ pub fn tool_routes(
         .and(warp::post())
         .and(with_sender(node_commands_sender.clone()))
         .and(warp::header::<String>("authorization"))
-        .and(warp::header::<String>("x-shinkai-tool-id"))
-        .and(warp::header::<String>("x-shinkai-app-id"))
+        .and(warp::header::<String>("x-hanzo-tool-id"))
+        .and(warp::header::<String>("x-hanzo-app-id"))
         .and(warp::multipart::form().max_length(50 * 1024 * 1024))
         .and_then(tool_asset_handler);
 
@@ -245,8 +245,8 @@ pub fn tool_routes(
         .and(warp::post())
         .and(with_sender(node_commands_sender.clone()))
         .and(warp::header::<String>("authorization"))
-        .and(warp::header::<String>("x-shinkai-tool-id"))
-        .and(warp::header::<String>("x-shinkai-app-id"))
+        .and(warp::header::<String>("x-hanzo-tool-id"))
+        .and(warp::header::<String>("x-hanzo-app-id"))
         .and(warp::multipart::form().max_length(50 * 1024 * 1024))
         .and_then(playground_file_handler);
 
@@ -254,16 +254,16 @@ pub fn tool_routes(
         .and(warp::get())
         .and(with_sender(node_commands_sender.clone()))
         .and(warp::header::<String>("authorization"))
-        .and(warp::header::<String>("x-shinkai-tool-id"))
-        .and(warp::header::<String>("x-shinkai-app-id"))
+        .and(warp::header::<String>("x-hanzo-tool-id"))
+        .and(warp::header::<String>("x-hanzo-app-id"))
         .and_then(list_tool_asset_handler);
 
     let delete_tool_asset_route = warp::path("tool_asset")
         .and(warp::delete())
         .and(with_sender(node_commands_sender.clone()))
         .and(warp::header::<String>("authorization"))
-        .and(warp::header::<String>("x-shinkai-tool-id"))
-        .and(warp::header::<String>("x-shinkai-app-id"))
+        .and(warp::header::<String>("x-hanzo-tool-id"))
+        .and(warp::header::<String>("x-hanzo-app-id"))
         .and(warp::query::<HashMap<String, String>>())
         .and_then(delete_tool_asset_handler);
 
@@ -285,9 +285,9 @@ pub fn tool_routes(
         .and(warp::post())
         .and(with_sender(node_commands_sender.clone()))
         .and(warp::header::<String>("authorization"))
-        .and(warp::header::<String>("x-shinkai-tool-id"))
-        .and(warp::header::<String>("x-shinkai-app-id"))
-        .and(warp::header::<String>("x-shinkai-llm-provider"))
+        .and(warp::header::<String>("x-hanzo-tool-id"))
+        .and(warp::header::<String>("x-hanzo-app-id"))
+        .and(warp::header::<String>("x-hanzo-llm-provider"))
         .and(warp::body::json())
         .and_then(standalone_playground_handler);
 
@@ -1737,8 +1737,8 @@ pub async fn import_tool_zip_handler(
         ("file" = String, Query, description = "Hanzo file protocol")
     ),
     responses(
-        (status = 200, description = "Resolved shinkai file protocol", body = Vec<u8>),
-        (status = 400, description = "Invalid shinkai file protocol", body = APIError),
+        (status = 200, description = "Resolved hanzo file protocol", body = Vec<u8>),
+        (status = 400, description = "Invalid hanzo file protocol", body = APIError),
     )
 )]
 pub async fn resolve_hanzo_file_protocol_handler(
@@ -1753,7 +1753,7 @@ pub async fn resolve_hanzo_file_protocol_handler(
         .ok_or_else(|| {
             warp::reject::custom(APIError {
                 code: 400,
-                error: "Invalid shinkai file protocol".to_string(),
+                error: "Invalid hanzo file protocol".to_string(),
                 message: "Hanzo file protocol is required".to_string(),
             })
         })?

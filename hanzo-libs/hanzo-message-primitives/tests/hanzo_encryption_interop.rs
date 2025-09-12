@@ -68,8 +68,8 @@ mod tests {
     //         string_to_encryption_public_key("3139fa22bc37ea6266d72a696a930777dec58123254f4a8ab41724421adb2949")
     //             .unwrap();
 
-    //     let sender = "@@localhost.shinkai".to_string();
-    //     let recipient = "@@localhost.shinkai".to_string();
+    //     let sender = "@@localhost.hanzo".to_string();
+    //     let recipient = "@@localhost.hanzo".to_string();
     //     let sender_subidentity = "main".to_string();
 
     //     let get_all_inboxes_message_result = HanzoMessageBuilder::get_all_inboxes_for_profile(

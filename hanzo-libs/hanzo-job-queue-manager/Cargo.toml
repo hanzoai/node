@@ -17,5 +17,5 @@ workspace = true
 features = ["derive"]
 
 [dev-dependencies]
-# shinkai_vector_resources = { workspace = true }
+# hanzo_vector_resources = { workspace = true }
 tempfile = { workspace = true }

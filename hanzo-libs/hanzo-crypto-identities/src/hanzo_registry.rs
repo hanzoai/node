@@ -369,7 +369,7 @@ impl HanzoRegistry {
             last_updated,
         };
 
-        // Check if any of the address_or_proxy_nodes ends with .sepolia-shinkai
+        // Check if any of the address_or_proxy_nodes ends with .sepolia-hanzo
         if onchain_identity.address_or_proxy_nodes.iter().any(|node| {
             let node_base = node.split(':').next().unwrap_or(node);
             node_base.ends_with(".sepolia-hanzo")
@@ -448,7 +448,7 @@ mod tests {
         env::set_var(
             "HANZO_TOOLS_RUNNER_DENO_BINARY_PATH",
             PathBuf::from(env!("CARGO_MANIFEST_DIR"))
-                .join("../../target/debug/shinkai-tools-runner-resources/deno")
+                .join("../../target/debug/hanzo-tools-runner-resources/deno")
                 .to_string_lossy()
                 .to_string(),
         );
@@ -456,7 +456,7 @@ mod tests {
         env::set_var(
             "HANZO_TOOLS_RUNNER_UV_BINARY_PATH",
             PathBuf::from(env!("CARGO_MANIFEST_DIR"))
-                .join("../../target/debug/shinkai-tools-runner-resources/uv")
+                .join("../../target/debug/hanzo-tools-runner-resources/uv")
                 .to_string_lossy()
                 .to_string(),
         );
@@ -469,11 +469,11 @@ mod tests {
         .await
         .unwrap();
 
-        let identity = "node1_test.sep-shinkai".to_string();
+        let identity = "node1_test.sep-hanzo".to_string();
 
         let record = registry.get_identity_record(identity.clone(), None).await.unwrap();
 
-        assert_eq!(record.hanzo_identity, "node1_test.sep-shinkai");
+        assert_eq!(record.hanzo_identity, "node1_test.sep-hanzo");
         assert_eq!(record.bound_nft, "9n");
         assert_eq!(record.staked_tokens, "55000000000000000000n");
         assert_eq!(

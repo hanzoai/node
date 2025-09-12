@@ -87,9 +87,9 @@ mod tests {
                 "https://base-sepolia.gateway.tenderly.co".to_string(),
             ],
             "0x425Fb20ba3874e887336aAa7f3fab32D08135BA9".to_string(),
-            include_str!("../../../shinkai-crypto-identities/src/abi/HanzoRegistry.sol/HanzoRegistry.json")
+            include_str!("../../../hanzo-crypto-identities/src/abi/HanzoRegistry.sol/HanzoRegistry.json")
                 .to_string(),
-            "official.sep-shinkai".to_string(),
+            "official.sep-hanzo".to_string(),
         )
         .await
         .unwrap();
@@ -122,9 +122,9 @@ mod tests {
                 "https://base-sepolia-rpc.publicnode.com".to_string(),
             ],
             "0x425Fb20ba3874e887336aAa7f3fab32D08135BA9".to_string(),
-            include_str!("../../../shinkai-crypto-identities/src/abi/HanzoRegistry.sol/HanzoRegistry.json")
+            include_str!("../../../hanzo-crypto-identities/src/abi/HanzoRegistry.sol/HanzoRegistry.json")
                 .to_string(),
-            "official.sep-shinkai".to_string(),
+            "official.sep-hanzo".to_string(),
         )
         .await;
         println!("output: {:?}", output);
@@ -136,15 +136,15 @@ mod tests {
         let _dir = testing_create_tempdir_and_set_env_var();
         let output = get_identity_data(
             vec![
-                "https://api.shinkai.com".to_string(),
+                "https://api.hanzo.com".to_string(),
                 "https://base-sepolia.blockpi.network/v1/rpc/public".to_string(),
                 "https://sepolia.base.org".to_string(),
                 "https://base-sepolia-rpc.publicnode.com".to_string(),
             ],
             "0x425Fb20ba3874e887336aAa7f3fab32D08135BA9".to_string(),
-            include_str!("../../../shinkai-crypto-identities/src/abi/HanzoRegistry.sol/HanzoRegistry.json")
+            include_str!("../../../hanzo-crypto-identities/src/abi/HanzoRegistry.sol/HanzoRegistry.json")
                 .to_string(),
-            "official.sep-shinkai".to_string(),
+            "official.sep-hanzo".to_string(),
         )
         .await;
         println!("output: {:?}", output);

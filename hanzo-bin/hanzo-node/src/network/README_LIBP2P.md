@@ -1,10 +1,10 @@
-# LibP2P Integration for Shinkai Node
+# LibP2P Integration for Hanzo Node
 
-This document explains the libp2p peer-to-peer networking integration that has been added to replace the TCP-based networking in Shinkai Node.
+This document explains the libp2p peer-to-peer networking integration that has been added to replace the TCP-based networking in Hanzo Node.
 
 ## Overview
 
-The libp2p integration provides decentralized peer-to-peer communication capabilities, allowing Shinkai nodes to discover and communicate with each other without relying on centralized servers.
+The libp2p integration provides decentralized peer-to-peer communication capabilities, allowing Hanzo nodes to discover and communicate with each other without relying on centralized servers.
 
 ## Components
 
@@ -23,9 +23,9 @@ The main component that manages the libp2p swarm and handles networking events. 
   - Message broadcasting to topics
   - Direct peer-to-peer messaging
 
-### 2. ShinkaiMessageHandler (`libp2p_message_handler.rs`)
+### 2. HanzoMessageHandler (`libp2p_message_handler.rs`)
 
-Bridges libp2p messages to the existing Shinkai network handling logic:
+Bridges libp2p messages to the existing Hanzo network handling logic:
 
 - Converts libp2p messages to the existing NetworkJobQueue format
 - Maintains compatibility with existing message processing pipeline
@@ -44,7 +44,7 @@ The Node struct has been updated to include:
 1. **Initialization**: When a Node starts, it initializes the libp2p manager with:
    - A deterministic keypair based on the node name
    - Network behaviors (GossipSub, Identify, etc.)
-   - A message handler that integrates with existing Shinkai logic
+   - A message handler that integrates with existing Hanzo logic
 
 2. **Peer Discovery**: Nodes automatically discover each other through the relay network or direct connections
 
@@ -77,7 +77,7 @@ The libp2p integration is automatically initialized when a Node starts. Key conf
 ## Future Enhancements
 
 1. **Relay Support**: Re-enable relay client for better NAT traversal
-2. **Custom Protocols**: Add Shinkai-specific request-response protocols
+2. **Custom Protocols**: Add Hanzo-specific request-response protocols
 3. **Peer Persistence**: Store and reconnect to known peers
 4. **Message Encryption**: Add end-to-end encryption for sensitive messages
 5. **Bandwidth Management**: Implement rate limiting and QoS

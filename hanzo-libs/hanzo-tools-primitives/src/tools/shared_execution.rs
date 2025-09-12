@@ -32,9 +32,9 @@ pub fn convert_to_hanzo_file_protocol(node_name: &HanzoName, path: &str, app_id:
             .display()
             .to_string();
         {
-            // Construct the shinkai URL with forward slashes regardless of platform
+            // Construct the hanzo URL with forward slashes regardless of platform
             return format!(
-                "shinkai://file/{}/{}/{}",
+                "hanzo://file/{}/{}/{}",
                 node_name,
                 app_id,
                 relative_path.replace('\\', "/")
@@ -42,7 +42,7 @@ pub fn convert_to_hanzo_file_protocol(node_name: &HanzoName, path: &str, app_id:
         }
     }
 
-    println!("[Running DenoTool] Failed to convert to shinkai file protocol {}", path);
+    println!("[Running DenoTool] Failed to convert to hanzo file protocol {}", path);
     "".to_string()
 }
 

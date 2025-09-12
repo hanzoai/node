@@ -264,7 +264,7 @@ mod tests {
         let open_ai = OpenAI {
             model_type: "gpt-3.5-turbo".to_string(),
         };
-        let identity = HanzoName::new("@@alice.shinkai/profileName/agent/myChatGPTAgent".to_string()).unwrap();
+        let identity = HanzoName::new("@@alice.hanzo/profileName/agent/myChatGPTAgent".to_string()).unwrap();
         let profile = identity.extract_profile().unwrap();
 
         let test_agent = SerializedLLMProvider {
@@ -291,7 +291,7 @@ mod tests {
         let open_ai = OpenAI {
             model_type: "gpt-3.5-turbo".to_string(),
         };
-        let identity = HanzoName::new("@@alice.shinkai/profileName/agent/myChatGPTAgent".to_string()).unwrap();
+        let identity = HanzoName::new("@@alice.hanzo/profileName/agent/myChatGPTAgent".to_string()).unwrap();
         let profile = identity.extract_profile().unwrap();
 
         let test_agent = SerializedLLMProvider {
@@ -331,7 +331,7 @@ mod tests {
         let open_ai = OpenAI {
             model_type: "gpt-3.5-turbo".to_string(),
         };
-        let identity = HanzoName::new("@@alice.shinkai/profileName/agent/myChatGPTAgent".to_string()).unwrap();
+        let identity = HanzoName::new("@@alice.hanzo/profileName/agent/myChatGPTAgent".to_string()).unwrap();
         let profile = identity.extract_profile().unwrap();
 
         let test_agent = SerializedLLMProvider {
@@ -366,7 +366,7 @@ mod tests {
         let open_ai = OpenAI {
             model_type: "gpt-3.5-turbo".to_string(),
         };
-        let identity = HanzoName::new("@@alice.shinkai/profileName/agent/myChatGPTAgent".to_string()).unwrap();
+        let identity = HanzoName::new("@@alice.hanzo/profileName/agent/myChatGPTAgent".to_string()).unwrap();
         let profile = identity.extract_profile().unwrap();
 
         let test_agent1 = SerializedLLMProvider {
@@ -405,8 +405,8 @@ mod tests {
         let open_ai = OpenAI {
             model_type: "gpt-3.5-turbo".to_string(),
         };
-        let identity1 = HanzoName::new("@@alice.shinkai/profileName1/agent/myChatGPTAgent".to_string()).unwrap();
-        let identity2 = HanzoName::new("@@bob.shinkai/profileName2/agent/myChatGPTAgent2".to_string()).unwrap();
+        let identity1 = HanzoName::new("@@alice.hanzo/profileName1/agent/myChatGPTAgent".to_string()).unwrap();
+        let identity2 = HanzoName::new("@@bob.hanzo/profileName2/agent/myChatGPTAgent2".to_string()).unwrap();
         let profile1 = identity1.extract_profile().unwrap();
         let profile2 = identity2.extract_profile().unwrap();
 

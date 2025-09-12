@@ -23,7 +23,7 @@ impl SerializedLLMProvider {
             LLMProviderInterface::OpenAI(_) => "openai",
             LLMProviderInterface::TogetherAI(_) => "togetherai",
             LLMProviderInterface::Ollama(_) => "ollama",
-            LLMProviderInterface::HanzoBackend(_) => "shinkai-backend",
+            LLMProviderInterface::HanzoBackend(_) => "hanzo-backend",
             LLMProviderInterface::Groq(_) => "groq",
             LLMProviderInterface::Grok(_) => "grok",
             LLMProviderInterface::Gemini(_) => "gemini",
@@ -41,7 +41,7 @@ impl SerializedLLMProvider {
             LLMProviderInterface::OpenAI(_) => "openai".to_string(),
             LLMProviderInterface::TogetherAI(_) => "openai-generic".to_string(),
             LLMProviderInterface::Ollama(_) => "ollama".to_string(),
-            LLMProviderInterface::HanzoBackend(_) => "shinkai-backend".to_string(),
+            LLMProviderInterface::HanzoBackend(_) => "hanzo-backend".to_string(),
             LLMProviderInterface::Groq(_) => "openai-generic".to_string(),
             LLMProviderInterface::Grok(_) => "openai-generic".to_string(),
             LLMProviderInterface::Gemini(_) => "google-ai".to_string(),
@@ -58,7 +58,7 @@ impl SerializedLLMProvider {
             LLMProviderInterface::OpenAI(openai) => openai.model_type.clone(),
             LLMProviderInterface::TogetherAI(togetherai) => togetherai.model_type.clone(),
             LLMProviderInterface::Ollama(ollama) => ollama.model_type.clone(),
-            LLMProviderInterface::HanzoBackend(shinkaibackend) => shinkaibackend.model_type.clone(),
+            LLMProviderInterface::HanzoBackend(hanzobackend) => hanzobackend.model_type.clone(),
             LLMProviderInterface::Groq(groq) => groq.model_type.clone(),
             LLMProviderInterface::Grok(grok) => grok.model_type.clone(),
             LLMProviderInterface::Gemini(gemini) => gemini.model_type.clone(),
@@ -75,7 +75,7 @@ impl SerializedLLMProvider {
             id: "mock_agent".to_string(),
             name: Some("Mock Agent".to_string()),
             description: Some("A mock agent for testing.".to_string()),
-            full_identity_name: HanzoName::new("@@test.shinkai/main/agent/mock_agent".to_string()).unwrap(),
+            full_identity_name: HanzoName::new("@@test.hanzo/main/agent/mock_agent".to_string()).unwrap(),
             external_url: Some("https://api.example.com".to_string()),
             api_key: Some("mockapikey".to_string()),
             model: LLMProviderInterface::OpenAI(OpenAI {
@@ -89,7 +89,7 @@ impl SerializedLLMProvider {
             id: "mock_agent_reasoning".to_string(),
             name: Some("Mock Agent Reasoning".to_string()),
             description: Some("A mock agent with reasoning for testing.".to_string()),
-            full_identity_name: HanzoName::new("@@test.shinkai/main/agent/mock_agent_reasoning".to_string()).unwrap(),
+            full_identity_name: HanzoName::new("@@test.hanzo/main/agent/mock_agent_reasoning".to_string()).unwrap(),
             external_url: Some("https://api.example.com".to_string()),
             api_key: Some("mockapikey".to_string()),
             model: LLMProviderInterface::OpenAI(OpenAI {
@@ -263,8 +263,8 @@ impl FromStr for LLMProviderInterface {
         } else if s.starts_with("ollama:") {
             let model_type = s.strip_prefix("ollama:").unwrap_or("").to_string();
             Ok(LLMProviderInterface::Ollama(Ollama { model_type }))
-        } else if s.starts_with("shinkai-backend:") {
-            let model_type = s.strip_prefix("shinkai-backend:").unwrap_or("").to_string();
+        } else if s.starts_with("hanzo-backend:") {
+            let model_type = s.strip_prefix("hanzo-backend:").unwrap_or("").to_string();
             Ok(LLMProviderInterface::HanzoBackend(HanzoBackend { model_type }))
         } else if s.starts_with("groq:") {
             let model_type = s.strip_prefix("groq:").unwrap_or("").to_string();
@@ -314,8 +314,8 @@ impl Serialize for LLMProviderInterface {
                 let model_type = format!("ollama:{}", ollama.model_type);
                 serializer.serialize_str(&model_type)
             }
-            LLMProviderInterface::HanzoBackend(shinkaibackend) => {
-                let model_type = format!("shinkai-backend:{}", shinkaibackend.model_type);
+            LLMProviderInterface::HanzoBackend(hanzobackend) => {
+                let model_type = format!("hanzo-backend:{}", hanzobackend.model_type);
                 serializer.serialize_str(&model_type)
             }
             LLMProviderInterface::Groq(groq) => {
@@ -378,7 +378,7 @@ impl<'de> Visitor<'de> for LLMProviderInterfaceVisitor {
             "ollama" => Ok(LLMProviderInterface::Ollama(Ollama {
                 model_type: parts.get(1).unwrap_or(&"").to_string(),
             })),
-            "shinkai-backend" => Ok(LLMProviderInterface::HanzoBackend(HanzoBackend {
+            "hanzo-backend" => Ok(LLMProviderInterface::HanzoBackend(HanzoBackend {
                 model_type: parts.get(1).unwrap_or(&"").to_string(),
             })),
             "groq" => Ok(LLMProviderInterface::Groq(Groq {
@@ -411,7 +411,7 @@ impl<'de> Visitor<'de> for LLMProviderInterfaceVisitor {
                     "openai",
                     "togetherai",
                     "ollama",
-                    "shinkai-backend",
+                    "hanzo-backend",
                     "local-llm",
                     "groq",
                     "grok",

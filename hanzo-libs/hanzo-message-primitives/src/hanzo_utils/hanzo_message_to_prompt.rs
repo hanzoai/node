@@ -104,7 +104,7 @@ mod tests {
         let my_signature_secret_key = SigningKey::from([0u8; 32]);
         let receiver_public_key = EncryptionPublicKey::from([0u8; 32]);
         let recipient_subidentity_name = "main_profile_node1".to_string();
-        let origin_destination_identity_name = "@@node1.shinkai".to_string();
+        let origin_destination_identity_name = "@@node1.hanzo".to_string();
         let timestamp = "2023-07-02T20:53:34.811Z".to_string();
 
         // Generate the HanzoMessage using the helper function

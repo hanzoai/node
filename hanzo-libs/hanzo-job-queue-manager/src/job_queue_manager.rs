@@ -325,7 +325,7 @@ mod tests {
                 tool_key: None,
                 tools: None,
             },
-            HanzoName::new("@@node1.shinkai/main".to_string()).unwrap(),
+            HanzoName::new("@@node1.hanzo/main".to_string()).unwrap(),
             None,
         );
         manager.push("job_id::123::false", job.clone()).await.unwrap();
@@ -360,7 +360,7 @@ mod tests {
                 tool_key: None,
                 tools: None,
             },
-            HanzoName::new("@@node1.shinkai/main".to_string()).unwrap(),
+            HanzoName::new("@@node1.hanzo/main".to_string()).unwrap(),
             None,
         );
         let job2 = JobForProcessing::new(
@@ -377,7 +377,7 @@ mod tests {
                 tool_key: None,
                 tools: None,
             },
-            HanzoName::new("@@node1.shinkai/main".to_string()).unwrap(),
+            HanzoName::new("@@node1.hanzo/main".to_string()).unwrap(),
             None,
         );
         manager.push("my_queue", job.clone()).await.unwrap();
@@ -479,7 +479,7 @@ mod tests {
                 tool_key: None,
                 tools: None,
             },
-            HanzoName::new("@@node1.shinkai/main".to_string()).unwrap(),
+            HanzoName::new("@@node1.hanzo/main".to_string()).unwrap(),
             None,
         );
         let job_a2 = JobForProcessing::new(
@@ -496,7 +496,7 @@ mod tests {
                 tool_key: None,
                 tools: None,
             },
-            HanzoName::new("@@node1.shinkai/main".to_string()).unwrap(),
+            HanzoName::new("@@node1.hanzo/main".to_string()).unwrap(),
             None,
         );
         let job_a3 = JobForProcessing::new(
@@ -513,7 +513,7 @@ mod tests {
                 tool_key: None,
                 tools: None,
             },
-            HanzoName::new("@@node1.shinkai/main".to_string()).unwrap(),
+            HanzoName::new("@@node1.hanzo/main".to_string()).unwrap(),
             None,
         );
 
@@ -531,7 +531,7 @@ mod tests {
                 tool_key: None,
                 tools: None,
             },
-            HanzoName::new("@@node1.shinkai/main".to_string()).unwrap(),
+            HanzoName::new("@@node1.hanzo/main".to_string()).unwrap(),
             None,
         );
 
@@ -549,7 +549,7 @@ mod tests {
                 tool_key: None,
                 tools: None,
             },
-            HanzoName::new("@@node1.shinkai/main".to_string()).unwrap(),
+            HanzoName::new("@@node1.hanzo/main".to_string()).unwrap(),
             None,
         );
 
@@ -567,7 +567,7 @@ mod tests {
                 tool_key: None,
                 tools: None,
             },
-            HanzoName::new("@@node1.shinkai/main".to_string()).unwrap(),
+            HanzoName::new("@@node1.hanzo/main".to_string()).unwrap(),
             None,
         );
 

@@ -620,7 +620,7 @@ mod tests {
         let job_id = "job3".to_string();
         let agent_id = "agent3".to_string();
         // let inbox_name =
-        //     InboxName::new("inbox::@@node1.shinkai/subidentity::@@node2.shinkai/subidentity2::true".to_string())
+        //     InboxName::new("inbox::@@node1.hanzo/subidentity::@@node2.hanzo/subidentity2::true".to_string())
         //         .unwrap();
         let scope = MinimalJobScope::default();
 
@@ -712,8 +712,8 @@ mod tests {
             vec![],
             None,
             placeholder_signature_sk,
-            "@@node1.shinkai".to_string(),
-            "@@node1.shinkai".to_string(),
+            "@@node1.hanzo".to_string(),
+            "@@node1.hanzo".to_string(),
         )
         .unwrap();
 
@@ -756,8 +756,8 @@ mod tests {
                 vec![],
                 None,
                 placeholder_signature_sk.clone(),
-                "@@node1.shinkai".to_string(),
-                "@@node1.shinkai".to_string(),
+                "@@node1.hanzo".to_string(),
+                "@@node1.hanzo".to_string(),
             )
             .unwrap();
 
@@ -848,8 +848,8 @@ mod tests {
                 vec![],
                 None,
                 placeholder_signature_sk.clone(),
-                "@@node1.shinkai".to_string(),
-                "@@node1.shinkai".to_string(),
+                "@@node1.hanzo".to_string(),
+                "@@node1.hanzo".to_string(),
             )
             .unwrap();
             messages.push(hanzo_message);
@@ -937,8 +937,8 @@ mod tests {
                 vec![],
                 None,
                 placeholder_signature_sk.clone(),
-                "@@node1.shinkai".to_string(),
-                "@@node1.shinkai".to_string(),
+                "@@node1.hanzo".to_string(),
+                "@@node1.hanzo".to_string(),
             )
             .unwrap();
 
@@ -1027,7 +1027,7 @@ mod tests {
         create_new_job(&db, job2_id.clone(), agent_id.clone(), scope.clone());
 
         // Check smart_inboxes
-        let node1_identity_name = "@@node1.shinkai";
+        let node1_identity_name = "@@node1.hanzo";
         let node1_subidentity_name = "main_profile_node1";
         let (_, node1_identity_pk) = unsafe_deterministic_signature_keypair(0);
         let (_, node1_encryption_pk) = unsafe_deterministic_encryption_keypair(0);
@@ -1113,8 +1113,8 @@ mod tests {
                 vec![],
                 None,
                 placeholder_signature_sk.clone(),
-                "@@node1.shinkai".to_string(),
-                "@@node1.shinkai".to_string(),
+                "@@node1.hanzo".to_string(),
+                "@@node1.hanzo".to_string(),
             )
             .unwrap();
             messages.push(hanzo_message.clone());

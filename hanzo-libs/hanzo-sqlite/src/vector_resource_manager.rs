@@ -731,7 +731,7 @@
 //             .await
 //             .unwrap();
 
-//         let profile = HanzoName::new("@@test_user.shinkai/main".to_string()).unwrap();
+//         let profile = HanzoName::new("@@test_user.hanzo/main".to_string()).unwrap();
 
 //         let vr = BaseVectorResource::Document(doc.clone());
 
@@ -782,7 +782,7 @@
 //             .insert_node_dt_specified(doc_name, node, embedding.clone(), None, true)
 //             .unwrap();
 
-//         let profile = HanzoName::new("@@test_user.shinkai/main".to_string()).unwrap();
+//         let profile = HanzoName::new("@@test_user.hanzo/main".to_string()).unwrap();
 
 //         let vr = BaseVectorResource::Map(map_resource.clone());
 
@@ -814,7 +814,7 @@
 //             .await
 //             .unwrap();
 
-//         let profile = HanzoName::new("@@test_user.shinkai/main".to_string()).unwrap();
+//         let profile = HanzoName::new("@@test_user.hanzo/main".to_string()).unwrap();
 
 //         let vr = BaseVectorResource::Document(doc.clone());
 

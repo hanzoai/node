@@ -1,4 +1,4 @@
-name: Build shinkai-node docker image
+name: Build hanzo-node docker image
 
 on:
   push:
@@ -11,10 +11,10 @@ on:
 
 jobs:
   build-and-deploy:
-    uses: dcSpark/shinkai-node/.github/workflows/build-workflow.yml@devops
+    uses: dcSpark/hanzo-node/.github/workflows/build-workflow.yml@devops
     with:
       REGISTRY: dcspark
-      REPOSITORY: shinkai-node
+      REPOSITORY: hanzo-node
     secrets:
       DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
       DOCKERHUB_TOKEN: ${{ secrets.DOCKERHUB_TOKEN }}

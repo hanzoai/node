@@ -59,7 +59,7 @@ impl RustTool {
     }
 
     pub fn author(&self) -> String {
-        "@@official.shinkai".to_string()
+        "@@official.hanzo".to_string()
     }
 
     /// Convert to json

@@ -15,7 +15,7 @@ pub fn testing_create_tempdir_and_set_env_var() -> tempfile::TempDir {
     env::set_var(
         "HANZO_TOOLS_RUNNER_DENO_BINARY_PATH",
         PathBuf::from(env!("CARGO_MANIFEST_DIR"))
-            .join("../../target/debug/shinkai-tools-runner-resources/deno")
+            .join("../../target/debug/hanzo-tools-runner-resources/deno")
             .to_string_lossy()
             .to_string(),
     );
@@ -23,7 +23,7 @@ pub fn testing_create_tempdir_and_set_env_var() -> tempfile::TempDir {
     env::set_var(
         "HANZO_TOOLS_RUNNER_UV_BINARY_PATH",
         PathBuf::from(env!("CARGO_MANIFEST_DIR"))
-            .join("../../target/debug/shinkai-tools-runner-resources/uv")
+            .join("../../target/debug/hanzo-tools-runner-resources/uv")
             .to_string_lossy()
             .to_string(),
     );

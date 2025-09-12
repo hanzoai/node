@@ -5,7 +5,7 @@
 # This script downloads and updates tools from the Hanzo store.
 # It compares versions and only downloads if a newer version is available.
 # This is only used for Docker builds and Development, bundled app uses 
-# shinkai-apps pre-install folder.
+# hanzo-apps pre-install folder.
 # 
 # Usage:
 #   ./update_tools.sh              # Normal update (only newer versions)

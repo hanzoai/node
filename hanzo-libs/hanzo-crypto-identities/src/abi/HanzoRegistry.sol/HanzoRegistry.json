@@ -70,7 +70,7 @@
         {
           "name": "params",
           "type": "tuple",
-          "internalType": "struct ShinkaiRegistryInterface.ClaimIdentityParams",
+          "internalType": "struct HanzoRegistryInterface.ClaimIdentityParams",
           "components": [
             { "name": "name", "type": "string", "internalType": "string" },
             {
@@ -98,7 +98,7 @@
         {
           "name": "params",
           "type": "tuple",
-          "internalType": "struct ShinkaiRegistryInterface.ClaimIdentityParams",
+          "internalType": "struct HanzoRegistryInterface.ClaimIdentityParams",
           "components": [
             { "name": "name", "type": "string", "internalType": "string" },
             {
@@ -118,7 +118,7 @@
         {
           "name": "setDataParams",
           "type": "tuple",
-          "internalType": "struct ShinkaiRegistryInterface.SetDataParams",
+          "internalType": "struct HanzoRegistryInterface.SetDataParams",
           "components": [
             { "name": "encryptionKey", "type": "string", "internalType": "string" },
             { "name": "signatureKey", "type": "string", "internalType": "string" },
@@ -133,7 +133,7 @@
         {
           "name": "delegations",
           "type": "tuple[]",
-          "internalType": "struct ShinkaiRegistryInterface.Delegation[]",
+          "internalType": "struct HanzoRegistryInterface.Delegation[]",
           "components": [
             { "name": "delegatee", "type": "string", "internalType": "string" },
             { "name": "amount", "type": "uint256", "internalType": "uint256" }
@@ -150,7 +150,7 @@
         {
           "name": "params",
           "type": "tuple[]",
-          "internalType": "struct ShinkaiRegistryInterface.ClaimIdentityParams[]",
+          "internalType": "struct HanzoRegistryInterface.ClaimIdentityParams[]",
           "components": [
             { "name": "name", "type": "string", "internalType": "string" },
             {
@@ -270,7 +270,7 @@
         {
           "name": "",
           "type": "tuple",
-          "internalType": "struct ShinkaiRegistryInterface.IdentityData",
+          "internalType": "struct HanzoRegistryInterface.IdentityData",
           "components": [
             { "name": "boundNft", "type": "uint256", "internalType": "uint256" },
             {
@@ -387,7 +387,7 @@
       "inputs": [
         { "name": "owner_", "type": "address", "internalType": "address" },
         { "name": "shinToken_", "type": "address", "internalType": "address" },
-        { "name": "shinkaiNft_", "type": "address", "internalType": "address" }
+        { "name": "hanzoNft_", "type": "address", "internalType": "address" }
       ],
       "outputs": [],
       "stateMutability": "nonpayable"
@@ -474,7 +474,7 @@
         {
           "name": "params",
           "type": "tuple",
-          "internalType": "struct ShinkaiRegistryInterface.SetDataParams",
+          "internalType": "struct HanzoRegistryInterface.SetDataParams",
           "components": [
             { "name": "encryptionKey", "type": "string", "internalType": "string" },
             { "name": "signatureKey", "type": "string", "internalType": "string" },
@@ -498,7 +498,7 @@
         {
           "name": "setDataParams",
           "type": "tuple[]",
-          "internalType": "struct ShinkaiRegistryInterface.SetDataParams[]",
+          "internalType": "struct HanzoRegistryInterface.SetDataParams[]",
           "components": [
             { "name": "encryptionKey", "type": "string", "internalType": "string" },
             { "name": "signatureKey", "type": "string", "internalType": "string" },
@@ -522,7 +522,7 @@
         {
           "name": "delegations",
           "type": "tuple[]",
-          "internalType": "struct ShinkaiRegistryInterface.Delegation[]",
+          "internalType": "struct HanzoRegistryInterface.Delegation[]",
           "components": [
             { "name": "delegatee", "type": "string", "internalType": "string" },
             { "name": "amount", "type": "uint256", "internalType": "uint256" }
@@ -585,20 +585,20 @@
         {
           "name": "",
           "type": "address",
-          "internalType": "contract ShinkaiTokenInterface"
+          "internalType": "contract HanzoTokenInterface"
         }
       ],
       "stateMutability": "view"
     },
     {
       "type": "function",
-      "name": "shinkaiNft",
+      "name": "hanzoNft",
       "inputs": [],
       "outputs": [
         {
           "name": "",
           "type": "address",
-          "internalType": "contract ShinkaiNftInterface"
+          "internalType": "contract HanzoNftInterface"
         }
       ],
       "stateMutability": "view"
@@ -763,7 +763,7 @@
           "name": "delegations",
           "type": "tuple[]",
           "indexed": false,
-          "internalType": "struct ShinkaiRegistryInterface.Delegation[]",
+          "internalType": "struct HanzoRegistryInterface.Delegation[]",
           "components": [
             { "name": "delegatee", "type": "string", "internalType": "string" },
             { "name": "amount", "type": "uint256", "internalType": "uint256" }

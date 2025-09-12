@@ -87,7 +87,7 @@ impl PythonTool {
             Some(PythonRunnerOptions {
                 uv_binary_path: PathBuf::from(
                     env::var("HANZO_TOOLS_RUNNER_UV_BINARY_PATH")
-                        .unwrap_or_else(|_| "./shinkai-tools-runner-resources/uv".to_string()),
+                        .unwrap_or_else(|_| "./hanzo-tools-runner-resources/uv".to_string()),
                 ),
                 ..Default::default()
             }),
@@ -330,7 +330,7 @@ impl PythonTool {
                 },
                 uv_binary_path: PathBuf::from(
                     env::var("HANZO_TOOLS_RUNNER_UV_BINARY_PATH")
-                        .unwrap_or_else(|_| "./shinkai-tools-runner-resources/uv".to_string()),
+                        .unwrap_or_else(|_| "./hanzo-tools-runner-resources/uv".to_string()),
                 ),
                 shinkai_node_location: ShinkaiNodeLocation {
                     protocol: String::from("http"),

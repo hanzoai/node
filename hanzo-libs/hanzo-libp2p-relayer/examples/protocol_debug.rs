@@ -46,9 +46,9 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     // Configure identify with the same protocol version as Hanzo nodes
     let identify = identify::Behaviour::new(identify::Config::new(
-        "/shinkai/1.0.0".to_string(),
+        "/hanzo/1.0.0".to_string(),
         local_key.public(),
-    ).with_agent_version("shinkai-node-debug@@debug".to_string())
+    ).with_agent_version("hanzo-node-debug@@debug".to_string())
     .with_interval(Duration::from_secs(60))
     .with_push_listen_addr_updates(true)
     .with_cache_size(100));

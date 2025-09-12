@@ -33,19 +33,19 @@ impl fmt::Display for HanzoSubidentityType {
 }
 
 // Valid Examples
-// @@alice.shinkai
-// @@alice.shinkai/profileName
-// @@alice.shinkai/profileName/agent/myChatGPTAgent
-// @@alice.shinkai/profileName/device/myPhone
-// @@alice.sep-shinkai
-// @@alice.sep-shinkai/profileName
+// @@alice.hanzo
+// @@alice.hanzo/profileName
+// @@alice.hanzo/profileName/agent/myChatGPTAgent
+// @@alice.hanzo/profileName/device/myPhone
+// @@alice.sep-hanzo
+// @@alice.sep-hanzo/profileName
 
 // Not valid examples
-// @@alice.shinkai/profileName/myPhone
-// @@al!ce.shinkai
-// @@alice.shinkai//
-// @@node1.shinkai/profile_1.shinkai
-// @@alice.sepolia--shinkai
+// @@alice.hanzo/profileName/myPhone
+// @@al!ce.hanzo
+// @@alice.hanzo//
+// @@node1.hanzo/profile_1.hanzo
+// @@alice.sepolia--hanzo
 
 impl HanzoName {
     // Define a list of valid endings

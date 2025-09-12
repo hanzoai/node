@@ -646,7 +646,7 @@ mod tests {
         // Create a mock DenoTool with all required fields
         let tool_router_key = ToolRouterKey::new(
             "local".to_string(),
-            "@@official.shinkai".to_string(),
+            "@@official.hanzo".to_string(),
             "Hanzo: Download Pages".to_string(),
             None,
         );
@@ -660,7 +660,7 @@ mod tests {
             input_args: Parameters::new(),
             output_arg: ToolOutputArg { json: "".to_string() },
             config: vec![],
-            author: "@@official.shinkai".to_string(),
+            author: "@@official.hanzo".to_string(),
             version: "1.0.0".to_string(),
             js_code: "".to_string(),
             tools: vec![],
@@ -691,7 +691,7 @@ mod tests {
         let router_key = hanzo_tool.tool_router_key();
 
         // Expected pattern: [^a-z0-9_]+ (plus the :::)
-        let expected_key = "local:::__official_shinkai:::hanzo__download_pages";
+        let expected_key = "local:::__official_hanzo:::hanzo__download_pages";
 
         // Assert that the generated key matches the expected pattern
         assert_eq!(router_key.to_string_without_version(), expected_key);
@@ -700,7 +700,7 @@ mod tests {
     #[test]
     fn test_set_playground_tool() {
         let tool_definition = ToolDefinition {
-            id: "shinkai-tool-download-website".to_string(),
+            id: "hanzo-tool-download-website".to_string(),
             name: "Download Website".to_string(),
             description: "Downloads a website and converts its content into Markdown.".to_string(),
             configurations: json!({
@@ -723,13 +723,13 @@ mod tests {
                 "properties": {},
                 "required": []
             }),
-            author: "@@my_local_ai.sep-shinkai".to_string(),
+            author: "@@my_local_ai.sep-hanzo".to_string(),
             keywords: vec![
                 "Deno".to_string(),
                 "Markdown".to_string(),
                 "HTML to Markdown".to_string(),
             ],
-            code: Some("import { getHomePath } from './shinkai-local-support.ts';\n\n...".to_string()), /* Truncated for brevity */
+            code: Some("import { getHomePath } from './hanzo-local-support.ts';\n\n...".to_string()), /* Truncated for brevity */
             embedding_metadata: None,
         };
 
@@ -784,7 +784,7 @@ mod tests {
         let hanzo_tool = HanzoTool::Deno(deno_tool, true);
         eprintln!("hanzo_tool: {:?}", hanzo_tool);
 
-        eprintln!("shinkai params: {:?}", hanzo_tool.input_args());
+        eprintln!("hanzo params: {:?}", hanzo_tool.input_args());
 
         assert_eq!(hanzo_tool.name(), "hanzo__download_website");
         assert_eq!(
@@ -808,7 +808,7 @@ mod tests {
                     "assets": null,
                     "author": "Hanzo",
                     "file_inbox": null,
-                    "toolkit_name": "shinkai-tool-coinbase-get-my-address",
+                    "toolkit_name": "hanzo-tool-coinbase-get-my-address",
                     "sql_tables": [],
                     "sql_queries": [],
                     "embedding": [],
@@ -817,7 +817,7 @@ mod tests {
                     "keywords": [
                         "coinbase",
                         "address",
-                        "shinkai"
+                        "hanzo"
                     ],
                     "tools": [],
                     "result": {
@@ -880,7 +880,7 @@ mod tests {
         let agent_wrapper = AgentToolWrapper {
             name: "new pirate".to_string(),
             agent_id: "new_pirate".to_string(),
-            author: "@@my_local_ai.sep-shinkai".to_string(),
+            author: "@@my_local_ai.sep-hanzo".to_string(),
             description: "".to_string(),
             input_args: Parameters {
                 schema_type: "object".to_string(),
@@ -925,7 +925,7 @@ mod tests {
             HanzoTool::Agent(agent, enabled) => {
                 assert_eq!(agent.name, "new pirate");
                 assert_eq!(agent.agent_id, "new_pirate");
-                assert_eq!(agent.author, "@@my_local_ai.sep-shinkai");
+                assert_eq!(agent.author, "@@my_local_ai.sep-hanzo");
                 assert_eq!(agent.description, "");
                 assert!(enabled);
 

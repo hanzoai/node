@@ -259,7 +259,7 @@ impl DenoTool {
             Some(DenoRunnerOptions {
                 deno_binary_path: PathBuf::from(
                     env::var("HANZO_TOOLS_RUNNER_DENO_BINARY_PATH")
-                        .unwrap_or_else(|_| "./shinkai-tools-runner-resources/deno".to_string()),
+                        .unwrap_or_else(|_| "./hanzo-tools-runner-resources/deno".to_string()),
                 ),
                 ..Default::default()
             }),
@@ -389,7 +389,7 @@ impl DenoTool {
                 },
                 deno_binary_path: PathBuf::from(
                     env::var("HANZO_TOOLS_RUNNER_DENO_BINARY_PATH")
-                        .unwrap_or_else(|_| "./shinkai-tools-runner-resources/deno".to_string()),
+                        .unwrap_or_else(|_| "./hanzo-tools-runner-resources/deno".to_string()),
                 ),
                 shinkai_node_location: ShinkaiNodeLocation {
                     protocol: String::from("http"),
@@ -630,7 +630,7 @@ impl DenoTool {
                 },
                 deno_binary_path: PathBuf::from(
                     env::var("HANZO_TOOLS_RUNNER_DENO_BINARY_PATH")
-                        .unwrap_or_else(|_| "./shinkai-tools-runner-resources/deno".to_string()),
+                        .unwrap_or_else(|_| "./hanzo-tools-runner-resources/deno".to_string()),
                 ),
                 shinkai_node_location: ShinkaiNodeLocation {
                     protocol: String::from("http"),

@@ -180,7 +180,7 @@ impl OAuth {
                 authorization_url: oauth_obj
                     .get("authorizationUrl")
                     .and_then(|v| v.as_str())
-                    .unwrap_or("https://secrets.shinkai.com/redirect")
+                    .unwrap_or("https://secrets.hanzo.com/redirect")
                     .to_string(),
                 token_url: oauth_obj.get("tokenUrl").and_then(|v| v.as_str()).map(String::from),
                 client_id: oauth_obj
@@ -196,7 +196,7 @@ impl OAuth {
                 redirect_url: oauth_obj
                     .get("redirectUrl")
                     .and_then(|v| v.as_str())
-                    .unwrap_or("https://secrets.shinkai.com/redirect")
+                    .unwrap_or("https://secrets.hanzo.com/redirect")
                     .to_string(),
                 version: oauth_obj
                     .get("version")
@@ -350,7 +350,7 @@ mod tests {
         let oauth = OAuth::from_value(&value).expect("Failed to parse OAuth from value");
 
         assert_eq!(oauth.name, "minimal");
-        assert_eq!(oauth.redirect_url, "https://secrets.shinkai.com/redirect");
+        assert_eq!(oauth.redirect_url, "https://secrets.hanzo.com/redirect");
         assert_eq!(oauth.version, "");
         assert_eq!(oauth.response_type, "code".to_string());
         assert_eq!(oauth.authorization_url, "https://example.com/auth");
