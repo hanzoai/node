@@ -96,8 +96,8 @@ tracing = "0.1.40"
 serde_yaml = "0.9.34-deprecated"
 tokio-tungstenite = "0.26.2"
 rustls = "0.23.27"
-# Native embedding support via mistral.rs (temporarily disabled - API fixes needed)
-# mistralrs = { git = "https://github.com/hanzoai/inference.git", default-features = false }
+# Native embedding support via hanzoai/engine (our mistral.rs fork)
+# hanzo_engine = { git = "https://github.com/hanzoai/engine.git", default-features = false }
 # candle-core = "0.8"
 # candle-nn = "0.8"
 # candle-transformers = "0.8"

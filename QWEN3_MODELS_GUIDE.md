@@ -1,4 +1,4 @@
-# Qwen3 Models Installation Guide for Hanzo Node
+# Qwen3 Models Installation Guide for Hanzo Node (via hanzoai/engine)
 
 ## 📊 Best Qwen3 Models (2025 Latest)
 
@@ -11,9 +11,9 @@ Based on latest benchmarks, Qwen3 embedding models are state-of-the-art, with **
 # Install with Ollama (recommended)
 ollama pull dengcao/Qwen3-Embedding-8B:Q5_K_M
 
-# Configuration
+# Configuration for Hanzo node
 export EMBEDDING_MODEL_TYPE="qwen3-embedding-8b"
-export EMBEDDINGS_SERVER_URL="http://localhost:11434"
+export EMBEDDINGS_SERVER_URL="http://localhost:3690"  # Hanzo embedding server port
 ```
 - **Performance**: #1 on MTEB multilingual leaderboard
 - **Specifications**: 8B params, 4096 embedding dimensions, 32K context
@@ -84,7 +84,7 @@ ollama list | grep qwen
 ```bash
 # Set environment variables
 export EMBEDDING_MODEL_TYPE="qwen3-embedding-8b"
-export EMBEDDINGS_SERVER_URL="http://localhost:11434"
+export EMBEDDINGS_SERVER_URL="http://localhost:3690"  # Hanzo embedding server
 
 # Run the node
 sh scripts/run_node_localhost.sh
@@ -108,7 +108,7 @@ export EMBEDDING_MODEL_TYPE="qwen3-embedding-8b"
 ```bash
 # Use the flagship model for best results
 export EMBEDDING_MODEL_TYPE="qwen3-embedding-8b"
-export EMBEDDINGS_SERVER_URL="http://localhost:11434"
+export EMBEDDINGS_SERVER_URL="http://localhost:3690"  # Hanzo embedding server
 export EMBEDDING_BATCH_SIZE="32"
 export EMBEDDING_MAX_RETRIES="3"
 ```
@@ -117,7 +117,7 @@ export EMBEDDING_MAX_RETRIES="3"
 ```bash
 # Use lightweight model for faster iteration
 export EMBEDDING_MODEL_TYPE="qwen3-embedding-0.6b"
-export EMBEDDINGS_SERVER_URL="http://localhost:11434"
+export EMBEDDINGS_SERVER_URL="http://localhost:3690"  # Hanzo embedding server
 ```
 
 ### With Reranking Pipeline
@@ -125,7 +125,7 @@ export EMBEDDINGS_SERVER_URL="http://localhost:11434"
 # Configure both embedding and reranking
 export EMBEDDING_MODEL_TYPE="qwen3-embedding-8b"
 export RERANKER_MODEL_TYPE="qwen3-reranker-4b"
-export EMBEDDINGS_SERVER_URL="http://localhost:11434"
+export EMBEDDINGS_SERVER_URL="http://localhost:3690"  # Hanzo embedding server
 ```
 
 ## 📈 Performance Comparison
@@ -148,13 +148,22 @@ All Qwen3 embedding models support **100+ languages** including:
 
 To verify your setup:
 ```bash
-# Check if Ollama is running
+# Check if Hanzo embedding server is running
+curl http://localhost:3690/health
+
+# For Ollama fallback (if using)
 curl http://localhost:11434/api/tags
 
 # Check available models
 ollama list
 
-# Test embedding generation
+# Test embedding generation on Hanzo server
+curl http://localhost:3690/embeddings -d '{
+  "model": "qwen3-embedding-8b",
+  "input": "Hello world"
+}'
+
+# Test with Ollama fallback (if needed)
 curl http://localhost:11434/api/embeddings -d '{
   "model": "dengcao/Qwen3-Embedding-8B:Q5_K_M",
   "prompt": "Hello world"

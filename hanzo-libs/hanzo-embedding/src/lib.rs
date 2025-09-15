@@ -62,8 +62,9 @@ mod tests {
         println!("Testing multi-provider LLM routing...");
         
         let providers = vec![
-            ("Ollama", "http://localhost:11434", false),
+            ("Hanzo Engine", "http://localhost:36900", false),
             ("LM Studio", "http://localhost:1234", false),
+            ("Ollama Fallback", "http://localhost:11434", false),
             ("Together AI", "https://api.together.xyz", true),
             ("OpenAI", "https://api.openai.com", true),
             ("Hanzo Cloud", "https://public.hanzo.ai/x-em", false),
