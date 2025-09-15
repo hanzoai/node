@@ -106,21 +106,22 @@ async fn hybrid_example() -> Result<(), Box<dyn std::error::Error>> {
     println!("  PQ public key size: {} bytes", encap_key.pq_key.key_bytes.len());
     println!("  Classical public key size: {} bytes", encap_key.classical_key.key_bytes.len());
     
-    // Encapsulate
-    let output = hybrid_kem.encapsulate(&encap_key).await?;
+    // Encapsulate with context
+    let context = b"example context";
+    let (ciphertext, shared_secret) = hybrid_kem.encapsulate(&encap_key, context).await?;
     println!("\n✓ Hybrid encapsulation complete");
-    println!("  PQ ciphertext: {} bytes", output.ciphertext.pq_ciphertext.len());
-    println!("  Classical ciphertext: {} bytes", output.ciphertext.classical_ciphertext.len());
-    println!("  Combined shared secret: {} bytes", output.shared_secret.len());
+    println!("  PQ ciphertext: {} bytes", ciphertext.pq_ciphertext.len());
+    println!("  Classical ciphertext: {} bytes", ciphertext.classical_ciphertext.len());
+    println!("  Combined shared secret: {} bytes", shared_secret.len());
     
     // Decapsulate
     let recovered = hybrid_kem.decapsulate(
         &decap_key,
-        &output.ciphertext.pq_ciphertext,
-        &output.ciphertext.classical_ciphertext
+        &ciphertext.pq_ciphertext,
+        &ciphertext.classical_ciphertext
     ).await?;
     
-    assert_eq!(output.shared_secret, recovered);
+    assert_eq!(shared_secret, recovered);
     println!("\n✓ Hybrid shared secrets match!");
     println!("  Defense-in-depth: Protected against both classical and quantum attacks\n");
     
