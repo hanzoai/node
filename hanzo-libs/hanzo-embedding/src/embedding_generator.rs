@@ -16,7 +16,7 @@ use std::time::Duration;
 
 lazy_static! {
     pub static ref DEFAULT_EMBEDDINGS_SERVER_URL: &'static str = "https://api.hanzo.com/embeddings";
-    pub static ref DEFAULT_EMBEDDINGS_LOCAL_URL: &'static str = "http://localhost:11434/";
+    pub static ref DEFAULT_EMBEDDINGS_LOCAL_URL: &'static str = "http://localhost:36900/";
 }
 
 /// A trait for types that can generate embeddings from text.
