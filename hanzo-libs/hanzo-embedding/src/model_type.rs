@@ -120,11 +120,13 @@ pub enum NativeMistralEmbeddings {
     MistralEmbed,
     E5MistralEmbed,
     BgeM3,
-    // Qwen models for embeddings
-    Qwen3Next,
-    Qwen25Embed,
-    // Reranker models for better retrieval
-    Qwen3Reranker4B,
+    // Qwen3 Embedding models (2025 latest)
+    Qwen3Embedding8B,  // 8B params, 4096 dims, #1 MTEB multilingual
+    Qwen3Embedding4B,  // 4B params, 2048 dims, balanced
+    Qwen3Embedding06B, // 0.6B params, 1024 dims, lightweight
+    // Qwen3 Reranker models
+    Qwen3Reranker4B,   // 4B params, high-quality reranking
+    Qwen3Reranker06B,  // 0.6B params, lightweight reranking
     BgeRerankerV2,
     JinaRerankerV2,
     Custom(String),
@@ -134,9 +136,11 @@ impl NativeMistralEmbeddings {
     const MISTRAL_EMBED: &'static str = "mistral-embed";
     const E5_MISTRAL_EMBED: &'static str = "e5-mistral-embed";
     const BGE_M3: &'static str = "bge-m3";
-    const QWEN3_NEXT: &'static str = "qwen3-next";
-    const QWEN25_EMBED: &'static str = "qwen2.5-embed";
+    const QWEN3_EMBEDDING_8B: &'static str = "qwen3-embedding-8b";
+    const QWEN3_EMBEDDING_4B: &'static str = "qwen3-embedding-4b";
+    const QWEN3_EMBEDDING_06B: &'static str = "qwen3-embedding-0.6b";
     const QWEN3_RERANKER_4B: &'static str = "qwen3-reranker-4b";
+    const QWEN3_RERANKER_06B: &'static str = "qwen3-reranker-0.6b";
     const BGE_RERANKER_V2: &'static str = "bge-reranker-v2";
     const JINA_RERANKER_V2: &'static str = "jina-reranker-v2";
 
@@ -145,9 +149,11 @@ impl NativeMistralEmbeddings {
             Self::MISTRAL_EMBED => Ok(Self::MistralEmbed),
             Self::E5_MISTRAL_EMBED => Ok(Self::E5MistralEmbed),
             Self::BGE_M3 => Ok(Self::BgeM3),
-            Self::QWEN3_NEXT => Ok(Self::Qwen3Next),
-            Self::QWEN25_EMBED => Ok(Self::Qwen25Embed),
+            Self::QWEN3_EMBEDDING_8B => Ok(Self::Qwen3Embedding8B),
+            Self::QWEN3_EMBEDDING_4B => Ok(Self::Qwen3Embedding4B),
+            Self::QWEN3_EMBEDDING_06B => Ok(Self::Qwen3Embedding06B),
             Self::QWEN3_RERANKER_4B => Ok(Self::Qwen3Reranker4B),
+            Self::QWEN3_RERANKER_06B => Ok(Self::Qwen3Reranker06B),
             Self::BGE_RERANKER_V2 => Ok(Self::BgeRerankerV2),
             Self::JINA_RERANKER_V2 => Ok(Self::JinaRerankerV2),
             _ if s.starts_with("native:") => Ok(Self::Custom(s.strip_prefix("native:").unwrap().to_string())),
@@ -157,7 +163,8 @@ impl NativeMistralEmbeddings {
     
     pub fn is_reranker(&self) -> bool {
         match self {
-            Self::Qwen3Reranker4B | 
+            Self::Qwen3Reranker4B |
+            Self::Qwen3Reranker06B | 
             Self::BgeRerankerV2 | 
             Self::JinaRerankerV2 => true,
             Self::Custom(s) => s.contains("reranker"),
@@ -170,9 +177,11 @@ impl NativeMistralEmbeddings {
             Self::MistralEmbed => 2048,
             Self::E5MistralEmbed => 4096,
             Self::BgeM3 => 8192,
-            Self::Qwen3Next => 32768, // Qwen supports long context
-            Self::Qwen25Embed => 32768,
+            Self::Qwen3Embedding8B => 32768, // Qwen3 supports 32K context
+            Self::Qwen3Embedding4B => 32768,
+            Self::Qwen3Embedding06B => 32768,
             Self::Qwen3Reranker4B => 8192,
+            Self::Qwen3Reranker06B => 8192,
             Self::BgeRerankerV2 => 512,
             Self::JinaRerankerV2 => 1024,
             Self::Custom(_) => 512, // Conservative default
@@ -188,10 +197,12 @@ impl NativeMistralEmbeddings {
             Self::MistralEmbed => Ok(1024),
             Self::E5MistralEmbed => Ok(1024),
             Self::BgeM3 => Ok(1024),
-            Self::Qwen3Next => Ok(1536), // Qwen uses 1536 dims
-            Self::Qwen25Embed => Ok(1536),
+            Self::Qwen3Embedding8B => Ok(4096), // #1 MTEB model
+            Self::Qwen3Embedding4B => Ok(2048), // Balanced model
+            Self::Qwen3Embedding06B => Ok(1024), // Lightweight model
             // Rerankers don't produce embeddings, they score pairs
             Self::Qwen3Reranker4B => Err(HanzoEmbeddingError::InvalidModelArchitecture),
+            Self::Qwen3Reranker06B => Err(HanzoEmbeddingError::InvalidModelArchitecture),
             Self::BgeRerankerV2 => Err(HanzoEmbeddingError::InvalidModelArchitecture),
             Self::JinaRerankerV2 => Err(HanzoEmbeddingError::InvalidModelArchitecture),
             Self::Custom(_) => Ok(768), // Default dimension
@@ -205,9 +216,11 @@ impl fmt::Display for NativeMistralEmbeddings {
             Self::MistralEmbed => write!(f, "{}", Self::MISTRAL_EMBED),
             Self::E5MistralEmbed => write!(f, "{}", Self::E5_MISTRAL_EMBED),
             Self::BgeM3 => write!(f, "{}", Self::BGE_M3),
-            Self::Qwen3Next => write!(f, "{}", Self::QWEN3_NEXT),
-            Self::Qwen25Embed => write!(f, "{}", Self::QWEN25_EMBED),
+            Self::Qwen3Embedding8B => write!(f, "{}", Self::QWEN3_EMBEDDING_8B),
+            Self::Qwen3Embedding4B => write!(f, "{}", Self::QWEN3_EMBEDDING_4B),
+            Self::Qwen3Embedding06B => write!(f, "{}", Self::QWEN3_EMBEDDING_06B),
             Self::Qwen3Reranker4B => write!(f, "{}", Self::QWEN3_RERANKER_4B),
+            Self::Qwen3Reranker06B => write!(f, "{}", Self::QWEN3_RERANKER_06B),
             Self::BgeRerankerV2 => write!(f, "{}", Self::BGE_RERANKER_V2),
             Self::JinaRerankerV2 => write!(f, "{}", Self::JINA_RERANKER_V2),
             Self::Custom(name) => write!(f, "native:{}", name),
@@ -258,20 +271,20 @@ mod tests {
     }
 
     #[test]
-    fn test_qwen3_next_embedding_model() {
-        let model_str = "qwen3-next";
+    fn test_qwen3_embedding_8b_model() {
+        let model_str = "qwen3-embedding-8b";
         let parsed_model = EmbeddingModelType::from_string(model_str);
         assert_eq!(
             parsed_model,
             Ok(EmbeddingModelType::NativeMistralEmbeddings(
-                NativeMistralEmbeddings::Qwen3Next
+                NativeMistralEmbeddings::Qwen3Embedding8B
             ))
         );
         
         // Verify properties
         if let Ok(EmbeddingModelType::NativeMistralEmbeddings(model)) = parsed_model {
             assert_eq!(model.max_input_token_count(), 32768);
-            assert_eq!(model.vector_dimensions(), Ok(1536));
+            assert_eq!(model.vector_dimensions(), Ok(4096)); // 8B model has 4096 dims
             assert!(!model.is_reranker());
         }
     }
@@ -298,8 +311,8 @@ mod tests {
 
     #[test]
     fn test_model_display() {
-        let qwen_embed = NativeMistralEmbeddings::Qwen3Next;
-        assert_eq!(format!("{}", qwen_embed), "qwen3-next");
+        let qwen_embed = NativeMistralEmbeddings::Qwen3Embedding8B;
+        assert_eq!(format!("{}", qwen_embed), "qwen3-embedding-8b");
         
         let qwen_reranker = NativeMistralEmbeddings::Qwen3Reranker4B;
         assert_eq!(format!("{}", qwen_reranker), "qwen3-reranker-4b");
