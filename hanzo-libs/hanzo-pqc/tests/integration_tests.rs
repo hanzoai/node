@@ -138,7 +138,7 @@ mod hybrid_tests {
         assert!(ciphertext.classical_ciphertext.len() > 0);
         
         // Test decapsulation
-        let recovered = hybrid_kem.decapsulate(&decap_key, &ciphertext.pq_ciphertext, &ciphertext.classical_ciphertext).await.unwrap();
+        let recovered = hybrid_kem.decapsulate(&decap_key, &ciphertext, context).await.unwrap();
         assert_eq!(shared_secret, recovered);
     }
     
