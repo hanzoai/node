@@ -11,16 +11,16 @@ mod tests {
     use embedding_generator::RemoteEmbeddingGenerator;
     
     #[test]
-    fn test_qwen3_next_model_support() {
-        println!("Testing Qwen3-Next model configuration...");
+    fn test_qwen3_embedding_8b_model_support() {
+        println!("Testing Qwen3-Embedding-8B model configuration...");
         
-        let model = EmbeddingModelType::from_string("qwen3-next").unwrap();
+        let model = EmbeddingModelType::from_string("qwen3-embedding-8b").unwrap();
         assert!(matches!(
             model,
-            EmbeddingModelType::NativeMistralEmbeddings(NativeMistralEmbeddings::Qwen3Next)
+            EmbeddingModelType::NativeMistralEmbeddings(NativeMistralEmbeddings::Qwen3Embedding8B)
         ));
         assert_eq!(model.max_input_token_count(), 32768);
-        assert_eq!(model.vector_dimensions(), Ok(1536));
+        assert_eq!(model.vector_dimensions(), Ok(4096));
         
         println!("✓ Qwen3-Next: 32K context, 1536 dimensions");
     }
@@ -46,8 +46,8 @@ mod tests {
         const LM_STUDIO_PORT: u16 = 1234;
         let lm_studio_url = format!("http://localhost:{}", LM_STUDIO_PORT);
         
-        let model_type = EmbeddingModelType::from_string("qwen3-next").unwrap();
-        let generator = RemoteEmbeddingGenerator::new(
+        let model_type = EmbeddingModelType::from_string("qwen3-embedding-8b").unwrap();
+        let _generator = RemoteEmbeddingGenerator::new(
             model_type,
             &lm_studio_url,
             None, // LM Studio doesn't need API key
@@ -70,7 +70,7 @@ mod tests {
         ];
         
         for (name, url, needs_key) in providers {
-            let model_type = EmbeddingModelType::from_string("qwen3-next").unwrap();
+            let model_type = EmbeddingModelType::from_string("qwen3-embedding-8b").unwrap();
             let api_key = if needs_key {
                 Some("test-key".to_string())
             } else {
