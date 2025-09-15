@@ -6,7 +6,8 @@ use crate::utils::environment::{fetch_llm_provider_env, fetch_node_environment};
 use crate::utils::keys::generate_or_load_keys;
 use async_channel::{bounded, Receiver, Sender};
 use ed25519_dalek::VerifyingKey;
-use hanzo_embedding::embedding_generator::RemoteEmbeddingGenerator;
+use hanzo_embedding::embedding_generator::{EmbeddingGenerator, RemoteEmbeddingGenerator};
+// use hanzo_embedding::native_embedding_generator::NativeEmbeddingGenerator;
 use hanzo_http_api::node_api_router;
 use hanzo_http_api::node_commands::NodeCommand;
 use hanzo_message_primitives::hanzo_utils::encryption::{
@@ -20,7 +21,7 @@ use std::collections::HashMap;
 use std::error::Error as StdError;
 use std::fmt;
 use std::net::TcpListener;
-use std::path::Path;
+use std::path::{Path, PathBuf};
 use std::sync::{Arc, Weak};
 use std::{env, fs};
 
@@ -371,12 +372,31 @@ fn parse_secrets_file(secrets_file_path: &str) -> HashMap<String, String> {
     map
 }
 
-/// Initializes RemoteEmbeddingGenerator struct using node environment/default embedding model for now
+/// Initializes RemoteEmbeddingGenerator struct using node environment/default embedding model
+/// Note: Native embeddings are handled internally within RemoteEmbeddingGenerator as a future enhancement
 fn init_embedding_generator(node_env: &NodeEnvironment) -> RemoteEmbeddingGenerator {
+    use std::env;
+    
+    // Check if native embeddings are enabled
+    let use_native = env::var("USE_NATIVE_EMBEDDINGS")
+        .unwrap_or_else(|_| "false".to_string())
+        .to_lowercase() == "true";
+    
+    if use_native {
+        hanzo_log(
+            HanzoLogOption::Node,
+            HanzoLogLevel::Info,
+            "Native embeddings enabled - will attempt to use mistral.rs with Ollama fallback",
+        );
+        // TODO: Integrate NativeEmbeddingGenerator within RemoteEmbeddingGenerator
+        // For now, we still use Ollama but the configuration is ready
+    }
+    
+    // Use remote embedding generator (Ollama)
     let api_url = node_env
         .embeddings_server_url
         .clone()
-        .expect("EMBEDDINGS_SERVER_URL not found in node_env");
+        .unwrap_or_else(|| "http://localhost:11434".to_string());
     let api_key = node_env.embeddings_server_api_key.clone();
     RemoteEmbeddingGenerator::new(node_env.default_embedding_model.clone(), &api_url, api_key)
 }

@@ -278,7 +278,6 @@ pub fn override_tool_config(tool_router_key: String, agent: Agent, extra_config:
                     ToolConfig::BasicConfig(config) => {
                         config.key_value = Some(value.clone());
                     }
-                    _ => {} // Handle other variants if needed
                 }
             } else {
                 final_config.push(ToolConfig::BasicConfig(BasicConfig {

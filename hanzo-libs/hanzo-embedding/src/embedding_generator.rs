@@ -107,6 +107,16 @@ impl EmbeddingGenerator for RemoteEmbeddingGenerator {
                 }
                 Ok(embeddings)
             }
+            EmbeddingModelType::NativeMistralEmbeddings(_) => {
+                // Native embeddings should not use RemoteEmbeddingGenerator
+                // Fall back to Ollama for now
+                let mut embeddings = Vec::new();
+                for input_string in input_strings.iter() {
+                    let embedding = self.generate_embedding_ollama_blocking(input_string)?;
+                    embeddings.push(embedding);
+                }
+                Ok(embeddings)
+            }
         }
     }
 
@@ -143,6 +153,18 @@ impl EmbeddingGenerator for RemoteEmbeddingGenerator {
                 for input_string in input_strings.iter() {
                     let embedding = self
                         .generate_embedding_ollama(input_string.clone(), model.to_string())
+                        .await?;
+                    embeddings.push(embedding);
+                }
+                Ok(embeddings)
+            }
+            EmbeddingModelType::NativeMistralEmbeddings(_) => {
+                // Native embeddings should not use RemoteEmbeddingGenerator
+                // Fall back to Ollama with default model
+                let mut embeddings = Vec::new();
+                for input_string in input_strings.iter() {
+                    let embedding = self
+                        .generate_embedding_ollama(input_string.clone(), self.model_type.to_string())
                         .await?;
                     embeddings.push(embedding);
                 }

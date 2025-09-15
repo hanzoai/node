@@ -19,6 +19,13 @@ futures = { workspace = true }
 csv = { workspace = true }
 utoipa = { workspace = true }
 regex = { workspace = true }
+# Native embedding support (temporarily disabled - API fixes needed)
+# mistralrs = { workspace = true }
+# candle-core = { workspace = true }
+# hf-hub = { workspace = true, features = ["tokio"] }
+# tokenizers = { workspace = true }
+dirs = { workspace = true }
+tokio = { workspace = true }
 
 [dependencies.serde]
 workspace = true
