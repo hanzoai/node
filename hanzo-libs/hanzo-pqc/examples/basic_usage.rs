@@ -117,8 +117,8 @@ async fn hybrid_example() -> Result<(), Box<dyn std::error::Error>> {
     // Decapsulate
     let recovered = hybrid_kem.decapsulate(
         &decap_key,
-        &ciphertext.pq_ciphertext,
-        &ciphertext.classical_ciphertext
+        &ciphertext,
+        context
     ).await?;
     
     assert_eq!(shared_secret, recovered);
