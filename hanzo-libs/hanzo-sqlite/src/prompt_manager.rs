@@ -458,7 +458,7 @@ mod tests {
 
     use super::*;
     use serde_json::Value;
-    use hanzo_embedding::model_type::{EmbeddingModelType, OllamaTextEmbeddingsInference};
+    
     use std::path::PathBuf;
     use tempfile::NamedTempFile;
 

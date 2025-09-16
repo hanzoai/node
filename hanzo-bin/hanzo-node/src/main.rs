@@ -1,5 +1,6 @@
 // main.rs
 #![recursion_limit = "512"]
+mod config;
 mod llm_provider;
 mod cron_tasks;
 mod managers;

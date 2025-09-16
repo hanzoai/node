@@ -191,7 +191,7 @@ impl SqliteManager {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use hanzo_embedding::model_type::{EmbeddingModelType, OllamaTextEmbeddingsInference};
+    
     use tempfile::NamedTempFile;
 
     async fn setup_test_db() -> SqliteManager {

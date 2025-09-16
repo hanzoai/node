@@ -20,7 +20,7 @@ use hanzo_message_primitives::hanzo_utils::signatures::{
 use std::collections::HashMap;
 use std::error::Error as StdError;
 use std::fmt;
-use std::net::TcpListener;
+use std::net::{SocketAddr, TcpListener};
 use std::path::{Path, PathBuf};
 use std::sync::{Arc, Weak};
 use std::{env, fs};
@@ -59,6 +59,21 @@ fn port_is_available(port: u16) -> bool {
     }
 }
 
+/// Try to detect a locally running Hanzo Engine (OpenAI-compatible) and return its base URL
+fn try_detect_local_engine_url() -> Option<String> {
+    // Default local engine port (pool): 36900
+    let port: u16 = std::env::var("HANZO_ENGINE_PORT").ok().and_then(|s| s.parse().ok()).unwrap_or(36900);
+    let host = std::env::var("HANZO_ENGINE_HOST").unwrap_or_else(|_| "127.0.0.1".to_string());
+    let base = format!("http://{}:{}", host, port);
+
+    // Try a quick TCP connect
+    if std::net::TcpStream::connect((host.as_str(), port)).is_ok() {
+        return Some(base);
+    }
+
+    None
+}
+
 pub async fn initialize_node() -> Result<
     (Sender<NodeCommand>, JoinHandle<()>, JoinHandle<()>, Weak<Mutex<Node>>),
     Box<dyn std::error::Error + Send + Sync>,
@@ -70,6 +85,27 @@ pub async fn initialize_node() -> Result<
     // Fetch Env vars/args
     let args = parse_args();
     let node_env = fetch_node_environment();
+
+    // Prefer local engine pool (36900) if available and requested
+    if std::env::var("USE_LOCAL_ENGINE").unwrap_or_else(|_| "true".to_string()).to_lowercase() == "true" {
+        if let Some(engine_url) = try_detect_local_engine_url() {
+            // If no explicit LLM providers configured, default to engine
+            let has_initial = std::env::var("INITIAL_AGENT_NAMES").ok().map(|v| !v.trim().is_empty()).unwrap_or(false);
+            if !has_initial {
+                std::env::set_var("INITIAL_AGENT_NAMES", "local_engine");
+                std::env::set_var("INITIAL_AGENT_URLS", &engine_url);
+                // Use OpenAI-compatible provider to talk to engine
+                // Default to a common local model id; engine will pull on first use if supported
+                std::env::set_var("INITIAL_AGENT_MODELS", "openai:llama3.2");
+                std::env::set_var("INITIAL_AGENT_API_KEYS", "");
+            }
+
+            // Set default embeddings URL to engine if none provided
+            if std::env::var("EMBEDDINGS_SERVER_URL").is_err() {
+                std::env::set_var("EMBEDDINGS_SERVER_URL", &engine_url);
+            }
+        }
+    }
 
     // Check if required ports are available
     let api_port = node_env.api_listen_address.port();
@@ -249,7 +285,10 @@ pub async fn initialize_node() -> Result<
     // Setup API Server task
     let api_listen_address = node_env.clone().api_listen_address;
     let api_https_listen_address = node_env.clone().api_https_listen_address;
-    let ws_listen_address = node_env.clone().ws_address.unwrap();
+    // Use the WebSocket address if provided, otherwise default to API port + 1
+    let ws_listen_address = node_env.clone().ws_address.unwrap_or_else(|| {
+        SocketAddr::new(api_listen_address.ip(), api_listen_address.port() + 1)
+    });
     let api_server = tokio::spawn(async move {
         match node_api_router::run_api(
             node_commands_sender,
@@ -386,17 +425,23 @@ fn init_embedding_generator(node_env: &NodeEnvironment) -> RemoteEmbeddingGenera
         hanzo_log(
             HanzoLogOption::Node,
             HanzoLogLevel::Info,
-            "Native embeddings enabled - will attempt to use mistral.rs with Ollama fallback",
+            "Native embeddings enabled - will prefer Hanzo Embeddings API with native model pull",
         );
-        // TODO: Integrate NativeEmbeddingGenerator within RemoteEmbeddingGenerator
-        // For now, we still use Ollama but the configuration is ready
     }
     
-    // Use remote embedding generator (Ollama)
-    let api_url = node_env
-        .embeddings_server_url
-        .clone()
-        .unwrap_or_else(|| "http://localhost:11434".to_string());
+    // Use remote embedding generator
+    // Prefer Hanzo public embeddings when native is requested; otherwise use provided URL or Ollama fallback
+    let api_url = if use_native {
+        node_env
+            .embeddings_server_url
+            .clone()
+            .unwrap_or_else(|| "https://public.hanzo.ai/x-em".to_string())
+    } else {
+        node_env
+            .embeddings_server_url
+            .clone()
+            .unwrap_or_else(|| "http://localhost:11434".to_string())
+    };
     let api_key = node_env.embeddings_server_api_key.clone();
     RemoteEmbeddingGenerator::new(node_env.default_embedding_model.clone(), &api_url, api_key)
 }

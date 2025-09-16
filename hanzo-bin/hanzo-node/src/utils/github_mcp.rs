@@ -1,3 +1,4 @@
+#![allow(dead_code)]
 use log::info;
 use regex::Regex;
 use reqwest::{Client, StatusCode};

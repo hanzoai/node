@@ -12,7 +12,7 @@ mod tests {
     use std::path::PathBuf;
     use std::sync::Arc;
 
-    use hanzo_embedding::model_type::{EmbeddingModelType, OllamaTextEmbeddingsInference};
+    
     use hanzo_sqlite::SqliteManager;
     use tempfile::NamedTempFile;
 

@@ -1,4 +1,4 @@
-use hanzo_embedding::model_type::{EmbeddingModelType, OllamaTextEmbeddingsInference};
+
 use hanzo_sqlite::SqliteManager;
 use std::path::PathBuf;
 use std::sync::Arc;

@@ -1,0 +1,116 @@
+# Hanzo Node Configuration
+# This file contains all configuration options for the Hanzo Node
+
+[node]
+# Node network configuration
+ip = "0.0.0.0"
+port = 3691
+api_ip = "0.0.0.0"
+api_port = 3690
+
+# Identity configuration
+global_identity_name = "@@localhost.sep-hanzo"
+starting_num_qr_profiles = 1
+starting_num_qr_devices = 1
+first_device_needs_registration_code = false
+
+[network]
+# Ping interval in seconds (0 to disable)
+ping_interval_secs = 0
+
+[logging]
+# Log level: trace, debug, info, warn, error
+rust_log = "debug,error,info"
+log_simple = true
+log_all = true
+
+[embeddings]
+# Enable native embeddings (recommended)
+use_native_embeddings = true
+
+# GPU acceleration
+use_gpu = true
+
+# Default embedding model
+# Options: qwen3-embedding-8b, mistral-embed, e5-mistral-embed, bge-m3
+default_embedding_model = "qwen3-embedding-8b"
+
+# Optional reranker model
+# reranker_model = "qwen3-reranker-4b"
+
+# Embedding server URL (optional - defaults to Hanzo public)
+# Options:
+# - https://public.hanzo.ai/x-em (Hanzo public)
+# - http://localhost:1234 (LM Studio)
+# - http://localhost:11434 (Ollama)
+# - https://api.together.xyz (Together AI)
+# embeddings_server_url = "https://public.hanzo.ai/x-em"
+
+# API key for embedding server (if required)
+# embeddings_server_api_key = "your-api-key"
+
+# Local model paths (optional - will download if not provided)
+# native_model_path = "/path/to/qwen3-embedding-8b.gguf"
+# reranker_model_path = "/path/to/qwen3-reranker-4b.gguf"
+
+[engine]
+# Use local engine pool if available
+use_local_engine = true
+# Engine pool endpoint
+# engine_pool_url = "http://localhost:36900"
+
+[database]
+# SQLite database configuration
+path = "./storage/db.sqlite"
+max_connections = 10
+connection_timeout = 30
+
+[security]
+# Post-quantum cryptography settings
+pqc_enabled = false
+# Privacy tier (0-4: Open → TEE-I/O)
+privacy_tier = 0
+
+[llm_providers]
+# Configure LLM providers
+# Add your API keys here or set them as environment variables
+
+# OpenAI
+# openai_api_key = "sk-..."
+
+# Anthropic
+# anthropic_api_key = "sk-ant-..."
+
+# Together AI
+# together_api_key = "..."
+
+# Groq
+# groq_api_key = "gsk_..."
+
+# Local providers
+ollama_base_url = "http://localhost:11434"
+lm_studio_base_url = "http://localhost:1234"
+
+[wallets]
+# Wallet configuration
+# coinbase_mpc_enabled = false
+# ethereum_enabled = false
+
+[tools]
+# Tool configuration
+mcp_enabled = true
+javascript_runtime = "deno"
+python_runtime = "uv"
+
+[performance]
+# Performance tuning
+job_queue_workers = 4
+max_concurrent_jobs = 10
+request_timeout = 60
+stream_timeout = 300
+
+[development]
+# Development settings
+swagger_ui_enabled = true
+debug_mode = false
+mock_providers_enabled = false

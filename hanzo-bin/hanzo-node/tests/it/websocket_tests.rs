@@ -8,7 +8,7 @@ use futures::SinkExt;
 use futures::StreamExt;
 
 use hanzo_embedding::model_type::EmbeddingModelType;
-use hanzo_embedding::model_type::OllamaTextEmbeddingsInference;
+
 use hanzo_message_primitives::schemas::identity::Identity;
 use hanzo_message_primitives::schemas::identity::StandardIdentity;
 use hanzo_message_primitives::schemas::identity::StandardIdentityType;

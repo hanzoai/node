@@ -3,6 +3,11 @@ name = "hanzo_node"
 version = { workspace = true }
 edition = { workspace = true }
 authors = { workspace = true }
+description = "Hanzo Node - AI Infrastructure Platform for creating AI agents without coding"
+repository = "https://github.com/hanzoai/hanzo-node"
+license = "Apache-2.0"
+keywords = ["ai", "llm", "agents", "mcp", "embeddings"]
+categories = ["network-programming", "web-programming", "science"]
 
 # this makes `cargo run` in the workspace root to run this package
 default-run = "hanzod"
@@ -10,6 +15,10 @@ default-run = "hanzod"
 [[bin]]
 name = "hanzod"
 path = "src/main.rs"
+
+[[example]]
+name = "simple_node"
+path = "../../examples/simple_node.rs"
 
 [build-dependencies]
 shinkai_tools_runner = { workspace = true, features = ["built-in-tools"] }
@@ -27,6 +36,8 @@ swagger-ui = ["hanzo_http_api/swagger-ui"]
 # static-pdf-parser = ["hanzo_vector_resources/static-pdf-parser"]
 
 [lib]
+name = "hanzo_node"
+path = "src/lib.rs"
 doctest = false
 
 [dependencies]

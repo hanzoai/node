@@ -866,7 +866,7 @@ impl SqliteManager {
 mod tests {
     use super::*;
     use ed25519_dalek::SigningKey;
-    use hanzo_embedding::model_type::{EmbeddingModelType, OllamaTextEmbeddingsInference};
+    
     use hanzo_message_primitives::{
         schemas::identity::StandardIdentityType, hanzo_message::{
             hanzo_message::MessageBody, hanzo_message_schemas::{IdentityPermissions, MessageSchemaType}

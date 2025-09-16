@@ -1,6 +1,7 @@
 use crate::llm_provider::providers::hanzo_backend::check_quota;
 use crate::managers::galxe_quests::{compute_quests, generate_proof};
 use crate::managers::tool_router::ToolRouter;
+use hanzo_tools_primitives::tools::mcp_server_tool::MCPServerTool;
 use crate::network::node_shareable_logic::download_zip_from_url;
 use crate::network::zip_export_import::zip_export_import::{
     generate_agent_zip, get_agent_from_zip, import_agent, import_dependencies_tools,
@@ -57,7 +58,7 @@ use hanzo_message_primitives::{
 };
 use hanzo_sqlite::regex_pattern_manager::RegexPattern;
 use hanzo_sqlite::SqliteManager;
-use hanzo_tools_primitives::tools::mcp_server_tool::MCPServerTool;
+
 use hanzo_tools_primitives::tools::{
     agent_tool_wrapper::AgentToolWrapper,
     parameters::Parameters,
@@ -67,7 +68,7 @@ use hanzo_tools_primitives::tools::{
     tool_types::ToolResult,
 };
 use std::collections::HashMap;
-use std::process::Command;
+
 use std::time::Instant;
 use std::{env, sync::Arc};
 use tokio::sync::Mutex;
