@@ -300,6 +300,7 @@ impl SqliteManager {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use hanzo_embedding::model_type::{EmbeddingModelType, NativeMistralEmbeddings};
     
     use std::collections::HashMap;
     use std::path::PathBuf;
@@ -310,7 +311,7 @@ mod tests {
         let db_path = PathBuf::from(temp_file.path());
         let api_url = String::new();
         let model_type =
-            EmbeddingModelType::OllamaTextEmbeddingsInference(OllamaTextEmbeddingsInference::SnowflakeArcticEmbedM);
+            EmbeddingModelType::NativeMistralEmbeddings(NativeMistralEmbeddings::Qwen3Embedding8B);
 
         SqliteManager::new(db_path, api_url, model_type).unwrap()
     }

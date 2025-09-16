@@ -8,6 +8,13 @@
 
 // Public modules for library consumers
 pub mod config;
+pub mod cron_tasks;
+pub mod llm_provider;
+pub mod managers;
+pub mod network;
+pub mod tools;
+pub mod utils;
+pub mod wallet;
 
 // Re-export commonly used types
 pub use config::Config;
