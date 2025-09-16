@@ -1,7 +1,7 @@
 use crate::llm_provider::{
     error::LLMProviderError, providers::shared::{openai_api::openai_prepare_messages, shared_model_logic::llama_prepare_messages}
 };
-use ai_model_catalog::{get_openrouter_model, providers::openrouter};
+
 use hanzo_message_primitives::{
     schemas::{
         llm_message::LlmMessage, llm_providers::{
@@ -723,9 +723,10 @@ impl ModelCapabilitiesManager {
                     131_072 // Default to grok-3 context window for unknown models
                 }
             }
-            LLMProviderInterface::OpenRouter(openrouter) => get_openrouter_model(&openrouter.model_type)
-                .and_then(|m| m.context_length)
-                .unwrap_or(4096) as usize,
+            LLMProviderInterface::OpenRouter(_openrouter) => {
+                // TODO: Implement get_openrouter_model
+                4096
+            }
             LLMProviderInterface::Claude(_) => 200_000, // All Claude models now have 200K context window
             LLMProviderInterface::DeepSeek(_) => 64_000,
             LLMProviderInterface::LocalRegex(_) => 128_000,
@@ -920,10 +921,9 @@ impl ModelCapabilitiesManager {
             }
             LLMProviderInterface::Exo(_) => 4096,
             LLMProviderInterface::Gemini(gemini) => Self::get_gemini_max_output_tokens(gemini.model_type.as_str()),
-            LLMProviderInterface::OpenRouter(openrouter) => {
-                let model = get_openrouter_model(&openrouter.model_type);
-                let max_tokens = model.and_then(|m| m.top_provider.as_ref().and_then(|p| p.max_completion_tokens));
-                max_tokens.unwrap_or(model.and_then(|m| m.context_length).unwrap_or(4096)) as usize
+            LLMProviderInterface::OpenRouter(_openrouter) => {
+                // TODO: Implement get_openrouter_model
+                4096
             }
             LLMProviderInterface::Claude(claude) => {
                 if claude.model_type.starts_with("claude-opus-4") {

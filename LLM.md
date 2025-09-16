@@ -1,5 +1,39 @@
 # Hanzo Node - AI Infrastructure Platform with Post-Quantum Security
 
+## Recent Improvements (Sep 2025)
+
+### Build System Enhancements
+- Added comprehensive Makefile for easier building and development
+- Fixed compilation warnings across the codebase
+- Improved project structure for better composability and reusability
+
+### Configuration System
+- Created `hanzo.toml` configuration file for centralized settings
+- Added `config` module for loading configuration from file or environment
+- Supports both TOML file and environment variable configuration
+
+### Code Quality Improvements
+- Fixed unreachable pattern warnings
+- Added missing imports for `EmbeddingModelType` and related types
+- Suppressed dead code warnings where appropriate
+- Fixed unused variable warnings
+- Removed unused imports across multiple modules
+
+### Project Structure
+- Added library support (`lib.rs`) alongside binary for reusability
+- Created example programs showing library usage
+- Improved modularity for external consumption
+
+### Build Instructions
+```bash
+make build         # Build debug version
+make build-release # Build optimized release
+make run          # Run the node locally
+make dev          # Build and run for development
+make test         # Run tests
+make clean        # Clean build artifacts
+```
+
 ## Project Overview
 
 Hanzo Node is a comprehensive AI infrastructure platform built by Hanzo Industries Inc. It provides a powerful framework for creating AI agents without coding, managing LLM providers, and orchestrating AI workflows at scale. The platform now includes full NIST Post-Quantum Cryptography support for quantum-resistant security.

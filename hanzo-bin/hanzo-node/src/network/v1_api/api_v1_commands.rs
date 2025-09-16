@@ -1,3 +1,4 @@
+#![allow(dead_code)]
 use crate::managers::identity_manager::IdentityManagerTrait;
 use crate::managers::tool_router::ToolRouter;
 use crate::{
@@ -21,7 +22,7 @@ use hanzo_message_primitives::schemas::identity::{
 use hanzo_message_primitives::schemas::inbox_permission::InboxPermission;
 use hanzo_message_primitives::schemas::smart_inbox::SmartInbox;
 use hanzo_message_primitives::schemas::ws_types::WSUpdateHandler;
-use hanzo_message_primitives::hanzo_utils::encryption::encryption_secret_key_to_string;
+
 use hanzo_message_primitives::{
     schemas::{
         inbox_name::InboxName, llm_providers::serialized_llm_provider::SerializedLLMProvider, hanzo_name::{HanzoName, HanzoSubidentityType}

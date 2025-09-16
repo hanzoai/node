@@ -115,7 +115,7 @@ impl MCPServerTool {
             "no content returned from MCP server".to_string(),
         ))?;
         Ok(RunResult {
-            data: serde_json::to_value(data).map_err(|e| ToolError::FailedJSONParsing)?,
+            data: serde_json::to_value(data).map_err(|_e| ToolError::FailedJSONParsing)?,
         })
     }
 
@@ -150,16 +150,13 @@ impl MCPServerTool {
         let configs = configs
             .iter()
             .filter_map(|c| {
-                if let ToolConfig::BasicConfig(c) = c {
-                    if let Some(value) = &c.key_value {
-                        let mut parsed_value = value.to_string();
-                        if let Some(value) = value.as_str() {
-                            parsed_value = value.to_string();
-                        }
-                        Some((c.key_name.clone(), parsed_value))
-                    } else {
-                        None
+                let ToolConfig::BasicConfig(c) = c;
+                if let Some(value) = &c.key_value {
+                    let mut parsed_value = value.to_string();
+                    if let Some(value) = value.as_str() {
+                        parsed_value = value.to_string();
                     }
+                    Some((c.key_name.clone(), parsed_value))
                 } else {
                     None
                 }

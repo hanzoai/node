@@ -1,3 +1,4 @@
+#![allow(dead_code)]
 use blake3::{self, Hasher};
 use chrono::{DateTime, Utc};
 use ed25519_dalek::{Signer, VerifyingKey};

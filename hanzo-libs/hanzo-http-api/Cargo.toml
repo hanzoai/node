@@ -40,5 +40,5 @@ workspace = true
 features = ["derive"]
 
 [features]
-default = []
+default = ["swagger-ui"]
 swagger-ui = ["utoipa-swagger-ui"]

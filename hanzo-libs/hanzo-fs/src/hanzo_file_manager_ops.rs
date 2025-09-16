@@ -218,6 +218,7 @@ mod tests {
     use serial_test::serial;
     use hanzo_embedding::mock_generator::MockGenerator;
     use hanzo_embedding::model_type::{EmbeddingModelType, OllamaTextEmbeddingsInference};
+    
     use hanzo_message_primitives::schemas::hanzo_fs::HanzoFileChunk;
     use std::fs::{self, File};
     use std::io::Read;

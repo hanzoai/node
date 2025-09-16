@@ -1,5 +1,15 @@
-use hanzo_message_primitives::hanzo_utils::{signatures::{unsafe_deterministic_signature_keypair, signature_secret_key_to_string, signature_public_key_to_string}, encryption::{unsafe_deterministic_encryption_keypair, encryption_secret_key_to_string, encryption_public_key_to_string}};
+#![allow(dead_code)]
 
+use hanzo_message_primitives::hanzo_utils::signatures::{
+    unsafe_deterministic_signature_keypair,
+    signature_secret_key_to_string,
+    signature_public_key_to_string,
+};
+use hanzo_message_primitives::hanzo_utils::encryption::{
+    unsafe_deterministic_encryption_keypair,
+    encryption_secret_key_to_string,
+    encryption_public_key_to_string,
+};
 
 fn print_generated_keys() {
     let _node1_identity_name = "@@node1.hanzo";

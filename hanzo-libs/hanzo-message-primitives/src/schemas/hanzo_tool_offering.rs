@@ -29,7 +29,6 @@ impl HanzoToolOffering {
     pub fn get_price_for_usage(&self, usage_type_inquiry: &UsageTypeInquiry) -> Option<&ToolPrice> {
         match (usage_type_inquiry, &self.usage_type) {
             (UsageTypeInquiry::PerUse, UsageType::PerUse(price)) => Some(price),
-            _ => None,
         }
     }
 

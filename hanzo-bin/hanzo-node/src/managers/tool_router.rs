@@ -30,7 +30,7 @@ use hanzo_message_primitives::hanzo_utils::hanzo_logging::{hanzo_log, HanzoLogLe
 use hanzo_sqlite::errors::SqliteManagerError;
 use hanzo_sqlite::files::prompts_data;
 use hanzo_sqlite::SqliteManager;
-use hanzo_tools_primitives::tools::mcp_server_tool::MCPServerTool;
+
 use hanzo_tools_primitives::tools::tool_types::ToolResult;
 use hanzo_tools_primitives::tools::{
     error::ToolError, network_tool::NetworkTool, parameters::Parameters, rust_tools::RustTool, hanzo_tool::{HanzoTool, HanzoToolHeader}, tool_config::ToolConfig, tool_output_arg::ToolOutputArg

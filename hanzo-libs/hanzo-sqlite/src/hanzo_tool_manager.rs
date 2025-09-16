@@ -4,9 +4,10 @@ use keyphrases::KeyPhraseExtractor;
 use rusqlite::{params, Result};
 use serde_json::Value;
 use hanzo_message_primitives::schemas::indexable_version::IndexableVersion;
-use hanzo_tools_primitives::tools::mcp_server_tool::MCPServerTool;
+
 use hanzo_tools_primitives::tools::hanzo_tool::{HanzoTool, HanzoToolHeader};
 use hanzo_tools_primitives::tools::tool_config::{BasicConfig, ToolConfig};
+use hanzo_tools_primitives::tools::mcp_server_tool::MCPServerTool;
 use std::collections::{HashMap, HashSet};
 
 impl SqliteManager {
@@ -1132,7 +1133,7 @@ mod tests {
     use super::*;
     use serde_json::json;
     use hanzo_embedding::model_type::EmbeddingModelType;
-    use hanzo_embedding::model_type::OllamaTextEmbeddingsInference;
+    
     use hanzo_message_primitives::schemas::hanzo_name::HanzoName;
     use hanzo_message_primitives::schemas::hanzo_tool_offering::ToolPrice;
     use hanzo_message_primitives::schemas::hanzo_tool_offering::UsageType;
@@ -2630,7 +2631,6 @@ mod tests {
                         None
                     }
                 }
-                _ => None,
             });
             assert_eq!(config_value, Some(serde_json::Value::Bool(true)));
         } else {

@@ -101,7 +101,7 @@ impl SqliteManager {
 mod tests {
     use crate::SqliteManager;
     use serde_json::json;
-    use hanzo_embedding::model_type::{EmbeddingModelType, OllamaTextEmbeddingsInference};
+    
     use std::path::PathBuf;
     use tempfile::NamedTempFile;
 

@@ -1,5 +1,6 @@
-use crate::model_type::{EmbeddingModelType, OllamaTextEmbeddingsInference};
+
 use crate::hanzo_embedding_errors::HanzoEmbeddingError;
+use crate::model_type::{EmbeddingModelType, OllamaTextEmbeddingsInference};
 use async_trait::async_trait;
 
 use lazy_static::lazy_static;
@@ -16,7 +17,7 @@ use std::time::Duration;
 
 lazy_static! {
     pub static ref DEFAULT_EMBEDDINGS_SERVER_URL: &'static str = "https://api.hanzo.com/embeddings";
-    pub static ref DEFAULT_EMBEDDINGS_LOCAL_URL: &'static str = "http://localhost:36900/";
+    pub static ref DEFAULT_EMBEDDINGS_LOCAL_URL: &'static str = "http://localhost:3690/";
 }
 
 /// A trait for types that can generate embeddings from text.

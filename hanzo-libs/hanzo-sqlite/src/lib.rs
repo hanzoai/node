@@ -1287,7 +1287,7 @@ impl SqliteManager {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use hanzo_embedding::model_type::OllamaTextEmbeddingsInference;
+    
     use std::path::PathBuf;
     use std::sync::{Arc, RwLock};
     use std::thread;

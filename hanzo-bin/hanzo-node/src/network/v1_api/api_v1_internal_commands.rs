@@ -1,3 +1,4 @@
+#![allow(dead_code)]
 use crate::llm_provider::job_manager::JobManager;
 use crate::managers::identity_manager::IdentityManagerTrait;
 use crate::managers::IdentityManager;

@@ -257,7 +257,7 @@ impl<T: Clone + Send + 'static + Debug> Clone for JobQueueManager<T> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use hanzo_embedding::model_type::{EmbeddingModelType, OllamaTextEmbeddingsInference};
+    
     use hanzo_message_primitives::{
         schemas::hanzo_name::HanzoName, hanzo_utils::hanzo_logging::{hanzo_log, HanzoLogLevel, HanzoLogOption}
     };

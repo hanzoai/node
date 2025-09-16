@@ -525,7 +525,7 @@ async fn process_function_call(
 mod tests {
     use super::*;
     use hanzo_embedding::model_type::EmbeddingModelType;
-    use hanzo_embedding::model_type::OllamaTextEmbeddingsInference;
+    
     use hanzo_sqlite::SqliteManager;
     use std::sync::Arc;
     use tempfile::NamedTempFile;

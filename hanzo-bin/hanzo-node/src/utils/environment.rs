@@ -2,7 +2,7 @@ use std::env;
 use std::net::{IpAddr, SocketAddr};
 use std::str::FromStr;
 
-use hanzo_embedding::model_type::{EmbeddingModelType, OllamaTextEmbeddingsInference};
+use hanzo_embedding::model_type::{EmbeddingModelType, NativeMistralEmbeddings};
 use hanzo_message_primitives::schemas::llm_providers::serialized_llm_provider::{
     LLMProviderInterface, SerializedLLMProvider
 };
@@ -49,6 +49,7 @@ pub fn fetch_llm_provider_env(global_identity: String) -> Vec<SerializedLLMProvi
         .or_else(|_| env::var("INITIAL_LLM_PROVIDER_API_KEYS"))
         .unwrap_or_else(|_| "".to_string())
         .split(',')
+        .filter(|s| !s.is_empty())
         .map(|s| s.to_string())
         .collect();
 
@@ -56,6 +57,7 @@ pub fn fetch_llm_provider_env(global_identity: String) -> Vec<SerializedLLMProvi
         .or_else(|_| env::var("INITIAL_LLM_PROVIDER_URLS"))
         .unwrap_or_else(|_| "".to_string())
         .split(',')
+        .filter(|s| !s.is_empty())
         .map(|s| s.to_string())
         .collect();
 
@@ -63,6 +65,7 @@ pub fn fetch_llm_provider_env(global_identity: String) -> Vec<SerializedLLMProvi
         .or_else(|_| env::var("INITIAL_LLM_PROVIDER_MODELS"))
         .unwrap_or_else(|_| "".to_string())
         .split(',')
+        .filter(|s| !s.is_empty())
         .map(|s| s.to_string())
         .collect();
 
@@ -172,7 +175,8 @@ pub fn fetch_node_environment() -> NodeEnvironment {
     let default_embedding_model: EmbeddingModelType = env::var("DEFAULT_EMBEDDING_MODEL")
         .map(|s| EmbeddingModelType::from_string(&s).expect("Failed to parse DEFAULT_EMBEDDING_MODEL"))
         .unwrap_or_else(|_| {
-            EmbeddingModelType::OllamaTextEmbeddingsInference(OllamaTextEmbeddingsInference::SnowflakeArcticEmbedM)
+            // Prefer native Qwen3 embeddings by default, with automatic download
+            EmbeddingModelType::NativeMistralEmbeddings(NativeMistralEmbeddings::Qwen3Embedding8B)
         });
 
     // Fetch the supported embedding models
@@ -183,8 +187,8 @@ pub fn fetch_node_environment() -> NodeEnvironment {
                 .collect()
         })
         .unwrap_or_else(|_| {
-            vec![EmbeddingModelType::OllamaTextEmbeddingsInference(
-                OllamaTextEmbeddingsInference::SnowflakeArcticEmbedM,
+            vec![EmbeddingModelType::NativeMistralEmbeddings(
+                NativeMistralEmbeddings::Qwen3Embedding8B,
             )]
         });
 

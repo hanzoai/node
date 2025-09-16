@@ -267,7 +267,7 @@ impl SqliteManager {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use hanzo_embedding::model_type::{EmbeddingModelType, OllamaTextEmbeddingsInference};
+    
     use hanzo_message_primitives::hanzo_message::hanzo_message_schemas::JobMessage;
     use std::path::PathBuf;
     use tempfile::NamedTempFile;

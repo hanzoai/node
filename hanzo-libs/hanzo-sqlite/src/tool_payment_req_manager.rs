@@ -59,7 +59,7 @@ impl SqliteManager {
 
     pub fn remove_tool_offering(&self, tool_key: &str) -> Result<(), SqliteManagerError> {
         let mut conn = self.get_connection()?;
-        let mut transaction = conn.transaction()?;
+        let transaction = conn.transaction()?;
         
         // First, nullify references in invoices to prevent constraint violations
         transaction.execute("UPDATE invoices SET hanzo_offering_key = NULL WHERE hanzo_offering_key = ?1", params![tool_key])?;
@@ -104,7 +104,7 @@ impl SqliteManager {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use hanzo_embedding::model_type::{EmbeddingModelType, OllamaTextEmbeddingsInference};
+    
     use hanzo_message_primitives::schemas::{
         hanzo_tool_offering::ToolPrice, x402_types::{Network, PaymentRequirements}
     };
