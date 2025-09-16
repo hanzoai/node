@@ -100,6 +100,7 @@ impl SqliteManager {
 #[cfg(test)]
 mod tests {
     use crate::SqliteManager;
+    use hanzo_embedding::model_type::{EmbeddingModelType, NativeMistralEmbeddings};
     use serde_json::json;
     
     use std::path::PathBuf;
