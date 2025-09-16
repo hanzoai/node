@@ -4,6 +4,11 @@ pub mod hanzo_embedding_errors;
 pub mod mock_generator;
 // pub mod native_embedding_generator; // Temporarily disabled - needs API fixes
 
+// Temporary compatibility aliases to unblock CI
+// TODO: Remove these after full refactoring to Qwen3Embeddings
+pub use model_type::OllamaTextEmbeddingsInference;
+pub use model_type::EmbeddingModelType;
+
 #[cfg(test)]
 mod tests {
     use super::*;
