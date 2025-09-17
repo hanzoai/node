@@ -68,7 +68,7 @@ SELECT field_1, field_3 FROM table_name WHERE field_3 > 100 ORDER BY field_2 DES
                 enabled: true,
                 mcp_enabled: Some(false),
                 input_args: {
-                    use shinkai_tools_primitives::tools::parameters::Property;
+                    use hanzo_tools_primitives::tools::parameters::Property;
                     let mut params = Parameters::new();
                     params.add_property("query".to_string(), "string".to_string(), "The SQL query to execute".to_string(), true, None);
                     

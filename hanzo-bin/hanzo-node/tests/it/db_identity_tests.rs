@@ -10,6 +10,7 @@ use hanzo_message_primitives::hanzo_utils::signatures::{
 };
 use hanzo_sqlite::errors::SqliteManagerError;
 use hanzo_sqlite::SqliteManager;
+use hanzo_embedding::model_type::EmbeddingModelType;
 
 use std::path::PathBuf;
 use std::sync::Arc;

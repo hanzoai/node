@@ -2,6 +2,7 @@ use super::db_handlers::{setup, setup_node_storage_path};
 use async_channel::{bounded, Receiver, Sender};
 
 use hanzo_embedding::embedding_generator::RemoteEmbeddingGenerator;
+use hanzo_embedding::model_type::EmbeddingModelType;
 
 use hanzo_node::llm_provider::job_callback_manager::JobCallbackManager;
 use hanzo_node::managers::tool_router::ToolRouter;
