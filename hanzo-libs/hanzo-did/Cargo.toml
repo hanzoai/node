@@ -1,0 +1,39 @@
+[package]
+name = "hanzo_did"
+version = { workspace = true }
+edition = { workspace = true }
+authors = { workspace = true }
+
+[dependencies]
+serde = { workspace = true, features = ["derive"] }
+serde_json = { workspace = true }
+thiserror = { workspace = true }
+anyhow = { workspace = true }
+base64 = { workspace = true }
+hex = { workspace = true }
+ed25519-dalek = { workspace = true }
+x25519-dalek = { workspace = true }
+sha2 = { workspace = true }
+blake3 = { workspace = true }
+chrono = { workspace = true, features = ["serde"] }
+regex = { workspace = true }
+url = "2.5"
+multibase = "0.9"
+multihash = "0.19"
+async-trait = { workspace = true }
+tokio = { workspace = true }
+reqwest = { workspace = true }
+
+# For Ethereum compatibility
+ethers-core = { version = "2.0", optional = true }
+
+# For IPFS support
+ipfs-api-backend-hyper = { version = "0.6", optional = true }
+
+[features]
+default = ["ethereum", "ipfs"]
+ethereum = ["ethers-core"]
+ipfs = ["ipfs-api-backend-hyper"]
+
+[dev-dependencies]
+tokio-test = { workspace = true }
