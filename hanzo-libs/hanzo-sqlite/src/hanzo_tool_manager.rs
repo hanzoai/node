@@ -9,6 +9,7 @@ use hanzo_tools_primitives::tools::hanzo_tool::{HanzoTool, HanzoToolHeader};
 use hanzo_tools_primitives::tools::tool_config::{BasicConfig, ToolConfig};
 use hanzo_tools_primitives::tools::mcp_server_tool::MCPServerTool;
 use std::collections::{HashMap, HashSet};
+use hanzo_embedding::model_type::EmbeddingModelType;
 
 impl SqliteManager {
     // Adds a HanzoTool entry to the hanzo_tools table
@@ -19,7 +20,7 @@ impl SqliteManager {
             None => self.generate_embeddings(&tool.format_embedding_string()).await?,
         };
 
-        self.add_tool_with_vector(tool, embedding)
+        self.add_tool_with_vector(updated_tool, embedding)
     }
 
     pub fn add_tool_with_vector(
@@ -47,6 +48,19 @@ impl SqliteManager {
         let tool_seos = tool.format_embedding_string();
         let tool_type = tool.tool_type().to_string();
         let tool_header = serde_json::to_vec(&tool.to_header()).unwrap();
+
+        // Validate embedding dimensions before storing (skip check for custom models with unknown dimensions)
+        let model_type = self.get_default_embedding_model()
+            .unwrap_or_else(|_| EmbeddingModelType::default());
+        if let Ok(expected_dimensions) = model_type.vector_dimensions() {
+            if embedding.len() != expected_dimensions {
+                return Err(SqliteManagerError::SomeError(format!(
+                    "Embedding dimension mismatch: expected {} dimensions but received {}",
+                    expected_dimensions, embedding.len()
+                )));
+            }
+        }
+        // Skip dimension validation for custom models where dimensions are unknown
 
         // Clone the tool to make it mutable
         let mut tool_clone = tool.clone();
@@ -539,7 +553,7 @@ impl SqliteManager {
             None => self.generate_embeddings(&tool.format_embedding_string()).await?,
         };
 
-        self.update_tool_with_vector(tool, embedding)
+        self.update_tool_with_vector(updated_tool, embedding)
     }
 
     /// Retrieves all HanzoToolHeader entries from the hanzo_tools table
@@ -875,6 +889,19 @@ impl SqliteManager {
         tool_key: &str,
         embedding: Vec<f32>,
     ) -> Result<(), SqliteManagerError> {
+        // Validate embedding dimensions before updating vector (skip check for custom models with unknown dimensions)
+        let model_type = self.get_default_embedding_model()
+            .unwrap_or_else(|_| EmbeddingModelType::default());
+        if let Ok(expected_dimensions) = model_type.vector_dimensions() {
+            if embedding.len() != expected_dimensions {
+                return Err(SqliteManagerError::SomeError(format!(
+                    "Embedding dimension mismatch: expected {} dimensions but received {}",
+                    expected_dimensions, embedding.len()
+                )));
+            }
+        }
+        // Skip dimension validation for custom models where dimensions are unknown
+
         // Get is_enabled and is_network from the main database
         let (is_enabled, is_network): (i32, i32) = tx.query_row(
             "SELECT is_enabled, is_network FROM hanzo_tools WHERE tool_key = ?1",

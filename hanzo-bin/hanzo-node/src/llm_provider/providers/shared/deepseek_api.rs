@@ -17,6 +17,17 @@ pub fn deepseek_prepare_messages(
     prompt: Prompt,
     session_id: String,
 ) -> Result<PromptResult, LLMProviderError> {
+    let mut prompt = prompt.clone();
+
+    // If this is a reasoning model, filter out system prompts before any processing
+    if ModelCapabilitiesManager::has_reasoning_capabilities(model) {
+        prompt.sub_prompts.retain(|sp| match sp {
+            SubPrompt::Content(SubPromptType::System, _, _) => false,
+            SubPrompt::Omni(SubPromptType::System, _, _, _) => false,
+            _ => true,
+        });
+    }
+
     let result = openai_api::openai_prepare_messages(model, prompt)?;
     let tools_json = result.functions.unwrap_or_else(Vec::new);
     let messages_json = result.messages.clone();

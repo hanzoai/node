@@ -57,12 +57,23 @@ impl SqliteManager {
         )?;
 
         // Create our new virtual table for chunk embeddings using sqlite-vec
+        // Using dynamic dimensions based on default embedding model
+        let default_model = hanzo_embedding::model_type::EmbeddingModelType::default();
+        let vector_dimensions = default_model.vector_dimensions()
+            .map_err(|e| rusqlite::Error::SqliteFailure(
+                rusqlite::ffi::Error::new(1),
+                Some(format!("Cannot get vector dimensions: {}", e))
+            ))?;
+
         conn.execute(
-            "CREATE VIRTUAL TABLE IF NOT EXISTS chunk_vec USING vec0(
-                embedding float[384],
-                parsed_file_id INTEGER,
-                +chunk_id INTEGER  -- Normal column recognized as chunk_id
-            );",
+            &format!(
+                "CREATE VIRTUAL TABLE IF NOT EXISTS chunk_vec USING vec0(
+                    embedding float[{}],
+                    parsed_file_id INTEGER,
+                    +chunk_id INTEGER  -- Normal column recognized as chunk_id
+                );",
+                vector_dimensions
+            ),
             [],
         )?;
 
@@ -89,7 +100,7 @@ impl SqliteManager {
 
         let relative_path = Self::normalize_path(&pf.relative_path);
         tx.execute(
-            "INSERT INTO parsed_files (relative_path, original_extension, description, source, embedding_model_used, 
+            "INSERT INTO parsed_files (relative_path, original_extension, description, source, embedding_model_used,
                                        keywords, distribution_info, created_time, tags, total_tokens, total_characters)
              VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11)",
             params![
@@ -605,7 +616,7 @@ impl SqliteManager {
 mod tests {
     use super::*;
     use hanzo_embedding::model_type::{EmbeddingModelType, NativeMistralEmbeddings};
-    
+
     use std::path::PathBuf;
     use tempfile::NamedTempFile;
 
