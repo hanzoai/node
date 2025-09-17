@@ -10,6 +10,7 @@ use hanzo_message_primitives::hanzo_utils::signatures::{
     clone_signature_secret_key, unsafe_deterministic_signature_keypair
 };
 use hanzo_sqlite::SqliteManager;
+use hanzo_embedding::model_type::EmbeddingModelType;
 
 use std::path::PathBuf;
 use std::sync::Arc;

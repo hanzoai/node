@@ -4,6 +4,7 @@ use std::path::{Path, PathBuf};
 
 use hanzo_message_primitives::hanzo_utils::hanzo_path::HanzoPath;
 use hanzo_sqlite::SqliteManager;
+use hanzo_embedding::model_type::EmbeddingModelType;
 use tempfile::NamedTempFile;
 
 pub fn setup() {
