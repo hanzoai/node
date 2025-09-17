@@ -15,6 +15,7 @@ members = [
   "hanzo-libs/hanzo-pqc",
   "hanzo-libs/hanzo-kbs",
   "hanzo-libs/hanzo-did",
+  "hanzo-libs/hanzo-model-discovery",
   "hanzo-test-framework",
   "hanzo-test-macro",
   "hanzo-bin/*",
