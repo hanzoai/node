@@ -26,7 +26,6 @@ impl EmbeddingFunction {
     pub async fn request_embeddings(&self, prompt: &str) -> Result<Vec<f32>, rusqlite::Error> {
         let model_str = match &self.model_type {
             EmbeddingModelType::OllamaTextEmbeddingsInference(model) => model.to_string(),
-            EmbeddingModelType::NativeMistralEmbeddings(model) => model.to_string(),
         };
 
         let max_tokens = self.model_type.max_input_token_count();
