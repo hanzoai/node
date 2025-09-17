@@ -104,6 +104,8 @@ impl McpToolsService {
                             input_schema: Arc::new(schema_map),
                             output_schema: None,
                             annotations: None,
+                            title: None,
+                            icons: None,
                         };
                         mcp_tools_list.push(mcp_tool);
 
