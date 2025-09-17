@@ -20,7 +20,7 @@ impl SqliteManager {
             None => self.generate_embeddings(&tool.format_embedding_string()).await?,
         };
 
-        self.add_tool_with_vector(updated_tool, embedding)
+        self.add_tool_with_vector(tool, embedding)
     }
 
     pub fn add_tool_with_vector(
@@ -553,7 +553,7 @@ impl SqliteManager {
             None => self.generate_embeddings(&tool.format_embedding_string()).await?,
         };
 
-        self.update_tool_with_vector(updated_tool, embedding)
+        self.update_tool_with_vector(tool, embedding)
     }
 
     /// Retrieves all HanzoToolHeader entries from the hanzo_tools table
