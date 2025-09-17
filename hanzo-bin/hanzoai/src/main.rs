@@ -214,7 +214,8 @@ async fn handle_search(
         ..Default::default()
     };
 
-    let models = discovery.search_models(&filter, SortBy::Downloads, limit).await?;
+    let models = discovery.search_models(&filter, SortBy::Downloads, limit).await
+        .map_err(|e| anyhow::anyhow!(e))?;
 
     if models.is_empty() {
         println!("{}", "No models found matching your criteria.".yellow());
@@ -391,7 +392,8 @@ async fn handle_recommend(use_case: &str) -> Result<()> {
     );
 
     let discovery = HanzoModelDiscovery::new();
-    let models = discovery.get_recommended(use_case).await?;
+    let models = discovery.get_recommended(use_case).await
+        .map_err(|e| anyhow::anyhow!(e))?;
 
     if models.is_empty() {
         println!("{}", "No recommendations found.".yellow());
@@ -464,7 +466,8 @@ async fn handle_info(model: &str) -> Result<()> {
     println!("{}", format!("ℹ️  Model info: {}", model).bright_blue().bold());
 
     let discovery = HanzoModelDiscovery::new();
-    let info = discovery.get_model_info(model).await?;
+    let info = discovery.get_model_info(model).await
+        .map_err(|e| anyhow::anyhow!(e))?;
 
     println!("{}", "─".repeat(80).bright_black());
     println!("ID: {}", info.id.bright_white());

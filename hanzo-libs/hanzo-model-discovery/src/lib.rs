@@ -165,7 +165,7 @@ impl HanzoModelDiscovery {
         ModelInfo {
             id: model_id.to_string(),
             name: name.clone(),
-            author,
+            author: author.clone(),
             tags: vec![],
             downloads: 0,
             likes: 0,
