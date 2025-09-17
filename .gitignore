@@ -48,6 +48,14 @@ shinkai-libs/shinkai-fs-mirror/mirror_db
 local_shinkai.key
 shinkai-fs-mirror.zip
 storage_9652
+
+# Test keys - NEVER commit these
+TEST_KEYS.md
+test-keys.env
+*.private_key
+*_PRIVATE_KEY
+~/.hanzod/
+.hanzod/
 storage_9750
 storage_wp
 9752_shinkai.key
