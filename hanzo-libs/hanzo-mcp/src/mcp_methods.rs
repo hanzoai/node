@@ -47,6 +47,7 @@ pub async fn list_tools_via_command(cmd_str: &str, config: Option<HashMap<String
 pub async fn list_tools_via_sse(sse_url: &str, _config: Option<HashMap<String, String>>) -> Result<Vec<Tool>> {
     // TODO: The config parameter is not currently used by SseTransport or ClientInfo setup in the example.
     // It might be used in the future for authentication headers or other SSE-specific configurations.
+    // Use the convenience constructor that's available with transport-sse-client-reqwest feature
     let transport = SseClientTransport::start(sse_url).await.map_err(|e| McpError {
         message: format!("{}", e),
     })?;
@@ -56,6 +57,9 @@ pub async fn list_tools_via_sse(sse_url: &str, _config: Option<HashMap<String, S
         client_info: Implementation {
             name: "hanzo_node_sse_client".to_string(),
             version: env!("CARGO_PKG_VERSION").to_string(),
+            title: Some("Hanzo Node SSE Client".to_string()),
+            website_url: Some("https://hanzo.ai".to_string()),
+            icons: None,
         },
     };
     let client = client_info.serve(transport).await.map_err(|e| McpError {
@@ -83,6 +87,7 @@ pub async fn list_tools_via_sse(sse_url: &str, _config: Option<HashMap<String, S
 pub async fn list_tools_via_http(sse_url: &str, _config: Option<HashMap<String, String>>) -> Result<Vec<Tool>> {
     // TODO: The config parameter is not currently used by SseTransport or ClientInfo setup in the example.
     // It might be used in the future for authentication headers or other SSE-specific configurations.
+    // Use the convenience constructor that's available with transport-streamable-http-client-reqwest feature
     let transport = StreamableHttpClientTransport::from_uri(sse_url);
     let client_info = ClientInfo {
         protocol_version: Default::default(),
@@ -90,6 +95,9 @@ pub async fn list_tools_via_http(sse_url: &str, _config: Option<HashMap<String, 
         client_info: Implementation {
             name: "hanzo_node_http_client".to_string(),
             version: env!("CARGO_PKG_VERSION").to_string(),
+            title: Some("Hanzo Node HTTP Client".to_string()),
+            website_url: Some("https://hanzo.ai".to_string()),
+            icons: None,
         },
     };
     let client = client_info.serve(transport).await.map_err(|e| McpError {
@@ -167,6 +175,7 @@ pub async fn run_tool_via_sse(
     tool: String,
     parameters: serde_json::Map<String, serde_json::Value>,
 ) -> Result<CallToolResult> {
+    // Use the convenience constructor that's available with transport-sse-client-reqwest feature
     let transport = SseClientTransport::start(url)
         .await
         .inspect_err(|e| log::error!("error starting sse transport: {:?}", e))
@@ -180,6 +189,9 @@ pub async fn run_tool_via_sse(
         client_info: Implementation {
             name: "Hanzo Node Client".to_string(),
             version: "0.0.1".to_string(),
+            title: Some("Hanzo Node Client".to_string()),
+            website_url: Some("https://hanzo.ai".to_string()),
+            icons: None,
         },
     };
     let client = client_info
@@ -217,6 +229,7 @@ pub async fn run_tool_via_http(
     tool: String,
     parameters: serde_json::Map<String, serde_json::Value>,
 ) -> Result<CallToolResult> {
+    // Use the convenience constructor that's available with transport-streamable-http-client-reqwest feature
     let transport = StreamableHttpClientTransport::from_uri(url);
 
     let client_info = ClientInfo {
@@ -225,6 +238,9 @@ pub async fn run_tool_via_http(
         client_info: Implementation {
             name: "Hanzo Node HTTP Client".to_string(),
             version: env!("CARGO_PKG_VERSION").to_string(),
+            title: Some("Hanzo Node HTTP Client".to_string()),
+            website_url: Some("https://hanzo.ai".to_string()),
+            icons: None,
         },
     };
     let client = client_info

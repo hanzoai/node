@@ -221,6 +221,9 @@ impl ServerHandler for McpToolsService {
             server_info: Implementation {
                 name: "Hanzo MCP Server".to_string(),
                 version: "1.0.0".to_string(),
+                title: Some("Hanzo MCP Server".to_string()),
+                website_url: Some("https://hanzo.ai".to_string()),
+                icons: None,
             },
             instructions: Some(format!("Hanzo Node {} command interface", self.node_name)),
         }
@@ -246,6 +249,9 @@ impl ServerHandler for McpToolsService {
             server_info: Implementation {
                 name: "Hanzo MCP Server".to_string(),
                 version: "1.0.0".to_string(),
+                title: Some("Hanzo MCP Server".to_string()),
+                website_url: Some("https://hanzo.ai".to_string()),
+                icons: None,
             },
             instructions: Some(format!("Hanzo Node {} command interface", self.node_name)),
         };
