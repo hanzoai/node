@@ -1357,7 +1357,8 @@ async fn bytes_to_zip_tool(
 mod tests {
     use super::*;
     use hanzo_embedding::model_type::EmbeddingModelType;
-    
+    use hanzo_embedding::OllamaTextEmbeddingsInference;
+
     use hanzo_message_primitives::schemas::hanzo_name::HanzoName;
     use hanzo_message_primitives::schemas::tool_router_key::ToolRouterKey;
     use hanzo_message_primitives::hanzo_utils::job_scope::MinimalJobScope;

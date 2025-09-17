@@ -307,8 +307,9 @@ impl ToolExecutor for ConfigSetupTool {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use hanzo_embedding::model_type::EmbeddingModelType;
+    use hanzo_embedding::OllamaTextEmbeddingsInference;
 
-    
     use hanzo_message_primitives::schemas::tool_router_key::ToolRouterKey;
     use hanzo_tools_primitives::tools::tool_config::BasicConfig;
     use hanzo_tools_primitives::tools::tool_types::{OperatingSystem, RunnerType, ToolResult};
