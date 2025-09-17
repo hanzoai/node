@@ -1,6 +1,5 @@
-
 use crate::hanzo_embedding_errors::HanzoEmbeddingError;
-use crate::model_type::{EmbeddingModelType, OllamaTextEmbeddingsInference};
+use crate::model_type::EmbeddingModelType;
 use async_trait::async_trait;
 
 use lazy_static::lazy_static;
@@ -215,8 +214,7 @@ impl RemoteEmbeddingGenerator {
 
     /// Create a RemoteEmbeddingGenerator that uses the default model and server
     pub fn new_default() -> RemoteEmbeddingGenerator {
-        let model_architecture =
-            EmbeddingModelType::OllamaTextEmbeddingsInference(OllamaTextEmbeddingsInference::SnowflakeArcticEmbedM);
+        let model_architecture = EmbeddingModelType::default();
         RemoteEmbeddingGenerator {
             model_type: model_architecture,
             api_url: DEFAULT_EMBEDDINGS_SERVER_URL.to_string(),
@@ -225,8 +223,7 @@ impl RemoteEmbeddingGenerator {
     }
     /// Create a RemoteEmbeddingGenerator that uses the default model and server
     pub fn new_default_local() -> RemoteEmbeddingGenerator {
-        let model_architecture =
-            EmbeddingModelType::OllamaTextEmbeddingsInference(OllamaTextEmbeddingsInference::SnowflakeArcticEmbedM);
+        let model_architecture = EmbeddingModelType::default();
         RemoteEmbeddingGenerator {
             model_type: model_architecture,
             api_url: DEFAULT_EMBEDDINGS_LOCAL_URL.to_string(),

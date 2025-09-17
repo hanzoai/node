@@ -3,7 +3,7 @@ use std::sync::Arc;
 
 use super::super::error::LLMProviderError;
 use super::shared::openai_api::{openai_prepare_messages, MessageContent, OpenAIResponse};
-use super::shared::shared_model_logic::send_tool_ws_update;
+use super::shared::shared_model_logic::{send_tool_ws_update, send_ws_update};
 use super::LLMService;
 use crate::llm_provider::execution::chains::inference_chain_trait::{FunctionCall, LLMInferenceResponse};
 use crate::llm_provider::llm_stopper::LLMStopper;
@@ -283,14 +283,15 @@ async fn handle_streaming_response(
                                         .unwrap_or(false);
 
                                     // Send WebSocket update with incremental content (like OpenAI)
-                                    send_ws_update(
+                                    let _ = send_ws_update(
                                         &ws_manager_trait,
                                         inbox_name.clone(),
                                         &session_id,
                                         new_content, // Send only new content, not entire response
-                                        is_finished,
-                                        None,
-                                    ).await.ok(); // Ignore errors for now
+                                        false, // is_reasoning
+                                        is_finished, // is_done
+                                        None, // done_reason
+                                    ).await;
 
                                     if is_finished {
                                         is_done_sent = true;
@@ -337,14 +338,15 @@ async fn handle_streaming_response(
                                 .unwrap_or(false);
 
                             // Send WebSocket update with incremental content
-                            send_ws_update(
+                            let _ = send_ws_update(
                                 &ws_manager_trait,
                                 inbox_name.clone(),
                                 &session_id,
                                 new_content, // Send only new content, not entire response
-                                is_finished,
-                                None,
-                            ).await.ok(); // Ignore errors for now
+                                false, // is_reasoning
+                                is_finished, // is_done
+                                None, // done_reason
+                            ).await;
 
                             if is_finished {
                                 is_done_sent = true;
@@ -374,14 +376,15 @@ async fn handle_streaming_response(
 
     // If no WS message with is_done: true was sent, send a final message
     if !is_done_sent {
-        send_ws_update(
+        let _ = send_ws_update(
             &ws_manager_trait,
             inbox_name.clone(),
             &session_id,
             "".to_string(), // Empty content
+            false, // is_reasoning
             true, // is_done
             None, // done_reason
-        ).await.ok();
+        ).await;
     }
 
     Ok(LLMInferenceResponse::new(
@@ -685,36 +688,6 @@ async fn send_ws_update(
     Ok(())
 }
 
-async fn send_ws_message(
-    manager: &Arc<Mutex<dyn WSUpdateHandler + Send>>,
-    inbox_name: &InboxName,
-    session_id: &str,
-    response_text: &str,
-    data: &JsonValue,
-) {
-    let m = manager.lock().await;
-    let inbox_name_string = inbox_name.to_string();
-
-    let metadata = WSMetadata {
-        id: Some(session_id.to_string()),
-        is_reasoning: false,
-        is_done: data.get("done").and_then(|d| d.as_bool()).unwrap_or(false),
-        done_reason: data.get("done_reason").and_then(|d| d.as_str()).map(|s| s.to_string()),
-        total_duration: data.get("total_duration").and_then(|d| d.as_u64()),
-        eval_count: data.get("eval_count").and_then(|c| c.as_u64()),
-    };
-
-    let ws_message_type = WSMessageType::Metadata(metadata);
-    let _ = m
-        .queue_message(
-            WSTopic::Inbox,
-            inbox_name_string,
-            response_text.to_string(),
-            ws_message_type,
-            true,
-        )
-        .await;
-}
 
 fn add_options_to_payload(payload: &mut serde_json::Value, config: Option<&JobConfig>) {
     // Helper function to read and parse environment variables
