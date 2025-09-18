@@ -280,112 +280,108 @@ impl ServerHandler for McpToolsService {
     }
 
     // Override the call_tool method
-    fn call_tool(
+    async fn call_tool(
         &self,
         request: CallToolRequestParam,
         _context: RequestContext<RoleServer>,
-    ) -> impl Future<Output = Result<CallToolResult, McpError>> + Send {
-        async move {
-        let tool_name = request.name.to_string(); // Get the requested tool name (e.g., "network__echo")
-        tracing::debug!(target: "mcp_tools_service", "Handling call_tool request for name='{}'", tool_name);
+    ) -> Result<CallToolResult, McpError> {
+    let tool_name = request.name.to_string(); // Get the requested tool name (e.g., "network__echo")
+    tracing::debug!(target: "mcp_tools_service", "Handling call_tool request for name='{}'", tool_name);
 
-        // Extract arguments directly for the target tool
-        let arguments = request.arguments.ok_or_else(|| {
-            tracing::warn!("Missing arguments for tool call: {}", tool_name);
-            McpError::invalid_params(format!("Missing arguments object for tool '{tool_name}'"), None)
+    // Extract arguments directly for the target tool
+    let arguments = request.arguments.ok_or_else(|| {
+        tracing::warn!("Missing arguments for tool call: {}", tool_name);
+        McpError::invalid_params(format!("Missing arguments object for tool '{tool_name}'"), None)
+    })?;
+
+    // --- Look up the tool_router_key from the map using the request.name ---
+    let tool_router_key = {
+        let map_guard = TOOL_NAME_TO_KEY_MAP.read().map_err(|_| {
+            McpError::internal_error("Failed to acquire read lock for TOOL_NAME_TO_KEY_MAP", None)
         })?;
+        map_guard.get(&tool_name).cloned()
+    };
 
-        // --- Look up the tool_router_key from the map using the request.name ---
-        let tool_router_key = {
-            let map_guard = TOOL_NAME_TO_KEY_MAP.read().map_err(|_| {
-                McpError::internal_error("Failed to acquire read lock for TOOL_NAME_TO_KEY_MAP", None)
-            })?;
-            map_guard.get(&tool_name).cloned()
-        };
+    match tool_router_key {
+        Some(key) => {
+            // Found the key, proceed to execute directly
+            tracing::debug!(target: "mcp_tools_service", "Found tool_router_key '{}' for name '{}'", key, tool_name);
 
-        match tool_router_key {
-            Some(key) => {
-                // Found the key, proceed to execute directly
-                tracing::debug!(target: "mcp_tools_service", "Found tool_router_key '{}' for name '{}'", key, tool_name);
+            // Convert arguments JsonObject into the Value expected by execute_hanzo_tool
+            let params_value = Value::Object(arguments);
 
-                // Convert arguments JsonObject into the Value expected by execute_hanzo_tool
-                let params_value = Value::Object(arguments);
-
-                match self.execute_hanzo_tool(key, params_value).await {
-                    Ok(output_str) => {
-                        tracing::debug!(
-                            "call_tool: execution successful for '{}', result: {}",
-                            tool_name,
-                            output_str
-                        );
-                        Ok(CallToolResult::success(vec![Content::text(output_str)]))
-                    }
-                    Err(err_str) => {
-                        tracing::error!("call_tool: execution failed for '{}': {}", tool_name, err_str);
-                        Err(McpError::internal_error(
-                            format!("Tool '{tool_name}' execution failed: {err_str}"),
-                            None,
-                        ))
-                    }
+            match self.execute_hanzo_tool(key, params_value).await {
+                Ok(output_str) => {
+                    tracing::debug!(
+                        "call_tool: execution successful for '{}', result: {}",
+                        tool_name,
+                        output_str
+                    );
+                    Ok(CallToolResult::success(vec![Content::text(output_str)]))
+                }
+                Err(err_str) => {
+                    tracing::error!("call_tool: execution failed for '{}': {}", tool_name, err_str);
+                    Err(McpError::internal_error(
+                        format!("Tool '{tool_name}' execution failed: {err_str}"),
+                        None,
+                    ))
                 }
             }
-            None => {
-                // Key not found for the given name
-                tracing::error!(target: "mcp_tools_service", "Could not find tool_router_key for tool name: {}", tool_name);
-                Err(McpError::invalid_params(
-                    format!("Tool '{tool_name}' not found or mapping missing"),
-                    None,
-                ))
-            }
         }
+        None => {
+            // Key not found for the given name
+            tracing::error!(target: "mcp_tools_service", "Could not find tool_router_key for tool name: {}", tool_name);
+            Err(McpError::invalid_params(
+                format!("Tool '{tool_name}' not found or mapping missing"),
+                None,
+            ))
         }
     }
+    }
 
-    fn list_tools(
+    async fn list_tools(
         &self,
         _request: Option<PaginatedRequestParam>,
         _context: RequestContext<RoleServer>,
-    ) -> impl Future<Output = Result<ListToolsResult, McpError>> + Send {
-        async move {
-        // This is implemented in an async block to avoid blocking the main thread,
-        // and to ensure that the cache is updated before reading it.
-        // If performance issues arise, just return the cached list instead. And consider other cache update
-        // strategies.
-        tracing::debug!("Handling list_tools request, attempting cache update first.");
+    ) -> Result<ListToolsResult, McpError> {
+    // This is implemented in an async block to avoid blocking the main thread,
+    // and to ensure that the cache is updated before reading it.
+    // If performance issues arise, just return the cached list instead. And consider other cache update
+    // strategies.
+    tracing::debug!("Handling list_tools request, attempting cache update first.");
 
-        // 1. Attempt to update the cache before reading
-        match self.update_tools_cache().await {
-            Ok(_) => {
-                tracing::debug!("Tools cache updated successfully before listing.");
-            }
-            Err(e) => {
-                // Log the error, but decide if you want to fail the request
-                // or return potentially stale data. Failing seems more correct
-                // if the update is intended to be part of the operation.
-                tracing::error!("Failed to update tools cache during list_tools: {:?}", e);
-                // Convert the anyhow::Error to McpError::internal_error
-                return Err(McpError::internal_error(
-                    format!("Failed to update tool cache before listing: {e}"),
-                    None, // No specific data to add here
-                ));
-            }
+    // 1. Attempt to update the cache before reading
+    match self.update_tools_cache().await {
+        Ok(_) => {
+            tracing::debug!("Tools cache updated successfully before listing.");
         }
-
-        // 2. Read the potentially updated cache
-        // self.list_tools() reads the static cache, which should now be updated.
-        let tools_from_cache = self.list_tools();
-
-        // 3. Construct the result
-        let result = ListToolsResult {
-            tools: tools_from_cache,
-            next_cursor: None,
-        };
-        tracing::debug!(
-            "Responding to list_tools with {} tools after cache update attempt.",
-            result.tools.len()
-        );
-        Ok(result) // Return Ok with the ListToolsResult
+        Err(e) => {
+            // Log the error, but decide if you want to fail the request
+            // or return potentially stale data. Failing seems more correct
+            // if the update is intended to be part of the operation.
+            tracing::error!("Failed to update tools cache during list_tools: {:?}", e);
+            // Convert the anyhow::Error to McpError::internal_error
+            return Err(McpError::internal_error(
+                format!("Failed to update tool cache before listing: {e}"),
+                None, // No specific data to add here
+            ));
         }
+    }
+
+    // 2. Read the potentially updated cache
+    // self.list_tools() reads the static cache, which should now be updated.
+    let tools_from_cache = self.list_tools();
+
+    // 3. Construct the result
+    let result = ListToolsResult {
+        tools: tools_from_cache,
+        next_cursor: None,
+    };
+    tracing::debug!(
+        "Responding to list_tools with {} tools after cache update attempt.",
+        result.tools.len()
+    );
+    Ok(result) // Return Ok with the ListToolsResult
     }
 }
 

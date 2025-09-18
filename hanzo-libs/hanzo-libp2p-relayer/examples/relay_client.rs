@@ -58,7 +58,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     // Start interactive session
     let stdin = io::stdin();
-    let mut reader = io::BufReader::new(stdin).lines();
+    let reader = io::BufReader::new(stdin).lines();
 
     println!("\nCommands:");
     println!("  register <identity> - Register with the relay");

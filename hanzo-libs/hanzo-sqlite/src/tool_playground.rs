@@ -4,8 +4,6 @@ use serde_json;
 use hanzo_message_primitives::schemas::{
     indexable_version::IndexableVersion, hanzo_tools::CodeLanguage,
 };
-#[cfg(test)]
-use hanzo_message_primitives::schemas::tool_router_key::ToolRouterKey;
 use hanzo_tools_primitives::tools::{
     tool_playground::{ToolPlayground, ToolPlaygroundMetadata}, tool_types::{OperatingSystem, RunnerType}
 };

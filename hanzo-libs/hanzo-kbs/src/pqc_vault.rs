@@ -3,7 +3,6 @@
 //! Provides quantum-resistant key storage and operations for different privacy tiers
 
 use async_trait::async_trait;
-use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::sync::Arc;
 use tokio::sync::RwLock;
@@ -14,14 +13,11 @@ use crate::{
     vault::KeyVault,
 };
 
-#[cfg(feature = "pqc")]
-use crate::pqc_integration::{PqcKbs, PqcHandshake, HandshakeKeys};
 
 #[cfg(feature = "pqc")]
 use hanzo_pqc::{
     kem::{Kem, KemAlgorithm, EncapsulationKey, DecapsulationKey, MlKem},
     signature::{Signature, SignatureAlgorithm, VerifyingKey, SigningKey, MlDsa},
-    hybrid::HybridMode,
     config::PqcConfig,
 };
 
@@ -129,7 +125,7 @@ impl KeyVault for PqcVault {
             .map_err(|e| SecurityError::CryptoError(format!("Key encapsulation failed: {:?}", e)))?;
         
         // Derive wrapping key from shared secret
-        use hanzo_pqc::kdf::{HkdfKdf, KdfAlgorithm, Kdf};
+        use hanzo_pqc::kdf::{HkdfKdf, Kdf};
         let kdf = HkdfKdf::new(self.config.kdf);
         let wrapping_key = kdf.derive(
             None,
@@ -141,7 +137,7 @@ impl KeyVault for PqcVault {
         // Encrypt key data with ChaCha20Poly1305
         use chacha20poly1305::{
             aead::{Aead, AeadCore, KeyInit, OsRng},
-            ChaCha20Poly1305, Nonce,
+            ChaCha20Poly1305,
         };
         
         let cipher = ChaCha20Poly1305::new_from_slice(&wrapping_key)

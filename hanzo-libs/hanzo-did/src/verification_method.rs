@@ -102,7 +102,7 @@ impl fmt::Display for VerificationMethodType {
             Self::Bls12381G2Key2020 => write!(f, "Bls12381G2Key2020"),
             Self::GpgVerificationKey2020 => write!(f, "GpgVerificationKey2020"),
             Self::RsaVerificationKey2018 => write!(f, "RsaVerificationKey2018"),
-            Self::Custom(s) => write!(f, "{}", s),
+            Self::Custom(s) => write!(f, "{s}"),
         }
     }
 }

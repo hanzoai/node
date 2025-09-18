@@ -427,7 +427,7 @@ mod tests {
     use hanzo_embedding::model_type::{EmbeddingModelType, OllamaTextEmbeddingsInference};
     
     use hanzo_message_primitives::schemas::{
-        invoices::InvoiceStatusEnum, hanzo_name::HanzoName, hanzo_tool_offering::{HanzoToolOffering, ToolPrice, UsageType, UsageTypeInquiry}, wallet_mixed::{NetworkIdentifier, PublicAddress}, x402_types::Network
+        invoices::InvoiceStatusEnum, hanzo_name::HanzoName, hanzo_tool_offering::{HanzoToolOffering, ToolPrice, UsageType, UsageTypeInquiry}, wallet_mixed::PublicAddress, x402_types::Network
     };
     use std::path::PathBuf;
     use tempfile::NamedTempFile;

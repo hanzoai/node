@@ -54,7 +54,7 @@ impl Service {
     /// Create a Hanzo node service
     pub fn hanzo_node(did: &str, endpoint: String) -> Self {
         Self::new(
-            format!("{}#hanzo-node", did),
+            format!("{did}#hanzo-node"),
             "HanzoNode".to_string(),
             endpoint,
         )
@@ -63,7 +63,7 @@ impl Service {
     /// Create an LLM provider service
     pub fn llm_provider(did: &str, endpoint: String) -> Self {
         Self::new(
-            format!("{}#llm-provider", did),
+            format!("{did}#llm-provider"),
             "LLMProvider".to_string(),
             endpoint,
         )
@@ -72,7 +72,7 @@ impl Service {
     /// Create a messaging service
     pub fn messaging(did: &str, endpoint: String) -> Self {
         Self::new(
-            format!("{}#messaging", did),
+            format!("{did}#messaging"),
             "MessagingService".to_string(),
             endpoint,
         )

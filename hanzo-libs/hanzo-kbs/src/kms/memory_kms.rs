@@ -9,7 +9,7 @@ use uuid::Uuid;
 use crate::error::{Result, SecurityError};
 use crate::kms::{
     AuditFilter, CustomerKeyMetadata, CustomerKeyReference, HsmType, KeyInfo, KeyManagementService,
-    KeyState, KeyType, KeyWrapAlgorithm, KmsConfig, RootKeySource,
+    KeyState, KeyType, KmsConfig, RootKeySource,
 };
 use crate::types::{
     AgentDek, KeyAuditEntry, KeyId, KeyOperation, RootKey, TenantKek,
@@ -38,7 +38,7 @@ impl MemoryKms {
         // Generate root key material
         let root_key_material = crate::kms::KeyHierarchy::generate_dek();
         
-        let mut key_info = DashMap::new();
+        let key_info = DashMap::new();
         key_info.insert(
             root_key_id.clone(),
             KeyInfo {
@@ -86,7 +86,7 @@ impl MemoryKms {
     fn wrap_with_aes_kwp(&self, key_data: &[u8], kek: &[u8]) -> Result<Vec<u8>> {
         // Simplified wrapping - in production use proper AES-KWP
         use chacha20poly1305::{
-            aead::{Aead, KeyInit, OsRng},
+            aead::{Aead, KeyInit},
             ChaCha20Poly1305, Nonce,
         };
         

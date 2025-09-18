@@ -1176,7 +1176,7 @@ mod tests {
     use hanzo_tools_primitives::tools::tool_types::OperatingSystem;
     use hanzo_tools_primitives::tools::tool_types::RunnerType;
     use hanzo_tools_primitives::tools::tool_types::ToolResult;
-    use std::collections::{HashMap, HashSet};
+    use std::collections::HashMap;
     use std::path::PathBuf;
     use tempfile::NamedTempFile;
 

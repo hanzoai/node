@@ -1,7 +1,7 @@
 use async_channel::{bounded, Receiver, Sender};
 use ed25519_dalek::SigningKey;
 use hanzo_embedding::embedding_generator::RemoteEmbeddingGenerator;
-use hanzo_embedding::model_type::{EmbeddingModelType, OllamaTextEmbeddingsInference};
+use hanzo_embedding::model_type::EmbeddingModelType;
 use hanzo_http_api::node_commands::NodeCommand;
 use hanzo_message_primitives::schemas::identity::IdentityType;
 use hanzo_message_primitives::schemas::job_config::JobConfig;

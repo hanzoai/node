@@ -663,7 +663,7 @@ mod tests {
     use super::*;
     use serial_test::serial;
     use hanzo_embedding::mock_generator::MockGenerator;
-    use hanzo_embedding::model_type::{EmbeddingModelType, OllamaTextEmbeddingsInference};
+    use hanzo_embedding::model_type::EmbeddingModelType;
     
     use hanzo_message_primitives::schemas::hanzo_fs::ParsedFile;
     use hanzo_message_primitives::hanzo_utils::job_scope::MinimalJobScope;

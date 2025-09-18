@@ -888,7 +888,7 @@ pub async fn get_hanzo_tool_handler(
         .to_string();
     let serialize_config = query_params
         .get("serialize_config")
-        .map(|value| if value == "false" { false } else { true })
+        .map(|value| value != "false")
         .unwrap_or(true);
     let (res_sender, res_receiver) = async_channel::bounded(1);
     sender

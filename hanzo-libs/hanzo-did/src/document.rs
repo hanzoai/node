@@ -151,7 +151,7 @@ impl DIDDocument {
     /// Find a verification method by ID
     pub fn find_verification_method(&self, id: &str) -> Option<&VerificationMethod> {
         self.verification_method.as_ref()?.iter()
-            .find(|m| m.id == id || m.id.ends_with(&format!("#{}", id)))
+            .find(|m| m.id == id || m.id.ends_with(&format!("#{id}")))
     }
 
     /// Get all verification methods for authentication
@@ -199,7 +199,7 @@ impl DIDDocument {
             for auth_ref in auth {
                 if let VerificationRelationship::Reference(id) = auth_ref {
                     if self.find_verification_method(id).is_none() {
-                        errors.push(format!("Authentication references non-existent verification method: {}", id));
+                        errors.push(format!("Authentication references non-existent verification method: {id}"));
                     }
                 }
             }
