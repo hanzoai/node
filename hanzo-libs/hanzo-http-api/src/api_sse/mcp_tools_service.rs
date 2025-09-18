@@ -280,11 +280,12 @@ impl ServerHandler for McpToolsService {
     }
 
     // Override the call_tool method
-    async fn call_tool(
+    fn call_tool(
         &self,
         request: CallToolRequestParam,
         _context: RequestContext<RoleServer>,
-    ) -> Result<CallToolResult, McpError> {
+    ) -> impl Future<Output = Result<CallToolResult, McpError>> + Send {
+        async move {
         let tool_name = request.name.to_string(); // Get the requested tool name (e.g., "network__echo")
         tracing::debug!(target: "mcp_tools_service", "Handling call_tool request for name='{}'", tool_name);
 
@@ -337,13 +338,15 @@ impl ServerHandler for McpToolsService {
                 ))
             }
         }
+        }
     }
 
-    async fn list_tools(
+    fn list_tools(
         &self,
         _request: Option<PaginatedRequestParam>,
         _context: RequestContext<RoleServer>,
-    ) -> Result<ListToolsResult, McpError> {
+    ) -> impl Future<Output = Result<ListToolsResult, McpError>> + Send {
+        async move {
         // This is implemented in an async block to avoid blocking the main thread,
         // and to ensure that the cache is updated before reading it.
         // If performance issues arise, just return the cached list instead. And consider other cache update
@@ -382,6 +385,7 @@ impl ServerHandler for McpToolsService {
             result.tools.len()
         );
         Ok(result) // Return Ok with the ListToolsResult
+        }
     }
 }
 
