@@ -1,4 +1,5 @@
 
+use hanzo_embedding::model_type::EmbeddingModelType;
 use hanzo_message_primitives::schemas::inbox_name::InboxName;
 use hanzo_message_primitives::hanzo_message::hanzo_message::HanzoMessage;
 use hanzo_message_primitives::hanzo_message::hanzo_message_schemas::MessageSchemaType;

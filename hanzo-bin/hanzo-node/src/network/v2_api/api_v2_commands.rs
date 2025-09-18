@@ -54,6 +54,7 @@ use hanzo_message_primitives::{
         encryption::{encryption_public_key_to_string, EncryptionMethod},
         hanzo_message_builder::HanzoMessageBuilder,
         signatures::signature_public_key_to_string,
+        hanzo_logging::{hanzo_log, HanzoLogLevel, HanzoLogOption},
     },
     hanzo_utils::{job_scope::MinimalJobScope, hanzo_time::HanzoStringTime},
 };
@@ -3230,10 +3231,19 @@ impl Node {
     }
 
     pub async fn v2_api_docker_status(res: Sender<Result<serde_json::Value, APIError>>) -> Result<(), NodeError> {
-        let docker_status = match hanzo_tools_runner::tools::container_utils::is_docker_available() {
-            hanzo_tools_runner::tools::container_utils::DockerStatus::NotInstalled => "not-installed",
-            hanzo_tools_runner::tools::container_utils::DockerStatus::NotRunning => "not-running",
-            hanzo_tools_runner::tools::container_utils::DockerStatus::Running => "running",
+        // Simple Docker status check
+        let docker_status = if let Ok(output) = tokio::process::Command::new("docker")
+            .arg("info")
+            .output()
+            .await
+        {
+            if output.status.success() {
+                "running"
+            } else {
+                "not-running"
+            }
+        } else {
+            "not-installed"
         };
 
         let _ = res

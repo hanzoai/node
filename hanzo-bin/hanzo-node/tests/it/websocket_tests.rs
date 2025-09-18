@@ -35,7 +35,6 @@ use hanzo_message_primitives::hanzo_utils::signatures::unsafe_deterministic_sign
 use hanzo_node::managers::identity_manager::IdentityManagerTrait;
 use hanzo_node::network::{ws_manager::WebSocketManager, ws_routes::run_ws_api};
 use hanzo_sqlite::SqliteManager;
-use hanzo_embedding::model_type::EmbeddingModelType;
 use std::env;
 use std::net::TcpListener;
 use std::path::PathBuf;
