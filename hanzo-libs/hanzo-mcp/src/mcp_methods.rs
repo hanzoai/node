@@ -21,10 +21,10 @@ pub async fn list_tools_via_command(cmd_str: &str, config: Option<HashMap<String
 
     // Retain the TokioChildProcess so we can wait on it after cancellation
     let child_process = TokioChildProcess::new(cmd).map_err(|e| McpError {
-        message: format!("{}", e),
+        message: format!("{e}"),
     })?;
     let service = ().serve(child_process).await.map_err(|e| McpError {
-        message: format!("{}", e),
+        message: format!("{e}"),
     })?;
     // 2. Initialize the MCP server
     service.peer_info();
@@ -33,13 +33,13 @@ pub async fn list_tools_via_command(cmd_str: &str, config: Option<HashMap<String
     let tools = service
         .list_all_tools()
         .await
-        .inspect_err(|e| log::error!("error listing tools: {:?}", e));
+        .inspect_err(|e| log::error!("error listing tools: {e:?}"));
 
     // 4. Gracefully shut down the service (drops stdio, child should exit)
     let _ = service
         .cancel()
         .await
-        .inspect_err(|e| log::error!("error cancelling sse service: {:?}", e));
+        .inspect_err(|e| log::error!("error cancelling sse service: {e:?}"));
 
     Ok(tools.unwrap())
 }
@@ -47,8 +47,9 @@ pub async fn list_tools_via_command(cmd_str: &str, config: Option<HashMap<String
 pub async fn list_tools_via_sse(sse_url: &str, _config: Option<HashMap<String, String>>) -> Result<Vec<Tool>> {
     // TODO: The config parameter is not currently used by SseTransport or ClientInfo setup in the example.
     // It might be used in the future for authentication headers or other SSE-specific configurations.
+    // Use the convenience constructor that's available with transport-sse-client-reqwest feature
     let transport = SseClientTransport::start(sse_url).await.map_err(|e| McpError {
-        message: format!("{}", e),
+        message: format!("{e}"),
     })?;
     let client_info = ClientInfo {
         protocol_version: Default::default(),
@@ -56,10 +57,13 @@ pub async fn list_tools_via_sse(sse_url: &str, _config: Option<HashMap<String, S
         client_info: Implementation {
             name: "hanzo_node_sse_client".to_string(),
             version: env!("CARGO_PKG_VERSION").to_string(),
+            title: Some("Hanzo Node SSE Client".to_string()),
+            website_url: Some("https://hanzo.ai".to_string()),
+            icons: None,
         },
     };
     let client = client_info.serve(transport).await.map_err(|e| McpError {
-        message: format!("SSE client connection error: {:?}", e),
+        message: format!("SSE client connection error: {e:?}"),
     })?;
 
     // Initialize and log server info (optional, but good for debugging)
@@ -69,13 +73,13 @@ pub async fn list_tools_via_sse(sse_url: &str, _config: Option<HashMap<String, S
     let tools_result = client
         .list_all_tools()
         .await
-        .inspect_err(|e| log::error!("error listing tools: {:?}", e));
+        .inspect_err(|e| log::error!("error listing tools: {e:?}"));
 
     // Gracefully shut down the client
     let _ = client
         .cancel()
         .await
-        .inspect_err(|e| log::error!("error cancelling sse service: {:?}", e));
+        .inspect_err(|e| log::error!("error cancelling sse service: {e:?}"));
 
     Ok(tools_result.unwrap())
 }
@@ -83,6 +87,7 @@ pub async fn list_tools_via_sse(sse_url: &str, _config: Option<HashMap<String, S
 pub async fn list_tools_via_http(sse_url: &str, _config: Option<HashMap<String, String>>) -> Result<Vec<Tool>> {
     // TODO: The config parameter is not currently used by SseTransport or ClientInfo setup in the example.
     // It might be used in the future for authentication headers or other SSE-specific configurations.
+    // Use the convenience constructor that's available with transport-streamable-http-client-reqwest feature
     let transport = StreamableHttpClientTransport::from_uri(sse_url);
     let client_info = ClientInfo {
         protocol_version: Default::default(),
@@ -90,10 +95,13 @@ pub async fn list_tools_via_http(sse_url: &str, _config: Option<HashMap<String, 
         client_info: Implementation {
             name: "hanzo_node_http_client".to_string(),
             version: env!("CARGO_PKG_VERSION").to_string(),
+            title: Some("Hanzo Node HTTP Client".to_string()),
+            website_url: Some("https://hanzo.ai".to_string()),
+            icons: None,
         },
     };
     let client = client_info.serve(transport).await.map_err(|e| McpError {
-        message: format!("HTTP client connection error: {:?}", e),
+        message: format!("HTTP client connection error: {e:?}"),
     })?;
 
     // Initialize and log server info (optional, but good for debugging)
@@ -103,13 +111,13 @@ pub async fn list_tools_via_http(sse_url: &str, _config: Option<HashMap<String, 
     let tools_result = client
         .list_all_tools()
         .await
-        .inspect_err(|e| log::error!("error listing tools: {:?}", e));
+        .inspect_err(|e| log::error!("error listing tools: {e:?}"));
 
     // Gracefully shut down the client
     let _ = client
         .cancel()
         .await
-        .inspect_err(|e| log::error!("error cancelling http service: {:?}", e));
+        .inspect_err(|e| log::error!("error cancelling http service: {e:?}"));
 
     Ok(tools_result.unwrap())
 }
@@ -122,9 +130,9 @@ pub async fn run_tool_via_command(
 ) -> Result<CallToolResult> {
     let (_, cmd_executable, cmd_args) = disect_command(command);
 
-    println!("cmd_executable: {}", cmd_executable);
-    println!("env_vars: {:?}", env_vars);
-    println!("cmd_args: {:?}", cmd_args);
+    println!("cmd_executable: {cmd_executable}");
+    println!("env_vars: {env_vars:?}");
+    println!("cmd_args: {cmd_args:?}");
 
     // Use the wrap_in_shell_as_values function to prepare the command
     let (adapted_program, adapted_args, adapted_envs) =
@@ -138,11 +146,11 @@ pub async fn run_tool_via_command(
 
     let service = ()
         .serve(TokioChildProcess::new(cmd).map_err(|e| McpError {
-            message: format!("{}", e),
+            message: format!("{e}"),
         })?)
         .await
         .map_err(|e| McpError {
-            message: format!("{}", e),
+            message: format!("{e}"),
         })?;
     service.peer_info();
 
@@ -156,10 +164,10 @@ pub async fn run_tool_via_command(
     let _ = service
         .cancel()
         .await
-        .inspect_err(|e| log::error!("error cancelling stdio service: {:?}", e));
-    Ok(call_tool_result.map_err(|e| McpError {
-        message: format!("{}", e),
-    })?)
+        .inspect_err(|e| log::error!("error cancelling stdio service: {e:?}"));
+    call_tool_result.map_err(|e| McpError {
+        message: format!("{e}"),
+    })
 }
 
 pub async fn run_tool_via_sse(
@@ -167,11 +175,12 @@ pub async fn run_tool_via_sse(
     tool: String,
     parameters: serde_json::Map<String, serde_json::Value>,
 ) -> Result<CallToolResult> {
+    // Use the convenience constructor that's available with transport-sse-client-reqwest feature
     let transport = SseClientTransport::start(url)
         .await
-        .inspect_err(|e| log::error!("error starting sse transport: {:?}", e))
+        .inspect_err(|e| log::error!("error starting sse transport: {e:?}"))
         .map_err(|e| McpError {
-            message: format!("{}", e),
+            message: format!("{e}"),
         })?;
 
     let client_info = ClientInfo {
@@ -180,16 +189,19 @@ pub async fn run_tool_via_sse(
         client_info: Implementation {
             name: "Hanzo Node Client".to_string(),
             version: "0.0.1".to_string(),
+            title: Some("Hanzo Node Client".to_string()),
+            website_url: Some("https://hanzo.ai".to_string()),
+            icons: None,
         },
     };
     let client = client_info
         .serve(transport)
         .await
         .inspect_err(|e| {
-            log::error!("client error: {:?}", e);
+            log::error!("client error: {e:?}");
         })
         .map_err(|e| McpError {
-            message: format!("{}", e),
+            message: format!("{e}"),
         })?;
 
     // Initialize
@@ -202,14 +214,14 @@ pub async fn run_tool_via_sse(
             arguments: Some(parameters),
         })
         .await
-        .inspect_err(|e| log::error!("error calling tool: {:?}", e));
+        .inspect_err(|e| log::error!("error calling tool: {e:?}"));
     let _ = client
         .cancel()
         .await
-        .inspect_err(|e| log::error!("error cancelling sse service: {:?}", e));
-    Ok(call_tool_result.map_err(|e| McpError {
-        message: format!("{}", e),
-    })?)
+        .inspect_err(|e| log::error!("error cancelling sse service: {e:?}"));
+    call_tool_result.map_err(|e| McpError {
+        message: format!("{e}"),
+    })
 }
 
 pub async fn run_tool_via_http(
@@ -217,6 +229,7 @@ pub async fn run_tool_via_http(
     tool: String,
     parameters: serde_json::Map<String, serde_json::Value>,
 ) -> Result<CallToolResult> {
+    // Use the convenience constructor that's available with transport-streamable-http-client-reqwest feature
     let transport = StreamableHttpClientTransport::from_uri(url);
 
     let client_info = ClientInfo {
@@ -225,16 +238,19 @@ pub async fn run_tool_via_http(
         client_info: Implementation {
             name: "Hanzo Node HTTP Client".to_string(),
             version: env!("CARGO_PKG_VERSION").to_string(),
+            title: Some("Hanzo Node HTTP Client".to_string()),
+            website_url: Some("https://hanzo.ai".to_string()),
+            icons: None,
         },
     };
     let client = client_info
         .serve(transport)
         .await
         .inspect_err(|e| {
-            log::error!("client error: {:?}", e);
+            log::error!("client error: {e:?}");
         })
         .map_err(|e| McpError {
-            message: format!("{}", e),
+            message: format!("{e}"),
         })?;
 
     // Initialize
@@ -247,14 +263,14 @@ pub async fn run_tool_via_http(
             arguments: Some(parameters),
         })
         .await
-        .inspect_err(|e| log::error!("error calling tool: {:?}", e));
+        .inspect_err(|e| log::error!("error calling tool: {e:?}"));
     let _ = client
         .cancel()
         .await
-        .inspect_err(|e| log::error!("error cancelling sse service: {:?}", e));
-    Ok(call_tool_result.map_err(|e| McpError {
-        message: format!("{}", e),
-    })?)
+        .inspect_err(|e| log::error!("error cancelling sse service: {e:?}"));
+    call_tool_result.map_err(|e| McpError {
+        message: format!("{e}"),
+    })
 }
 
 #[cfg(test)]

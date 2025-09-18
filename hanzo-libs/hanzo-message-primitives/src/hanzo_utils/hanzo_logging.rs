@@ -148,7 +148,7 @@ pub fn hanzo_log(option: HanzoLogOption, level: HanzoLogLevel, message: &str) {
         let is_simple_log = std::env::var("LOG_SIMPLE").is_ok();
         let time = Local::now().format("%Y-%m-%d %H:%M:%S");
 
-        let option_str = format!("{:?}", option);
+        let option_str = format!("{option:?}");
         let level_str = match level {
             HanzoLogLevel::Error => "ERROR",
             HanzoLogLevel::Info => "INFO",
@@ -162,8 +162,8 @@ pub fn hanzo_log(option: HanzoLogOption, level: HanzoLogLevel, message: &str) {
             let app_name = "hanzo";
             let proc_id = std::process::id().to_string();
             let msg_id = "-";
-            let header = format!("{} {} {} {} {}", time, hostname, app_name, proc_id, msg_id);
-            format!("{} - {} - {} - {}", header, level_str, option_str, message)
+            let header = format!("{time} {hostname} {app_name} {proc_id} {msg_id}");
+            format!("{header} - {level_str} - {option_str} - {message}")
         };
 
         // Conditional compilation: Only include tracing-related code for non-WASM targets

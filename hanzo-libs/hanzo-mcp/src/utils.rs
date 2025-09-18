@@ -2,14 +2,14 @@ use std::collections::HashMap;
 use regex::Regex;
 
 pub fn disect_command(command: String) -> (HashMap<String, String>, String, Vec<String>) {
-    let mut cmd_parts = command.trim().split_whitespace();
+    let cmd_parts = command.split_whitespace();
     let mut env_vars = HashMap::new();
     let mut cmd_executable = "";
     let mut cmd_args = Vec::new();
 
     let env_regex = Regex::new(r#"^([A-Z0-9_]+)=(.*)$"#).unwrap();
-    while let Some(part) = cmd_parts.next() {
-        println!("part: {}", part);
+    for part in cmd_parts {
+        println!("part: {part}");
         if let Some(captures) = env_regex.captures(part) {
             let key = captures[1].to_string();
             let mut value = captures[2].to_string();

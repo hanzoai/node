@@ -15,7 +15,7 @@ pub struct Output {
 }
 
 pub async fn parse_docx(file_path: PathBuf) -> Result<Output, RunError> {
-    println!("parsing docx file: {:?}", file_path);
+    println!("parsing docx file: {file_path:?}");
     let code = r#"
             import mammoth from 'npm:mammoth';
             import TurndownService from 'npm:turndown';

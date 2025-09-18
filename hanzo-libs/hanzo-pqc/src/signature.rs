@@ -3,7 +3,7 @@
 
 use async_trait::async_trait;
 use serde::{Deserialize, Serialize};
-use zeroize::{Zeroize, ZeroizeOnDrop};
+use zeroize::Zeroize;
 use crate::{PqcError, Result};
 
 /// Signature algorithms supported
@@ -141,6 +141,12 @@ pub struct MlDsa {
 }
 
 #[cfg(feature = "ml-dsa")]
+impl Default for MlDsa {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl MlDsa {
     pub fn new() -> Self {
         Self {
@@ -156,7 +162,7 @@ impl Signature for MlDsa {
         use oqs::sig::Sig;
         
         let oqs_alg = alg.to_oqs_alg()
-            .ok_or_else(|| PqcError::UnsupportedAlgorithm(format!("{:?} not supported", alg)))?;
+            .ok_or_else(|| PqcError::UnsupportedAlgorithm(format!("{alg:?} not supported")))?;
         
         let sig = Sig::new(oqs_alg)
             .map_err(|_| PqcError::SignatureError("Failed to create signature".into()))?;
@@ -188,7 +194,7 @@ impl Signature for MlDsa {
         let sk = sig.secret_key_from_bytes(&key.key_bytes)
             .ok_or_else(|| PqcError::SignatureError("Invalid signing key".into()))?;
         
-        let signature = sig.sign(message, &sk)
+        let signature = sig.sign(message, sk)
             .map_err(|_| PqcError::SignatureError("Signing failed".into()))?;
         
         Ok(DigitalSignature {
@@ -221,7 +227,7 @@ impl Signature for MlDsa {
         let sig_bytes = sig.signature_from_bytes(&signature.signature_bytes)
             .ok_or_else(|| PqcError::SignatureError("Invalid signature".into()))?;
         
-        Ok(sig.verify(message, &sig_bytes, &pk).is_ok())
+        Ok(sig.verify(message, sig_bytes, pk).is_ok())
     }
 }
 
@@ -279,7 +285,7 @@ impl Signature for Ed25519Sig {
         let mut vk_bytes = [0u8; 32];
         vk_bytes.copy_from_slice(&key.key_bytes);
         let verifying_key = Ed25519VerifyingKey::from_bytes(&vk_bytes)
-            .map_err(|e| PqcError::SignatureError(format!("Invalid verifying key: {}", e)))?;
+            .map_err(|e| PqcError::SignatureError(format!("Invalid verifying key: {e}")))?;
         
         let mut sig_bytes = [0u8; 64];
         sig_bytes.copy_from_slice(&signature.signature_bytes);

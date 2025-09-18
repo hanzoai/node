@@ -180,7 +180,7 @@ pub fn domain_separate(
     domain: &str,
     output_len: usize,
 ) -> Result<Vec<u8>> {
-    let info = format!("hanzo-pqc-v1|{}", domain);
+    let info = format!("hanzo-pqc-v1|{domain}");
     kdf.expand(key_material, info.as_bytes(), output_len)
 }
 

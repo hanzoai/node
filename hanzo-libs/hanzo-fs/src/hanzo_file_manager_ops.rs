@@ -230,7 +230,7 @@ mod tests {
         let db_path = PathBuf::from(temp_file.path());
         let api_url = String::new();
         let model_type =
-            EmbeddingModelType::OllamaTextEmbeddingsInference(OllamaTextEmbeddingsInference::SnowflakeArcticEmbedM);
+            EmbeddingModelType::default();
 
         SqliteManager::new(db_path, api_url, model_type).unwrap()
     }
@@ -418,10 +418,9 @@ mod tests {
 
         assert!(found_file, "File 'old_file.txt' should be found in the directory.");
 
-        let mock_generator = MockGenerator::new(
-            EmbeddingModelType::OllamaTextEmbeddingsInference(OllamaTextEmbeddingsInference::SnowflakeArcticEmbedM),
-            10,
-        );
+        let model_type = EmbeddingModelType::default();
+        let vector_dimensions = model_type.vector_dimensions().unwrap_or(768);
+        let mock_generator = MockGenerator::new(model_type, vector_dimensions);
 
         // Add embeddings to the file
         let _ = HanzoFileManager::process_embeddings_for_file(

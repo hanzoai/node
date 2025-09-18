@@ -15,14 +15,14 @@ pub enum HanzoMessageError {
 impl fmt::Display for HanzoMessageError {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match self {
-            HanzoMessageError::SigningError(msg) => write!(f, "SigningError: {}", msg),
-            HanzoMessageError::DecryptionError(msg) => write!(f, "DecryptionError: {}", msg),
-            HanzoMessageError::EncryptionError(msg) => write!(f, "EncryptionError: {}", msg),
-            HanzoMessageError::InvalidMessageSchemaType(msg) => write!(f, "InvalidMessageSchemaType: {}", msg),
-            HanzoMessageError::MissingMessageBody(msg) => write!(f, "MissingMessageBody: {}", msg),
-            HanzoMessageError::DeserializationError(msg) => write!(f, "DeserializationError: {}", msg),
-            HanzoMessageError::SerializationError(msg) => write!(f, "SerializationError: {}", msg),
-            HanzoMessageError::AlreadyEncrypted(msg) => write!(f, "AlreadyEncrypted: {}", msg),
+            HanzoMessageError::SigningError(msg) => write!(f, "SigningError: {msg}"),
+            HanzoMessageError::DecryptionError(msg) => write!(f, "DecryptionError: {msg}"),
+            HanzoMessageError::EncryptionError(msg) => write!(f, "EncryptionError: {msg}"),
+            HanzoMessageError::InvalidMessageSchemaType(msg) => write!(f, "InvalidMessageSchemaType: {msg}"),
+            HanzoMessageError::MissingMessageBody(msg) => write!(f, "MissingMessageBody: {msg}"),
+            HanzoMessageError::DeserializationError(msg) => write!(f, "DeserializationError: {msg}"),
+            HanzoMessageError::SerializationError(msg) => write!(f, "SerializationError: {msg}"),
+            HanzoMessageError::AlreadyEncrypted(msg) => write!(f, "AlreadyEncrypted: {msg}"),
         }
     }
 }

@@ -26,7 +26,7 @@ impl SqliteManager {
             agent.agent_id
         );
         let _agent_name = HanzoName::new(agent_name_str.clone())
-            .map_err(|_| SqliteManagerError::InvalidIdentityName(format!("Invalid HanzoName: {}", agent_name_str)))?;
+            .map_err(|_| SqliteManagerError::InvalidIdentityName(format!("Invalid HanzoName: {agent_name_str}")))?;
 
         let knowledge = serde_json::to_string(&agent.knowledge).unwrap();
         let config = agent.config.map(|c| serde_json::to_string(&c).unwrap());
@@ -134,7 +134,7 @@ impl SqliteManager {
                     })?),
                     None => None,
                 },
-                edited: edited,
+                edited,
             })
         })?;
 
@@ -203,7 +203,7 @@ impl SqliteManager {
                     })?),
                     None => None,
                 },
-                edited: edited,
+                edited,
             })
         });
 
@@ -267,7 +267,7 @@ impl SqliteManager {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use hanzo_embedding::model_type::{EmbeddingModelType, NativeMistralEmbeddings};
+    use hanzo_embedding::model_type::{EmbeddingModelType, OllamaTextEmbeddingsInference};
     
     use hanzo_message_primitives::schemas::{hanzo_name::HanzoName, tool_router_key::ToolRouterKey};
     use std::collections::HashMap;
@@ -279,7 +279,7 @@ mod tests {
         let db_path = PathBuf::from(temp_file.path());
         let api_url = String::new();
         let model_type =
-            EmbeddingModelType::NativeMistralEmbeddings(NativeMistralEmbeddings::Qwen3Embedding8B);
+            EmbeddingModelType::OllamaTextEmbeddingsInference(OllamaTextEmbeddingsInference::EmbeddingGemma300M);
 
         SqliteManager::new(db_path, api_url, model_type).unwrap()
     }

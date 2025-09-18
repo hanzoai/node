@@ -14,6 +14,10 @@ members = [
   "hanzo-libs/hanzo-mcp",
   "hanzo-libs/hanzo-pqc",
   "hanzo-libs/hanzo-kbs",
+  "hanzo-libs/hanzo-did",
+  "hanzo-libs/hanzo-model-discovery",
+  "hanzo-libs/hanzo-config",
+  "hanzo-libs/hanzo-mining",
   "hanzo-test-framework",
   "hanzo-test-macro",
   "hanzo-bin/*",
@@ -21,7 +25,7 @@ members = [
 resolver = "2"
 
 [workspace.package]
-version = "1.1.8"
+version = "1.1.10"
 edition = "2021"
 authors = ["Nico Arqueros <nico@hanzo.com>"]
 
@@ -40,6 +44,9 @@ hanzo_non_rust_code = { path = "./hanzo-libs/hanzo-non-rust-code" }
 hanzo_mcp = { path = "./hanzo-libs/hanzo-mcp" }
 hanzo_pqc = { path = "./hanzo-libs/hanzo-pqc" }
 hanzo_kbs = { path = "./hanzo-libs/hanzo-kbs" }
+hanzo_did = { path = "./hanzo-libs/hanzo-did" }
+hanzo_config = { path = "./hanzo-libs/hanzo-config" }
+hanzo_mining = { path = "./hanzo-libs/hanzo-mining" }
 
 rmcp = { version = "0.6" }
 futures = "0.3.30"

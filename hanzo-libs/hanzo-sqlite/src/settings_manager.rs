@@ -86,7 +86,7 @@ impl SqliteManager {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use hanzo_embedding::model_type::{EmbeddingModelType, NativeMistralEmbeddings};
+    use hanzo_embedding::model_type::{EmbeddingModelType, OllamaTextEmbeddingsInference};
     
     use std::path::PathBuf;
     use tempfile::NamedTempFile;
@@ -96,7 +96,7 @@ mod tests {
         let db_path = PathBuf::from(temp_file.path());
         let api_url = String::new();
         let model_type =
-            EmbeddingModelType::NativeMistralEmbeddings(NativeMistralEmbeddings::Qwen3Embedding8B);
+            EmbeddingModelType::OllamaTextEmbeddingsInference(OllamaTextEmbeddingsInference::EmbeddingGemma300M);
 
         SqliteManager::new(db_path, api_url, model_type).unwrap()
     }
@@ -104,8 +104,8 @@ mod tests {
     #[tokio::test]
     async fn test_update_and_get_supported_embedding_models() {
         let manager = setup_test_db();
-        let models = vec![EmbeddingModelType::NativeMistralEmbeddings(
-            NativeMistralEmbeddings::Qwen3Embedding8B,
+        let models = vec![EmbeddingModelType::OllamaTextEmbeddingsInference(
+            OllamaTextEmbeddingsInference::EmbeddingGemma300M,
         )];
 
         // Insert the models
@@ -116,8 +116,8 @@ mod tests {
         assert_eq!(models, updated_models);
 
         let new_models = vec![
-            EmbeddingModelType::NativeMistralEmbeddings(NativeMistralEmbeddings::Qwen3Embedding8B),
-            EmbeddingModelType::NativeMistralEmbeddings(NativeMistralEmbeddings::Qwen3Embedding4B),
+            EmbeddingModelType::OllamaTextEmbeddingsInference(OllamaTextEmbeddingsInference::EmbeddingGemma300M),
+            EmbeddingModelType::OllamaTextEmbeddingsInference(OllamaTextEmbeddingsInference::SnowflakeArcticEmbedM),
         ];
 
         // Update the models

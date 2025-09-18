@@ -41,7 +41,7 @@ impl HanzoToolOffering {
         let toolkit_name = parts[1];
         let tool_name = parts[2];
 
-        let local_tool_key = format!("local:::{}:::{}", toolkit_name, tool_name);
+        let local_tool_key = format!("local:::{toolkit_name}:::{tool_name}");
         Ok(local_tool_key)
     }
 }

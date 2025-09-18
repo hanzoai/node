@@ -26,7 +26,6 @@ impl EmbeddingFunction {
     pub async fn request_embeddings(&self, prompt: &str) -> Result<Vec<f32>, rusqlite::Error> {
         let model_str = match &self.model_type {
             EmbeddingModelType::OllamaTextEmbeddingsInference(model) => model.to_string(),
-            EmbeddingModelType::NativeMistralEmbeddings(model) => model.to_string(),
         };
 
         let max_tokens = self.model_type.max_input_token_count();
@@ -56,15 +55,15 @@ impl EmbeddingFunction {
                     return Err(rusqlite::Error::InvalidQuery);
                 }
                 let ollama_response = response.json::<OllamaResponse>().await.map_err(|e| {
-                    println!("Failed to convert response to OllamaResponse: {}", e);
+                    println!("Failed to convert response to OllamaResponse: {e}");
                     rusqlite::Error::InvalidQuery
                 })?;
 
                 Ok(ollama_response.embedding)
             }
             Err(e) => {
-                println!("Failed to send request to embedding API: {}", e);
-                return Err(rusqlite::Error::InvalidParameterName(e.to_string()));
+                println!("Failed to send request to embedding API: {e}");
+                Err(rusqlite::Error::InvalidParameterName(e.to_string()))
             }
         }
     }

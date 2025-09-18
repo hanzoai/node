@@ -14,7 +14,7 @@ async fn handle_rejection(err: Rejection) -> Result<impl Reply, Rejection> {
     hanzo_log(
         HanzoLogOption::WsAPI,
         HanzoLogLevel::Error,
-        &format!("unhandled rejection: {:?}", err),
+        &format!("unhandled rejection: {err:?}"),
     );
 
     // Return a generic error message

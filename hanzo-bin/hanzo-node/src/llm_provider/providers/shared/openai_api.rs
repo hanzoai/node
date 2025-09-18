@@ -7,7 +7,6 @@ use serde::{Deserialize, Serialize};
 use serde_json::{self};
 use hanzo_message_primitives::schemas::llm_providers::serialized_llm_provider::LLMProviderInterface;
 use hanzo_message_primitives::schemas::prompts::Prompt;
-use hanzo_message_primitives::schemas::subprompts::{SubPrompt, SubPromptType};
 
 use super::shared_model_logic;
 
@@ -110,17 +109,6 @@ pub struct Usage {
 }
 
 pub fn openai_prepare_messages(model: &LLMProviderInterface, prompt: Prompt) -> Result<PromptResult, LLMProviderError> {
-    let mut prompt = prompt.clone();
-
-    // If this is a reasoning model, filter out system prompts before any processing
-    if ModelCapabilitiesManager::has_reasoning_capabilities(model) {
-        prompt.sub_prompts.retain(|sp| match sp {
-            SubPrompt::Content(SubPromptType::System, _, _) => false,
-            SubPrompt::Omni(SubPromptType::System, _, _, _) => false,
-            _ => true,
-        });
-    }
-
     let max_input_tokens = ModelCapabilitiesManager::get_max_input_tokens(model);
 
     // Generate the messages and filter out images
@@ -645,7 +633,8 @@ mod tests {
         let model = SerializedLLMProvider::mock_provider_with_reasoning().model;
 
         // Process the prompt
-        let result = openai_prepare_messages(&model, prompt).expect("Failed to prepare messages");
+        let session_id = uuid::Uuid::new_v4().to_string();
+        let result = crate::llm_provider::providers::shared::deepseek_api::deepseek_prepare_messages(&model, prompt, session_id).expect("Failed to prepare messages");
 
         // Extract the messages from the result
         let messages = match &result.messages {

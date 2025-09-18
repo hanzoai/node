@@ -7,7 +7,6 @@ use crate::network::Node;
 
 use async_channel::Sender;
 use dashmap::DashMap;
-use chrono::Utc;
 use ed25519_dalek::{SigningKey, VerifyingKey};
 use log::{error, info};
 use hanzo_fs;

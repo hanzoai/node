@@ -67,7 +67,7 @@ impl HanzoName {
                 hanzo_log(
                     HanzoLogOption::Identity,
                     HanzoLogLevel::Error,
-                    &format!("Invalid subidentity type: {}", s),
+                    &format!("Invalid subidentity type: {s}"),
                 );
                 panic!("Invalid subidentity type");
             }
@@ -90,7 +90,7 @@ impl HanzoName {
                 hanzo_log(
                     HanzoLogOption::Identity,
                     HanzoLogLevel::Info,
-                    &format!("Validation error: {}", err),
+                    &format!("Validation error: {err}"),
                 );
                 false
             }
@@ -105,8 +105,7 @@ impl HanzoName {
                 HanzoLogOption::Identity,
                 HanzoLogLevel::Info,
                 &format!(
-                    "Name should have one to four parts: node, profile, type (device or agent), and name: {}",
-                    raw_name
+                    "Name should have one to four parts: node, profile, type (device or agent), and name: {raw_name}"
                 ),
             );
             return Err("Name should have one to four parts: node, profile, type (device or agent), and name.");
@@ -116,7 +115,7 @@ impl HanzoName {
             hanzo_log(
                 HanzoLogOption::Identity,
                 HanzoLogLevel::Info,
-                &format!("Validation error: {}", raw_name),
+                &format!("Validation error: {raw_name}"),
             );
             return Err("Node part of the name should start with '@@' and end with a valid ending ('.hanzo', '.arb-sep-hanzo', '.sep-hanzo', etc.).");
         }
@@ -126,7 +125,7 @@ impl HanzoName {
             hanzo_log(
                 HanzoLogOption::Identity,
                 HanzoLogLevel::Info,
-                &format!("Node part of the name contains invalid characters: {}", raw_name),
+                &format!("Node part of the name contains invalid characters: {raw_name}"),
             );
             return Err("Node part of the name contains invalid characters.");
         }
@@ -139,7 +138,7 @@ impl HanzoName {
                     hanzo_log(
                         HanzoLogOption::Identity,
                         HanzoLogLevel::Info,
-                        &format!("Root node name cannot contain '/': {}", raw_name),
+                        &format!("Root node name cannot contain '/': {raw_name}"),
                     );
                     return Err("Root node name cannot contain '/'.");
                 }
@@ -153,7 +152,7 @@ impl HanzoName {
                 hanzo_log(
                     HanzoLogOption::Identity,
                     HanzoLogLevel::Info,
-                    &format!("The third part should either be 'agent' or 'device': {}", raw_name),
+                    &format!("The third part should either be 'agent' or 'device': {raw_name}"),
                 );
                 return Err("The third part should either be 'agent' or 'device'.");
             }
@@ -163,8 +162,7 @@ impl HanzoName {
                     HanzoLogOption::Identity,
                     HanzoLogLevel::Info,
                     &format!(
-                        "The fourth part (name after 'agent' or 'device') should be alphanumeric or underscore: {}",
-                        raw_name
+                        "The fourth part (name after 'agent' or 'device') should be alphanumeric or underscore: {raw_name}"
                     ),
                 );
                 return Err("The fourth part (name after 'agent' or 'device') should be alphanumeric or underscore.");
@@ -175,8 +173,7 @@ impl HanzoName {
                     HanzoLogOption::Identity,
                     HanzoLogLevel::Info,
                     &format!(
-                        "Name parts should be alphanumeric or underscore and not contain '.hanzo': {}",
-                        raw_name
+                        "Name parts should be alphanumeric or underscore and not contain '.hanzo': {raw_name}"
                     ),
                 );
                 return Err("Name parts should be alphanumeric or underscore and not contain '.hanzo'.");
@@ -184,15 +181,14 @@ impl HanzoName {
         }
 
         if parts.len() == 3
-            && (parts[2] == &HanzoSubidentityType::Agent.to_string()
-                || parts[2] == &HanzoSubidentityType::Device.to_string())
+            && (parts[2] == HanzoSubidentityType::Agent.to_string()
+                || parts[2] == HanzoSubidentityType::Device.to_string())
         {
             hanzo_log(
                 HanzoLogOption::Identity,
                 HanzoLogLevel::Info,
                 &format!(
-                    "If type is 'agent' or 'device', a fourth part is expected: {}",
-                    raw_name
+                    "If type is 'agent' or 'device', a fourth part is expected: {raw_name}"
                 ),
             );
             return Err("If type is 'agent' or 'device', a fourth part is expected.");
@@ -294,11 +290,10 @@ impl HanzoName {
             format!("/{}", body.internal_metadata.sender_subidentity)
         };
 
-        match Self::new(format!("{}{}", node, sender_subidentity)) {
+        match Self::new(format!("{node}{sender_subidentity}")) {
             Ok(name) => Ok(name),
             Err(_) => Err(HanzoNameError::InvalidNameFormat(format!(
-                "{}{}",
-                node, sender_subidentity
+                "{node}{sender_subidentity}"
             ))),
         }
     }
@@ -331,11 +326,10 @@ impl HanzoName {
             format!("/{}", body.internal_metadata.recipient_subidentity)
         };
 
-        match Self::new(format!("{}{}", node, recipient_subidentity)) {
+        match Self::new(format!("{node}{recipient_subidentity}")) {
             Ok(name) => Ok(name),
             Err(_) => Err(HanzoNameError::InvalidNameFormat(format!(
-                "{}{}",
-                node, recipient_subidentity
+                "{node}{recipient_subidentity}"
             ))),
         }
     }
@@ -453,12 +447,12 @@ impl HanzoName {
 
         // Prepend with "@@" if the node doesn't already start with "@@"
         if !node_name.starts_with("@@") {
-            node_name = format!("@@{}", node_name);
+            node_name = format!("@@{node_name}");
         }
 
         // Check if the node_name ends with any of the valid endings, append ".hanzo" if not
         if !Self::VALID_ENDINGS.iter().any(|&ending| node_name.ends_with(ending)) {
-            node_name = format!("{}.hanzo", node_name);
+            node_name = format!("{node_name}.hanzo");
         }
 
         // Reconstruct the name
@@ -547,22 +541,22 @@ impl fmt::Display for HanzoNameError {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match self {
             HanzoNameError::MissingBody(message) => {
-                write!(f, "Missing body in HanzoMessage: {}", message)
+                write!(f, "Missing body in HanzoMessage: {message}")
             }
             HanzoNameError::MissingInternalMetadata(message) => {
-                write!(f, "Missing internal metadata in HanzoMessage: {}", message)
+                write!(f, "Missing internal metadata in HanzoMessage: {message}")
             }
             HanzoNameError::MetadataMissing => write!(f, "Metadata missing"),
             HanzoNameError::MessageBodyMissing => write!(f, "Message body missing"),
             HanzoNameError::InvalidGroupFormat(message) => {
-                write!(f, "Invalid group format: {}", message)
+                write!(f, "Invalid group format: {message}")
             }
             HanzoNameError::InvalidNameFormat(message) => {
-                write!(f, "Invalid name format: {}", message)
+                write!(f, "Invalid name format: {message}")
             }
-            HanzoNameError::SomeError(message) => write!(f, "Some error: {}", message),
+            HanzoNameError::SomeError(message) => write!(f, "Some error: {message}"),
             HanzoNameError::InvalidOperation(message) => {
-                write!(f, "Invalid operation: {}", message)
+                write!(f, "Invalid operation: {message}")
             }
         }
     }

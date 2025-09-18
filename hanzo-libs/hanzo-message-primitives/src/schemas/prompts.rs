@@ -19,8 +19,8 @@ pub enum PromptError {
 impl fmt::Display for PromptError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
-            PromptError::SerializationError(e) => write!(f, "Serialization error: {}", e),
-            PromptError::DeserializationError(e) => write!(f, "Deserialization error: {}", e),
+            PromptError::SerializationError(e) => write!(f, "Serialization error: {e}"),
+            PromptError::DeserializationError(e) => write!(f, "Deserialization error: {e}"),
             // Handle other error variants
         }
     }
@@ -599,8 +599,8 @@ impl Prompt {
                 }
                 SubPrompt::Content(prompt_type, content, _priority_value) => {
                     let new_message = match prompt_type {
-                        SubPromptType::System | SubPromptType::Assistant => format!("System: {}\n", content),
-                        SubPromptType::User => format!("User: {}\n", content),
+                        SubPromptType::System | SubPromptType::Assistant => format!("System: {content}\n"),
+                        SubPromptType::User => format!("User: {content}\n"),
                         _ => String::new(),
                     };
                     if !new_message.is_empty() {
@@ -610,8 +610,8 @@ impl Prompt {
                 SubPrompt::FunctionCall(prompt_type, content, _priority_value)
                 | SubPrompt::FunctionCallResponse(prompt_type, content, _priority_value) => {
                     let new_message = match prompt_type {
-                        SubPromptType::System | SubPromptType::Assistant => format!("System: {}\n", content),
-                        SubPromptType::User => format!("User: {}\n", content),
+                        SubPromptType::System | SubPromptType::Assistant => format!("System: {content}\n"),
+                        SubPromptType::User => format!("User: {content}\n"),
                         _ => String::new(),
                     };
                     if !new_message.is_empty() {
@@ -619,7 +619,7 @@ impl Prompt {
                     }
                 }
                 SubPrompt::ToolAvailable(_, content, _) => {
-                    messages.push(format!("{}\n", content));
+                    messages.push(format!("{content}\n"));
                 }
                 SubPrompt::Omni(_, _, _, _) => {
                     // Ignore Omni

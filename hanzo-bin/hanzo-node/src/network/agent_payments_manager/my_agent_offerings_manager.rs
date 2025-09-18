@@ -10,7 +10,7 @@ use hanzo_message_primitives::schemas::agent_network_offering::AgentNetworkOffer
 use hanzo_message_primitives::schemas::tool_router_key::ToolRouterKey;
 use hanzo_message_primitives::{
     schemas::{
-        invoices::{InternalInvoiceRequest, Invoice, InvoiceStatusEnum, Payment}, hanzo_name::HanzoName, hanzo_proxy_builder_info::HanzoProxyBuilderInfo, hanzo_tool_offering::{HanzoToolOffering, ToolPrice, UsageTypeInquiry}, wallet_mixed::{AddressBalanceList, Asset}
+        invoices::{InternalInvoiceRequest, Invoice, InvoiceStatusEnum, Payment}, hanzo_name::HanzoName, hanzo_proxy_builder_info::HanzoProxyBuilderInfo, hanzo_tool_offering::{ToolPrice, UsageTypeInquiry}, wallet_mixed::{AddressBalanceList, Asset}
     }, hanzo_message::hanzo_message_schemas::MessageSchemaType, hanzo_utils::{
         encryption::clone_static_secret_key, hanzo_message_builder::HanzoMessageBuilder, signatures::clone_signature_secret_key
     }
@@ -1003,7 +1003,7 @@ mod tests {
     //     let fs_db_path = format!("db_tests/{}", "vector_fs");
     //     let profile_list = vec![default_test_profile()];
     //     let supported_embedding_models = vec![EmbeddingModelType::OllamaTextEmbeddingsInference(
-    //         OllamaTextEmbeddingsInference::SnowflakeArcticEmbed_M,
+    //         OllamaTextEmbeddingsInference::EmbeddingGemma300M,
     //     )];
 
     //     VectorFS::new(

@@ -3,7 +3,7 @@
 
 use async_trait::async_trait;
 use serde::{Deserialize, Serialize};
-use zeroize::{Zeroize, ZeroizeOnDrop};
+use zeroize::Zeroize;
 use crate::{PqcError, Result};
 
 /// KEM algorithms supported
@@ -120,6 +120,12 @@ pub struct MlKem {
 }
 
 #[cfg(feature = "ml-kem")]
+impl Default for MlKem {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl MlKem {
     pub fn new() -> Self {
         Self {
@@ -165,7 +171,7 @@ impl Kem for MlKem {
         let pk = kem.public_key_from_bytes(&encap_key.key_bytes)
             .ok_or_else(|| PqcError::KemError("Invalid encapsulation key".into()))?;
         
-        let (ct, ss) = kem.encapsulate(&pk)
+        let (ct, ss) = kem.encapsulate(pk)
             .map_err(|_| PqcError::KemError("Encapsulation failed".into()))?;
         
         let mut shared_secret = [0u8; 32];
@@ -193,7 +199,7 @@ impl Kem for MlKem {
         let ct = kem.ciphertext_from_bytes(ciphertext)
             .ok_or_else(|| PqcError::KemError("Invalid ciphertext".into()))?;
         
-        let ss = kem.decapsulate(&sk, &ct)
+        let ss = kem.decapsulate(sk, ct)
             .map_err(|_| PqcError::KemError("Decapsulation failed".into()))?;
         
         let mut shared_secret = [0u8; 32];

@@ -81,7 +81,7 @@ impl MCPServerType {
             "SSE" => Ok(MCPServerType::Sse),
             "COMMAND" => Ok(MCPServerType::Command),
             "HTTP" => Ok(MCPServerType::Http),
-            _ => Err(format!("Invalid MCP server type: {}", s)),
+            _ => Err(format!("Invalid MCP server type: {s}")),
         }
     }
 

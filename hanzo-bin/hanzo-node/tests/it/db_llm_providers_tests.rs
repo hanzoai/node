@@ -1,4 +1,5 @@
 
+use hanzo_embedding::model_type::EmbeddingModelType;
 use hanzo_sqlite::SqliteManager;
 use std::path::PathBuf;
 use std::sync::Arc;
@@ -9,7 +10,7 @@ fn setup_test_db() -> SqliteManager {
     let db_path = PathBuf::from(temp_file.path());
     let api_url = String::new();
     let model_type =
-        EmbeddingModelType::OllamaTextEmbeddingsInference(OllamaTextEmbeddingsInference::SnowflakeArcticEmbedM);
+        EmbeddingModelType::default();
 
     SqliteManager::new(db_path, api_url, model_type).unwrap()
 }

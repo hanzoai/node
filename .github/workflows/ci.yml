@@ -51,7 +51,7 @@ jobs:
       run: cargo fmt -- --check
     
     - name: Run clippy
-      run: cargo clippy -- -D warnings
+      run: cargo clippy --all-features -- -D warnings
 
   build-release:
     name: Build Release
@@ -67,7 +67,7 @@ jobs:
       run: cargo build --release --verbose
     
     - name: Upload artifacts
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: hanzo-node
         path: target/release/hanzod

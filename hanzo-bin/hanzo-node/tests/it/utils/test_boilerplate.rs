@@ -2,6 +2,7 @@ use super::db_handlers::{setup, setup_node_storage_path};
 use async_channel::{bounded, Receiver, Sender};
 
 use hanzo_embedding::embedding_generator::RemoteEmbeddingGenerator;
+use hanzo_embedding::model_type::EmbeddingModelType;
 
 use hanzo_node::llm_provider::job_callback_manager::JobCallbackManager;
 use hanzo_node::managers::tool_router::ToolRouter;
@@ -55,11 +56,7 @@ pub struct TestEnvironment {
 }
 
 pub fn default_embedding_model() -> EmbeddingModelType {
-    env::var("DEFAULT_EMBEDDING_MODEL")
-        .map(|s| EmbeddingModelType::from_string(&s).expect("Failed to parse DEFAULT_EMBEDDING_MODEL"))
-        .unwrap_or_else(|_| {
-            EmbeddingModelType::OllamaTextEmbeddingsInference(OllamaTextEmbeddingsInference::SnowflakeArcticEmbedM)
-        })
+    EmbeddingModelType::default()
 }
 
 pub fn supported_embedding_models() -> Vec<EmbeddingModelType> {
@@ -70,9 +67,7 @@ pub fn supported_embedding_models() -> Vec<EmbeddingModelType> {
                 .collect()
         })
         .unwrap_or_else(|_| {
-            vec![EmbeddingModelType::OllamaTextEmbeddingsInference(
-                OllamaTextEmbeddingsInference::SnowflakeArcticEmbedM,
-            )]
+            vec![EmbeddingModelType::default()]
         })
 }
 

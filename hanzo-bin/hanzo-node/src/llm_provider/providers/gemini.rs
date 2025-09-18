@@ -525,7 +525,8 @@ async fn process_function_call(
 mod tests {
     use super::*;
     use hanzo_embedding::model_type::EmbeddingModelType;
-    
+    use hanzo_embedding::OllamaTextEmbeddingsInference;
+
     use hanzo_sqlite::SqliteManager;
     use std::sync::Arc;
     use tempfile::NamedTempFile;
@@ -535,9 +536,7 @@ mod tests {
         let temp_file = NamedTempFile::new().unwrap();
         let db_path = std::path::PathBuf::from(temp_file.path());
         let api_url = String::new();
-        let model_type = EmbeddingModelType::OllamaTextEmbeddingsInference(
-            OllamaTextEmbeddingsInference::SnowflakeArcticEmbedM
-        );
+        let model_type = EmbeddingModelType::default();
 
         SqliteManager::new(db_path, api_url, model_type).unwrap()
     }

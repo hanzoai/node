@@ -1,6 +1,5 @@
-
 use crate::hanzo_embedding_errors::HanzoEmbeddingError;
-use crate::model_type::{EmbeddingModelType, OllamaTextEmbeddingsInference};
+use crate::model_type::EmbeddingModelType;
 use async_trait::async_trait;
 
 use lazy_static::lazy_static;
@@ -108,16 +107,6 @@ impl EmbeddingGenerator for RemoteEmbeddingGenerator {
                 }
                 Ok(embeddings)
             }
-            EmbeddingModelType::NativeMistralEmbeddings(_) => {
-                // Native embeddings should not use RemoteEmbeddingGenerator
-                // Fall back to Ollama for now
-                let mut embeddings = Vec::new();
-                for input_string in input_strings.iter() {
-                    let embedding = self.generate_embedding_ollama_blocking(input_string)?;
-                    embeddings.push(embedding);
-                }
-                Ok(embeddings)
-            }
         }
     }
 
@@ -154,18 +143,6 @@ impl EmbeddingGenerator for RemoteEmbeddingGenerator {
                 for input_string in input_strings.iter() {
                     let embedding = self
                         .generate_embedding_ollama(input_string.clone(), model.to_string())
-                        .await?;
-                    embeddings.push(embedding);
-                }
-                Ok(embeddings)
-            }
-            EmbeddingModelType::NativeMistralEmbeddings(_) => {
-                // Native embeddings should not use RemoteEmbeddingGenerator
-                // Fall back to Ollama with default model
-                let mut embeddings = Vec::new();
-                for input_string in input_strings.iter() {
-                    let embedding = self
-                        .generate_embedding_ollama(input_string.clone(), self.model_type.to_string())
                         .await?;
                     embeddings.push(embedding);
                 }
@@ -215,8 +192,7 @@ impl RemoteEmbeddingGenerator {
 
     /// Create a RemoteEmbeddingGenerator that uses the default model and server
     pub fn new_default() -> RemoteEmbeddingGenerator {
-        let model_architecture =
-            EmbeddingModelType::OllamaTextEmbeddingsInference(OllamaTextEmbeddingsInference::SnowflakeArcticEmbedM);
+        let model_architecture = EmbeddingModelType::default();
         RemoteEmbeddingGenerator {
             model_type: model_architecture,
             api_url: DEFAULT_EMBEDDINGS_SERVER_URL.to_string(),
@@ -225,8 +201,7 @@ impl RemoteEmbeddingGenerator {
     }
     /// Create a RemoteEmbeddingGenerator that uses the default model and server
     pub fn new_default_local() -> RemoteEmbeddingGenerator {
-        let model_architecture =
-            EmbeddingModelType::OllamaTextEmbeddingsInference(OllamaTextEmbeddingsInference::SnowflakeArcticEmbedM);
+        let model_architecture = EmbeddingModelType::default();
         RemoteEmbeddingGenerator {
             model_type: model_architecture,
             api_url: DEFAULT_EMBEDDINGS_LOCAL_URL.to_string(),
@@ -285,7 +260,7 @@ impl RemoteEmbeddingGenerator {
 
             // Add the API key to the header if it's available
             if let Some(api_key) = &self.api_key {
-                request = request.header("Authorization", format!("Bearer {}", api_key));
+                request = request.header("Authorization", format!("Bearer {api_key}"));
             }
 
             // Send the request
@@ -301,8 +276,7 @@ impl RemoteEmbeddingGenerator {
                         }
                         Err(err) => {
                             return Err(HanzoEmbeddingError::RequestFailed(format!(
-                                "Failed to deserialize response JSON: {}",
-                                err
+                                "Failed to deserialize response JSON: {err}"
                             )));
                         }
                     }
@@ -339,8 +313,7 @@ impl RemoteEmbeddingGenerator {
                         continue;
                     } else {
                         return Err(HanzoEmbeddingError::RequestFailed(format!(
-                            "HTTP request failed after {} retries: {}",
-                            max_retries, err
+                            "HTTP request failed after {max_retries} retries: {err}"
                         )));
                     }
                 }
@@ -361,25 +334,25 @@ impl RemoteEmbeddingGenerator {
 
         // Build the request
         let mut request = client
-            .post(&format!("{}", self.ollama_endpoint_url()))
+            .post(self.ollama_endpoint_url().to_string())
             .header("Content-Type", "application/json")
             .json(&request_body);
 
         // Add the API key to the header if it's available
         if let Some(api_key) = &self.api_key {
-            request = request.header("Authorization", format!("Bearer {}", api_key));
+            request = request.header("Authorization", format!("Bearer {api_key}"));
         }
 
         // Send the request and check for errors
         let response = request.send().map_err(|err| {
             // Handle any HTTP client errors here (e.g., request creation failure)
-            HanzoEmbeddingError::RequestFailed(format!("HTTP request failed: {}", err))
+            HanzoEmbeddingError::RequestFailed(format!("HTTP request failed: {err}"))
         })?;
 
         // Check if the response is successful
         if response.status().is_success() {
             let embedding_response: OllamaEmbeddingsResponse = response.json().map_err(|err| {
-                HanzoEmbeddingError::RequestFailed(format!("Failed to deserialize response JSON: {}", err))
+                HanzoEmbeddingError::RequestFailed(format!("Failed to deserialize response JSON: {err}"))
             })?;
             Ok(embedding_response.embedding)
         } else {
@@ -418,7 +391,7 @@ impl RemoteEmbeddingGenerator {
 
             // Add the API key to the header if it's available
             if let Some(api_key) = &self.api_key {
-                request = request.header("Authorization", format!("Bearer {}", api_key));
+                request = request.header("Authorization", format!("Bearer {api_key}"));
             }
 
             // Send the request
@@ -433,8 +406,7 @@ impl RemoteEmbeddingGenerator {
                         }
                         Err(err) => {
                             return Err(HanzoEmbeddingError::RequestFailed(format!(
-                                "Failed to deserialize response JSON: {}",
-                                err
+                                "Failed to deserialize response JSON: {err}"
                             )));
                         }
                     }
@@ -480,8 +452,7 @@ impl RemoteEmbeddingGenerator {
                         continue;
                     } else {
                         return Err(HanzoEmbeddingError::RequestFailed(format!(
-                            "HTTP request failed after {} retries: {}",
-                            max_retries, err
+                            "HTTP request failed after {max_retries} retries: {err}"
                         )));
                     }
                 }
@@ -508,13 +479,13 @@ impl RemoteEmbeddingGenerator {
 
         // Add the API key to the header if it's available
         if let Some(api_key) = &self.api_key {
-            request = request.header("Authorization", format!("Bearer {}", api_key));
+            request = request.header("Authorization", format!("Bearer {api_key}"));
         }
 
         // Send the request and check for errors
         let response = request.send().await.map_err(|err| {
             // Handle any HTTP client errors here (e.g., request creation failure)
-            HanzoEmbeddingError::RequestFailed(format!("HTTP request failed: {}", err))
+            HanzoEmbeddingError::RequestFailed(format!("HTTP request failed: {err}"))
         })?;
 
         // Check if the response is successful
@@ -522,7 +493,7 @@ impl RemoteEmbeddingGenerator {
             // Deserialize the response JSON into a struct (assuming you have an
             // EmbeddingResponse struct)
             let embedding_response: EmbeddingResponse = response.json().await.map_err(|err| {
-                HanzoEmbeddingError::RequestFailed(format!("Failed to deserialize response JSON: {}", err))
+                HanzoEmbeddingError::RequestFailed(format!("Failed to deserialize response JSON: {err}"))
             })?;
 
             // Use the response to create an Embedding instance

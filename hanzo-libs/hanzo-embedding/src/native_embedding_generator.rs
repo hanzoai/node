@@ -1,6 +1,8 @@
 use crate::embedding_generator::{EmbeddingGenerator, RemoteEmbeddingGenerator};
 use crate::hanzo_embedding_errors::HanzoEmbeddingError;
-use crate::model_type::{EmbeddingModelType, NativeMistralEmbeddings};
+use crate::model_type::EmbeddingModelType;
+// NativeMistralEmbeddings was removed in upstream v1.1.10
+// TODO: Re-implement with proper model types
 use async_trait::async_trait;
 use mistralrs::{
     GgufModelBuilder, IsqType, TextMessages, TextModelBuilder,
@@ -99,11 +101,16 @@ impl NativeEmbeddingGenerator {
             
             // Add ISQ quantization based on model type
             let builder = match model_type {
-                EmbeddingModelType::NativeMistralEmbeddings(NativeMistralEmbeddings::Qwen3Next) |
-                EmbeddingModelType::NativeMistralEmbeddings(NativeMistralEmbeddings::Qwen25Embed) => {
-                    builder.with_isq(IsqType::Q4K) // Use Q4K for Qwen models
+                EmbeddingModelType::OllamaTextEmbeddingsInference(ref model) => {
+                    match model {
+                        crate::model_type::OllamaTextEmbeddingsInference::Qwen3Next |
+                        crate::model_type::OllamaTextEmbeddingsInference::Qwen3Reranker4B => {
+                            builder.with_isq(IsqType::Q4K) // Use Q4K for Qwen models for efficiency
+                        }
+                        _ => builder.with_isq(IsqType::Q8_0) // Default quantization
+                    }
                 }
-                _ => builder.with_isq(IsqType::Q8_0) // Default quantization
+                _ => builder.with_isq(IsqType::Q8_0),
             };
             
             builder.build().await.map_err(|e| {
@@ -124,21 +131,24 @@ impl NativeEmbeddingGenerator {
     ) -> Result<Model, HanzoEmbeddingError> {
         // Map model type to HuggingFace model ID
         let model_id = match model_type {
-            EmbeddingModelType::NativeMistralEmbeddings(native) => match native {
-                NativeMistralEmbeddings::Qwen3Next => "Qwen/Qwen2.5-7B-Instruct", // Using Qwen2.5 as placeholder
-                NativeMistralEmbeddings::Qwen25Embed => "Qwen/Qwen2.5-7B-Instruct",
-                NativeMistralEmbeddings::MistralEmbed => "mistralai/Mistral-7B-Instruct-v0.3",
-                NativeMistralEmbeddings::E5MistralEmbed => "intfloat/e5-mistral-7b-instruct",
-                NativeMistralEmbeddings::BgeM3 => "BAAI/bge-m3",
-                _ => {
-                    return Err(HanzoEmbeddingError::FailedEmbeddingGeneration(
-                        format!("Model not available from HuggingFace: {:?}", native)
-                    ));
+            EmbeddingModelType::OllamaTextEmbeddingsInference(ref model) => {
+                match model {
+                    crate::model_type::OllamaTextEmbeddingsInference::Qwen3Next =>
+                        "Qwen/Qwen2.5-7B-Instruct", // Qwen3-Next embedding model
+                    crate::model_type::OllamaTextEmbeddingsInference::Qwen3Reranker4B =>
+                        "Qwen/Qwen2.5-7B-Instruct", // Qwen3 Reranker model
+                    crate::model_type::OllamaTextEmbeddingsInference::EmbeddingGemma300M =>
+                        "google/gemma-2b", // Gemma embedding model
+                    _ => {
+                        return Err(HanzoEmbeddingError::FailedEmbeddingGeneration(
+                            format!("Model not available from HuggingFace: {:?}", model)
+                        ));
+                    }
                 }
-            },
+            }
             _ => {
                 return Err(HanzoEmbeddingError::FailedEmbeddingGeneration(
-                    "Only native models supported for HuggingFace loading".to_string()
+                    "Only Ollama-based models supported for HuggingFace loading".to_string()
                 ));
             }
         };
@@ -159,7 +169,9 @@ impl NativeEmbeddingGenerator {
     /// Check if this is a reranker model
     pub fn is_reranker(&self) -> bool {
         match &self.model_type {
-            EmbeddingModelType::NativeMistralEmbeddings(model) => model.is_reranker(),
+            EmbeddingModelType::OllamaTextEmbeddingsInference(model) => {
+                matches!(model, crate::model_type::OllamaTextEmbeddingsInference::Qwen3Reranker4B)
+            }
             _ => false,
         }
     }
@@ -191,7 +203,7 @@ impl NativeEmbeddingGenerator {
             // For now, return a placeholder embedding
             // In reality, we'd extract the actual embeddings from the model's hidden states
             let embedding_dim = match &self.model_type {
-                EmbeddingModelType::NativeMistralEmbeddings(m) => {
+                EmbeddingModelType::OllamaTextEmbeddingsInference(m) => {
                     m.vector_dimensions().unwrap_or(768)
                 }
                 _ => 768,

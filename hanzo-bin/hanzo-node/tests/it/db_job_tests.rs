@@ -1,4 +1,5 @@
 
+use hanzo_embedding::model_type::EmbeddingModelType;
 use hanzo_message_primitives::schemas::inbox_name::InboxName;
 use hanzo_message_primitives::hanzo_message::hanzo_message::HanzoMessage;
 use hanzo_message_primitives::hanzo_message::hanzo_message_schemas::MessageSchemaType;
@@ -26,7 +27,7 @@ fn setup_test_db() -> SqliteManager {
     let db_path = PathBuf::from(temp_file.path());
     let api_url = String::new();
     let model_type =
-        EmbeddingModelType::OllamaTextEmbeddingsInference(OllamaTextEmbeddingsInference::SnowflakeArcticEmbedM);
+        EmbeddingModelType::default();
 
     SqliteManager::new(db_path, api_url, model_type).unwrap()
 }

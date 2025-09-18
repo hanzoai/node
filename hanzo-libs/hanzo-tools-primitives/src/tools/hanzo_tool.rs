@@ -291,8 +291,8 @@ impl HanzoTool {
 
     pub fn get_runner(&self) -> RunnerType {
         match self {
-            HanzoTool::Deno(d, _) => d.runner.clone(),
-            HanzoTool::Python(p, _) => p.runner.clone(),
+            HanzoTool::Deno(d, _) => d.runner,
+            HanzoTool::Python(p, _) => p.runner,
             _ => RunnerType::Any,
         }
     }
@@ -374,7 +374,7 @@ impl HanzoTool {
     pub fn get_config_from_env(&self) -> Option<ToolConfig> {
         // Get the ToolRouterKey instance and convert it to a string
         let tool_key = self.tool_router_key().to_string_without_version().replace(":::", "___");
-        let env_var_key = format!("TOOLKIT_{}", tool_key);
+        let env_var_key = format!("TOOLKIT_{tool_key}");
 
         if let Ok(env_value) = env::var(env_var_key) {
             // Attempt to parse the environment variable as JSON

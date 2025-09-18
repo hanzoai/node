@@ -73,7 +73,7 @@ impl ToolConfig {
 
                 let basic_config = BasicConfig {
                     key_name: key.clone(),
-                    description: format!("Description for {}", key),
+                    description: format!("Description for {key}"),
                     required: false,
                     type_name,
                     key_value,
@@ -100,7 +100,7 @@ impl ToolConfig {
                     description: description.to_string(),
                     required,
                     type_name,
-                    key_value: key_value.map(|v| v.clone()),
+                    key_value: key_value.cloned(),
                 };
                 return Some(ToolConfig::BasicConfig(basic_config));
             }
