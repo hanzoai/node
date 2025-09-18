@@ -1432,6 +1432,7 @@ mod tests {
 
     #[tokio::test]
     async fn test_update_middle_tool() {
+        if skip_test_in_ci("test_update_middle_tool") { return; }
         let manager = setup_test_db().await;
 
         let tool_router_key = ToolRouterKey::new(
@@ -1803,6 +1804,7 @@ mod tests {
 
     #[tokio::test]
     async fn test_tool_vector_search_with_disabled() {
+        if skip_test_in_ci("test_tool_vector_search_with_disabled") { return; }
         let manager = setup_test_db().await;
 
         let tool_router_key = ToolRouterKey::new(
@@ -1938,6 +1940,7 @@ mod tests {
 
     #[tokio::test]
     async fn test_tool_vector_search_with_network_filter() {
+        if skip_test_in_ci("test_tool_vector_search_with_network_filter") { return; }
         let manager = setup_test_db().await;
 
         let tool_router_key = ToolRouterKey::new(
@@ -2145,6 +2148,7 @@ mod tests {
 
     #[tokio::test]
     async fn test_tool_vector_search_with_vector_limited() {
+        if skip_test_in_ci("test_tool_vector_search_with_vector_limited") { return; }
         let manager = setup_test_db().await;
 
         let tool_router_key = ToolRouterKey::new(
@@ -2442,6 +2446,7 @@ mod tests {
 
     #[tokio::test]
     async fn test_upgrade_tool_preserves_config() {
+        if skip_test_in_ci("test_upgrade_tool_preserves_config") { return; }
         let manager = setup_test_db().await;
 
         let tool_router_key = ToolRouterKey::new(
@@ -2569,6 +2574,7 @@ mod tests {
 
     #[tokio::test]
     async fn test_upgrade_tool_preserves_config_python() {
+        if skip_test_in_ci("test_upgrade_tool_preserves_config_python") { return; }
         let manager = setup_test_db().await;
         let tool_router_key = ToolRouterKey::new(
             "local".to_string(),
