@@ -287,7 +287,7 @@ pub mod tests_mcp_manager {
         let params_map = params.as_object().unwrap().clone();
 
         let result = run_tool_via_command(
-            "npx -y @modelcontextprotocol/server-everything".to_string(),
+            "npx -y @modelcontextprotocol/server-everything@2025.9.12".to_string(),
             "add".to_string(),
             HashMap::new(),
             params_map,
@@ -311,7 +311,7 @@ pub mod tests_mcp_manager {
             "npx".to_string(),
             Some(vec![
                 "-y".to_string(),
-                "@modelcontextprotocol/server-everything".to_string(),
+                "@modelcontextprotocol/server-everything@2025.9.12".to_string(),
                 "sse".to_string(),
             ]) as Option<Vec<String>>,
             Some(envs),
@@ -351,11 +351,18 @@ pub mod tests_mcp_manager {
 
     #[tokio::test]
     async fn test_list_tools_via_command() {
-        let result = list_tools_via_command("npx -y @modelcontextprotocol/server-everything", None).await;
+        let result = list_tools_via_command("npx -y @modelcontextprotocol/server-everything@2025.9.12", None).await;
         assert!(result.is_ok());
         let unwrapped = result.unwrap();
-        assert!(unwrapped.len() == 11);
-        let tools = [
+
+        // Debug output to see actual tools
+        println!("Actual number of tools: {}", unwrapped.len());
+        println!("Actual tools: {:?}", unwrapped.iter().map(|t| &t.name).collect::<Vec<_>>());
+
+        // The MCP server-everything package now returns 10 tools
+        assert_eq!(unwrapped.len(), 10, "Expected exactly 10 tools, got {}", unwrapped.len());
+
+        let expected_tools = [
             "echo",
             "add",
             "longRunningOperation",
@@ -364,12 +371,11 @@ pub mod tests_mcp_manager {
             "getTinyImage",
             "annotatedMessage",
             "getResourceReference",
-            "startElicitation",
             "getResourceLinks",
             "structuredContent",
         ];
-        for tool in tools {
-            assert!(unwrapped.iter().any(|t| t.name == tool));
+        for tool in expected_tools {
+            assert!(unwrapped.iter().any(|t| t.name == tool), "Missing expected tool: {}", tool);
         }
     }
 
@@ -381,7 +387,7 @@ pub mod tests_mcp_manager {
             "npx".to_string(),
             Some(vec![
                 "-y".to_string(),
-                "@modelcontextprotocol/server-everything".to_string(),
+                "@modelcontextprotocol/server-everything@2025.9.12".to_string(),
                 "sse".to_string(),
             ]) as Option<Vec<String>>,
             Some(envs),
@@ -406,8 +412,15 @@ pub mod tests_mcp_manager {
             });
         assert!(result.is_ok());
         let unwrapped = result.unwrap();
-        assert!(unwrapped.len() == 11);
-        let tools = [
+
+        // Debug output to see actual tools
+        println!("Actual number of tools: {}", unwrapped.len());
+        println!("Actual tools: {:?}", unwrapped.iter().map(|t| &t.name).collect::<Vec<_>>());
+
+        // The MCP server-everything package now returns 10 tools
+        assert_eq!(unwrapped.len(), 10, "Expected exactly 10 tools, got {}", unwrapped.len());
+
+        let expected_tools = [
             "echo",
             "add",
             "longRunningOperation",
@@ -416,12 +429,11 @@ pub mod tests_mcp_manager {
             "getTinyImage",
             "annotatedMessage",
             "getResourceReference",
-            "startElicitation",
             "getResourceLinks",
             "structuredContent",
         ];
-        for tool in tools {
-            assert!(unwrapped.iter().any(|t| t.name == tool));
+        for tool in expected_tools {
+            assert!(unwrapped.iter().any(|t| t.name == tool), "Missing expected tool: {}", tool);
         }
     }
 
@@ -433,7 +445,7 @@ pub mod tests_mcp_manager {
             "npx".to_string(),
             Some(vec![
                 "-y".to_string(),
-                "@modelcontextprotocol/server-everything".to_string(),
+                "@modelcontextprotocol/server-everything@2025.9.12".to_string(),
                 "streamableHttp".to_string(),
             ]) as Option<Vec<String>>,
             Some(envs),
@@ -451,7 +463,7 @@ pub mod tests_mcp_manager {
         let result = list_tools_via_http("http://localhost:8002/mcp", None).await;
         assert!(result.is_ok());
         let unwrapped = result.unwrap();
-        assert!(unwrapped.len() == 11);
+        assert_eq!(unwrapped.len(), 10, "Expected exactly 10 tools, got {}", unwrapped.len());
     }
 
     #[tokio::test]
@@ -462,7 +474,7 @@ pub mod tests_mcp_manager {
             "npx".to_string(),
             Some(vec![
                 "-y".to_string(),
-                "@modelcontextprotocol/server-everything".to_string(),
+                "@modelcontextprotocol/server-everything@2025.9.12".to_string(),
                 "streamableHttp".to_string(),
             ]) as Option<Vec<String>>,
             Some(envs),
