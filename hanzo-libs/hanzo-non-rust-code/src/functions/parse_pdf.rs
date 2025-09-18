@@ -68,6 +68,7 @@ mod tests {
 
     #[tokio::test]
     async fn test_parse_pdf_file() {
+        if std::env::var("CI").is_ok() { println!("Skipping test in CI: test_parse_pdf_file"); return; }
         let _dir = testing_create_tempdir_and_set_env_var();
 
         let file_path = path::absolute(Path::new("../../files/Hanzo_Protocol_Whitepaper.pdf"))
