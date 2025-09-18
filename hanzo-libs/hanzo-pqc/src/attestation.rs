@@ -1,7 +1,7 @@
 //! Attestation support for TEE environments
 
 use serde::{Deserialize, Serialize};
-use crate::{PqcError, Result};
+use crate::Result;
 
 /// TEE attestation verifier trait
 pub trait AttestationVerifier: Send + Sync {

@@ -26,7 +26,7 @@ impl SqliteManager {
             agent.agent_id
         );
         let _agent_name = HanzoName::new(agent_name_str.clone())
-            .map_err(|_| SqliteManagerError::InvalidIdentityName(format!("Invalid HanzoName: {}", agent_name_str)))?;
+            .map_err(|_| SqliteManagerError::InvalidIdentityName(format!("Invalid HanzoName: {agent_name_str}")))?;
 
         let knowledge = serde_json::to_string(&agent.knowledge).unwrap();
         let config = agent.config.map(|c| serde_json::to_string(&c).unwrap());
@@ -134,7 +134,7 @@ impl SqliteManager {
                     })?),
                     None => None,
                 },
-                edited: edited,
+                edited,
             })
         })?;
 
@@ -203,7 +203,7 @@ impl SqliteManager {
                     })?),
                     None => None,
                 },
-                edited: edited,
+                edited,
             })
         });
 

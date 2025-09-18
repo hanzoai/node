@@ -1,4 +1,4 @@
-use std::path::{Path, PathBuf};
+use std::path::PathBuf;
 use std::fs;
 use crate::hanzo_embedding_errors::HanzoEmbeddingError;
 use crate::model_type::OllamaTextEmbeddingsInference;
@@ -56,7 +56,7 @@ impl ModelStorage {
         for dir in dirs {
             fs::create_dir_all(&dir)
                 .map_err(|e| HanzoEmbeddingError::FailedEmbeddingGeneration(
-                    format!("Failed to create directory {:?}: {}", dir, e)
+                    format!("Failed to create directory {dir:?}: {e}")
                 ))?;
         }
 
@@ -156,7 +156,7 @@ impl ModelStorage {
             }
             _ => {
                 // Fallback for other models
-                format!("https://huggingface.co/models/{}", model)
+                format!("https://huggingface.co/models/{model}")
             }
         }
     }
@@ -202,7 +202,7 @@ hanzod --download-model qwen3-embedding-8b
 "#;
             fs::write(&readme_path, readme_content)
                 .map_err(|e| HanzoEmbeddingError::FailedEmbeddingGeneration(
-                    format!("Failed to create README: {}", e)
+                    format!("Failed to create README: {e}")
                 ))?;
         }
 

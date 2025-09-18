@@ -162,7 +162,7 @@ impl SqliteManager {
                             preferences.insert(key.clone(), value); // Insert the actual preference key-value
                         }
                         Err(e) => {
-                            eprintln!("Error deserializing preference value for key '{}': {}. Skipping value.", key, e);
+                            eprintln!("Error deserializing preference value for key '{key}': {e}. Skipping value.");
                         }
                     }
 
@@ -173,7 +173,7 @@ impl SqliteManager {
                     metadata.insert(key, meta_entry);
                 }
                 Err(e) => {
-                    eprintln!("Error retrieving preference row: {}. Skipping row.", e);
+                    eprintln!("Error retrieving preference row: {e}. Skipping row.");
                 }
             }
         }

@@ -5,7 +5,6 @@ use crate::{
     hybrid::HybridCiphertext,
     signature::DigitalSignature,
     privacy_tiers::PrivacyTier,
-    Result,
 };
 
 /// P2P handshake message with PQC support
@@ -163,6 +162,12 @@ pub struct HandshakeTranscript {
     messages: Vec<Vec<u8>>,
 }
 
+impl Default for HandshakeTranscript {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl HandshakeTranscript {
     pub fn new() -> Self {
         Self {
@@ -178,7 +183,7 @@ impl HandshakeTranscript {
         use sha2::{Sha256, Digest};
         let mut hasher = Sha256::new();
         for msg in &self.messages {
-            hasher.update(&(msg.len() as u32).to_be_bytes());
+            hasher.update((msg.len() as u32).to_be_bytes());
             hasher.update(msg);
         }
         hasher.finalize().into()

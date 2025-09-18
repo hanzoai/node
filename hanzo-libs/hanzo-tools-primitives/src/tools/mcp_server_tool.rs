@@ -42,7 +42,7 @@ pub struct MCPServerTool {
 impl MCPServerTool {
     pub fn create_tool_router_key(server_command_hash: Option<String>, tool_name: String) -> ToolRouterKey {
         let name = if let Some(hash) = server_command_hash {
-            format!("{}_{}", hash, tool_name)
+            format!("{hash}_{tool_name}")
         } else {
             tool_name
         };
@@ -137,7 +137,7 @@ impl MCPServerTool {
     pub async fn map_content_to_error_message(content: Vec<Content>) -> String {
         content
             .iter()
-            .map(|c| c.as_text().and_then(|t| Some(t.text.clone())).unwrap_or(String::new()))
+            .map(|c| c.as_text().map(|t| t.text.clone()).unwrap_or_default())
             .collect::<Vec<String>>()
             .join("\n")
     }

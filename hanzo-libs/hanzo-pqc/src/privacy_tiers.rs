@@ -2,7 +2,6 @@
 //! Implements tiered privacy from open data to GPU TEE-I/O
 
 use serde::{Deserialize, Serialize};
-use std::collections::HashMap;
 
 /// Privacy tier definitions
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize)]
@@ -188,11 +187,10 @@ impl RuntimeRequirements {
         }
         
         // For CPU-TEE tier, require at least one CPU TEE technology
-        if self.min_tier >= PrivacyTier::AccessCpuTee {
-            if !(caps.cpu_sev_snp || caps.cpu_tdx || caps.cpu_sgx || caps.cpu_arm_cca) {
+        if self.min_tier >= PrivacyTier::AccessCpuTee
+            && !(caps.cpu_sev_snp || caps.cpu_tdx || caps.cpu_sgx || caps.cpu_arm_cca) {
                 return false;
             }
-        }
         
         true
     }

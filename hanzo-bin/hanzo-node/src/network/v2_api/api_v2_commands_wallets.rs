@@ -6,7 +6,7 @@ use serde_json::{json, Value};
 
 use hanzo_http_api::node_api_router::APIError;
 use hanzo_message_primitives::schemas::{
-    coinbase_mpc_config::CoinbaseMPCWalletConfig, hanzo_name::HanzoName, wallet_complementary::{WalletRole, WalletSource}, wallet_mixed::{Asset, AssetType}, x402_types::Network
+    coinbase_mpc_config::CoinbaseMPCWalletConfig, hanzo_name::HanzoName, wallet_complementary::{WalletRole, WalletSource}, x402_types::Network
 };
 use hanzo_sqlite::SqliteManager;
 use tokio::sync::Mutex;

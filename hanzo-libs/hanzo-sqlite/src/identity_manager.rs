@@ -446,7 +446,7 @@ impl SqliteManager {
                 .collect::<Result<Vec<String>, rusqlite::Error>>()?;
 
             // Check if the profile exists
-            if !profile_names.iter().any(|name| *name == profile_name) {
+            if !profile_names.contains(&profile_name) {
                 return Err(SqliteManagerError::ProfileNotFound(profile_name));
             }
         }
@@ -501,7 +501,7 @@ impl SqliteManager {
                 hanzo_log(
                     HanzoLogOption::Identity,
                     HanzoLogLevel::Error,
-                    format!("Error reading from database: {}", e).as_str(),
+                    format!("Error reading from database: {e}").as_str(),
                 );
                 return;
             }
@@ -514,7 +514,7 @@ impl SqliteManager {
                 hanzo_log(
                     HanzoLogOption::Identity,
                     HanzoLogLevel::Error,
-                    format!("Error reading from database: {}", e).as_str(),
+                    format!("Error reading from database: {e}").as_str(),
                 );
                 return;
             }
@@ -526,7 +526,7 @@ impl SqliteManager {
                 hanzo_log(
                     HanzoLogOption::Identity,
                     HanzoLogLevel::Error,
-                    format!("Error reading from database: {}", e).as_str(),
+                    format!("Error reading from database: {e}").as_str(),
                 );
                 return;
             }
@@ -538,7 +538,7 @@ impl SqliteManager {
             hanzo_log(
                 HanzoLogOption::Identity,
                 HanzoLogLevel::Debug,
-                format!("print_all_keys_for_profiles_identity_key {}", identity_name).as_str(),
+                format!("print_all_keys_for_profiles_identity_key {identity_name}").as_str(),
             );
         }
 
@@ -549,7 +549,7 @@ impl SqliteManager {
                 hanzo_log(
                     HanzoLogOption::Identity,
                     HanzoLogLevel::Error,
-                    format!("Error reading from database: {}", e).as_str(),
+                    format!("Error reading from database: {e}").as_str(),
                 );
                 return;
             }
@@ -561,7 +561,7 @@ impl SqliteManager {
                 hanzo_log(
                     HanzoLogOption::Identity,
                     HanzoLogLevel::Error,
-                    format!("Error reading from database: {}", e).as_str(),
+                    format!("Error reading from database: {e}").as_str(),
                 );
                 return;
             }
@@ -573,7 +573,7 @@ impl SqliteManager {
             hanzo_log(
                 HanzoLogOption::Identity,
                 HanzoLogLevel::Debug,
-                format!("print_all_devices_for_profile {}", identity_name).as_str(),
+                format!("print_all_devices_for_profile {identity_name}").as_str(),
             );
         }
     }

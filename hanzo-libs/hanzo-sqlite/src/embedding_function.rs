@@ -55,15 +55,15 @@ impl EmbeddingFunction {
                     return Err(rusqlite::Error::InvalidQuery);
                 }
                 let ollama_response = response.json::<OllamaResponse>().await.map_err(|e| {
-                    println!("Failed to convert response to OllamaResponse: {}", e);
+                    println!("Failed to convert response to OllamaResponse: {e}");
                     rusqlite::Error::InvalidQuery
                 })?;
 
                 Ok(ollama_response.embedding)
             }
             Err(e) => {
-                println!("Failed to send request to embedding API: {}", e);
-                return Err(rusqlite::Error::InvalidParameterName(e.to_string()));
+                println!("Failed to send request to embedding API: {e}");
+                Err(rusqlite::Error::InvalidParameterName(e.to_string()))
             }
         }
     }

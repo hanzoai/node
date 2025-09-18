@@ -44,8 +44,7 @@ impl SqliteManager {
                 Ok(name) => name,
                 Err(_) => {
                     return Err(SqliteManagerError::InvalidIdentityName(format!(
-                        "{}/{}",
-                        node_name, profile_name
+                        "{node_name}/{profile_name}"
                     )))
                 }
             };
@@ -96,8 +95,7 @@ impl SqliteManager {
                         Ok(name) => name,
                         Err(_) => {
                             return Err(SqliteManagerError::InvalidIdentityName(format!(
-                                "{}/{}",
-                                node_name, new_name
+                                "{node_name}/{new_name}"
                             )))
                         }
                     };
@@ -113,8 +111,7 @@ impl SqliteManager {
                                 Ok(name) => name,
                                 Err(_) => {
                                     return Err(SqliteManagerError::InvalidIdentityName(format!(
-                                        "{}/{}",
-                                        node_name, new_name
+                                        "{node_name}/{new_name}"
                                     )))
                                 }
                             };
@@ -153,8 +150,7 @@ impl SqliteManager {
                     Ok(name) => name,
                     Err(_) => {
                         return Err(SqliteManagerError::InvalidIdentityName(format!(
-                            "{}/{}",
-                            node_name, new_name
+                            "{node_name}/{new_name}"
                         )))
                     }
                 };
@@ -169,7 +165,7 @@ impl SqliteManager {
                             match HanzoName::from_node_and_profile_names(node_name.to_string(), "main".to_string()) {
                                 Ok(name) => name,
                                 Err(_) => {
-                                    return Err(SqliteManagerError::InvalidIdentityName(format!("{}/main", node_name)))
+                                    return Err(SqliteManagerError::InvalidIdentityName(format!("{node_name}/main")))
                                 }
                             };
 
@@ -211,8 +207,7 @@ impl SqliteManager {
                     Ok(name) => name,
                     Err(_) => {
                         return Err(SqliteManagerError::InvalidIdentityName(format!(
-                            "{}/{}",
-                            node_name, new_name
+                            "{node_name}/{new_name}"
                         )))
                     }
                 };

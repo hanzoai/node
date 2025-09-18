@@ -234,7 +234,7 @@ impl SqliteManager {
             .clone()
             .ok_or(SqliteManagerError::InvalidIdentityName(profile.full_name.to_string()))?;
 
-        Ok(format!("{}:::{}", llm_provider_id, profile_name))
+        Ok(format!("{llm_provider_id}:::{profile_name}"))
     }
 }
 

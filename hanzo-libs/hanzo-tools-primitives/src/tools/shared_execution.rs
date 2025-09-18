@@ -42,7 +42,7 @@ pub fn convert_to_hanzo_file_protocol(node_name: &HanzoName, path: &str, app_id:
         }
     }
 
-    println!("[Running DenoTool] Failed to convert to hanzo file protocol {}", path);
+    println!("[Running DenoTool] Failed to convert to hanzo file protocol {path}");
     "".to_string()
 }
 
@@ -88,8 +88,7 @@ fn get_files_after(start_time: u64, files: Vec<DirEntry>) -> Vec<(String, u64)> 
         .filter(|(_, modified)| {
             let current_time = *modified;
             println!(
-                "[Running DenoTool] Modified: {}, Start Time: {}",
-                current_time, start_time
+                "[Running DenoTool] Modified: {current_time}, Start Time: {start_time}"
             );
             println!("[Running DenoTool] Diff: {}", current_time >= start_time);
             current_time >= start_time
@@ -109,7 +108,7 @@ pub fn get_files_after_with_protocol(
         get_files_in_directories(vec![home_path, logs_path]).unwrap_or_default(),
     )
     .into_iter()
-    .map(|(name, _)| serde_json::Value::String(convert_to_hanzo_file_protocol(&node_name, &name, &app_id)))
+    .map(|(name, _)| serde_json::Value::String(convert_to_hanzo_file_protocol(node_name, &name, app_id)))
     .collect()
 }
 
@@ -132,8 +131,8 @@ pub fn update_result_with_modified_files(
         })
     } else {
         println!("[Running DenoTool] Result is not an object, skipping modified files");
-        return Err(ToolError::ExecutionError(
+        Err(ToolError::ExecutionError(
             "Result is not an object, skipping modified files".to_string(),
-        ));
+        ))
     }
 }

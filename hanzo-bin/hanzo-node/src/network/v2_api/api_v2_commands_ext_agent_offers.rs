@@ -4,7 +4,6 @@ use tokio::sync::Mutex;
 use async_channel::Sender;
 use reqwest::StatusCode;
 
-use chrono::Utc;
 use serde_json::{json, Value};
 use hanzo_http_api::node_api_router::APIError;
 use hanzo_message_primitives::schemas::{
@@ -12,7 +11,7 @@ use hanzo_message_primitives::schemas::{
 };
 use hanzo_sqlite::{errors::SqliteManagerError, SqliteManager};
 use hanzo_tools_primitives::tools::{
-    network_tool::NetworkTool, hanzo_tool::{HanzoTool, HanzoToolHeader}
+    network_tool::NetworkTool, hanzo_tool::HanzoToolHeader
 };
 
 use crate::network::{

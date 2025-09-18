@@ -319,7 +319,7 @@ impl fmt::Display for NetworkIdentifier {
             NetworkIdentifier::ArbitrumMainnet => "Arbitrum Mainnet",
             NetworkIdentifier::Anvil => "Anvil",
         };
-        write!(f, "{}", display_str)
+        write!(f, "{display_str}")
     }
 }
 

@@ -88,6 +88,12 @@ pub struct HanzoModelDiscovery {
     cache: HashMap<String, Vec<ModelInfo>>,
 }
 
+impl Default for HanzoModelDiscovery {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl HanzoModelDiscovery {
     pub fn new() -> Self {
         Self {
@@ -119,7 +125,7 @@ impl HanzoModelDiscovery {
 
         // Check for GGUF formats
         if name.contains("Q4_K_M") || name.contains("Q5_K_M") || name.contains("Q8_0") {
-            quantization = Some(name.split('-').last().unwrap_or("GGUF").to_string());
+            quantization = Some(name.split('-').next_back().unwrap_or("GGUF").to_string());
         }
 
         // Extract parameter count (7B, 70B, etc.)
@@ -191,7 +197,7 @@ impl HanzoModelDiscovery {
             },
             pipeline_tag: Some("text-generation".to_string()),
             trusted_source,
-            download_url: format!("https://huggingface.co/{}", model_id),
+            download_url: format!("https://huggingface.co/{model_id}"),
         }
     }
 }
@@ -222,21 +228,21 @@ impl ModelDiscovery for HanzoModelDiscovery {
             }).collect();
 
             for author in authors {
-                params.push(format!("author={}", author));
+                params.push(format!("author={author}"));
             }
         }
 
         // Add library filter
         if let Some(libs) = &filter.library {
             for lib in libs {
-                params.push(format!("library={}", lib));
+                params.push(format!("library={lib}"));
             }
         }
 
         // Add pipeline filter
         if let Some(tags) = &filter.pipeline_tag {
             for tag in tags {
-                params.push(format!("pipeline_tag={}", tag));
+                params.push(format!("pipeline_tag={tag}"));
             }
         }
 
@@ -249,8 +255,8 @@ impl ModelDiscovery for HanzoModelDiscovery {
             SortBy::Name => "id",
             SortBy::Size => "downloads", // No direct size sort
         };
-        params.push(format!("sort={}", sort_param));
-        params.push(format!("limit={}", limit));
+        params.push(format!("sort={sort_param}"));
+        params.push(format!("limit={limit}"));
 
         if !params.is_empty() {
             url.push('?');
@@ -262,12 +268,12 @@ impl ModelDiscovery for HanzoModelDiscovery {
             .get(&url)
             .send()
             .await
-            .map_err(|e| format!("Failed to fetch models: {}", e))?;
+            .map_err(|e| format!("Failed to fetch models: {e}"))?;
 
         let models_json: Vec<serde_json::Value> = response
             .json()
             .await
-            .map_err(|e| format!("Failed to parse response: {}", e))?;
+            .map_err(|e| format!("Failed to parse response: {e}"))?;
 
         // Parse models
         let mut models: Vec<ModelInfo> = models_json
@@ -320,18 +326,18 @@ impl ModelDiscovery for HanzoModelDiscovery {
     }
 
     async fn get_model_info(&self, model_id: &str) -> Result<ModelInfo, String> {
-        let url = format!("https://huggingface.co/api/models/{}", model_id);
+        let url = format!("https://huggingface.co/api/models/{model_id}");
 
         let response = self.client
             .get(&url)
             .send()
             .await
-            .map_err(|e| format!("Failed to fetch model: {}", e))?;
+            .map_err(|e| format!("Failed to fetch model: {e}"))?;
 
         let model_json: serde_json::Value = response
             .json()
             .await
-            .map_err(|e| format!("Failed to parse response: {}", e))?;
+            .map_err(|e| format!("Failed to parse response: {e}"))?;
 
         let mut info = self.parse_model_id(model_id);
 

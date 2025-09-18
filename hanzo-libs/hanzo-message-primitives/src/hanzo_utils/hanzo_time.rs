@@ -42,10 +42,7 @@ impl HanzoStringTime {
 
     /// Validates that the provided &str is an RFC3339 datetime
     pub fn validate_datetime_string(datetime_str: &str) -> bool {
-        match DateTime::parse_from_rfc3339(datetime_str) {
-            Ok(_) => true,
-            Err(_) => false,
-        }
+        DateTime::parse_from_rfc3339(datetime_str).is_ok()
     }
 
     /// Generates a datetime String in the future based on number of seconds

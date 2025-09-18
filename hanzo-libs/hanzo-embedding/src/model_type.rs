@@ -21,7 +21,7 @@ impl EmbeddingModelType {
     pub fn default() -> Self {
         std::env::var("DEFAULT_EMBEDDING_MODEL")
             .and_then(|s| Self::from_string(&s).map_err(|_| std::env::VarError::NotPresent))
-            .unwrap_or_else(|_| {
+            .unwrap_or({
                 EmbeddingModelType::OllamaTextEmbeddingsInference(OllamaTextEmbeddingsInference::EmbeddingGemma300M)
             })
     }
@@ -48,7 +48,7 @@ impl EmbeddingModelType {
 impl fmt::Display for EmbeddingModelType {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match self {
-            EmbeddingModelType::OllamaTextEmbeddingsInference(model) => write!(f, "{}", model),
+            EmbeddingModelType::OllamaTextEmbeddingsInference(model) => write!(f, "{model}"),
         }
     }
 }
@@ -144,7 +144,7 @@ impl fmt::Display for OllamaTextEmbeddingsInference {
             Self::Qwen3Embedding4B => write!(f, "{}", Self::QWEN3_EMBEDDING_4B),
             Self::Qwen3Reranker4B => write!(f, "{}", Self::QWEN3_RERANKER_4B),
             Self::Qwen3Reranker8B => write!(f, "{}", Self::QWEN3_RERANKER_8B),
-            Self::Other(name) => write!(f, "{}", name),
+            Self::Other(name) => write!(f, "{name}"),
         }
     }
 }

@@ -59,9 +59,9 @@ pub enum WebSocketManagerError {
 impl fmt::Display for WebSocketManagerError {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match self {
-            WebSocketManagerError::UserValidationFailed(msg) => write!(f, "User validation failed: {}", msg),
-            WebSocketManagerError::AccessDenied(msg) => write!(f, "Access denied: {}", msg),
-            WebSocketManagerError::InvalidSharedKey(msg) => write!(f, "Invalid shared key: {}", msg),
+            WebSocketManagerError::UserValidationFailed(msg) => write!(f, "User validation failed: {msg}"),
+            WebSocketManagerError::AccessDenied(msg) => write!(f, "Access denied: {msg}"),
+            WebSocketManagerError::InvalidSharedKey(msg) => write!(f, "Invalid shared key: {msg}"),
         }
     }
 }

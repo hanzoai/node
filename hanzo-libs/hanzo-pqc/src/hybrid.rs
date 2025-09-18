@@ -1,12 +1,10 @@
 //! Hybrid KEM implementation combining ML-KEM with X25519
 //! Per NIST guidance for defense-in-depth
 
-use async_trait::async_trait;
 use serde::{Deserialize, Serialize};
 use crate::{
-    kem::{Kem, KemAlgorithm, KemKeyPair, KemOutput, EncapsulationKey, DecapsulationKey},
-    kdf::{HkdfKdf, KdfAlgorithm, Kdf, combine_shared_secrets},
-    PqcError, Result,
+    kem::{Kem, KemAlgorithm, EncapsulationKey, DecapsulationKey},
+    kdf::{HkdfKdf, KdfAlgorithm, combine_shared_secrets}, Result,
 };
 
 /// Hybrid mode configuration
