@@ -93,6 +93,12 @@ pub struct UniversalResolver {
     resolvers: HashMap<String, Box<dyn DIDResolver + Send + Sync>>,
 }
 
+impl Default for UniversalResolver {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl UniversalResolver {
     /// Create a new universal resolver
     pub fn new() -> Self {

@@ -389,7 +389,7 @@ pub async fn handle_default_encryption(
 pub async fn handle_network_message_cases(
     message: HanzoMessage,
     sender_encryption_pk: x25519_dalek::PublicKey,
-    sender_address: SocketAddr,
+    _sender_address: SocketAddr,
     sender_profile_name: String,
     my_encryption_secret_key: &EncryptionStaticKey,
     my_signature_secret_key: &SigningKey,

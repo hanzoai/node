@@ -5,7 +5,6 @@ use hanzo_model_discovery::{HanzoModelDiscovery, ModelDiscovery, ModelFilter, Mo
 use indicatif::{ProgressBar, ProgressStyle};
 use std::path::PathBuf;
 use tokio::fs;
-use tracing::{info, warn};
 
 #[derive(Parser)]
 #[command(name = "hanzoai")]
@@ -234,14 +233,14 @@ async fn handle_search(
 
         let size_str = model
             .model_size_gb
-            .map(|s| format!("{:.1}GB", s))
+            .map(|s| format!("{s:.1}GB"))
             .unwrap_or_else(|| "?".to_string());
 
         let quant_str = model
             .quantization
             .as_ref()
-            .map(|q| format!("[{}]", q))
-            .unwrap_or_else(|| String::new());
+            .map(|q| format!("[{q}]"))
+            .unwrap_or_else(String::new);
 
         println!(
             "{}. {} {} {} {}",
@@ -249,7 +248,7 @@ async fn handle_search(
             trust_badge,
             model.id.bright_white().bold(),
             quant_str.bright_cyan(),
-            format!("({})", size_str).bright_black()
+            format!("({size_str})").bright_black()
         );
 
         if let Some(params) = &model.parameters {
@@ -269,7 +268,7 @@ async fn handle_search(
 }
 
 async fn handle_pull(model: &str, output: Option<PathBuf>, force: bool) -> Result<()> {
-    println!("{}", format!("📥 Pulling model: {}", model).bright_blue().bold());
+    println!("{}", format!("📥 Pulling model: {model}").bright_blue().bold());
 
     // Determine output path
     let home = directories::UserDirs::new()
@@ -369,7 +368,7 @@ async fn handle_serve(
 
     println!(
         "{}",
-        format!("🚀 Starting Hanzo AI Engine").bright_blue().bold()
+        "🚀 Starting Hanzo AI Engine".to_string().bright_blue().bold()
     );
     println!("  Model: {}", model_name.yellow());
     println!("  Address: {}:{}", host.green(), port.to_string().green());
@@ -388,7 +387,7 @@ async fn handle_serve(
 async fn handle_recommend(use_case: &str) -> Result<()> {
     println!(
         "{}",
-        format!("🎯 Recommended models for: {}", use_case).bright_blue().bold()
+        format!("🎯 Recommended models for: {use_case}").bright_blue().bold()
     );
 
     let discovery = HanzoModelDiscovery::new();
@@ -404,7 +403,7 @@ async fn handle_recommend(use_case: &str) -> Result<()> {
     for (i, model) in models.iter().enumerate() {
         let size_str = model
             .model_size_gb
-            .map(|s| format!("{:.1}GB", s))
+            .map(|s| format!("{s:.1}GB"))
             .unwrap_or_else(|| "?".to_string());
 
         println!(
@@ -428,7 +427,7 @@ async fn handle_repo(command: RepoCommands) -> Result<()> {
         RepoCommands::Mirror { source, target, dry_run } => {
             println!(
                 "{}",
-                format!("🔄 Mirroring {} → {}", source, target).bright_blue().bold()
+                format!("🔄 Mirroring {source} → {target}").bright_blue().bold()
             );
 
             if dry_run {
@@ -463,7 +462,7 @@ async fn handle_repo(command: RepoCommands) -> Result<()> {
 }
 
 async fn handle_info(model: &str) -> Result<()> {
-    println!("{}", format!("ℹ️  Model info: {}", model).bright_blue().bold());
+    println!("{}", format!("ℹ️  Model info: {model}").bright_blue().bold());
 
     let discovery = HanzoModelDiscovery::new();
     let info = discovery.get_model_info(model).await
@@ -474,7 +473,7 @@ async fn handle_info(model: &str) -> Result<()> {
     println!("Author: {}", info.author.yellow());
 
     if let Some(size) = info.model_size_gb {
-        println!("Size: {:.2} GB", size);
+        println!("Size: {size:.2} GB");
     }
 
     if let Some(quant) = &info.quantization {
@@ -486,7 +485,7 @@ async fn handle_info(model: &str) -> Result<()> {
     }
 
     if let Some(ctx) = info.context_length {
-        println!("Context: {} tokens", ctx);
+        println!("Context: {ctx} tokens");
     }
 
     println!("Downloads: {}", humansize::format_size(info.downloads, humansize::BINARY));

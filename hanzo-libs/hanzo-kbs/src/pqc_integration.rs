@@ -2,18 +2,17 @@
 //! 
 //! This module provides PQC support for the KBS when the "pqc" feature is enabled.
 
-use async_trait::async_trait;
 use serde::{Deserialize, Serialize};
 use hanzo_pqc::{
-    kem::{Kem, KemAlgorithm, MlKem, EncapsulationKey, DecapsulationKey, KemOutput},
+    kem::{Kem, KemAlgorithm, MlKem, EncapsulationKey, DecapsulationKey},
     signature::{Signature, SignatureAlgorithm, MlDsa, VerifyingKey, SigningKey, DigitalSignature},
-    hybrid::{HybridMode, HybridKem, HybridEncapsulationKey, HybridDecapsulationKey, HybridCiphertext},
+    hybrid::{HybridMode, HybridKem, HybridEncapsulationKey},
     privacy_tiers::PrivacyTier as PqcPrivacyTier,
     config::PqcConfig,
 };
 use crate::{
     error::{Result, SecurityError},
-    types::{PrivacyTier, AttestationType},
+    types::PrivacyTier,
 };
 
 /// PQC Key Broker Service integration
@@ -91,7 +90,7 @@ impl PqcKbs {
         // Encrypt DEK with ChaCha20Poly1305
         use chacha20poly1305::{
             aead::{Aead, AeadCore, KeyInit, OsRng},
-            ChaCha20Poly1305, Nonce,
+            ChaCha20Poly1305,
         };
         
         let cipher = ChaCha20Poly1305::new_from_slice(&wrapping_key)

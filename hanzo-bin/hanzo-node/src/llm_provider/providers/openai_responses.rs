@@ -118,7 +118,7 @@ pub async fn call_api(
             truncate_image_url_in_payload(&mut payload_log);
 
             if let Some(ref msg_id) = tracing_message_id {
-                if let Err(e) = db.add_tracing(
+                if let Err(_e) = db.add_tracing(
                     msg_id,
                     inbox_name.as_ref().map(|i| i.get_value()).as_deref(),
                     "llm_payload",

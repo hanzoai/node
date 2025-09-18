@@ -40,13 +40,13 @@ pub enum HanzoRegistryError {
 impl fmt::Display for HanzoRegistryError {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match self {
-            HanzoRegistryError::IoError(err) => write!(f, "IO Error: {}", err),
-            HanzoRegistryError::JsonError(err) => write!(f, "JSON Error: {}", err),
-            HanzoRegistryError::CustomError(err) => write!(f, "Custom Error: {}", err),
-            HanzoRegistryError::SystemTimeError(err) => write!(f, "System Time Error: {}", err),
-            HanzoRegistryError::AddressParseError(err) => write!(f, "Address Parse Error: {}", err),
-            HanzoRegistryError::IdentityNotFound(err) => write!(f, "Identity Not Found: {}", err),
-            HanzoRegistryError::IdentityFetchError(err) => write!(f, "Identity Fetch Error: {}", err),
+            HanzoRegistryError::IoError(err) => write!(f, "IO Error: {err}"),
+            HanzoRegistryError::JsonError(err) => write!(f, "JSON Error: {err}"),
+            HanzoRegistryError::CustomError(err) => write!(f, "Custom Error: {err}"),
+            HanzoRegistryError::SystemTimeError(err) => write!(f, "System Time Error: {err}"),
+            HanzoRegistryError::AddressParseError(err) => write!(f, "Address Parse Error: {err}"),
+            HanzoRegistryError::IdentityNotFound(err) => write!(f, "Identity Not Found: {err}"),
+            HanzoRegistryError::IdentityFetchError(err) => write!(f, "Identity Fetch Error: {err}"),
         }
     }
 }
@@ -153,7 +153,7 @@ impl OnchainIdentity {
                 let resolved_addresses = resolver
                     .lookup_ip(host)
                     .await
-                    .map_err(|e| HanzoRegistryError::CustomError(format!("DNS resolution error: {}", e)))?;
+                    .map_err(|e| HanzoRegistryError::CustomError(format!("DNS resolution error: {e}")))?;
 
                 resolved_addresses
                     .iter()
@@ -176,9 +176,9 @@ impl OnchainIdentity {
         // Append default ports if missing
         let address = if !address.contains(':') {
             if first_address.starts_with("https://") {
-                format!("{}:443", address)
+                format!("{address}:443")
             } else if first_address.starts_with("http://") {
-                format!("{}:80", address)
+                format!("{address}:80")
             } else {
                 address
             }
@@ -291,7 +291,7 @@ impl HanzoRegistry {
                             hanzo_log(
                                 HanzoLogOption::CryptoIdentity,
                                 HanzoLogLevel::Error,
-                                format!("Error updating cache: {}", e).as_str(),
+                                format!("Error updating cache: {e}").as_str(),
                             );
                         }
                     });

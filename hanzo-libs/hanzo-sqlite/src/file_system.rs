@@ -447,7 +447,7 @@ impl SqliteManager {
         params.push(&limit_binding);
 
         // Convert Vec to slice
-        let params_slice: Vec<&dyn rusqlite::ToSql> = params.iter().copied().collect();
+        let params_slice: Vec<&dyn rusqlite::ToSql> = params.to_vec();
 
         // Execute the query and collect results using query_map
         let chunk_ids_and_distances: Vec<(i64, f64)> = stmt

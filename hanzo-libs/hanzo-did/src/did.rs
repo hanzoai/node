@@ -124,10 +124,10 @@ impl DID {
     pub fn parse(did_string: &str) -> Result<Self, DIDError> {
         // DID format: did:method:method-specific-id[/path][?query][#fragment]
         let regex = Regex::new(r"^did:([a-z0-9]+):([a-zA-Z0-9:._-]+)(/[^?#]*)?(\?[^#]*)?(#.*)?$")
-            .map_err(|e| DIDError::InvalidFormat(format!("Regex error: {}", e)))?;
+            .map_err(|e| DIDError::InvalidFormat(format!("Regex error: {e}")))?;
 
         let captures = regex.captures(did_string)
-            .ok_or_else(|| DIDError::InvalidFormat(format!("Invalid DID format: {}", did_string)))?;
+            .ok_or_else(|| DIDError::InvalidFormat(format!("Invalid DID format: {did_string}")))?;
 
         let method = captures.get(1)
             .ok_or_else(|| DIDError::InvalidFormat("Missing method".to_string()))?
