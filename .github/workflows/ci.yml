@@ -48,7 +48,8 @@ jobs:
     - name: Run lib tests
       run: |
         echo "Running library tests..."
-        cargo test --lib -- --test-threads=1
+        # Skip hanzo_sqlite tests in CI as they require database setup
+        cargo test --lib --workspace --exclude hanzo_sqlite -- --test-threads=1
 
     - name: Run doc tests
       run: |
