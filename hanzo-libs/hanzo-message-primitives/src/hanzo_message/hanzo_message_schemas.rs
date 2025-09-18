@@ -570,7 +570,7 @@ impl Serialize for RegistrationCodeType {
     {
         match self {
             RegistrationCodeType::Device(device_name) => {
-                let s = format!("device:{}", device_name);
+                let s = format!("device:{device_name}");
                 serializer.serialize_str(&s)
             }
             RegistrationCodeType::Profile => serializer.serialize_str("profile"),
@@ -599,7 +599,7 @@ impl<'de> Deserialize<'de> for RegistrationCodeType {
 impl fmt::Display for RegistrationCodeType {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
-            RegistrationCodeType::Device(device_name) => write!(f, "device:{}", device_name),
+            RegistrationCodeType::Device(device_name) => write!(f, "device:{device_name}"),
             RegistrationCodeType::Profile => write!(f, "profile"),
         }
     }

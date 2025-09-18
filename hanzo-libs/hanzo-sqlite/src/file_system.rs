@@ -62,17 +62,16 @@ impl SqliteManager {
         let vector_dimensions = default_model.vector_dimensions()
             .map_err(|e| rusqlite::Error::SqliteFailure(
                 rusqlite::ffi::Error::new(1),
-                Some(format!("Cannot get vector dimensions: {}", e))
+                Some(format!("Cannot get vector dimensions: {e}"))
             ))?;
 
         conn.execute(
             &format!(
                 "CREATE VIRTUAL TABLE IF NOT EXISTS chunk_vec USING vec0(
-                    embedding float[{}],
+                    embedding float[{vector_dimensions}],
                     parsed_file_id INTEGER,
                     +chunk_id INTEGER  -- Normal column recognized as chunk_id
-                );",
-                vector_dimensions
+                );"
             ),
             [],
         )?;
@@ -418,7 +417,7 @@ impl SqliteManager {
 
         // Serialize the vector to a JSON array string
         let vector_json = serde_json::to_string(&query_embedding).map_err(|e| {
-            eprintln!("Vector serialization error: {}", e);
+            eprintln!("Vector serialization error: {e}");
             SqliteManagerError::SerializationError(e.to_string())
         })?;
 
@@ -431,11 +430,10 @@ impl SqliteManager {
             SELECT v.chunk_id, v.distance
             FROM chunk_vec v
             WHERE v.embedding MATCH json(?)
-            AND v.parsed_file_id IN ({})
+            AND v.parsed_file_id IN ({placeholders})
             ORDER BY v.distance
             LIMIT ?
-        "#,
-            placeholders
+        "#
         );
 
         let mut stmt = conn.prepare(&sql)?;
@@ -449,7 +447,7 @@ impl SqliteManager {
         params.push(&limit_binding);
 
         // Convert Vec to slice
-        let params_slice: Vec<&dyn rusqlite::ToSql> = params.iter().map(|&p| p).collect();
+        let params_slice: Vec<&dyn rusqlite::ToSql> = params.iter().copied().collect();
 
         // Execute the query and collect results using query_map
         let chunk_ids_and_distances: Vec<(i64, f64)> = stmt
@@ -480,7 +478,7 @@ impl SqliteManager {
         let tx = conn.transaction()?;
 
         // Construct a wildcard for the old_prefix
-        let like_pattern = format!("{}%", old_prefix);
+        let like_pattern = format!("{old_prefix}%");
 
         tx.execute(
             "UPDATE parsed_files
@@ -506,8 +504,8 @@ impl SqliteManager {
              WHERE relative_path LIKE ? AND relative_path NOT LIKE ?",
         )?;
 
-        let like_pattern = format!("{}%", directory_path);
-        let not_like_pattern = format!("{}%/%", directory_path);
+        let like_pattern = format!("{directory_path}%");
+        let not_like_pattern = format!("{directory_path}%/%");
 
         let rows = stmt.query_map(params![like_pattern, not_like_pattern], |row| {
             Ok(ParsedFile {
@@ -585,7 +583,7 @@ impl SqliteManager {
              WHERE relative_path LIKE ?",
         )?;
 
-        let like_pattern = format!("{}%", prefix);
+        let like_pattern = format!("{prefix}%");
 
         let rows = stmt.query_map([like_pattern], |row| {
             Ok(ParsedFile {

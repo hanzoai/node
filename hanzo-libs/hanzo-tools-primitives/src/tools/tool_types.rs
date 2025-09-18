@@ -2,17 +2,14 @@ use serde::{Deserialize, Deserializer, Serialize, Serializer};
 use serde_json::Value as JsonValue;
 
 #[derive(Copy, Debug, Clone, PartialEq)]
+#[derive(Default)]
 pub enum RunnerType {
+    #[default]
     Any,
     OnlyHost,
     OnlyDocker,
 }
 
-impl Default for RunnerType {
-    fn default() -> Self {
-        RunnerType::Any
-    }
-}
 
 impl RunnerType {
     fn as_str(&self) -> &'static str {
@@ -28,7 +25,7 @@ impl RunnerType {
             "any" => Ok(RunnerType::Any),
             "only_host" => Ok(RunnerType::OnlyHost),
             "only_docker" => Ok(RunnerType::OnlyDocker),
-            _ => Err(format!("Invalid runner type: {}", s)),
+            _ => Err(format!("Invalid runner type: {s}")),
         }
     }
 }
@@ -73,7 +70,7 @@ impl OperatingSystem {
             "linux" => Ok(OperatingSystem::Linux),
             "macos" => Ok(OperatingSystem::MacOS),
             "windows" => Ok(OperatingSystem::Windows),
-            _ => Err(format!("Invalid operating system: {}", s)),
+            _ => Err(format!("Invalid operating system: {s}")),
         }
     }
 }

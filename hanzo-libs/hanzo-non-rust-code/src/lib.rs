@@ -93,10 +93,10 @@ pub enum RunError {
 impl std::fmt::Display for RunError {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
-            RunError::CodeExecutionError(err) => write!(f, "code execution error: {}", err),
-            RunError::SerializeConfigurationsError(err) => write!(f, "failed to serialize configurations: {}", err),
-            RunError::SerializeParamsError(err) => write!(f, "failed to serialize parameters: {}", err),
-            RunError::ParseOutputError(err) => write!(f, "failed to parse output: {}", err),
+            RunError::CodeExecutionError(err) => write!(f, "code execution error: {err}"),
+            RunError::SerializeConfigurationsError(err) => write!(f, "failed to serialize configurations: {err}"),
+            RunError::SerializeParamsError(err) => write!(f, "failed to serialize parameters: {err}"),
+            RunError::ParseOutputError(err) => write!(f, "failed to parse output: {err}"),
         }
     }
 }

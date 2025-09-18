@@ -37,35 +37,35 @@ pub enum ToolError {
 impl fmt::Display for ToolError {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match *self {
-            ToolError::RegexError(ref e) => write!(f, "Regex error: {}", e),
+            ToolError::RegexError(ref e) => write!(f, "Regex error: {e}"),
             ToolError::FailedJSONParsing => write!(f, "Failed JSON parsing."),
-            ToolError::ParseError(ref s) => write!(f, "Failed to parse {}", s),
+            ToolError::ParseError(ref s) => write!(f, "Failed to parse {s}"),
             ToolError::ToolkitNotFound => write!(f, "Toolkit was not found."),
             ToolError::ToolkitVersionAlreadyInstalled(ref s, ref e) => {
-                write!(f, "Toolkit with the same version is already installed: {} {}", s, e)
+                write!(f, "Toolkit with the same version is already installed: {s} {e}")
             }
-            ToolError::RequestError(ref e) => write!(f, "Request error: {}", e),
-            ToolError::ToolNotFound(ref t) => write!(f, "Tool not found: {}", t),
-            ToolError::ToolAlreadyInstalled(ref t) => write!(f, "Tool already installed: {}", t),
-            ToolError::ToolkitAlreadyActivated(ref t) => write!(f, "Toolkit is already activated: {}", t),
-            ToolError::ToolkitAlreadyDeactivated(ref t) => write!(f, "Toolkit is already deactivated: {}", t),
-            ToolError::SerializationError(ref e) => write!(f, "Serialization error: {}", e),
-            ToolError::InvalidProfile(ref e) => write!(f, "Invalid profile: {}", e),
+            ToolError::RequestError(ref e) => write!(f, "Request error: {e}"),
+            ToolError::ToolNotFound(ref t) => write!(f, "Tool not found: {t}"),
+            ToolError::ToolAlreadyInstalled(ref t) => write!(f, "Tool already installed: {t}"),
+            ToolError::ToolkitAlreadyActivated(ref t) => write!(f, "Toolkit is already activated: {t}"),
+            ToolError::ToolkitAlreadyDeactivated(ref t) => write!(f, "Toolkit is already deactivated: {t}"),
+            ToolError::SerializationError(ref e) => write!(f, "Serialization error: {e}"),
+            ToolError::InvalidProfile(ref e) => write!(f, "Invalid profile: {e}"),
             ToolError::AlreadyStarted => write!(f, "Tool is already started."),
             ToolError::NotStarted => write!(f, "Tool is not started."),
-            ToolError::ToolNotRunnable(ref t) => write!(f, "Tool is not runnable: {}", t),
-            ToolError::ExecutionError(ref e) => write!(f, "Execution error: {}", e),
-            ToolError::DatabaseError(ref e) => write!(f, "Database error: {}", e),
+            ToolError::ToolNotRunnable(ref t) => write!(f, "Tool is not runnable: {t}"),
+            ToolError::ExecutionError(ref e) => write!(f, "Execution error: {e}"),
+            ToolError::DatabaseError(ref e) => write!(f, "Database error: {e}"),
             ToolError::MissingEmbedding => write!(f, "Missing embedding."),
-            ToolError::MissingParameterError(ref e) => write!(f, "Missing parameter error: {}", e),
-            ToolError::EmbeddingGenerationError(ref e) => write!(f, "Embedding generation error: {}", e),
-            ToolError::MissingConfigError(ref e) => write!(f, "Missing config error: {}", e),
-            ToolError::InvalidFunctionArguments(ref e) => write!(f, "Invalid function arguments: {}", e),
-            ToolError::InvalidToolRouterKey(ref e) => write!(f, "Invalid tool router key: {}", e),
-            ToolError::OAuthError(ref e) => write!(f, "OAuth not setup: {}", e),
-            ToolError::AutocontainedError(ref e) => write!(f, "{}", e),
-            ToolError::NetworkError(ref e) => write!(f, "Network error: {}", e),
-            ToolError::FailedToResolveMCPServer(ref e) => write!(f, "Failed to resolve MCP server: {}", e),
+            ToolError::MissingParameterError(ref e) => write!(f, "Missing parameter error: {e}"),
+            ToolError::EmbeddingGenerationError(ref e) => write!(f, "Embedding generation error: {e}"),
+            ToolError::MissingConfigError(ref e) => write!(f, "Missing config error: {e}"),
+            ToolError::InvalidFunctionArguments(ref e) => write!(f, "Invalid function arguments: {e}"),
+            ToolError::InvalidToolRouterKey(ref e) => write!(f, "Invalid tool router key: {e}"),
+            ToolError::OAuthError(ref e) => write!(f, "OAuth not setup: {e}"),
+            ToolError::AutocontainedError(ref e) => write!(f, "{e}"),
+            ToolError::NetworkError(ref e) => write!(f, "Network error: {e}"),
+            ToolError::FailedToResolveMCPServer(ref e) => write!(f, "Failed to resolve MCP server: {e}"),
         }
     }
 }

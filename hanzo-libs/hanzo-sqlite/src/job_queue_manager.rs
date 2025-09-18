@@ -13,7 +13,7 @@ impl SqliteManager {
         prefix: Option<String>,
     ) -> Result<(), SqliteManagerError> {
         let full_job_id = match &prefix {
-            Some(p) => format!("{}{}", p, job_id),
+            Some(p) => format!("{p}{job_id}"),
             None => job_id.to_string(),
         };
 
@@ -38,7 +38,7 @@ impl SqliteManager {
         let mut query = "SELECT job_id, queue_data FROM job_queues WHERE 1=1".to_string();
 
         if let Some(p) = &prefix {
-            query.push_str(&format!(" AND job_id LIKE '{}%'", p));
+            query.push_str(&format!(" AND job_id LIKE '{p}%'"));
         }
 
         let mut stmt = conn.prepare(&query)?;

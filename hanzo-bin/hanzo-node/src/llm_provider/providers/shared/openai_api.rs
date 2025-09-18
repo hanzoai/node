@@ -7,7 +7,6 @@ use serde::{Deserialize, Serialize};
 use serde_json::{self};
 use hanzo_message_primitives::schemas::llm_providers::serialized_llm_provider::LLMProviderInterface;
 use hanzo_message_primitives::schemas::prompts::Prompt;
-use hanzo_message_primitives::schemas::subprompts::{SubPrompt, SubPromptType};
 
 use super::shared_model_logic;
 

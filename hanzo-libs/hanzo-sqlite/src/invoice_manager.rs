@@ -7,7 +7,7 @@ use crate::{SqliteManager, SqliteManagerError};
 
 impl SqliteManager {
     pub fn set_invoice(&self, invoice: &Invoice) -> Result<(), SqliteManagerError> {
-        println!("set_invoice: {:?}", invoice);
+        println!("set_invoice: {invoice:?}");
 
         let conn = self.get_connection()?;
         let mut stmt = conn.prepare(

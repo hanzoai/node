@@ -76,9 +76,9 @@ impl fmt::Display for InvoiceError {
         match self {
             InvoiceError::InvalidToolKeyFormat => write!(f, "Invalid tool_key_name format"),
             InvoiceError::NodeNameMismatch { expected, found } => {
-                write!(f, "Node name mismatch: expected {}, found {}", expected, found)
+                write!(f, "Node name mismatch: expected {expected}, found {found}")
             }
-            InvoiceError::OperationFailed(msg) => write!(f, "Operation failed: {}", msg),
+            InvoiceError::OperationFailed(msg) => write!(f, "Operation failed: {msg}"),
         }
     }
 }
@@ -114,18 +114,17 @@ impl InvoiceRequest {
 
         // Normalize both node_name_part and node_name for comparison
         let normalized_node_name_part = ToolRouterKey::sanitize(node_name_part);
-        let normalized_node_name = ToolRouterKey::sanitize(&node_name.to_string());
+        let normalized_node_name = ToolRouterKey::sanitize(node_name.as_ref());
 
         // Validate that the normalized node name part matches our normalized node_name
         if normalized_node_name_part != normalized_node_name {
             return Err(InvoiceError::OperationFailed(format!(
-                "Node name in tool_key_name does not match our node_name (expected: {}, found: {})",
-                normalized_node_name, normalized_node_name_part
+                "Node name in tool_key_name does not match our node_name (expected: {normalized_node_name}, found: {normalized_node_name_part})"
             )));
         }
 
         // Convert the tool_key_name to the actual tool_key_name
-        let actual_tool_key_name = format!("local:::{}:::{}", author, tool_name);
+        let actual_tool_key_name = format!("local:::{author}:::{tool_name}");
 
         Ok(actual_tool_key_name)
     }

@@ -39,7 +39,7 @@ impl ToolRouterKey {
         let string_vec: Vec<String> = match Vec::deserialize(deserializer) {
             Ok(v) => v,
             Err(e) => {
-                println!("Failed to deserialize string vector: {}", e);
+                println!("Failed to deserialize string vector: {e}");
                 return Err(e);
             }
         };
@@ -48,7 +48,7 @@ impl ToolRouterKey {
             .into_iter()
             .map(|s| {
                 Self::from_string(&s).map_err(|e| {
-                    println!("Failed to parse tool router key: {}", e);
+                    println!("Failed to parse tool router key: {e}");
                     serde::de::Error::custom(e)
                 })
             })
@@ -64,8 +64,8 @@ impl ToolRouterKey {
         let strings: Vec<String> = tools
             .iter()
             .map(|k| {
-                let s = k.to_string_with_version();
-                s
+                
+                k.to_string_with_version()
             })
             .collect();
         strings.serialize(serializer)
@@ -89,13 +89,13 @@ impl ToolRouterKey {
         let s: String = match String::deserialize(deserializer) {
             Ok(v) => v,
             Err(e) => {
-                println!("Failed to deserialize string: {}", e);
+                println!("Failed to deserialize string: {e}");
                 return Err(e);
             }
         };
 
         let tool = ToolRouterKey::from_string(&s).map_err(|e| {
-            println!("Failed to parse tool router key: {}", e);
+            println!("Failed to parse tool router key: {e}");
             serde::de::Error::custom(e)
         })?;
         Ok(Some(tool))
@@ -113,7 +113,7 @@ impl ToolRouterKey {
         let sanitized_author = Self::sanitize(&self.author);
         let sanitized_name = Self::sanitize(&self.name);
 
-        let key = format!("{}:::{}:::{}", sanitized_source, sanitized_author, sanitized_name);
+        let key = format!("{sanitized_source}:::{sanitized_author}:::{sanitized_name}");
         key.replace('/', "|").to_lowercase()
     }
 
@@ -129,8 +129,7 @@ impl ToolRouterKey {
         let version_str = self.version.clone().unwrap();
 
         let key = format!(
-            "{}:::{}:::{}:::{}",
-            sanitized_source, sanitized_author, sanitized_name, version_str
+            "{sanitized_source}:::{sanitized_author}:::{sanitized_name}:::{version_str}"
         );
 
         key.replace('/', "|").to_lowercase()
@@ -183,7 +182,7 @@ impl ToolRouterKey {
 
         // Create a HanzoName to properly validate the node name
         let hanzo_name =
-            HanzoName::new(node_name.to_string()).map_err(|e| format!("Invalid node name '{}': {}", node_name, e))?;
+            HanzoName::new(node_name.to_string()).map_err(|e| format!("Invalid node name '{node_name}': {e}"))?;
 
         // Sanitize the node name to create the network source
         let network_source = Self::sanitize(&hanzo_name.node_name);

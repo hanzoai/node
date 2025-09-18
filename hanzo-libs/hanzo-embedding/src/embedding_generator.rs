@@ -260,7 +260,7 @@ impl RemoteEmbeddingGenerator {
 
             // Add the API key to the header if it's available
             if let Some(api_key) = &self.api_key {
-                request = request.header("Authorization", format!("Bearer {}", api_key));
+                request = request.header("Authorization", format!("Bearer {api_key}"));
             }
 
             // Send the request
@@ -276,8 +276,7 @@ impl RemoteEmbeddingGenerator {
                         }
                         Err(err) => {
                             return Err(HanzoEmbeddingError::RequestFailed(format!(
-                                "Failed to deserialize response JSON: {}",
-                                err
+                                "Failed to deserialize response JSON: {err}"
                             )));
                         }
                     }
@@ -314,8 +313,7 @@ impl RemoteEmbeddingGenerator {
                         continue;
                     } else {
                         return Err(HanzoEmbeddingError::RequestFailed(format!(
-                            "HTTP request failed after {} retries: {}",
-                            max_retries, err
+                            "HTTP request failed after {max_retries} retries: {err}"
                         )));
                     }
                 }
@@ -336,25 +334,25 @@ impl RemoteEmbeddingGenerator {
 
         // Build the request
         let mut request = client
-            .post(&format!("{}", self.ollama_endpoint_url()))
+            .post(self.ollama_endpoint_url().to_string())
             .header("Content-Type", "application/json")
             .json(&request_body);
 
         // Add the API key to the header if it's available
         if let Some(api_key) = &self.api_key {
-            request = request.header("Authorization", format!("Bearer {}", api_key));
+            request = request.header("Authorization", format!("Bearer {api_key}"));
         }
 
         // Send the request and check for errors
         let response = request.send().map_err(|err| {
             // Handle any HTTP client errors here (e.g., request creation failure)
-            HanzoEmbeddingError::RequestFailed(format!("HTTP request failed: {}", err))
+            HanzoEmbeddingError::RequestFailed(format!("HTTP request failed: {err}"))
         })?;
 
         // Check if the response is successful
         if response.status().is_success() {
             let embedding_response: OllamaEmbeddingsResponse = response.json().map_err(|err| {
-                HanzoEmbeddingError::RequestFailed(format!("Failed to deserialize response JSON: {}", err))
+                HanzoEmbeddingError::RequestFailed(format!("Failed to deserialize response JSON: {err}"))
             })?;
             Ok(embedding_response.embedding)
         } else {
@@ -393,7 +391,7 @@ impl RemoteEmbeddingGenerator {
 
             // Add the API key to the header if it's available
             if let Some(api_key) = &self.api_key {
-                request = request.header("Authorization", format!("Bearer {}", api_key));
+                request = request.header("Authorization", format!("Bearer {api_key}"));
             }
 
             // Send the request
@@ -408,8 +406,7 @@ impl RemoteEmbeddingGenerator {
                         }
                         Err(err) => {
                             return Err(HanzoEmbeddingError::RequestFailed(format!(
-                                "Failed to deserialize response JSON: {}",
-                                err
+                                "Failed to deserialize response JSON: {err}"
                             )));
                         }
                     }
@@ -455,8 +452,7 @@ impl RemoteEmbeddingGenerator {
                         continue;
                     } else {
                         return Err(HanzoEmbeddingError::RequestFailed(format!(
-                            "HTTP request failed after {} retries: {}",
-                            max_retries, err
+                            "HTTP request failed after {max_retries} retries: {err}"
                         )));
                     }
                 }
@@ -483,13 +479,13 @@ impl RemoteEmbeddingGenerator {
 
         // Add the API key to the header if it's available
         if let Some(api_key) = &self.api_key {
-            request = request.header("Authorization", format!("Bearer {}", api_key));
+            request = request.header("Authorization", format!("Bearer {api_key}"));
         }
 
         // Send the request and check for errors
         let response = request.send().await.map_err(|err| {
             // Handle any HTTP client errors here (e.g., request creation failure)
-            HanzoEmbeddingError::RequestFailed(format!("HTTP request failed: {}", err))
+            HanzoEmbeddingError::RequestFailed(format!("HTTP request failed: {err}"))
         })?;
 
         // Check if the response is successful
@@ -497,7 +493,7 @@ impl RemoteEmbeddingGenerator {
             // Deserialize the response JSON into a struct (assuming you have an
             // EmbeddingResponse struct)
             let embedding_response: EmbeddingResponse = response.json().await.map_err(|err| {
-                HanzoEmbeddingError::RequestFailed(format!("Failed to deserialize response JSON: {}", err))
+                HanzoEmbeddingError::RequestFailed(format!("Failed to deserialize response JSON: {err}"))
             })?;
 
             // Use the response to create an Embedding instance

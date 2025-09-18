@@ -26,7 +26,7 @@ impl fmt::Display for SubPromptType {
             SubPromptType::AvailableTool => "tool",
             SubPromptType::Function => "function",
         };
-        write!(f, "{}", s)
+        write!(f, "{s}")
     }
 }
 
@@ -88,7 +88,7 @@ impl SubPrompt {
         match self {
             SubPrompt::Content(_, content, _) => content.clone(),
             SubPrompt::Asset(_, asset_type, _asset_content, asset_detail, _) => {
-                format!("Asset Type: {:?}, Content: ..., Detail: {:?}", asset_type, asset_detail)
+                format!("Asset Type: {asset_type:?}, Content: ..., Detail: {asset_detail:?}")
             }
             SubPrompt::ToolAvailable(_, content, _) => content.to_string(),
             SubPrompt::FunctionCall(_, content, _) => content.to_string(),
@@ -97,11 +97,11 @@ impl SubPrompt {
                 let assets_str = assets
                     .iter()
                     .map(|(asset_type, _asset_content, asset_detail)| {
-                        format!("Asset Type: {:?}, Detail: {:?}", asset_type, asset_detail)
+                        format!("Asset Type: {asset_type:?}, Detail: {asset_detail:?}")
                     })
                     .collect::<Vec<_>>()
                     .join(", ");
-                format!("Content: {}, Assets: [{}]", content, assets_str)
+                format!("Content: {content}, Assets: [{assets_str}]")
             }
         }
     }
@@ -348,7 +348,7 @@ impl SubPrompt {
                 buffer_content.clone_from(&current_content);
                 last_reference.clone_from(&extra_info);
             } else {
-                buffer_content.push_str(&format!(" {}", current_content));
+                buffer_content.push_str(&format!(" {current_content}"));
             }
 
             if i == chunks.len() - 1 || extra_info != last_reference {

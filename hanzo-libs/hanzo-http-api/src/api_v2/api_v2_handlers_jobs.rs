@@ -688,11 +688,11 @@ pub async fn add_file_to_inbox_handler(
 
     while let Some(part) = form.next().await {
         let mut part = part.map_err(|e| {
-            eprintln!("Error collecting form data: {:?}", e);
+            eprintln!("Error collecting form data: {e:?}");
             warp::reject::custom(APIError::new(
                 StatusCode::BAD_REQUEST,
                 "Bad Request",
-                format!("Failed to collect form data: {:?}", e).as_str(),
+                format!("Failed to collect form data: {e:?}").as_str(),
             ))
         })?;
         match part.name() {
@@ -708,7 +708,7 @@ pub async fn add_file_to_inbox_handler(
                     warp::reject::custom(APIError::new(
                         StatusCode::BAD_REQUEST,
                         "Bad Request",
-                        format!("Failed to read file_inbox_name: {:?}", e).as_str(),
+                        format!("Failed to read file_inbox_name: {e:?}").as_str(),
                     ))
                 })?;
                 file_inbox_name =

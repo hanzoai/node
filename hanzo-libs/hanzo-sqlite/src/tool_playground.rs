@@ -372,7 +372,7 @@ impl SqliteManager {
             params![message_id, playground_id, code],
         )
         .map_err(|e| {
-            eprintln!("Database error: {}", e);
+            eprintln!("Database error: {e}");
             SqliteManagerError::DatabaseError(e)
         })?;
         Ok(())

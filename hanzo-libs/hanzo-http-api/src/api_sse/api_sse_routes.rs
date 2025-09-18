@@ -30,7 +30,7 @@ async fn handle_rejection(err: Rejection) -> Result<impl Reply, Rejection> {
         tracing::warn!("SSE route rejection: {}", message);
     } else if let Some(e) = err.find::<warp::reject::MethodNotAllowed>() {
          status = StatusCode::METHOD_NOT_ALLOWED;
-         message = format!("Method not allowed: {}", e);
+         message = format!("Method not allowed: {e}");
          tracing::warn!("SSE route rejection: {}", message);
     } else {
         status = StatusCode::INTERNAL_SERVER_ERROR;

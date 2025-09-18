@@ -60,6 +60,12 @@ impl Property {
     }
 }
 
+impl Default for Parameters {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl Parameters {
     pub fn new() -> Self {
         Self {

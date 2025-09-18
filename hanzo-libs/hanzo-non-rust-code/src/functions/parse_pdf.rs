@@ -26,7 +26,7 @@ pub struct Metadata {
 }
 
 pub async fn parse_pdf(file_path: PathBuf) -> Result<Output, RunError> {
-    println!("parsing pdf file: {:?}", file_path);
+    println!("parsing pdf file: {file_path:?}");
     let code = r#"
 # /// script
 # requires-python = ">=3.10,<3.13"

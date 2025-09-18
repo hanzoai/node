@@ -71,7 +71,7 @@ impl IndexableVersion {
         let major = self.version_number / 1_000_000;
         let minor = (self.version_number % 1_000_000) / 1_000;
         let patch = self.version_number % 1_000;
-        format!("{}.{}.{}", major, minor, patch)
+        format!("{major}.{minor}.{patch}")
     }
 }
 

@@ -114,7 +114,7 @@ impl SqliteManager {
 
     pub async fn update_prompt(&self, prompt: &CustomPrompt) -> Result<(), SqliteManagerError> {
         let embedding = self.generate_embeddings(&prompt.prompt).await?;
-        Ok(self.update_prompt_with_vector(prompt, embedding)?)
+        self.update_prompt_with_vector(prompt, embedding)
     }
 
     // Updates or inserts a CustomPrompt and its vector
@@ -223,7 +223,7 @@ impl SqliteManager {
     ) -> Result<Vec<(CustomPrompt, f64)>> {
         // Serialize the vector to a JSON array string
         let vector_json = serde_json::to_string(&vector).map_err(|e| {
-            eprintln!("Vector serialization error: {}", e);
+            eprintln!("Vector serialization error: {e}");
             rusqlite::Error::ToSqlConversionFailure(Box::new(e))
         })?;
 
@@ -395,7 +395,7 @@ impl SqliteManager {
 
         for name_result in name_iter {
             let name = name_result.map_err(|e| {
-                eprintln!("FTS query error: {}", e);
+                eprintln!("FTS query error: {e}");
                 SqliteManagerError::DatabaseError(e)
             })?;
 

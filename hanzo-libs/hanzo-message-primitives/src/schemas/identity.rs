@@ -323,11 +323,11 @@ impl fmt::Debug for Identity {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
             Identity::Standard(std_identity) => {
-                write!(f, "Standard({})", std_identity)
+                write!(f, "Standard({std_identity})")
             }
             Identity::LLMProvider(agent) => {
                 // Assuming you have implemented Debug for SerializedLLMProvider
-                write!(f, "Agent({:?})", agent)
+                write!(f, "Agent({agent:?})")
             }
             Identity::Device(device) => {
                 let node_encryption_public_key = encryption_public_key_to_string(device.node_encryption_public_key);

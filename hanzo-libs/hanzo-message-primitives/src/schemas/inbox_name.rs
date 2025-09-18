@@ -16,8 +16,8 @@ impl fmt::Display for InboxNameError {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match *self {
             InboxNameError::HanzoNameError(ref err) => std::fmt::Display::fmt(err, f),
-            InboxNameError::InvalidFormat(ref s) => write!(f, "Invalid inbox name format: {}", s),
-            InboxNameError::InvalidOperation(ref s) => write!(f, "Invalid operation: {}", s),
+            InboxNameError::InvalidFormat(ref s) => write!(f, "Invalid inbox name format: {s}"),
+            InboxNameError::InvalidOperation(ref s) => write!(f, "Invalid operation: {s}"),
         }
     }
 }
@@ -145,13 +145,13 @@ impl InboxName {
         let sender_full = if sender_subidentity.is_empty() {
             sender
         } else {
-            format!("{}/{}", sender, sender_subidentity)
+            format!("{sender}/{sender_subidentity}")
         };
 
         let recipient_full = if recipient_subidentity.is_empty() {
             recipient
         } else {
-            format!("{}/{}", recipient, recipient_subidentity)
+            format!("{recipient}/{recipient_subidentity}")
         };
 
         let sender_name = HanzoName::new(sender_full.clone())
@@ -177,8 +177,7 @@ impl InboxName {
     pub fn get_job_inbox_name_from_params(unique_id: String) -> Result<InboxName, InboxNameError> {
         let inbox_name_separator = "::";
         let inbox_name = format!(
-            "job_inbox{}{}{}false",
-            inbox_name_separator, unique_id, inbox_name_separator
+            "job_inbox{inbox_name_separator}{unique_id}{inbox_name_separator}false"
         );
         InboxName::new(inbox_name)
     }

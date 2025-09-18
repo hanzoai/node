@@ -133,12 +133,12 @@ impl SqliteManager {
         };
         let fts_sync_result = manager.sync_tools_fts_table();
         if let Err(e) = fts_sync_result {
-            eprintln!("Error synchronizing Tools FTS table: {}", e);
+            eprintln!("Error synchronizing Tools FTS table: {e}");
         }
 
         let fts_sync_result = manager.sync_prompts_fts_table();
         if let Err(e) = fts_sync_result {
-            eprintln!("Error synchronizing Prompts FTS table: {}", e);
+            eprintln!("Error synchronizing Prompts FTS table: {e}");
         }
 
         Self::migrate_agents_full_identity_name(&manager)?;
@@ -151,7 +151,7 @@ impl SqliteManager {
         let agents = manager.get_all_agents()?;
         for mut agent in agents {
             if !agent.full_identity_name.has_profile() {
-                println!("Migrating agent: {:?}", agent);
+                println!("Migrating agent: {agent:?}");
                 agent.full_identity_name = HanzoName::new(format!(
                     "{}/main/agent/{}",
                     agent.full_identity_name.node_name.clone(),
@@ -751,17 +751,16 @@ impl SqliteManager {
         let vector_dimensions = default_model.vector_dimensions()
             .map_err(|e| rusqlite::Error::SqliteFailure(
                 rusqlite::ffi::Error::new(1),
-                Some(format!("Cannot get vector dimensions: {}", e))
+                Some(format!("Cannot get vector dimensions: {e}"))
             ))?;
 
         conn.execute(
             &format!(
                 "CREATE VIRTUAL TABLE IF NOT EXISTS prompt_vec_items USING vec0(
-                    embedding float[{}],
+                    embedding float[{vector_dimensions}],
                     is_enabled integer,
                     +prompt_id integer
-                )",
-                vector_dimensions
+                )"
             ),
             [],
         )?;
@@ -819,7 +818,7 @@ impl SqliteManager {
         let vector_dimensions = default_model.vector_dimensions()
             .map_err(|e| rusqlite::Error::SqliteFailure(
                 rusqlite::ffi::Error::new(1),
-                Some(format!("Cannot get vector dimensions: {}", e))
+                Some(format!("Cannot get vector dimensions: {e}"))
             ))?;
 
         conn.execute(
@@ -1276,7 +1275,7 @@ impl SqliteManager {
         hanzo_log(
             HanzoLogOption::Database,
             HanzoLogLevel::Info,
-            &format!("Starting embedding migration to new model: {} (force: {})", new_model_type, force),
+            &format!("Starting embedding migration to new model: {new_model_type} (force: {force})"),
         );
 
         if !force && !self.is_embedding_migration_needed(new_model_type)? {
@@ -1298,12 +1297,12 @@ impl SqliteManager {
 
         // Step 1: Drop and recreate vector tables with new dimensions
         let vector_dimensions = new_model_type.vector_dimensions()
-            .map_err(|e| SqliteManagerError::SerializationError(format!("Cannot get vector dimensions for new model: {}", e)))?;
+            .map_err(|e| SqliteManagerError::SerializationError(format!("Cannot get vector dimensions for new model: {e}")))?;
 
         hanzo_log(
             HanzoLogOption::Database,
             HanzoLogLevel::Info,
-            &format!("Recreating vector tables with {} dimensions", vector_dimensions),
+            &format!("Recreating vector tables with {vector_dimensions} dimensions"),
         );
 
         // Drop and recreate vector tables synchronously (no await points)
@@ -1318,11 +1317,10 @@ impl SqliteManager {
             conn.execute(
                 &format!(
                     "CREATE VIRTUAL TABLE prompt_vec_items USING vec0(
-                        embedding float[{}],
+                        embedding float[{vector_dimensions}],
                         is_enabled integer,
                         +prompt_id integer
-                    )",
-                    vector_dimensions
+                    )"
                 ),
                 [],
             )?;
@@ -1330,12 +1328,11 @@ impl SqliteManager {
             conn.execute(
                 &format!(
                     "CREATE VIRTUAL TABLE hanzo_tools_vec_items USING vec0(
-                        embedding float[{}],
+                        embedding float[{vector_dimensions}],
                         is_enabled integer,
                         is_network integer,
                         +tool_key text
-                    )",
-                    vector_dimensions
+                    )"
                 ),
                 [],
             )?;
@@ -1343,11 +1340,10 @@ impl SqliteManager {
             conn.execute(
                 &format!(
                     "CREATE VIRTUAL TABLE chunk_vec USING vec0(
-                        embedding float[{}],
+                        embedding float[{vector_dimensions}],
                         parsed_file_id INTEGER,
                         +chunk_id INTEGER
-                    )",
-                    vector_dimensions
+                    )"
                 ),
                 [],
             )?;
@@ -1380,7 +1376,7 @@ impl SqliteManager {
         for prompt in prompts {
             if let Some(id) = prompt.rowid {
                 let embedding = embedding_generator.generate_embedding_default(&prompt.prompt).await
-                    .map_err(|e| SqliteManagerError::SerializationError(format!("Embedding generation failed: {}", e)))?;
+                    .map_err(|e| SqliteManagerError::SerializationError(format!("Embedding generation failed: {e}")))?;
 
                 let conn = self.get_connection()?;
                 conn.execute(
@@ -1413,7 +1409,7 @@ impl SqliteManager {
 
         for (tool_key, embedding_seo, is_enabled, is_network) in tools {
             let embedding = embedding_generator.generate_embedding_default(&embedding_seo).await
-                .map_err(|e| SqliteManagerError::SerializationError(format!("Tool embedding generation failed: {}", e)))?;
+                .map_err(|e| SqliteManagerError::SerializationError(format!("Tool embedding generation failed: {e}")))?;
 
             let conn = self.get_connection()?;
             conn.execute(
@@ -1444,7 +1440,7 @@ impl SqliteManager {
 
         for (chunk_id, parsed_file_id, text) in chunks {
             let embedding = embedding_generator.generate_embedding_default(&text).await
-                .map_err(|e| SqliteManagerError::SerializationError(format!("Chunk embedding generation failed: {}", e)))?;
+                .map_err(|e| SqliteManagerError::SerializationError(format!("Chunk embedding generation failed: {e}")))?;
 
             let conn = self.get_connection()?;
             conn.execute(
@@ -1525,19 +1521,19 @@ impl SqliteManager {
             Err(e) => {
                 return Err(rusqlite::Error::SqliteFailure(
                     rusqlite::ffi::Error::new(1),
-                    Some(format!("failed to parse new version: {}", e)),
+                    Some(format!("failed to parse new version: {e}")),
                 ))
             }
         };
 
-        let breaking_versions = vec!["0.9.0", "0.9.1", "0.9.2", "0.9.3", "0.9.4", "0.9.5", "0.9.7", "0.9.8"]
+        let breaking_versions = ["0.9.0", "0.9.1", "0.9.2", "0.9.3", "0.9.4", "0.9.5", "0.9.7", "0.9.8"]
             .iter()
             .map(|v| semver::Version::parse(v))
             .collect::<Result<Vec<semver::Version>, _>>()
             .map_err(|e| {
                 rusqlite::Error::SqliteFailure(
                     rusqlite::ffi::Error::new(1),
-                    Some(format!("failed to parse breaking versions: {}", e)),
+                    Some(format!("failed to parse breaking versions: {e}")),
                 )
             })?;
 
@@ -1547,7 +1543,7 @@ impl SqliteManager {
             let current_version = semver::Version::parse(&current_version_str).map_err(|e| {
                 rusqlite::Error::SqliteFailure(
                     rusqlite::ffi::Error::new(1),
-                    Some(format!("failed to parse current version: {}", e)),
+                    Some(format!("failed to parse current version: {e}")),
                 )
             })?;
             needs_global_reset = Self::get_needs_global_reset(&current_version, &new_version, &breaking_versions);

@@ -137,7 +137,7 @@ impl SqliteManager {
             env.map(|e| serde_json::to_string(&e).unwrap())
                 .unwrap_or_else(|| "{}".to_string()),
             if is_enabled { 1.to_string() } else { 0.to_string() },
-            (id as i64).to_string(),
+            id.to_string(),
         ])?;
         match rows.next()? {
             Some(row) => Ok(MCPServer {

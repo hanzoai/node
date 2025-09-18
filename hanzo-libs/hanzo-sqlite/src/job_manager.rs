@@ -20,7 +20,7 @@ impl SqliteManager {
         associated_ui: Option<AssociatedUI>,
         config: Option<JobConfig>,
     ) -> Result<(), SqliteManagerError> {
-        let job_inbox_name = format!("job_inbox::{}::false", job_id);
+        let job_inbox_name = format!("job_inbox::{job_id}::false");
 
         {
             let conn = self.get_connection()?;
@@ -91,7 +91,7 @@ impl SqliteManager {
 
     /// Returns the first half of the blake3 hash of the job id value
     pub fn job_id_to_hash(job_id: &str) -> String {
-        let input = &format!("job_inbox::{}::false", job_id);
+        let input = &format!("job_inbox::{job_id}::false");
         let full_hash = blake3::hash(input.as_bytes()).to_hex().to_string();
         full_hash[..full_hash.len() / 2].to_string()
     }
@@ -139,7 +139,7 @@ impl SqliteManager {
         let mut rows = stmt.query(params![job_id])?;
 
         let row = rows.next()?.ok_or(SqliteManagerError::DataNotFound)?;
-        self.parse_job_from_row(&row, true)
+        self.parse_job_from_row(row, true)
     }
 
     #[allow(clippy::type_complexity)]
@@ -246,7 +246,7 @@ impl SqliteManager {
         let mut jobs = vec![];
 
         while let Some(row) = rows.next()? {
-            let job = self.parse_job_from_row(&row, false)?;
+            let job = self.parse_job_from_row(row, false)?;
             jobs.push(Box::new(job) as Box<dyn JobLike>);
         }
 
@@ -273,7 +273,7 @@ impl SqliteManager {
         let mut jobs = vec![];
 
         while let Some(row) = rows.next()? {
-            let job = self.parse_job_from_row(&row, false)?;
+            let job = self.parse_job_from_row(row, false)?;
             jobs.push(Box::new(job) as Box<dyn JobLike>);
         }
 
@@ -305,7 +305,7 @@ impl SqliteManager {
         }
 
         let inbox_name = InboxName::get_job_inbox_name_from_params(job_id.to_string())
-            .map_err(|e| SqliteManagerError::SomeError(format!("Error getting inbox name: {}", e)))?;
+            .map_err(|e| SqliteManagerError::SomeError(format!("Error getting inbox name: {e}")))?;
 
         let messages = self.get_last_messages_from_inbox(inbox_name.to_string(), 1000, None)?;
 
@@ -360,7 +360,7 @@ impl SqliteManager {
         let tx = conn.transaction()?;
 
         let inbox_name = InboxName::get_job_inbox_name_from_params(job_id.to_string())
-            .map_err(|e| SqliteManagerError::SomeError(format!("Error getting inbox name: {}", e)))?;
+            .map_err(|e| SqliteManagerError::SomeError(format!("Error getting inbox name: {e}")))?;
 
         tx.execute(
             "DELETE FROM inbox_profile_permissions WHERE inbox_name = ?1",

@@ -655,7 +655,7 @@ impl HanzoMessageBuilder {
         error_msg: String,
     ) -> Result<HanzoMessage, &'static str> {
         HanzoMessageBuilder::new(my_encryption_secret_key, my_signature_secret_key, receiver_public_key)
-            .message_raw_content(format!("{{error: \"{}\"}}", error_msg))
+            .message_raw_content(format!("{{error: \"{error_msg}\"}}"))
             .empty_encrypted_internal_metadata()
             .external_metadata(receiver, sender)
             .no_body_encryption()

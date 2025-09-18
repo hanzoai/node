@@ -41,7 +41,7 @@ impl SqliteManager {
         )?;
 
         if exists {
-            println!("Tool already exists with key: {} and version: {}", tool_key, version);
+            println!("Tool already exists with key: {tool_key} and version: {version}");
             return Err(SqliteManagerError::ToolAlreadyExists(tool_key));
         }
 
@@ -74,7 +74,7 @@ impl SqliteManager {
         }
 
         let tool_data = serde_json::to_vec(&tool_clone).map_err(|e| {
-            eprintln!("Serialization error: {}", e);
+            eprintln!("Serialization error: {e}");
             SqliteManagerError::SerializationError(e.to_string())
         })?;
 
@@ -277,7 +277,7 @@ impl SqliteManager {
 
         // Serialize the vector to a JSON array string
         let vector_json = serde_json::to_string(&vector).map_err(|e| {
-            eprintln!("Vector serialization error: {}", e);
+            eprintln!("Vector serialization error: {e}");
             SqliteManagerError::SerializationError(e.to_string())
         })?;
 
@@ -350,7 +350,7 @@ impl SqliteManager {
 
         // Generate the embedding from the query string
         let embedding = self.generate_embeddings(query).await.map_err(|e| {
-            eprintln!("Embedding generation error: {}", e);
+            eprintln!("Embedding generation error: {e}");
             SqliteManagerError::EmbeddingGenerationError(e.to_string())
         })?;
 
@@ -368,16 +368,16 @@ impl SqliteManager {
             .query_row(params![tool_key.to_lowercase()], |row| row.get(0))
             .map_err(|e| {
                 if e == rusqlite::Error::QueryReturnedNoRows {
-                    eprintln!("Tool not found with key: {}", tool_key);
+                    eprintln!("Tool not found with key: {tool_key}");
                     SqliteManagerError::ToolNotFound(tool_key.to_string())
                 } else {
-                    eprintln!("Database error: {}", e);
+                    eprintln!("Database error: {e}");
                     SqliteManagerError::DatabaseError(e)
                 }
             })?;
 
         let tool_header: HanzoToolHeader = serde_json::from_slice(&tool_header_data).map_err(|e| {
-            eprintln!("Deserialization error: {}", e);
+            eprintln!("Deserialization error: {e}");
             SqliteManagerError::SerializationError(e.to_string())
         })?;
 
@@ -393,22 +393,22 @@ impl SqliteManager {
             .query_map(params![format!("%{}", agent_id)], |row| {
                 let tool_key: String = row.get(0)?;
                 let tool = self.get_tool_by_key(&tool_key).map_err(|e| {
-                    eprintln!("Database error: {}", e);
+                    eprintln!("Database error: {e}");
                     rusqlite::Error::ToSqlConversionFailure(Box::new(e))
                 })?;
                 match tool.clone() {
                     HanzoTool::Agent(agent, _) => {
                         if agent.agent_id == agent_id {
-                            return Ok(Some(tool));
+                            Ok(Some(tool))
                         } else {
-                            return Ok(None);
+                            Ok(None)
                         }
                     }
                     _ => unreachable!(),
                 }
             })
             .map_err(|e| {
-                eprintln!("Database error: {}", e);
+                eprintln!("Database error: {e}");
                 SqliteManagerError::DatabaseError(e)
             })?;
 
@@ -430,17 +430,17 @@ impl SqliteManager {
             .query_row(params![tool_key.to_lowercase()], |row| row.get(0))
             .map_err(|e| {
                 if e == rusqlite::Error::QueryReturnedNoRows {
-                    eprintln!("Tool not found with key: {}", tool_key);
+                    eprintln!("Tool not found with key: {tool_key}");
                     SqliteManagerError::ToolNotFound(tool_key.to_string())
                 } else {
-                    eprintln!("Database error: {}", e);
+                    eprintln!("Database error: {e}");
                     SqliteManagerError::DatabaseError(e)
                 }
             })?;
 
         // Deserialize the tool_data to get the HanzoTool
         let tool: HanzoTool = serde_json::from_slice(&tool_data).map_err(|e| {
-            eprintln!("Deserialization error: {}", e);
+            eprintln!("Deserialization error: {e}");
             SqliteManagerError::SerializationError(e.to_string())
         })?;
 
@@ -461,7 +461,7 @@ impl SqliteManager {
 
         // Convert version string to IndexableVersion
         let indexable_version = IndexableVersion::from_string(&tool.version())
-            .map_err(|e| SqliteManagerError::VersionConversionError(e))?;
+            .map_err(SqliteManagerError::VersionConversionError)?;
         let version_number = indexable_version.get_version_number();
 
         let rowid: i64 = tx
@@ -471,13 +471,13 @@ impl SqliteManager {
                 |row| row.get(0),
             )
             .map_err(|e| {
-                eprintln!("Tool not found with key: {}", tool_key);
+                eprintln!("Tool not found with key: {tool_key}");
                 SqliteManagerError::DatabaseError(e)
             })?;
 
         // Serialize the updated tool data
         let tool_data = serde_json::to_vec(&tool).map_err(|e| {
-            eprintln!("Serialization error: {}", e);
+            eprintln!("Serialization error: {e}");
             SqliteManagerError::SerializationError(e.to_string())
         })?;
 
@@ -564,7 +564,7 @@ impl SqliteManager {
         let header_iter = stmt.query_map([], |row| {
             let tool_header_data: Vec<u8> = row.get(0)?;
             serde_json::from_slice(&tool_header_data).map_err(|e| {
-                eprintln!("Deserialization error: {}", e);
+                eprintln!("Deserialization error: {e}");
                 rusqlite::Error::ToSqlConversionFailure(Box::new(SqliteManagerError::SerializationError(e.to_string())))
             })
         })?;
@@ -572,7 +572,7 @@ impl SqliteManager {
         let mut headers = Vec::new();
         for header in header_iter {
             headers.push(header.map_err(|e| {
-                eprintln!("Database error: {}", e);
+                eprintln!("Database error: {e}");
                 SqliteManagerError::DatabaseError(e)
             })?);
         }
@@ -605,7 +605,7 @@ impl SqliteManager {
                     |row| row.get(0),
                 )
                 .map_err(|e| {
-                    eprintln!("Tool not found with key={} version={}", tool_key_lower, ver_num);
+                    eprintln!("Tool not found with key={tool_key_lower} version={ver_num}");
                     SqliteManagerError::DatabaseError(e)
                 })?;
             vec![rowid]
@@ -616,12 +616,12 @@ impl SqliteManager {
             let mut all_rowids = Vec::new();
             for r in rows {
                 all_rowids.push(r.map_err(|e| {
-                    eprintln!("Tool not found with key={}", tool_key_lower);
+                    eprintln!("Tool not found with key={tool_key_lower}");
                     SqliteManagerError::DatabaseError(e)
                 })?);
             }
             if all_rowids.is_empty() {
-                eprintln!("No tools found with key={}", tool_key_lower);
+                eprintln!("No tools found with key={tool_key_lower}");
                 return Err(SqliteManagerError::ToolNotFound(tool_key_lower));
             }
             all_rowids
@@ -687,7 +687,7 @@ impl SqliteManager {
         let count: i64 = conn
             .query_row("SELECT COUNT(*) FROM hanzo_tools", [], |row| row.get(0))
             .map_err(|e| {
-                eprintln!("Database error: {}", e);
+                eprintln!("Database error: {e}");
                 SqliteManagerError::DatabaseError(e)
             })?;
 
@@ -712,7 +712,7 @@ impl SqliteManager {
         match exists {
             Ok(exists) => Ok(exists),
             Err(e) => {
-                eprintln!("Database error: {}", e);
+                eprintln!("Database error: {e}");
                 Err(SqliteManagerError::DatabaseError(e))
             }
         }
@@ -728,7 +728,7 @@ impl SqliteManager {
                 |row| row.get(0),
             )
             .map_err(|e| {
-                eprintln!("Database error: {}", e);
+                eprintln!("Database error: {e}");
                 SqliteManagerError::DatabaseError(e)
             })?;
 
@@ -745,7 +745,7 @@ impl SqliteManager {
                 |row| row.get(0),
             )
             .map_err(|e| {
-                eprintln!("Database error: {}", e);
+                eprintln!("Database error: {e}");
                 SqliteManagerError::DatabaseError(e)
             })?;
 
@@ -823,7 +823,7 @@ impl SqliteManager {
 
             for name_res in name_iter {
                 let name = name_res.map_err(|e| {
-                    eprintln!("FTS query error: {}", e);
+                    eprintln!("FTS query error: {e}");
                     SqliteManagerError::DatabaseError(e)
                 })?;
 
@@ -833,12 +833,12 @@ impl SqliteManager {
                         conn.prepare("SELECT tool_header FROM hanzo_tools WHERE name = ?1 ORDER BY version DESC")?;
                     let tool_header_data: Vec<u8> =
                         stmt.query_row(rusqlite::params![name], |row| row.get(0)).map_err(|e| {
-                            eprintln!("Persistent DB query error: {}", e);
+                            eprintln!("Persistent DB query error: {e}");
                             SqliteManagerError::DatabaseError(e)
                         })?;
 
                     let tool_header: HanzoToolHeader = serde_json::from_slice(&tool_header_data).map_err(|e| {
-                        eprintln!("Deserialization error: {}", e);
+                        eprintln!("Deserialization error: {e}");
                         SqliteManagerError::SerializationError(e.to_string())
                     })?;
 
@@ -930,7 +930,7 @@ impl SqliteManager {
     ) -> Result<Vec<(HanzoToolHeader, f64)>, SqliteManagerError> {
         // Serialize the vector to a JSON array string for the database query
         let vector_json = serde_json::to_string(&vector).map_err(|e| {
-            eprintln!("Vector serialization error: {}", e);
+            eprintln!("Vector serialization error: {e}");
             SqliteManagerError::SerializationError(e.to_string())
         })?;
 
@@ -951,9 +951,9 @@ impl SqliteManager {
 
         // Fetch and filter results until we have enough
         loop {
-            let mut stmt = conn.prepare(&query)?;
+            let mut stmt = conn.prepare(query)?;
             let tool_keys_and_distances: Vec<(String, f64)> = stmt
-                .query_map(&[&vector_json, &current_limit.to_string()], |row| {
+                .query_map([&vector_json, &current_limit.to_string()], |row| {
                     // Dereference the distance to convert from &f64 to f64
                     Ok((row.get(0)?, row.get::<_, f64>(1)?))
                 })?
@@ -1000,7 +1000,7 @@ impl SqliteManager {
                 |row| {
                     let tool_data: Vec<u8> = row.get(0)?;
                     serde_json::from_slice(&tool_data).map_err(|e| {
-                        eprintln!("Deserialization error: {}", e);
+                        eprintln!("Deserialization error: {e}");
                         rusqlite::Error::InvalidQuery
                     })
                 },
@@ -1012,7 +1012,7 @@ impl SqliteManager {
                 |row| {
                     let tool_data: Vec<u8> = row.get(0)?;
                     serde_json::from_slice(&tool_data).map_err(|e| {
-                        eprintln!("Deserialization error: {}", e);
+                        eprintln!("Deserialization error: {e}");
                         rusqlite::Error::InvalidQuery
                     })
                 },
@@ -1030,7 +1030,7 @@ impl SqliteManager {
         let tool_iter = stmt.query_map([], |row| {
             let tool_data: Vec<u8> = row.get(0)?;
             serde_json::from_slice(&tool_data).map_err(|e| {
-                eprintln!("Deserialization error: {}", e);
+                eprintln!("Deserialization error: {e}");
                 rusqlite::Error::ToSqlConversionFailure(Box::new(SqliteManagerError::SerializationError(e.to_string())))
             })
         })?;
@@ -1038,7 +1038,7 @@ impl SqliteManager {
         let mut tools = Vec::new();
         for tool_result in tool_iter {
             let tool: HanzoTool = tool_result.map_err(|e| {
-                eprintln!("Database error: {}", e);
+                eprintln!("Database error: {e}");
                 SqliteManagerError::DatabaseError(e)
             })?;
 
@@ -1137,7 +1137,7 @@ impl SqliteManager {
         while let Some(row) = rows.next()? {
             let tool_data: Vec<u8> = row.get(0)?;
             let tool: HanzoTool = serde_json::from_slice(&tool_data).map_err(|e| {
-                eprintln!("Deserialization error: {}", e);
+                eprintln!("Deserialization error: {e}");
                 SqliteManagerError::SerializationError(e.to_string())
             })?;
             if let HanzoTool::MCPServer(mcp_tool, _) = tool {

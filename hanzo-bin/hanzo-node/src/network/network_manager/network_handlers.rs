@@ -10,9 +10,7 @@ use ed25519_dalek::{SigningKey, VerifyingKey};
 use libp2p::{request_response::ResponseChannel, PeerId};
 use serde_json::json;
 use serde_json::Value;
-use hanzo_message_primitives::schemas::agent_network_offering::{
-    AgentNetworkOfferingRequest, AgentNetworkOfferingResponse
-};
+use hanzo_message_primitives::schemas::agent_network_offering::AgentNetworkOfferingRequest;
 use hanzo_message_primitives::schemas::ws_types::WSUpdateHandler;
 use hanzo_message_primitives::{
     schemas::{

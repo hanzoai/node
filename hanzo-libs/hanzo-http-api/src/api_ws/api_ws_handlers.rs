@@ -105,7 +105,7 @@ impl WebSocketProxy {
                         }
                     }
                     Err(e) => {
-                        Self::log_error(&format!("Error receiving message from client: {}", e));
+                        Self::log_error(&format!("Error receiving message from client: {e}"));
                         break;
                     }
                 }
@@ -130,7 +130,7 @@ impl WebSocketProxy {
             loop {
                 match Self::establish_target_connection(&target_url).await {
                     Ok(target_ws) => {
-                        Self::log_info(&format!("Connected to target WebSocket server: {}", target_url));
+                        Self::log_info(&format!("Connected to target WebSocket server: {target_url}"));
                         reconnect_manager.reset();
 
                         if Self::handle_active_connection(
@@ -234,7 +234,7 @@ impl WebSocketProxy {
             while let Ok(msg) = client_msg_rx.recv().await {
                 let mut lock = target_tx.lock().await;
                 if let Err(e) = lock.send(msg).await {
-                    Self::log_error(&format!("Error forwarding message to target: {}", e));
+                    Self::log_error(&format!("Error forwarding message to target: {e}"));
                     let _ = reconnect_tx.send(());
                     return false;
                 }
@@ -256,7 +256,7 @@ impl WebSocketProxy {
                         if let Some(warp_msg) = Self::convert_tungstenite_to_warp_message(msg) {
                             let mut lock = client_tx.lock().await;
                             if let Err(e) = lock.send(warp_msg).await {
-                                Self::log_error(&format!("Error forwarding message to client: {}", e));
+                                Self::log_error(&format!("Error forwarding message to client: {e}"));
                                 return false;
                             }
                         } else {
@@ -267,7 +267,7 @@ impl WebSocketProxy {
                         }
                     }
                     Err(e) => {
-                        Self::log_error(&format!("Error receiving message from target: {}", e));
+                        Self::log_error(&format!("Error receiving message from target: {e}"));
                         let _ = reconnect_tx.send(());
                         return false;
                     }

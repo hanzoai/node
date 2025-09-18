@@ -888,7 +888,7 @@ pub async fn get_hanzo_tool_handler(
         .to_string();
     let serialize_config = query_params
         .get("serialize_config")
-        .map(|value| (value == "false").then(|| false).unwrap_or(true))
+        .map(|value| if value == "false" { false } else { true })
         .unwrap_or(true);
     let (res_sender, res_receiver) = async_channel::bounded(1);
     sender
@@ -1013,7 +1013,7 @@ pub async fn set_playground_tool_handler(
     let bearer = authorization.strip_prefix("Bearer ").unwrap_or("").to_string();
     if let Some(original_tool_key_path) = original_tool_key_path.clone() {
         if original_tool_key_path.split(":::").collect::<Vec<&str>>().len() != 4 {
-            println!("Invalid original_tool_key_path: {}", original_tool_key_path);
+            println!("Invalid original_tool_key_path: {original_tool_key_path}");
         }
     }
     let (res_sender, res_receiver) = async_channel::bounded(1);
@@ -1326,9 +1326,9 @@ pub async fn code_execution_handler(
             parameters,
             extra_config,
             oauth: payload.oauth,
-            tool_id: tool_id,
-            app_id: app_id,
-            agent_id: agent_id,
+            tool_id,
+            app_id,
+            agent_id,
             llm_provider: payload.llm_provider,
             mounts: payload.mounts,
             runner: payload.runner,
@@ -2353,7 +2353,7 @@ pub async fn standalone_playground_handler(
             oauth: payload.oauth,
             tool_id: safe_folder_name(&tool_id),
             app_id: safe_folder_name(&app_id),
-            llm_provider: llm_provider,
+            llm_provider,
             res: res_sender,
         })
         .await
@@ -2555,12 +2555,12 @@ pub async fn get_tools_from_toolset_handler(
         })
         .await
         .map_err(|e| {
-            eprintln!("Failed to send V2ApiGetToolsFromToolset command: {}", e);
+            eprintln!("Failed to send V2ApiGetToolsFromToolset command: {e}");
             warp::reject::reject()
         })?;
 
     let result = res_receiver.recv().await.map_err(|e| {
-        eprintln!("Failed to receive result for V2ApiGetToolsFromToolset: {}", e);
+        eprintln!("Failed to receive result for V2ApiGetToolsFromToolset: {e}");
         warp::reject::reject()
     })?;
 
@@ -2610,12 +2610,12 @@ pub async fn set_common_toolset_config_handler(
     };
 
     sender.send(command).await.map_err(|e| {
-        eprintln!("Failed to send V2SetCommonToolSetConfig command: {}", e);
+        eprintln!("Failed to send V2SetCommonToolSetConfig command: {e}");
         warp::reject::reject()
     })?;
 
     let result = res_receiver.recv().await.map_err(|e| {
-        eprintln!("Failed to receive result for V2SetCommonToolSetConfig: {}", e);
+        eprintln!("Failed to receive result for V2SetCommonToolSetConfig: {e}");
         warp::reject::reject()
     })?;
 

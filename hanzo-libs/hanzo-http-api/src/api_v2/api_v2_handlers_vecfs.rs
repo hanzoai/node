@@ -543,11 +543,11 @@ pub async fn upload_file_to_folder_handler(
 
     while let Some(part) = form.next().await {
         let mut part = part.map_err(|e| {
-            eprintln!("Error collecting form data: {:?}", e);
+            eprintln!("Error collecting form data: {e:?}");
             warp::reject::custom(APIError::new(
                 StatusCode::BAD_REQUEST,
                 "Bad Request",
-                format!("Failed to collect form data: {:?}", e).as_str(),
+                format!("Failed to collect form data: {e:?}").as_str(),
             ))
         })?;
         match part.name() {
@@ -594,7 +594,7 @@ pub async fn upload_file_to_folder_handler(
                     warp::reject::custom(APIError::new(
                         StatusCode::BAD_REQUEST,
                         "Bad Request",
-                        format!("Failed to read path: {:?}", e).as_str(),
+                        format!("Failed to read path: {e:?}").as_str(),
                     ))
                 })?;
                 path = String::from_utf8(content.copy_to_bytes(content.remaining()).to_vec()).map_err(|_| {
@@ -611,7 +611,7 @@ pub async fn upload_file_to_folder_handler(
                         warp::reject::custom(APIError::new(
                             StatusCode::BAD_REQUEST,
                             "Bad Request",
-                            format!("Failed to read file_datetime: {:?}", e).as_str(),
+                            format!("Failed to read file_datetime: {e:?}").as_str(),
                         ))
                     })?;
                     let datetime_str =
@@ -840,11 +840,11 @@ pub async fn upload_file_to_job_handler(
 
     while let Some(part) = form.next().await {
         let mut part = part.map_err(|e| {
-            eprintln!("Error collecting form data: {:?}", e);
+            eprintln!("Error collecting form data: {e:?}");
             warp::reject::custom(APIError::new(
                 StatusCode::BAD_REQUEST,
                 "Bad Request",
-                format!("Failed to collect form data: {:?}", e).as_str(),
+                format!("Failed to collect form data: {e:?}").as_str(),
             ))
         })?;
         match part.name() {
@@ -908,7 +908,7 @@ pub async fn upload_file_to_job_handler(
                         warp::reject::custom(APIError::new(
                             StatusCode::BAD_REQUEST,
                             "Bad Request",
-                            format!("Failed to read file_datetime: {:?}", e).as_str(),
+                            format!("Failed to read file_datetime: {e:?}").as_str(),
                         ))
                     })?;
                     let datetime_str =

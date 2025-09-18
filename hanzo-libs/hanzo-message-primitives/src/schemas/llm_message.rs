@@ -186,7 +186,7 @@ impl LlmMessage {
         // Extract the functions from the "function" key
         let functions_value = value.get("function").ok_or_else(|| {
             let err_msg = "Missing 'function' key in JSON";
-            eprintln!("{}", err_msg);
+            eprintln!("{err_msg}");
             LlmMessageError::JsonParseError(serde::de::Error::custom(err_msg))
         })?;
 

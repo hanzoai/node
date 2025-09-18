@@ -63,11 +63,8 @@ use hanzo_sqlite::SqliteManager;
 
 use hanzo_tools_primitives::tools::{
     agent_tool_wrapper::AgentToolWrapper,
-    parameters::Parameters,
     hanzo_tool::HanzoTool,
     tool_config::{BasicConfig, ToolConfig},
-    tool_output_arg::ToolOutputArg,
-    tool_types::ToolResult,
 };
 use std::collections::HashMap;
 
