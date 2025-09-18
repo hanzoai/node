@@ -25,6 +25,7 @@ use hanzo_message_primitives::schemas::llm_providers::common_agent_llm_provider:
 use hanzo_message_primitives::schemas::hanzo_fs::HanzoFileChunkCollection;
 use hanzo_message_primitives::schemas::hanzo_name::HanzoName;
 use hanzo_message_primitives::schemas::ws_types::WSUpdateHandler;
+use hanzo_message_primitives::hanzo_message::hanzo_message::HanzoMessage;
 use hanzo_message_primitives::hanzo_utils::job_scope::MinimalJobScope;
 use hanzo_message_primitives::hanzo_utils::hanzo_logging::{hanzo_log, HanzoLogLevel, HanzoLogOption};
 use hanzo_message_primitives::hanzo_utils::hanzo_path::HanzoPath;

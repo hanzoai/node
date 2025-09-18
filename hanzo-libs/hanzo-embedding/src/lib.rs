@@ -2,11 +2,13 @@ pub mod embedding_generator;
 pub mod model_type;
 pub mod hanzo_embedding_errors;
 pub mod mock_generator;
+pub mod model_storage;
 // pub mod native_embedding_generator; // Temporarily disabled - needs API fixes
 
 // Re-export commonly used types
 pub use model_type::OllamaTextEmbeddingsInference;
 pub use model_type::EmbeddingModelType;
+pub use model_storage::ModelStorage;
 
 #[cfg(test)]
 mod tests {

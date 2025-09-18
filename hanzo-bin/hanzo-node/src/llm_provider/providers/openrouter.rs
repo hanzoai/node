@@ -654,41 +654,6 @@ fn process_streaming_chunk(
     new_content
 }
 
-async fn send_ws_update(
-    ws_manager_trait: &Option<Arc<Mutex<dyn WSUpdateHandler + Send>>>,
-    inbox_name: Option<InboxName>,
-    session_id: &str,
-    content: String,
-    is_done: bool,
-    done_reason: Option<String>,
-) -> Result<(), LLMProviderError> {
-    if let Some(ref manager) = ws_manager_trait {
-        if let Some(inbox_name) = inbox_name {
-            let m = manager.lock().await;
-            let inbox_name_string = inbox_name.to_string();
-            let metadata = WSMetadata {
-                id: Some(session_id.to_string()),
-                is_reasoning: false,
-                is_done,
-                done_reason,
-                total_duration: None,
-                eval_count: None,
-            };
-            let ws_message_type = WSMessageType::Metadata(metadata);
-            hanzo_log(
-                HanzoLogOption::JobExecution,
-                HanzoLogLevel::Debug,
-                format!("Websocket content: {}", content).as_str(),
-            );
-            let _ = m
-                .queue_message(WSTopic::Inbox, inbox_name_string, content, ws_message_type, true)
-                .await;
-        }
-    }
-    Ok(())
-}
-
-
 fn add_options_to_payload(payload: &mut serde_json::Value, config: Option<&JobConfig>) {
     // Helper function to read and parse environment variables
     fn read_env_var<T: std::str::FromStr>(key: &str) -> Option<T> {

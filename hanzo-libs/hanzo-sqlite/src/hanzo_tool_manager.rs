@@ -1158,7 +1158,7 @@ impl SqliteManager {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use hanzo_embedding::model_type::{EmbeddingModelType, NativeMistralEmbeddings};
+    use hanzo_embedding::model_type::{EmbeddingModelType, OllamaTextEmbeddingsInference};
     use serde_json::json;
     
     use hanzo_message_primitives::schemas::hanzo_name::HanzoName;
@@ -1191,7 +1191,7 @@ mod tests {
         let db_path = PathBuf::from(temp_file.path());
         let api_url = String::new();
         let model_type =
-            EmbeddingModelType::NativeMistralEmbeddings(NativeMistralEmbeddings::Qwen3Embedding8B);
+            EmbeddingModelType::OllamaTextEmbeddingsInference(OllamaTextEmbeddingsInference::EmbeddingGemma300M);
 
         SqliteManager::new(db_path, api_url, model_type).unwrap()
     }

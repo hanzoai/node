@@ -1,5 +1,6 @@
 #[cfg(test)]
 mod tests {
+    use hanzo_embedding::model_type::EmbeddingModelType;
     use hanzo_message_primitives::schemas::llm_providers::serialized_llm_provider::{
         LLMProviderInterface, OpenAI, SerializedLLMProvider
     };
@@ -12,7 +13,7 @@ mod tests {
     use std::path::PathBuf;
     use std::sync::Arc;
 
-    
+
     use hanzo_sqlite::SqliteManager;
     use tempfile::NamedTempFile;
 
