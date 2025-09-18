@@ -22,7 +22,7 @@ impl HanzoMessage {
 
         // Convert the hexadecimal hash back to bytes
         let message_hash_bytes = hex::decode(message_hash)
-            .map_err(|e| HanzoMessageError::SigningError(format!("Failed to decode message hash: {}", e)))?;
+            .map_err(|e| HanzoMessageError::SigningError(format!("Failed to decode message hash: {e}")))?;
 
         let signature = secret_key.sign(message_hash_bytes.as_slice());
         message_clone.external_metadata.signature = hex::encode(signature.to_bytes());
@@ -36,7 +36,7 @@ impl HanzoMessage {
 
         // Convert the hexadecimal hash back to bytes
         let hanzo_body_hash_bytes = hex::decode(hanzo_body_hash)
-            .map_err(|e| HanzoMessageError::SigningError(format!("Failed to decode message hash: {}", e)))?;
+            .map_err(|e| HanzoMessageError::SigningError(format!("Failed to decode message hash: {e}")))?;
 
         // Sign the hash of the HanzoBody
         let signature = secret_key.sign(hanzo_body_hash_bytes.as_slice());
@@ -65,7 +65,7 @@ impl HanzoMessage {
 
         // Decode the base58 signature to bytes
         let signature_bytes = hex::decode(hex_signature)
-            .map_err(|e| HanzoMessageError::SigningError(format!("Failed to decode signature: {}", e)))?;
+            .map_err(|e| HanzoMessageError::SigningError(format!("Failed to decode signature: {e}")))?;
 
         // Convert the bytes to Signature
         let signature_bytes_slice = &signature_bytes[..];
@@ -73,7 +73,7 @@ impl HanzoMessage {
             signature_bytes_slice
                 .try_into()
                 .map_err(|e: std::array::TryFromSliceError| {
-                    HanzoMessageError::SigningError(format!("Failed to convert signature bytes to array: {}", e))
+                    HanzoMessageError::SigningError(format!("Failed to convert signature bytes to array: {e}"))
                 })?;
 
         let signature = ed25519_dalek::Signature::from_bytes(signature_bytes_array);
@@ -83,7 +83,7 @@ impl HanzoMessage {
 
         // Convert the hexadecimal hash back to bytes
         let message_hash_bytes = hex::decode(message_hash)
-            .map_err(|e| HanzoMessageError::SigningError(format!("Failed to decode message hash: {}", e)))?;
+            .map_err(|e| HanzoMessageError::SigningError(format!("Failed to decode message hash: {e}")))?;
 
         // Verify the signature against the hash of the message
         match public_key.verify(&message_hash_bytes, &signature) {
@@ -112,7 +112,7 @@ impl HanzoMessage {
 
         // Decode the base58 signature to bytes
         let signature_bytes = hex::decode(signature)
-            .map_err(|e| HanzoMessageError::SigningError(format!("Failed to decode signature: {}", e)))?;
+            .map_err(|e| HanzoMessageError::SigningError(format!("Failed to decode signature: {e}")))?;
 
         // Convert the bytes to Signature
         let signature_bytes_slice = &signature_bytes[..];
@@ -120,7 +120,7 @@ impl HanzoMessage {
             signature_bytes_slice
                 .try_into()
                 .map_err(|e: std::array::TryFromSliceError| {
-                    HanzoMessageError::SigningError(format!("Failed to convert signature bytes to array: {}", e))
+                    HanzoMessageError::SigningError(format!("Failed to convert signature bytes to array: {e}"))
                 })?;
         let signature = ed25519_dalek::Signature::from_bytes(signature_bytes_array);
 
@@ -129,7 +129,7 @@ impl HanzoMessage {
 
         // Convert the hexadecimal hash back to bytes
         let hanzo_body_hash_bytes = hex::decode(hanzo_body_hash)
-            .map_err(|e| HanzoMessageError::SigningError(format!("Failed to decode message hash: {}", e)))?;
+            .map_err(|e| HanzoMessageError::SigningError(format!("Failed to decode message hash: {e}")))?;
 
         // Verify the signature against the hash of the HanzoBody
         match public_key.verify(&hanzo_body_hash_bytes, &signature) {
@@ -232,14 +232,14 @@ impl HanzoMessage {
     ) -> Result<(String, String), HanzoMessageError> {
         // Read the secret desktop key from the environment
         let secret_desktop_key = env::var("SECRET_DESKTOP_KEY").map_err(|e| {
-            HanzoMessageError::SigningError(format!("Failed to read SECRET_DESKTOP_KEY from environment: {}", e))
+            HanzoMessageError::SigningError(format!("Failed to read SECRET_DESKTOP_KEY from environment: {e}"))
         })?;
 
         // Convert the public key to hex
         let public_key_hex = hex::encode(public_key.to_bytes());
 
         // Combine the public key hex and the secret desktop key
-        let combined = format!("{}{}", public_key_hex, secret_desktop_key);
+        let combined = format!("{public_key_hex}{secret_desktop_key}");
 
         // Hash the combined value and take the last 4 characters
         let mut hasher = Hasher::new();
@@ -249,7 +249,7 @@ impl HanzoMessage {
         let last_8_chars = &hash_str[hash_str.len() - 8..];
 
         // Concatenate the public key hex with the last 4 characters using :::
-        let concatenated = format!("{}:::{}", public_key_hex, last_8_chars);
+        let concatenated = format!("{public_key_hex}:::{last_8_chars}");
 
         // Hash the concatenated string
         let mut hasher = Hasher::new();

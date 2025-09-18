@@ -137,7 +137,7 @@ impl SqliteManager {
             env.map(|e| serde_json::to_string(&e).unwrap())
                 .unwrap_or_else(|| "{}".to_string()),
             if is_enabled { 1.to_string() } else { 0.to_string() },
-            (id as i64).to_string(),
+            id.to_string(),
         ])?;
         match rows.next()? {
             Some(row) => Ok(MCPServer {
@@ -300,7 +300,7 @@ impl SqliteManager {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use hanzo_embedding::model_type::{EmbeddingModelType, NativeMistralEmbeddings};
+    use hanzo_embedding::model_type::{EmbeddingModelType, OllamaTextEmbeddingsInference};
     
     use std::collections::HashMap;
     use std::path::PathBuf;
@@ -311,7 +311,7 @@ mod tests {
         let db_path = PathBuf::from(temp_file.path());
         let api_url = String::new();
         let model_type =
-            EmbeddingModelType::NativeMistralEmbeddings(NativeMistralEmbeddings::Qwen3Embedding8B);
+            EmbeddingModelType::OllamaTextEmbeddingsInference(OllamaTextEmbeddingsInference::EmbeddingGemma300M);
 
         SqliteManager::new(db_path, api_url, model_type).unwrap()
     }

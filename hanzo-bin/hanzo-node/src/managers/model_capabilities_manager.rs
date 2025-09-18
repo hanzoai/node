@@ -709,9 +709,7 @@ impl ModelCapabilitiesManager {
             LLMProviderInterface::Gemini(gemini) => Self::get_gemini_max_tokens(gemini.model_type.as_str()),
             LLMProviderInterface::Ollama(ollama) => Self::get_max_tokens_for_model_type(&ollama.model_type),
             LLMProviderInterface::Exo(exo) => Self::get_max_tokens_for_model_type(&exo.model_type),
-            LLMProviderInterface::Groq(groq) => {
-                std::cmp::min(Self::get_max_tokens_for_model_type(&groq.model_type), 7000)
-            }
+            LLMProviderInterface::Groq(groq) => Self::get_max_tokens_for_model_type(&groq.model_type),
             LLMProviderInterface::Grok(grok) => {
                 if grok.model_type.starts_with("grok-4") {
                     256_000
@@ -782,22 +780,29 @@ impl ModelCapabilitiesManager {
             model_type if model_type.starts_with("llama3") || model_type.starts_with("llava-llama3") => 8_000,
             model_type if model_type.starts_with("claude") => 200_000,
             // Groq Production Models
-            model_type if model_type.starts_with("gemma2-9b-it") => 8_192,
+            model_type if model_type.starts_with("groq/compound") => 131_072,
+            model_type if model_type.starts_with("groq/compound-mini") => 131_072,            
+            model_type if model_type.starts_with("llama-3.1-8b-instant") => 131_072,
+            model_type if model_type.starts_with("llama-3.3-70b-versatile") => 131_072,
             model_type if model_type.starts_with("meta-llama/llama-guard-4-12b") => 131_072,
-            model_type if model_type.starts_with("llama-3.3-70b-versatile") => 128_000,
-            model_type if model_type.starts_with("llama-3.1-8b-instant") => 128_000,
-            model_type if model_type.starts_with("llama3-70b-8192") => 8_192,
-            model_type if model_type.starts_with("llama3-8b-8192") => 8_192,
+            model_type if model_type.starts_with("openai/gpt-oss") => 128_000,
             // Groq Preview Models
-            model_type if model_type.starts_with("allam-2-7b") => 4_096,
-            model_type if model_type.starts_with("deepseek-r1-distill-llama-70b") => 128_000,
             model_type if model_type.starts_with("meta-llama/llama-4-maverick-17b-128e-instruct") => 131_072,
             model_type if model_type.starts_with("meta-llama/llama-4-scout-17b-16e-instruct") => 131_072,
             model_type if model_type.starts_with("meta-llama/llama-prompt-guard-2-22m") => 512,
             model_type if model_type.starts_with("meta-llama/llama-prompt-guard-2-86m") => 512,
-            model_type if model_type.starts_with("mistral-saba-24b") => 32_000,
-            model_type if model_type.starts_with("qwen-qwq-32b") => 128_000,
+            model_type if model_type.starts_with("moonshotai/kimi-k2-instruct") => 131_072,
+            model_type if model_type.starts_with("playai-tts") => 8_192,
+            model_type if model_type.starts_with("playai-tts-arabic") => 8_192,
+            model_type if model_type.starts_with("qwen/qwen3-32b") => 131_072,
             // Legacy Groq models (keeping for backward compatibility)
+            model_type if model_type.starts_with("deepseek-r1-distill-llama-70b") => 131_072,
+            model_type if model_type.starts_with("mistral-saba-24b") => 32_000,
+            model_type if model_type.starts_with("qwen-qwq-32b") => 128_000,            
+            model_type if model_type.starts_with("allam-2-7b") => 4_096,            
+            model_type if model_type.starts_with("gemma2-9b-it") => 8_192,
+            model_type if model_type.starts_with("llama3-70b-8192") => 8_192,
+            model_type if model_type.starts_with("llama3-8b-8192") => 8_192,            
             model_type if model_type.starts_with("llama-guard-3-8b") => 8_192,
             model_type if model_type.starts_with("mixtral-8x7b-32768") => 32_768,
             model_type if model_type.starts_with("llama-3.3-70b-specdec") => 8_192,
@@ -892,20 +897,23 @@ impl ModelCapabilitiesManager {
             }
             LLMProviderInterface::Groq(groq) => {
                 // Groq model-specific max output tokens based on official documentation
-                if groq.model_type.starts_with("meta-llama/llama-guard-4-12b") {
-                    128
-                } else if groq.model_type.starts_with("llama-3.3-70b-versatile") {
-                    32_768
-                } else if groq.model_type.starts_with("llama-3.1-8b-instant") {
-                    8_192
-                } else if groq
-                    .model_type
-                    .starts_with("meta-llama/llama-4-maverick-17b-128e-instruct")
-                    || groq.model_type.starts_with("meta-llama/llama-4-scout-17b-16e-instruct")
-                {
-                    8_192
-                } else {
-                    4096 // Default for other Groq models
+                match groq.model_type.as_str() {
+                    model_type if model_type.starts_with("groq/compound") => 8_192,
+                    model_type if model_type.starts_with("groq/compound-mini") => 8_192,
+                    model_type if model_type.starts_with("llama-3.1-8b-instant") => 8_192,
+                    model_type if model_type.starts_with("llama-3.3-70b-versatile") => 32_768,
+                    model_type if model_type.starts_with("meta-llama/llama-guard-4-12b") => 128,
+                    model_type if model_type.starts_with("openai/gpt-oss") => 65_536,
+                    model_type if model_type.starts_with("meta-llama/llama-4-maverick-17b-128e-instruct") => 8_192,
+                    model_type if model_type.starts_with("meta-llama/llama-4-scout-17b-16e-instruct") => 8_192,
+                    model_type if model_type.starts_with("meta-llama/llama-prompt-guard-2-22m") => 512,
+                    model_type if model_type.starts_with("meta-llama/llama-prompt-guard-2-86m") => 512,
+                    model_type if model_type.starts_with("moonshotai/kimi-k2-instruct") => 16_384,
+                    model_type if model_type.starts_with("playai-tts") => 8_192,
+                    model_type if model_type.starts_with("playai-tts-arabic") => 8_192,
+                    model_type if model_type.starts_with("qwen/qwen3-32b") => 40_960,
+                    model_type if model_type.starts_with("deepseek-r1-distill-llama-70b") => 131_072,
+                    _ => 4096,
                 }
             }
             LLMProviderInterface::Grok(grok) => {
@@ -1081,21 +1089,12 @@ impl ModelCapabilitiesManager {
                     || model.model_type.starts_with("gpt-oss")
             }
             LLMProviderInterface::Groq(model) => {
-                // Groq Production Models (that support tool calling)
+                // Legacy and deprecated models
                 model.model_type.starts_with("gemma2-9b-it")
-                    || model.model_type.starts_with("meta-llama/llama-guard-4-12b")
-                    || model.model_type.starts_with("llama-3.3-70b-versatile")
-                    || model.model_type.starts_with("llama-3.1-8b-instant")
                     || model.model_type.starts_with("llama3-70b-8192")
                     || model.model_type.starts_with("llama3-8b-8192")
-                    // Groq Preview Models (that support tool calling)
-                    || model.model_type.starts_with("deepseek-r1-distill-llama-70b")
-                    || model.model_type.starts_with("meta-llama/llama-4-maverick-17b-128e-instruct")
-                    || model.model_type.starts_with("meta-llama/llama-4-scout-17b-16e-instruct")
                     || model.model_type.starts_with("qwen-qwq-32b")
                     || model.model_type.starts_with("magistral")
-                    // Legacy/backward compatibility models
-                    || model.model_type.starts_with("llama-guard-3-8b")
                     || model.model_type.starts_with("mixtral-8x7b-32768")
                     || model.model_type.starts_with("llama-3.3-70b-specdec")
                     || model.model_type.starts_with("llama-3.2-1b-preview")
@@ -1109,7 +1108,15 @@ impl ModelCapabilitiesManager {
                     || model.model_type.starts_with("qwen-2.5-coder-32b")
                     || model.model_type.starts_with("qwen-2.5-32b")
                     || model.model_type.starts_with("deepseek-r1-distill-qwen-32b")
-                    || model.model_type.starts_with("gpt-oss")
+                    || model.model_type.starts_with("deepseek-r1-distill-llama-70b")                    
+                    // List from https://console.groq.com/docs/tool-use (sept 11, 2025)
+                    || model.model_type.starts_with("openai/gpt-oss")
+                    || model.model_type.starts_with("qwen/qwen3-32b")
+                    || model.model_type.starts_with("moonshotai/kimi-k2-instruct")
+                    || model.model_type.starts_with("meta-llama/llama-4-scout-17b-16e-instruct")
+                    || model.model_type.starts_with("meta-llama/llama-4-maverick-17b-128e-instruct")
+                    || model.model_type.starts_with("llama-3.3-70b-versatile")
+                    || model.model_type.starts_with("llama-3.1-8b-instant")
             }
             LLMProviderInterface::OpenRouter(model) => {
                 model.model_type.starts_with("llama-3.2")
@@ -1139,10 +1146,8 @@ impl ModelCapabilitiesManager {
         match model {
             LLMProviderInterface::OpenAI(openai) => {
                 openai.model_type.starts_with("o1")
-                    || openai.model_type.starts_with("o2")
                     || openai.model_type.starts_with("o3")
                     || openai.model_type.starts_with("o4")
-                    || openai.model_type.starts_with("o5")
                     || (openai.model_type.starts_with("gpt-5") && openai.model_type != "gpt-5-chat-latest")
             }
             LLMProviderInterface::Ollama(ollama) => {
@@ -1170,6 +1175,11 @@ impl ModelCapabilitiesManager {
                     || gemini.model_type == "gemini-2.5-flash"
                     || gemini.model_type == "gemini-2.5-pro"
                     || gemini.model_type == "gemini-2.0-flash-exp"
+            },
+            LLMProviderInterface::HanzoBackend(hanzo_backend) => {
+                hanzo_backend.model_type().starts_with("FREE_TEXT_INFERENCE")
+                    || hanzo_backend.model_type().starts_with("STANDARD_TEXT_INFERENCE")
+                    || hanzo_backend.model_type().starts_with("PREMIUM_TEXT_INFERENCE")
             }
             _ => false,
         }

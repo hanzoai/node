@@ -35,7 +35,7 @@ pub fn get_envs() -> HashMap<String, String> {
                 let shell_env_delimiter = stdout.split("_SHELL_ENV_DELIMITER_").nth(1);
 
                 if shell_env_delimiter.is_none() {
-                    error!("shell env delimiter not found: {}", stdout);
+                    error!("shell env delimiter not found: {stdout}");
                     return HashMap::new();
                 }
 
@@ -61,8 +61,7 @@ pub fn get_envs() -> HashMap<String, String> {
         }
         Err(e) => {
             error!(
-                "error executing default shell to grab environment variables: {}",
-                e
+                "error executing default shell to grab environment variables: {e}"
             );
             HashMap::new()
         }
@@ -72,7 +71,7 @@ pub fn get_envs() -> HashMap<String, String> {
 static BASE_OS_ENVS: Lazy<Option<HashMap<String, String>>> = Lazy::new(get_base_os_envs);
 fn get_base_os_envs() -> Option<HashMap<String, String>> {
     let env_location = "/usr/bin/env";
-    info!("grabbing environment variables from {}", env_location);
+    info!("grabbing environment variables from {env_location}");
     let env_output = std::process::Command::new(env_location).output();
     match env_output {
         Ok(env_output) => {
@@ -91,7 +90,7 @@ fn get_base_os_envs() -> Option<HashMap<String, String>> {
             Some(env_map)
         }
         Err(e) => {
-            error!("error executing env to grab environment variables: {}", e);
+            error!("error executing env to grab environment variables: {e}");
             None
         }
     }

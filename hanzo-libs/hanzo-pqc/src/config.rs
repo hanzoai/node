@@ -173,14 +173,13 @@ impl PqcConfig {
     /// Validate configuration consistency
     pub fn validate(&self) -> Result<(), String> {
         // Check FIPS mode requirements
-        if self.fips_mode {
-            if self.rng != RngSource::FipsDrbg && self.rng != RngSource::Os {
+        if self.fips_mode
+            && self.rng != RngSource::FipsDrbg && self.rng != RngSource::Os {
                 return Err("FIPS mode requires approved RNG".to_string());
             }
             
             // ML-KEM and ML-DSA are FIPS approved
             // X25519 hybrid is allowed per NIST guidance
-        }
         
         // Check attestation requirements
         if self.min_privacy_tier >= PrivacyTier::AccessCpuTee && !self.verify_attestation {

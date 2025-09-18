@@ -1,5 +1,5 @@
 use hanzo_message_primitives::schemas::{
-    llm_message::{LlmMessage, DetailedFunctionCall}, llm_providers::serialized_llm_provider::LLMProviderInterface, prompts::Prompt
+    llm_message::LlmMessage, llm_providers::serialized_llm_provider::LLMProviderInterface, prompts::Prompt
 };
 use serde::{Deserialize, Serialize};
 use serde_json::Value;

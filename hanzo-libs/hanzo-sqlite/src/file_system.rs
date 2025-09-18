@@ -57,12 +57,22 @@ impl SqliteManager {
         )?;
 
         // Create our new virtual table for chunk embeddings using sqlite-vec
+        // Using dynamic dimensions based on default embedding model
+        let default_model = hanzo_embedding::model_type::EmbeddingModelType::default();
+        let vector_dimensions = default_model.vector_dimensions()
+            .map_err(|e| rusqlite::Error::SqliteFailure(
+                rusqlite::ffi::Error::new(1),
+                Some(format!("Cannot get vector dimensions: {e}"))
+            ))?;
+
         conn.execute(
-            "CREATE VIRTUAL TABLE IF NOT EXISTS chunk_vec USING vec0(
-                embedding float[384],
-                parsed_file_id INTEGER,
-                +chunk_id INTEGER  -- Normal column recognized as chunk_id
-            );",
+            &format!(
+                "CREATE VIRTUAL TABLE IF NOT EXISTS chunk_vec USING vec0(
+                    embedding float[{vector_dimensions}],
+                    parsed_file_id INTEGER,
+                    +chunk_id INTEGER  -- Normal column recognized as chunk_id
+                );"
+            ),
             [],
         )?;
 
@@ -89,7 +99,7 @@ impl SqliteManager {
 
         let relative_path = Self::normalize_path(&pf.relative_path);
         tx.execute(
-            "INSERT INTO parsed_files (relative_path, original_extension, description, source, embedding_model_used, 
+            "INSERT INTO parsed_files (relative_path, original_extension, description, source, embedding_model_used,
                                        keywords, distribution_info, created_time, tags, total_tokens, total_characters)
              VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11)",
             params![
@@ -407,7 +417,7 @@ impl SqliteManager {
 
         // Serialize the vector to a JSON array string
         let vector_json = serde_json::to_string(&query_embedding).map_err(|e| {
-            eprintln!("Vector serialization error: {}", e);
+            eprintln!("Vector serialization error: {e}");
             SqliteManagerError::SerializationError(e.to_string())
         })?;
 
@@ -420,11 +430,10 @@ impl SqliteManager {
             SELECT v.chunk_id, v.distance
             FROM chunk_vec v
             WHERE v.embedding MATCH json(?)
-            AND v.parsed_file_id IN ({})
+            AND v.parsed_file_id IN ({placeholders})
             ORDER BY v.distance
             LIMIT ?
-        "#,
-            placeholders
+        "#
         );
 
         let mut stmt = conn.prepare(&sql)?;
@@ -438,7 +447,7 @@ impl SqliteManager {
         params.push(&limit_binding);
 
         // Convert Vec to slice
-        let params_slice: Vec<&dyn rusqlite::ToSql> = params.iter().map(|&p| p).collect();
+        let params_slice: Vec<&dyn rusqlite::ToSql> = params.iter().copied().collect();
 
         // Execute the query and collect results using query_map
         let chunk_ids_and_distances: Vec<(i64, f64)> = stmt
@@ -469,7 +478,7 @@ impl SqliteManager {
         let tx = conn.transaction()?;
 
         // Construct a wildcard for the old_prefix
-        let like_pattern = format!("{}%", old_prefix);
+        let like_pattern = format!("{old_prefix}%");
 
         tx.execute(
             "UPDATE parsed_files
@@ -495,8 +504,8 @@ impl SqliteManager {
              WHERE relative_path LIKE ? AND relative_path NOT LIKE ?",
         )?;
 
-        let like_pattern = format!("{}%", directory_path);
-        let not_like_pattern = format!("{}%/%", directory_path);
+        let like_pattern = format!("{directory_path}%");
+        let not_like_pattern = format!("{directory_path}%/%");
 
         let rows = stmt.query_map(params![like_pattern, not_like_pattern], |row| {
             Ok(ParsedFile {
@@ -574,7 +583,7 @@ impl SqliteManager {
              WHERE relative_path LIKE ?",
         )?;
 
-        let like_pattern = format!("{}%", prefix);
+        let like_pattern = format!("{prefix}%");
 
         let rows = stmt.query_map([like_pattern], |row| {
             Ok(ParsedFile {
@@ -604,8 +613,8 @@ impl SqliteManager {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use hanzo_embedding::model_type::{EmbeddingModelType, NativeMistralEmbeddings};
-    
+    use hanzo_embedding::model_type::{EmbeddingModelType, OllamaTextEmbeddingsInference};
+
     use std::path::PathBuf;
     use tempfile::NamedTempFile;
 
@@ -614,7 +623,7 @@ mod tests {
         let db_path = PathBuf::from(temp_file.path());
         let api_url = String::new();
         let model_type =
-            EmbeddingModelType::NativeMistralEmbeddings(NativeMistralEmbeddings::Qwen3Embedding8B);
+            EmbeddingModelType::OllamaTextEmbeddingsInference(OllamaTextEmbeddingsInference::EmbeddingGemma300M);
 
         SqliteManager::new(db_path, api_url, model_type).unwrap()
     }

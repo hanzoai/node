@@ -12,7 +12,7 @@ pub enum RustToolError {
 impl fmt::Display for RustToolError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
-            RustToolError::InvalidFunctionArguments(msg) => write!(f, "Invalid function arguments: {}", msg),
+            RustToolError::InvalidFunctionArguments(msg) => write!(f, "Invalid function arguments: {msg}"),
             RustToolError::FailedJSONParsing => write!(f, "Failed to parse JSON"),
         }
     }

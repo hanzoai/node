@@ -114,7 +114,7 @@ impl SqliteManager {
 
     pub async fn update_prompt(&self, prompt: &CustomPrompt) -> Result<(), SqliteManagerError> {
         let embedding = self.generate_embeddings(&prompt.prompt).await?;
-        Ok(self.update_prompt_with_vector(prompt, embedding)?)
+        self.update_prompt_with_vector(prompt, embedding)
     }
 
     // Updates or inserts a CustomPrompt and its vector
@@ -223,7 +223,7 @@ impl SqliteManager {
     ) -> Result<Vec<(CustomPrompt, f64)>> {
         // Serialize the vector to a JSON array string
         let vector_json = serde_json::to_string(&vector).map_err(|e| {
-            eprintln!("Vector serialization error: {}", e);
+            eprintln!("Vector serialization error: {e}");
             rusqlite::Error::ToSqlConversionFailure(Box::new(e))
         })?;
 
@@ -395,7 +395,7 @@ impl SqliteManager {
 
         for name_result in name_iter {
             let name = name_result.map_err(|e| {
-                eprintln!("FTS query error: {}", e);
+                eprintln!("FTS query error: {e}");
                 SqliteManagerError::DatabaseError(e)
             })?;
 
@@ -457,7 +457,7 @@ mod tests {
     use crate::files::prompts_data::PROMPTS_JSON_TESTING;
 
     use super::*;
-    use hanzo_embedding::model_type::{EmbeddingModelType, NativeMistralEmbeddings};
+    use hanzo_embedding::model_type::{EmbeddingModelType, OllamaTextEmbeddingsInference};
     use serde_json::Value;
     
     use std::path::PathBuf;
@@ -468,14 +468,16 @@ mod tests {
         let db_path = PathBuf::from(temp_file.path());
         let api_url = String::new();
         let model_type =
-            EmbeddingModelType::NativeMistralEmbeddings(NativeMistralEmbeddings::Qwen3Embedding8B);
+            EmbeddingModelType::OllamaTextEmbeddingsInference(OllamaTextEmbeddingsInference::EmbeddingGemma300M);
 
         SqliteManager::new(db_path, api_url, model_type).unwrap()
     }
 
-    // Utility function to generate a vector of length 384 filled with a specified value
+    // Utility function to generate a vector filled with a specified value, using the default embedding model's dimensions
     fn generate_vector(value: f32) -> Vec<f32> {
-        vec![value; 384]
+        use hanzo_embedding::model_type::EmbeddingModelType;
+        let dimensions = EmbeddingModelType::default().vector_dimensions().unwrap_or(768);
+        vec![value; dimensions]
     }
 
     #[tokio::test]

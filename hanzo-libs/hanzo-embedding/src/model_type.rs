@@ -8,40 +8,39 @@ pub type EmbeddingModelTypeString = String;
 #[derive(Debug, Clone, PartialEq, Eq, serde::Serialize, serde::Deserialize, Hash)]
 pub enum EmbeddingModelType {
     OllamaTextEmbeddingsInference(OllamaTextEmbeddingsInference),
-    NativeMistralEmbeddings(NativeMistralEmbeddings),
 }
 
 impl EmbeddingModelType {
     pub fn from_string(s: &str) -> Result<Self, HanzoEmbeddingError> {
-        // Try native models first
-        if let Ok(model) = NativeMistralEmbeddings::from_string(s) {
-            return Ok(EmbeddingModelType::NativeMistralEmbeddings(model));
-        }
-        
-        // Fall back to Ollama models
         OllamaTextEmbeddingsInference::from_string(s)
             .map(EmbeddingModelType::OllamaTextEmbeddingsInference)
             .map_err(|_| HanzoEmbeddingError::InvalidModelArchitecture)
     }
 
+    /// Returns the default embedding model
+    pub fn default() -> Self {
+        std::env::var("DEFAULT_EMBEDDING_MODEL")
+            .and_then(|s| Self::from_string(&s).map_err(|_| std::env::VarError::NotPresent))
+            .unwrap_or({
+                EmbeddingModelType::OllamaTextEmbeddingsInference(OllamaTextEmbeddingsInference::EmbeddingGemma300M)
+            })
+    }
+
     pub fn max_input_token_count(&self) -> usize {
         match self {
             EmbeddingModelType::OllamaTextEmbeddingsInference(model) => model.max_input_token_count(),
-            EmbeddingModelType::NativeMistralEmbeddings(model) => model.max_input_token_count(),
         }
     }
 
     pub fn embedding_normalization_factor(&self) -> f32 {
         match self {
             EmbeddingModelType::OllamaTextEmbeddingsInference(model) => model.embedding_normalization_factor(),
-            EmbeddingModelType::NativeMistralEmbeddings(model) => model.embedding_normalization_factor(),
         }
     }
 
     pub fn vector_dimensions(&self) -> Result<usize, HanzoEmbeddingError> {
         match self {
             EmbeddingModelType::OllamaTextEmbeddingsInference(model) => model.vector_dimensions(),
-            EmbeddingModelType::NativeMistralEmbeddings(model) => model.vector_dimensions(),
         }
     }
 }
@@ -49,8 +48,7 @@ impl EmbeddingModelType {
 impl fmt::Display for EmbeddingModelType {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match self {
-            EmbeddingModelType::OllamaTextEmbeddingsInference(model) => write!(f, "{}", model),
-            EmbeddingModelType::NativeMistralEmbeddings(model) => write!(f, "{}", model),
+            EmbeddingModelType::OllamaTextEmbeddingsInference(model) => write!(f, "{model}"),
         }
     }
 }
@@ -61,6 +59,12 @@ pub enum OllamaTextEmbeddingsInference {
     #[serde(alias = "SnowflakeArcticEmbed_M")]
     SnowflakeArcticEmbedM,
     JinaEmbeddingsV2BaseEs,
+    EmbeddingGemma300M,
+    Qwen3Next,           // Qwen3-Next embedding model
+    Qwen3Embedding8B,    // Qwen3 8B embedding model (the main one)
+    Qwen3Embedding4B,    // Qwen3 4B embedding model
+    Qwen3Reranker4B,     // Qwen3 4B reranker model
+    Qwen3Reranker8B,     // Qwen3 8B reranker model
     Other(String),
 }
 
@@ -68,19 +72,39 @@ impl OllamaTextEmbeddingsInference {
     const ALL_MINI_LML6V2: &'static str = "all-minilm:l6-v2";
     const SNOWFLAKE_ARCTIC_EMBED_M: &'static str = "snowflake-arctic-embed:xs";
     const JINA_EMBEDDINGS_V2_BASE_ES: &'static str = "jina/jina-embeddings-v2-base-es:latest";
+    const EMBEDDING_GEMMA_300_M: &'static str = "embeddinggemma:300m";
+    const QWEN3_NEXT: &'static str = "qwen3-next";
+    const QWEN3_EMBEDDING_8B: &'static str = "qwen3-embedding-8b";
+    const QWEN3_EMBEDDING_4B: &'static str = "qwen3-embedding-4b";
+    const QWEN3_RERANKER_4B: &'static str = "qwen3-reranker-4b";
+    const QWEN3_RERANKER_8B: &'static str = "qwen3-reranker-8b";
 
     pub fn from_string(s: &str) -> Result<Self, HanzoEmbeddingError> {
         match s {
             Self::ALL_MINI_LML6V2 => Ok(Self::AllMiniLML6v2),
             Self::SNOWFLAKE_ARCTIC_EMBED_M => Ok(Self::SnowflakeArcticEmbedM),
             Self::JINA_EMBEDDINGS_V2_BASE_ES => Ok(Self::JinaEmbeddingsV2BaseEs),
-            _ => Err(HanzoEmbeddingError::InvalidModelArchitecture),
+            Self::EMBEDDING_GEMMA_300_M => Ok(Self::EmbeddingGemma300M),
+            Self::QWEN3_NEXT | "Qwen/Qwen2.5-7B-Instruct" => Ok(Self::Qwen3Next),
+            Self::QWEN3_EMBEDDING_8B | "dengcao/Qwen3-Embedding-8B" | "Qwen/Qwen3-Embedding-8B" => Ok(Self::Qwen3Embedding8B),
+            Self::QWEN3_EMBEDDING_4B | "dengcao/Qwen3-Embedding-4B" | "Qwen/Qwen3-Embedding-4B" => Ok(Self::Qwen3Embedding4B),
+            Self::QWEN3_RERANKER_4B | "qwen3-reranker" | "dengcao/Qwen3-Reranker-4B" => Ok(Self::Qwen3Reranker4B),
+            Self::QWEN3_RERANKER_8B | "dengcao/Qwen3-Reranker-8B" | "Qwen/Qwen3-Reranker-8B" => Ok(Self::Qwen3Reranker8B),
+            other => Ok(Self::Other(other.to_string())),
         }
     }
 
     pub fn max_input_token_count(&self) -> usize {
         match self {
             Self::JinaEmbeddingsV2BaseEs => 1024,
+            Self::EmbeddingGemma300M => 2048,
+            Self::AllMiniLML6v2 => 512,
+            Self::SnowflakeArcticEmbedM => 512,
+            Self::Qwen3Next => 32768,        // 32K context
+            Self::Qwen3Embedding8B => 32768, // 32K context for 8B embedding
+            Self::Qwen3Embedding4B => 32768, // 32K context for 4B embedding
+            Self::Qwen3Reranker4B => 8192,   // 8K context for 4B reranker
+            Self::Qwen3Reranker8B => 8192,   // 8K context for 8B reranker
             _ => 512,
         }
     }
@@ -95,11 +119,15 @@ impl OllamaTextEmbeddingsInference {
     pub fn vector_dimensions(&self) -> Result<usize, HanzoEmbeddingError> {
         match self {
             Self::SnowflakeArcticEmbedM => Ok(384),
+            Self::AllMiniLML6v2 => Ok(384),
             Self::JinaEmbeddingsV2BaseEs => Ok(768),
-            _ => Err(HanzoEmbeddingError::UnimplementedModelDimensions(format!(
-                "{:?}",
-                self
-            ))),
+            Self::EmbeddingGemma300M => Ok(768),
+            Self::Qwen3Next => Ok(1536),        // 1536 dimensions
+            Self::Qwen3Embedding8B => Ok(4096), // 4096 dimensions for 8B (best quality)
+            Self::Qwen3Embedding4B => Ok(2048), // 2048 dimensions for 4B
+            Self::Qwen3Reranker4B => Ok(768),   // Reranker score dimension
+            Self::Qwen3Reranker8B => Ok(768),   // Reranker score dimension
+            Self::Other(_) => Ok(768),          // Default for unknown models
         }
     }
 }
@@ -110,120 +138,13 @@ impl fmt::Display for OllamaTextEmbeddingsInference {
             Self::AllMiniLML6v2 => write!(f, "{}", Self::ALL_MINI_LML6V2),
             Self::SnowflakeArcticEmbedM => write!(f, "{}", Self::SNOWFLAKE_ARCTIC_EMBED_M),
             Self::JinaEmbeddingsV2BaseEs => write!(f, "{}", Self::JINA_EMBEDDINGS_V2_BASE_ES),
-            Self::Other(name) => write!(f, "{}", name),
-        }
-    }
-}
-
-#[derive(Debug, Clone, PartialEq, Eq, Hash, serde::Serialize, serde::Deserialize)]
-pub enum NativeMistralEmbeddings {
-    MistralEmbed,
-    E5MistralEmbed,
-    BgeM3,
-    // Qwen3 Embedding models (2025 latest)
-    Qwen3Embedding8B,  // 8B params, 4096 dims, #1 MTEB multilingual
-    Qwen3Embedding4B,  // 4B params, 2048 dims, balanced
-    Qwen3Embedding06B, // 0.6B params, 1024 dims, lightweight
-    // Qwen3 Reranker models
-    Qwen3Reranker4B,   // 4B params, high-quality reranking
-    Qwen3Reranker06B,  // 0.6B params, lightweight reranking
-    BgeRerankerV2,
-    JinaRerankerV2,
-    Custom(String),
-}
-
-impl NativeMistralEmbeddings {
-    const MISTRAL_EMBED: &'static str = "mistral-embed";
-    const E5_MISTRAL_EMBED: &'static str = "e5-mistral-embed";
-    const BGE_M3: &'static str = "bge-m3";
-    const QWEN3_EMBEDDING_8B: &'static str = "qwen3-embedding-8b";
-    const QWEN3_EMBEDDING_4B: &'static str = "qwen3-embedding-4b";
-    const QWEN3_EMBEDDING_06B: &'static str = "qwen3-embedding-0.6b";
-    const QWEN3_RERANKER_4B: &'static str = "qwen3-reranker-4b";
-    const QWEN3_RERANKER_06B: &'static str = "qwen3-reranker-0.6b";
-    const BGE_RERANKER_V2: &'static str = "bge-reranker-v2";
-    const JINA_RERANKER_V2: &'static str = "jina-reranker-v2";
-
-    pub fn from_string(s: &str) -> Result<Self, HanzoEmbeddingError> {
-        match s {
-            Self::MISTRAL_EMBED => Ok(Self::MistralEmbed),
-            Self::E5_MISTRAL_EMBED => Ok(Self::E5MistralEmbed),
-            Self::BGE_M3 => Ok(Self::BgeM3),
-            Self::QWEN3_EMBEDDING_8B => Ok(Self::Qwen3Embedding8B),
-            Self::QWEN3_EMBEDDING_4B => Ok(Self::Qwen3Embedding4B),
-            Self::QWEN3_EMBEDDING_06B => Ok(Self::Qwen3Embedding06B),
-            Self::QWEN3_RERANKER_4B => Ok(Self::Qwen3Reranker4B),
-            Self::QWEN3_RERANKER_06B => Ok(Self::Qwen3Reranker06B),
-            Self::BGE_RERANKER_V2 => Ok(Self::BgeRerankerV2),
-            Self::JINA_RERANKER_V2 => Ok(Self::JinaRerankerV2),
-            _ if s.starts_with("native:") => Ok(Self::Custom(s.strip_prefix("native:").unwrap().to_string())),
-            _ => Err(HanzoEmbeddingError::InvalidModelArchitecture),
-        }
-    }
-    
-    pub fn is_reranker(&self) -> bool {
-        match self {
-            Self::Qwen3Reranker4B |
-            Self::Qwen3Reranker06B | 
-            Self::BgeRerankerV2 | 
-            Self::JinaRerankerV2 => true,
-            Self::Custom(s) => s.contains("reranker"),
-            _ => false,
-        }
-    }
-
-    pub fn max_input_token_count(&self) -> usize {
-        match self {
-            Self::MistralEmbed => 2048,
-            Self::E5MistralEmbed => 4096,
-            Self::BgeM3 => 8192,
-            Self::Qwen3Embedding8B => 32768, // Qwen3 supports 32K context
-            Self::Qwen3Embedding4B => 32768,
-            Self::Qwen3Embedding06B => 32768,
-            Self::Qwen3Reranker4B => 8192,
-            Self::Qwen3Reranker06B => 8192,
-            Self::BgeRerankerV2 => 512,
-            Self::JinaRerankerV2 => 1024,
-            Self::Custom(_) => 512, // Conservative default
-        }
-    }
-
-    pub fn embedding_normalization_factor(&self) -> f32 {
-        1.0 // Native models typically don't need normalization
-    }
-
-    pub fn vector_dimensions(&self) -> Result<usize, HanzoEmbeddingError> {
-        match self {
-            Self::MistralEmbed => Ok(1024),
-            Self::E5MistralEmbed => Ok(1024),
-            Self::BgeM3 => Ok(1024),
-            Self::Qwen3Embedding8B => Ok(4096), // #1 MTEB model
-            Self::Qwen3Embedding4B => Ok(2048), // Balanced model
-            Self::Qwen3Embedding06B => Ok(1024), // Lightweight model
-            // Rerankers don't produce embeddings, they score pairs
-            Self::Qwen3Reranker4B => Err(HanzoEmbeddingError::InvalidModelArchitecture),
-            Self::Qwen3Reranker06B => Err(HanzoEmbeddingError::InvalidModelArchitecture),
-            Self::BgeRerankerV2 => Err(HanzoEmbeddingError::InvalidModelArchitecture),
-            Self::JinaRerankerV2 => Err(HanzoEmbeddingError::InvalidModelArchitecture),
-            Self::Custom(_) => Ok(768), // Default dimension
-        }
-    }
-}
-
-impl fmt::Display for NativeMistralEmbeddings {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        match self {
-            Self::MistralEmbed => write!(f, "{}", Self::MISTRAL_EMBED),
-            Self::E5MistralEmbed => write!(f, "{}", Self::E5_MISTRAL_EMBED),
-            Self::BgeM3 => write!(f, "{}", Self::BGE_M3),
+            Self::EmbeddingGemma300M => write!(f, "{}", Self::EMBEDDING_GEMMA_300_M),
+            Self::Qwen3Next => write!(f, "{}", Self::QWEN3_NEXT),
             Self::Qwen3Embedding8B => write!(f, "{}", Self::QWEN3_EMBEDDING_8B),
             Self::Qwen3Embedding4B => write!(f, "{}", Self::QWEN3_EMBEDDING_4B),
-            Self::Qwen3Embedding06B => write!(f, "{}", Self::QWEN3_EMBEDDING_06B),
             Self::Qwen3Reranker4B => write!(f, "{}", Self::QWEN3_RERANKER_4B),
-            Self::Qwen3Reranker06B => write!(f, "{}", Self::QWEN3_RERANKER_06B),
-            Self::BgeRerankerV2 => write!(f, "{}", Self::BGE_RERANKER_V2),
-            Self::JinaRerankerV2 => write!(f, "{}", Self::JINA_RERANKER_V2),
-            Self::Custom(name) => write!(f, "native:{}", name),
+            Self::Qwen3Reranker8B => write!(f, "{}", Self::QWEN3_RERANKER_8B),
+            Self::Other(name) => write!(f, "{name}"),
         }
     }
 }
@@ -244,6 +165,13 @@ mod tests {
         let model_str = "jina/jina-embeddings-v2-base-es:latest";
         let parsed_model = OllamaTextEmbeddingsInference::from_string(model_str);
         assert_eq!(parsed_model, Ok(OllamaTextEmbeddingsInference::JinaEmbeddingsV2BaseEs));
+    }
+
+    #[test]
+    fn test_parse_embedding_gemma_300m() {
+        let model_str = "embeddinggemma:300m";
+        let parsed_model = OllamaTextEmbeddingsInference::from_string(model_str);
+        assert_eq!(parsed_model, Ok(OllamaTextEmbeddingsInference::EmbeddingGemma300M));
     }
 
     #[test]
@@ -271,50 +199,90 @@ mod tests {
     }
 
     #[test]
-    fn test_qwen3_embedding_8b_model() {
-        let model_str = "qwen3-embedding-8b";
+    fn test_parse_embedding_gemma_300m_as_embedding_model_type() {
+        let model_str = "embeddinggemma:300m";
         let parsed_model = EmbeddingModelType::from_string(model_str);
         assert_eq!(
             parsed_model,
-            Ok(EmbeddingModelType::NativeMistralEmbeddings(
-                NativeMistralEmbeddings::Qwen3Embedding8B
+            Ok(EmbeddingModelType::OllamaTextEmbeddingsInference(
+                OllamaTextEmbeddingsInference::EmbeddingGemma300M
             ))
         );
-        
-        // Verify properties
-        if let Ok(EmbeddingModelType::NativeMistralEmbeddings(model)) = parsed_model {
-            assert_eq!(model.max_input_token_count(), 32768);
-            assert_eq!(model.vector_dimensions(), Ok(4096)); // 8B model has 4096 dims
-            assert!(!model.is_reranker());
-        }
     }
 
     #[test]
-    fn test_qwen3_reranker_4b_model() {
-        let model_str = "qwen3-reranker-4b";
-        let parsed_model = EmbeddingModelType::from_string(model_str);
-        assert_eq!(
-            parsed_model,
-            Ok(EmbeddingModelType::NativeMistralEmbeddings(
-                NativeMistralEmbeddings::Qwen3Reranker4B
-            ))
-        );
-        
-        // Verify properties
-        if let Ok(EmbeddingModelType::NativeMistralEmbeddings(model)) = parsed_model {
-            assert_eq!(model.max_input_token_count(), 8192);
-            assert!(model.is_reranker());
-            // Rerankers don't produce embeddings
-            assert!(model.vector_dimensions().is_err());
-        }
+    fn test_parse_qwen3_next() {
+        // Test Qwen3-Next model name
+        let parsed_model = OllamaTextEmbeddingsInference::from_string("qwen3-next");
+        assert_eq!(parsed_model, Ok(OllamaTextEmbeddingsInference::Qwen3Next));
+
+        // Test Qwen2.5 model name (parses as Qwen3Next)
+        let parsed_model2 = OllamaTextEmbeddingsInference::from_string("Qwen/Qwen2.5-7B-Instruct");
+        assert_eq!(parsed_model2, Ok(OllamaTextEmbeddingsInference::Qwen3Next));
     }
 
     #[test]
-    fn test_model_display() {
-        let qwen_embed = NativeMistralEmbeddings::Qwen3Embedding8B;
-        assert_eq!(format!("{}", qwen_embed), "qwen3-embedding-8b");
-        
-        let qwen_reranker = NativeMistralEmbeddings::Qwen3Reranker4B;
-        assert_eq!(format!("{}", qwen_reranker), "qwen3-reranker-4b");
+    fn test_parse_qwen3_embedding_models() {
+        // Test Qwen3 embedding 8B model
+        let parsed_model = OllamaTextEmbeddingsInference::from_string("qwen3-embedding-8b");
+        assert_eq!(parsed_model, Ok(OllamaTextEmbeddingsInference::Qwen3Embedding8B));
+
+        // Test other 8B variations
+        let parsed_model2 = OllamaTextEmbeddingsInference::from_string("dengcao/Qwen3-Embedding-8B");
+        assert_eq!(parsed_model2, Ok(OllamaTextEmbeddingsInference::Qwen3Embedding8B));
+
+        // Test 4B model
+        let parsed_model3 = OllamaTextEmbeddingsInference::from_string("qwen3-embedding-4b");
+        assert_eq!(parsed_model3, Ok(OllamaTextEmbeddingsInference::Qwen3Embedding4B));
+    }
+
+    #[test]
+    fn test_parse_qwen3_reranker() {
+        // Test 4B reranker variations
+        let parsed_model = OllamaTextEmbeddingsInference::from_string("qwen3-reranker-4b");
+        assert_eq!(parsed_model, Ok(OllamaTextEmbeddingsInference::Qwen3Reranker4B));
+
+        let parsed_model2 = OllamaTextEmbeddingsInference::from_string("qwen3-reranker");
+        assert_eq!(parsed_model2, Ok(OllamaTextEmbeddingsInference::Qwen3Reranker4B));
+
+        // Test 8B reranker
+        let parsed_model3 = OllamaTextEmbeddingsInference::from_string("qwen3-reranker-8b");
+        assert_eq!(parsed_model3, Ok(OllamaTextEmbeddingsInference::Qwen3Reranker8B));
+
+        let parsed_model4 = OllamaTextEmbeddingsInference::from_string("dengcao/Qwen3-Reranker-8B");
+        assert_eq!(parsed_model4, Ok(OllamaTextEmbeddingsInference::Qwen3Reranker8B));
+    }
+
+    #[test]
+    fn test_qwen3_model_properties() {
+        // Test Qwen3-Next properties
+        let qwen3_next = OllamaTextEmbeddingsInference::Qwen3Next;
+        assert_eq!(qwen3_next.max_input_token_count(), 32768);
+        assert_eq!(qwen3_next.vector_dimensions(), Ok(1536));
+        assert_eq!(qwen3_next.to_string(), "qwen3-next");
+
+        // Test Qwen3 Embedding 8B properties
+        let qwen3_embed_8b = OllamaTextEmbeddingsInference::Qwen3Embedding8B;
+        assert_eq!(qwen3_embed_8b.max_input_token_count(), 32768);
+        assert_eq!(qwen3_embed_8b.vector_dimensions(), Ok(4096));
+        assert_eq!(qwen3_embed_8b.to_string(), "qwen3-embedding-8b");
+
+        // Test Qwen3 Embedding 4B properties
+        let qwen3_embed_4b = OllamaTextEmbeddingsInference::Qwen3Embedding4B;
+        assert_eq!(qwen3_embed_4b.max_input_token_count(), 32768);
+        assert_eq!(qwen3_embed_4b.vector_dimensions(), Ok(2048));
+        assert_eq!(qwen3_embed_4b.to_string(), "qwen3-embedding-4b");
+
+        // Test Qwen3 Reranker 4B properties
+        let qwen3_reranker_4b = OllamaTextEmbeddingsInference::Qwen3Reranker4B;
+        assert_eq!(qwen3_reranker_4b.max_input_token_count(), 8192);
+        assert_eq!(qwen3_reranker_4b.vector_dimensions(), Ok(768));
+        assert_eq!(qwen3_reranker_4b.to_string(), "qwen3-reranker-4b");
+
+        // Test Qwen3 Reranker 8B properties
+        let qwen3_reranker_8b = OllamaTextEmbeddingsInference::Qwen3Reranker8B;
+        assert_eq!(qwen3_reranker_8b.max_input_token_count(), 8192);
+        assert_eq!(qwen3_reranker_8b.vector_dimensions(), Ok(768));
+        assert_eq!(qwen3_reranker_8b.to_string(), "qwen3-reranker-8b");
     }
 }

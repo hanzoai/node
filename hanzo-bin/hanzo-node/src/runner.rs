@@ -6,7 +6,7 @@ use crate::utils::environment::{fetch_llm_provider_env, fetch_node_environment};
 use crate::utils::keys::generate_or_load_keys;
 use async_channel::{bounded, Receiver, Sender};
 use ed25519_dalek::VerifyingKey;
-use hanzo_embedding::embedding_generator::{EmbeddingGenerator, RemoteEmbeddingGenerator};
+use hanzo_embedding::embedding_generator::RemoteEmbeddingGenerator;
 // use hanzo_embedding::native_embedding_generator::NativeEmbeddingGenerator;
 use hanzo_http_api::node_api_router;
 use hanzo_http_api::node_commands::NodeCommand;
@@ -21,7 +21,7 @@ use std::collections::HashMap;
 use std::error::Error as StdError;
 use std::fmt;
 use std::net::{SocketAddr, TcpListener};
-use std::path::{Path, PathBuf};
+use std::path::Path;
 use std::sync::{Arc, Weak};
 use std::{env, fs};
 

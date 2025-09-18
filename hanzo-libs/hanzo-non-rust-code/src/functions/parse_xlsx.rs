@@ -15,7 +15,7 @@ pub struct Output {
 }
 
 pub async fn parse_xlsx(file_path: PathBuf) -> Result<Output, RunError> {
-    println!("parsing xlsx file: {:?}", file_path);
+    println!("parsing xlsx file: {file_path:?}");
     let code = r#"
             // @deno-types="https://cdn.sheetjs.com/xlsx-0.20.3/package/types/index.d.ts"
             import * as XLSX from 'https://cdn.sheetjs.com/xlsx-0.20.3/package/xlsx.mjs';

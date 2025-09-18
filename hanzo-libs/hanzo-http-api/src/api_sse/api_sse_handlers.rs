@@ -58,6 +58,12 @@ pub struct McpState {
     ping_interval: Option<Duration>,
 }
 
+impl Default for McpState {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl McpState {
     /// Create a new MCP state
     pub fn new() -> Self {
@@ -233,7 +239,7 @@ pub async fn sse_handler(state: Arc<McpState>, tools_service: Arc<McpToolsServic
     let client_rx_stream = ReceiverStream::new(client_rx);
 
     // Initial message with endpoint information
-    let endpoint_event = format!("event: endpoint\ndata: /mcp/sse?sessionId={}\n\n", session_id);
+    let endpoint_event = format!("event: endpoint\ndata: /mcp/sse?sessionId={session_id}\n\n");
 
     // Base stream with endpoint and client messages
     let base_stream = tokio_stream::StreamExt::chain(
@@ -242,7 +248,7 @@ pub async fn sse_handler(state: Arc<McpState>, tools_service: Arc<McpToolsServic
             tracing::debug!("sse_handler: Received message from client_rx: {:?}", msg);
             match serde_json::to_string(&msg) {
                 Ok(json) => {
-                    let event_string = format!("event: message\ndata: {}\n\n", json);
+                    let event_string = format!("event: message\ndata: {json}\n\n");
                     tracing::debug!("sse_handler: Sending event: {}", event_string);
                     Ok(event_string)
                 }
@@ -277,7 +283,7 @@ pub async fn sse_handler(state: Arc<McpState>, tools_service: Arc<McpToolsServic
         .header("X-Accel-Buffering", "no")
         .header("Transfer-Encoding", "chunked")
         .body(warp::hyper::Body::wrap_stream(final_stream.map_err(|_| {
-            std::io::Error::new(std::io::ErrorKind::Other, "infallible stream error")
+            std::io::Error::other("infallible stream error")
         })))
         .map_err(|e| {
             tracing::error!("Failed to build SSE response: {}", e);
@@ -301,7 +307,7 @@ pub async fn post_event_handler(session_id: String, body: Bytes, state: Arc<McpS
                 jsonrpc: Default::default(),
                 id: RequestId::String("parse_error".into()), // Use a generic ID
                 error: rmcp::model::ErrorData::parse_error(
-                    format!("Invalid JSON: {}", e),
+                    format!("Invalid JSON: {e}"),
                     Some(Value::String(body_str.to_string())),
                 ),
             };
@@ -328,7 +334,7 @@ pub async fn post_event_handler(session_id: String, body: Bytes, state: Arc<McpS
                 jsonrpc: Default::default(),
                 id: req_id,
                 error: rmcp::model::ErrorData::invalid_request(
-                    format!("Invalid JSON-RPC structure after transform: {}", e),
+                    format!("Invalid JSON-RPC structure after transform: {e}"),
                     None,
                 ),
             };

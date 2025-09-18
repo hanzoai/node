@@ -47,7 +47,7 @@ impl SqliteManager {
         let job_id_suffix = &job_id[job_id.len() - 4..];
 
         // Create the folder name with the job_id suffix
-        let folder_name = format!("{} - ({}) {}", formatted_date, job_id_suffix, smart_inbox_name);
+        let folder_name = format!("{formatted_date} - ({job_id_suffix}) {smart_inbox_name}");
 
         // Use the sanitize_folder_name function to ensure compatibility
         let valid_folder_name = Self::sanitize_folder_name(&folder_name);
@@ -65,7 +65,7 @@ impl SqliteManager {
         let trimmed_final_folder_name = final_folder_name.trim_end().to_string();
 
         // Include the Chat Files folder in the path
-        let full_path = format!("Chat Files/{}", trimmed_final_folder_name);
+        let full_path = format!("Chat Files/{trimmed_final_folder_name}");
 
         Ok(HanzoPath::from_string(full_path))
     }

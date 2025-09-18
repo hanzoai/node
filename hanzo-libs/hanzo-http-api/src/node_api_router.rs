@@ -84,7 +84,7 @@ impl From<async_channel::SendError<NodeCommand>> for APIError {
         APIError {
             code: StatusCode::INTERNAL_SERVER_ERROR.as_u16(),
             error: "Internal Server Error".to_string(),
-            message: format!("Failed with error: {}", error),
+            message: format!("Failed with error: {error}"),
         }
     }
 }
@@ -178,8 +178,8 @@ pub async fn run_api(
     // Check if certificates are provided for HTTPS
     if let (Some(cert_string), Some(key_string)) = (public_https_certificate, private_https_certificate) {
         if !cert_string.is_empty() && !key_string.is_empty() {
-            eprintln!("cert_string: {}", cert_string);
-            eprintln!("key_string: {}", key_string);
+            eprintln!("cert_string: {cert_string}");
+            eprintln!("key_string: {key_string}");
 
             // Parse TLS keys from strings
             let certs = rustls_pemfile::certs(&mut cert_string.as_bytes())
@@ -217,7 +217,7 @@ pub async fn run_api(
                                     hanzo_log(
                                         HanzoLogOption::Api,
                                         HanzoLogLevel::Error,
-                                        &format!("Error serving connection: {:?}", e),
+                                        &format!("Error serving connection: {e:?}"),
                                     );
                                 }
                             }
@@ -226,7 +226,7 @@ pub async fn run_api(
                                 hanzo_log(
                                     HanzoLogOption::Api,
                                     HanzoLogLevel::Error,
-                                    &format!("TLS handshake failed: {:?}", e),
+                                    &format!("TLS handshake failed: {e:?}"),
                                 );
                             }
                         }
@@ -297,7 +297,7 @@ async fn handle_rejection(err: warp::Rejection) -> Result<impl warp::Reply, warp
         let json = warp::reply::json(&APIError::new(
             StatusCode::BAD_REQUEST,
             "Invalid Body",
-            &format!("Deserialization error: {}", body_err),
+            &format!("Deserialization error: {body_err}"),
         ));
         Ok(warp::reply::with_status(json, StatusCode::BAD_REQUEST))
     } else if err.find::<warp::reject::MethodNotAllowed>().is_some() {

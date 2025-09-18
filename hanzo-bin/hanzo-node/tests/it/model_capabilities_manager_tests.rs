@@ -1,5 +1,6 @@
 #[cfg(test)]
 mod tests {
+    use hanzo_embedding::model_type::EmbeddingModelType;
     use hanzo_message_primitives::schemas::llm_providers::serialized_llm_provider::{
         LLMProviderInterface, OpenAI, SerializedLLMProvider
     };
@@ -12,7 +13,7 @@ mod tests {
     use std::path::PathBuf;
     use std::sync::Arc;
 
-    
+
     use hanzo_sqlite::SqliteManager;
     use tempfile::NamedTempFile;
 
@@ -21,7 +22,7 @@ mod tests {
         let db_path = PathBuf::from(temp_file.path());
         let api_url = String::new();
         let model_type =
-            EmbeddingModelType::OllamaTextEmbeddingsInference(OllamaTextEmbeddingsInference::SnowflakeArcticEmbedM);
+            EmbeddingModelType::default();
 
         SqliteManager::new(db_path, api_url, model_type).unwrap()
     }

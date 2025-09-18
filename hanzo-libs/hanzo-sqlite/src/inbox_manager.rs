@@ -22,10 +22,10 @@ pub struct PaginatedSmartInboxes {
 
 impl SqliteManager {
     pub fn create_empty_inbox(&self, inbox_name: String, is_hidden: Option<bool>) -> Result<(), SqliteManagerError> {
-        let smart_inbox_name = format!("New Inbox: {}", inbox_name);
+        let smart_inbox_name = format!("New Inbox: {inbox_name}");
         let conn = self.get_connection()?;
         conn.execute(
-            "INSERT INTO inboxes (inbox_name, smart_inbox_name, last_modified, is_hidden) VALUES (?1, ?2, ?3, ?4)",
+            "INSERT OR IGNORE INTO inboxes (inbox_name, smart_inbox_name, last_modified, is_hidden) VALUES (?1, ?2, ?3, ?4)",
             params![
                 inbox_name,
                 smart_inbox_name,
@@ -53,9 +53,8 @@ impl SqliteManager {
             return Err(SqliteManagerError::SomeError("Inbox name is empty".to_string()));
         }
 
-        if !self.does_inbox_exist(&inbox_name)? {
-            self.create_empty_inbox(inbox_name.clone(), None)?;
-        }
+        // Create inbox if it doesn't exist (idempotent operation)
+        self.create_empty_inbox(inbox_name.clone(), None)?;
 
         // If this message has a parent, add this message as a child of the parent
         let parent_key = match maybe_parent_message_key {
@@ -110,7 +109,7 @@ impl SqliteManager {
 
             let updated_message = message.clone();
             updated_message.update_node_api_data(Some(node_api_data)).map_err(|e| {
-                SqliteManagerError::SomeError(format!("Error updating message with node_api_data: {}", e))
+                SqliteManagerError::SomeError(format!("Error updating message with node_api_data: {e}"))
             })?
         };
 
@@ -241,7 +240,7 @@ impl SqliteManager {
 
         let mut first_iteration = true;
         let mut tree_found = false;
-        let total_elements = until_offset_hash_key.is_some().then(|| n + 1).unwrap_or(n);
+        let total_elements = if until_offset_hash_key.is_some() { n + 1 } else { n };
 
         for _i in 0..total_elements {
             let mut path = Vec::new();
@@ -253,7 +252,7 @@ impl SqliteManager {
             current_key = None;
 
             let message = messages.iter().find(|(message_key, _, _)| message_key == &key).ok_or(
-                SqliteManagerError::SomeError(format!("Message with key not found: {}", key)),
+                SqliteManagerError::SomeError(format!("Message with key not found: {key}")),
             )?;
 
             let added_message_hash = &message.0;
@@ -738,7 +737,7 @@ impl SqliteManager {
     }
 
     fn get_agent_provider(&self, p: HanzoName, parent_id: String) -> (Option<LLMProviderSubset>, ProviderType) {
-        eprintln!("Trying to get agent: {:?}", parent_id);
+        eprintln!("Trying to get agent: {parent_id:?}");
         match self.get_agent(&parent_id.to_lowercase()) {
              Ok(Some(agent)) => {
                  // Fetch the serialized LLM provider for the agent
@@ -865,7 +864,7 @@ impl SqliteManager {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use hanzo_embedding::model_type::{EmbeddingModelType, NativeMistralEmbeddings};
+    use hanzo_embedding::model_type::{EmbeddingModelType, OllamaTextEmbeddingsInference};
     use ed25519_dalek::SigningKey;
     
     use hanzo_message_primitives::{
@@ -884,7 +883,7 @@ mod tests {
         let db_path = PathBuf::from(temp_file.path());
         let api_url = String::new();
         let model_type =
-            EmbeddingModelType::NativeMistralEmbeddings(NativeMistralEmbeddings::Qwen3Embedding8B);
+            EmbeddingModelType::OllamaTextEmbeddingsInference(OllamaTextEmbeddingsInference::EmbeddingGemma300M);
 
         SqliteManager::new(db_path, api_url, model_type).unwrap()
     }

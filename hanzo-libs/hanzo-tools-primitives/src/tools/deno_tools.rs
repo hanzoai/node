@@ -245,7 +245,7 @@ impl DenoTool {
         let mut code_files = HashMap::new();
         code_files.insert("index.ts".to_string(), code);
         support_files.iter().for_each(|(file_name, file_code)| {
-            code_files.insert(format!("{}.ts", file_name), file_code.clone());
+            code_files.insert(format!("{file_name}.ts"), file_code.clone());
         });
         let empty_hash_map: HashMap<String, String> = HashMap::new();
         let config_json =
@@ -265,7 +265,7 @@ impl DenoTool {
             }),
         );
         let result = tool.check().await;
-        println!("[Checking DenoTool] Result: {:?}", result);
+        println!("[Checking DenoTool] Result: {result:?}");
         result.map_err(|e| ToolError::ExecutionError(e.to_string()))
     }
 
@@ -319,13 +319,12 @@ impl DenoTool {
         fn print_result(result: &Result<RunResult, ExecutionError>) {
             match result {
                 Ok(result) => println!("[Running DenoTool] Result: {:?}", result.data),
-                Err(e) => println!("[Running DenoTool] Error: {:?}", e),
+                Err(e) => println!("[Running DenoTool] Error: {e:?}"),
             }
         }
 
         println!(
-            "[Running DenoTool] Config: {:?}. Parameters: {:?}",
-            config_json, parameters
+            "[Running DenoTool] Config: {config_json:?}. Parameters: {parameters:?}"
         );
         println!(
             "[Running DenoTool] Code: {} ... {}",
@@ -333,8 +332,7 @@ impl DenoTool {
             &code[code.len().saturating_sub(400)..]
         );
         println!(
-            "[Running DenoTool] Config JSON: {}. Parameters: {:?}",
-            config_json, parameters
+            "[Running DenoTool] Config JSON: {config_json}. Parameters: {parameters:?}"
         );
 
         // Create the directory structure for the tool
@@ -344,10 +342,9 @@ impl DenoTool {
 
         // Ensure the root directory exists. Subdirectories will be handled by the engine
         std::fs::create_dir_all(full_path.clone())
-            .map_err(|e| ToolError::ExecutionError(format!("Failed to create directory structure: {}", e)))?;
+            .map_err(|e| ToolError::ExecutionError(format!("Failed to create directory structure: {e}")))?;
         println!(
-            "[Running DenoTool] Full path: {:?}. App ID: {}. Tool ID: {}",
-            full_path, app_id, tool_id
+            "[Running DenoTool] Full path: {full_path:?}. App ID: {app_id}. Tool ID: {tool_id}"
         );
 
         // If the tool is temporary, create a .temporal file
@@ -355,7 +352,7 @@ impl DenoTool {
             // TODO: Garbage collector will delete the tool folder after some time
             let temporal_path = full_path.join(".temporal");
             std::fs::write(temporal_path, "")
-                .map_err(|e| ToolError::ExecutionError(format!("Failed to create .temporal file: {}", e)))?;
+                .map_err(|e| ToolError::ExecutionError(format!("Failed to create .temporal file: {e}")))?;
         }
 
         // Get the start time, this is used to check if the files were modified after the tool was executed
@@ -368,7 +365,7 @@ impl DenoTool {
         let mut code_files = HashMap::new();
         code_files.insert("index.ts".to_string(), code);
         support_files.iter().for_each(|(file_name, file_code)| {
-            code_files.insert(format!("{}.ts", file_name), file_code.clone());
+            code_files.insert(format!("{file_name}.ts"), file_code.clone());
         });
 
         // Setup the engine with the code files and config
@@ -427,10 +424,7 @@ impl DenoTool {
                     .split("\n")
                     .map(|line| line.to_string())
                     .filter(|line| !line.is_empty())
-                    .filter(|line| match re.captures(line) {
-                        Some(_) => false,
-                        None => true,
-                    })
+                    .filter(|line| re.captures(line).is_none())
                     .collect::<Vec<String>>()
                     .join("\n");
 
@@ -466,7 +460,7 @@ impl DenoTool {
             .clone()
             .unwrap_or_default()
             .iter()
-            .map(|mount| PathBuf::from(mount))
+            .map(PathBuf::from)
             .collect();
 
         // Get assets files from tool router key
@@ -481,11 +475,11 @@ impl DenoTool {
                 let assets_files_: Vec<PathBuf> = self
                     .assets
                     .clone()
-                    .unwrap_or(vec![])
+                    .unwrap_or_default()
                     .iter()
                     .map(|asset| path.clone().join(asset))
                     .collect();
-                println!("[Running DenoTool] Assets files: {:?}", assets_files_);
+                println!("[Running DenoTool] Assets files: {assets_files_:?}");
 
                 let mut assets_files = Vec::new();
                 if path.exists() {
@@ -495,15 +489,15 @@ impl DenoTool {
                         .join("home");
                     let _ = create_dir_all(&home_path);
                     for entry in std::fs::read_dir(&path)
-                        .map_err(|e| ToolError::ExecutionError(format!("Failed to read assets directory: {}", e)))?
+                        .map_err(|e| ToolError::ExecutionError(format!("Failed to read assets directory: {e}")))?
                     {
                         let entry = entry
-                            .map_err(|e| ToolError::ExecutionError(format!("Failed to read directory entry: {}", e)))?;
+                            .map_err(|e| ToolError::ExecutionError(format!("Failed to read directory entry: {e}")))?;
                         let file_path = entry.path();
                         if file_path.is_file() {
                             assets_files.push(file_path.clone());
                             // In case of docker the files should be located in the home directory
-                            let _ = std::fs::copy(&file_path, &home_path.join(file_path.file_name().unwrap()));
+                            let _ = std::fs::copy(&file_path, home_path.join(file_path.file_name().unwrap()));
                         }
                     }
                 }
@@ -550,7 +544,7 @@ impl DenoTool {
             .clone()
             .unwrap_or_default()
             .iter()
-            .map(|mount| PathBuf::from(mount))
+            .map(PathBuf::from)
             .collect();
 
         let original_path = playground_assets_files;
@@ -570,7 +564,7 @@ impl DenoTool {
             let dest_path = home_path.join(&file_name);
             let _ = create_dir_all(&home_path);
             std::fs::copy(&asset, &dest_path)
-                .map_err(|e| ToolError::ExecutionError(format!("Failed to copy asset {}: {}", file_name, e)))?;
+                .map_err(|e| ToolError::ExecutionError(format!("Failed to copy asset {file_name}: {e}")))?;
             assets_files.push(dest_path);
         }
 
@@ -609,7 +603,7 @@ impl DenoTool {
         let mut code_files = HashMap::new();
         code_files.insert("index.ts".to_string(), code);
         support_files.iter().for_each(|(file_name, file_code)| {
-            code_files.insert(format!("{}.ts", file_name), file_code.clone());
+            code_files.insert(format!("{file_name}.ts"), file_code.clone());
         });
 
         // Setup the engine with the code files and config
@@ -646,11 +640,11 @@ impl DenoTool {
 
         match result {
             Ok(warnings) => {
-                println!("[Checking DenoTool] Warnings: {:?}", warnings);
+                println!("[Checking DenoTool] Warnings: {warnings:?}");
                 Ok(warnings)
             }
             Err(e) => {
-                println!("[Checking DenoTool] Error: {:?}", e);
+                println!("[Checking DenoTool] Error: {e:?}");
                 Err(e)
             }
         }
@@ -682,7 +676,7 @@ impl DenoTool {
             sql_queries: self.sql_queries.clone().unwrap_or_default(),
             tools: Some(self.tools.clone()),
             oauth: self.oauth.clone(),
-            runner: self.runner.clone(),
+            runner: self.runner,
             operating_system: self.operating_system.clone(),
             tool_set: self.tool_set.clone(),
         }

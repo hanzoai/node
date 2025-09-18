@@ -59,12 +59,9 @@ impl HanzoMessage {
         sender_pk: &EncryptionPublicKey,
     ) -> Result<HanzoMessage, HanzoMessageError> {
         let mut message_clone = self.clone();
-        match message_clone.body {
-            MessageBody::Encrypted(_) => {
-                let decrypted_body = message_clone.body.decrypt(self_sk, sender_pk)?;
-                message_clone.body = MessageBody::Unencrypted(decrypted_body);
-            }
-            _ => (),
+        if let MessageBody::Encrypted(_) = message_clone.body {
+            let decrypted_body = message_clone.body.decrypt(self_sk, sender_pk)?;
+            message_clone.body = MessageBody::Unencrypted(decrypted_body);
         }
         Ok(message_clone)
     }
@@ -76,12 +73,9 @@ impl HanzoMessage {
     ) -> Result<HanzoMessage, HanzoMessageError> {
         let mut message_clone = self.clone();
         if let MessageBody::Unencrypted(body) = &mut message_clone.body {
-            match body.message_data {
-                MessageData::Encrypted(_) => {
-                    let decrypted_data = body.message_data.decrypt(self_sk, sender_pk)?;
-                    body.message_data = MessageData::Unencrypted(decrypted_data);
-                }
-                _ => (),
+            if let MessageData::Encrypted(_) = body.message_data {
+                let decrypted_data = body.message_data.decrypt(self_sk, sender_pk)?;
+                body.message_data = MessageData::Unencrypted(decrypted_data);
             }
         } else {
             Err(HanzoMessageError::EncryptionError(
@@ -163,7 +157,7 @@ impl MessageBody {
                 let cipher = ChaCha20Poly1305::new(&key);
 
                 let decoded = hex::decode(content)
-                    .map_err(|e| HanzoMessageError::DecryptionError(format!("Failed to decode hex: {}", e)))?;
+                    .map_err(|e| HanzoMessageError::DecryptionError(format!("Failed to decode hex: {e}")))?;
                 let (nonce, ciphertext) = decoded.split_at(12);
                 let nonce = GenericArray::from_slice(nonce);
 
@@ -258,7 +252,7 @@ impl MessageData {
                 let cipher = ChaCha20Poly1305::new(&key);
 
                 let decoded = hex::decode(content)
-                    .map_err(|e| HanzoMessageError::DecryptionError(format!("Failed to decode hex: {}", e)))?;
+                    .map_err(|e| HanzoMessageError::DecryptionError(format!("Failed to decode hex: {e}")))?;
 
                 let (content_len_bytes, remainder) = decoded.split_at(8);
                 let (_, remainder) = remainder.split_at(8);

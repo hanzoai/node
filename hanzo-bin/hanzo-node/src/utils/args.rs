@@ -1,5 +1,3 @@
-use clap::{App};
-
 pub struct Args {
     pub create_message: bool,
     pub code_registration: Option<String>,
@@ -13,63 +11,80 @@ pub struct Args {
 }
 
 pub fn parse_args() -> Args {
-    let matches = App::new("Hanzo Node")
+    // Legacy args parsing - now handled by src/cli/mod.rs
+    // Return defaults for backward compatibility
+    Args {
+        create_message: false,
+        code_registration: None,
+        receiver_encryption_pk: None,
+        recipient: None,
+        _other: None,
+        sender_subidentity: None,
+        receiver_subidentity: None,
+        inbox: None,
+        body_content: None,
+    }
+}
+
+#[allow(dead_code)]
+fn _parse_args_legacy() -> Args {
+    let matches = clap::Command::new("Hanzo Node")
         .version(env!("CARGO_PKG_VERSION"))
         .arg(
             clap::Arg::new("create_message")
                 .short('c')
                 .long("create_message")
-                .takes_value(false),
+                .action(clap::ArgAction::SetTrue),
         )
         .arg(
             clap::Arg::new("code_registration")
                 .short('d')
                 .long("code_registration")
-                .takes_value(true),
+                .action(clap::ArgAction::Set),
         )
         .arg(
             clap::Arg::new("receiver_encryption_pk")
                 .short('e')
                 .long("receiver_encryption_pk")
-                .takes_value(true),
+                .action(clap::ArgAction::Set),
         )
         .arg(
             clap::Arg::new("recipient")
                 .short('r')
                 .long("recipient")
-                .takes_value(true),
+                .action(clap::ArgAction::Set),
         )
-        .arg(clap::Arg::new("other").short('o').long("other").takes_value(true))
+        .arg(clap::Arg::new("other").short('o').long("other").action(clap::ArgAction::Set))
         .arg(
             clap::Arg::new("sender_subidentity")
                 .short('s')
                 .long("sender_subidentity")
-                .takes_value(true),
+                .action(clap::ArgAction::Set),
         )
         .arg(
             clap::Arg::new("receiver_subidentity")
                 .short('a')
                 .long("receiver_subidentity")
-                .takes_value(true),
+                .action(clap::ArgAction::Set),
         )
-        .arg(clap::Arg::new("inbox").short('i').long("inbox").takes_value(true))
+        .arg(clap::Arg::new("inbox").short('i').long("inbox").action(clap::ArgAction::Set))
         .arg(
             clap::Arg::new("body_content")
                 .short('b')
                 .long("body_content")
-                .takes_value(true),
+                .action(clap::ArgAction::Set),
         )
         .get_matches();
 
     Args {
-        create_message: matches.is_present("create_message"),
-        code_registration: matches.value_of("code_registration").map(String::from),
-        receiver_encryption_pk: matches.value_of("receiver_encryption_pk").map(String::from),
-        recipient: matches.value_of("recipient").map(String::from),
-        _other: matches.value_of("other").map(String::from),
-        sender_subidentity: matches.value_of("sender_subidentity").map(String::from),
-        receiver_subidentity: matches.value_of("receiver_subidentity").map(String::from),
-        inbox: matches.value_of("inbox").map(String::from),
-        body_content: matches.value_of("body_content").map(String::from),
+        create_message: matches.get_flag("create_message"),
+        code_registration: matches.get_one::<String>("code_registration").cloned(),
+        receiver_encryption_pk: matches.get_one::<String>("receiver_encryption_pk").cloned(),
+        recipient: matches.get_one::<String>("recipient").cloned(),
+        _other: matches.get_one::<String>("other").cloned(),
+        sender_subidentity: matches.get_one::<String>("sender_subidentity").cloned(),
+        receiver_subidentity: matches.get_one::<String>("receiver_subidentity").cloned(),
+        inbox: matches.get_one::<String>("inbox").cloned(),
+        body_content: matches.get_one::<String>("body_content").cloned(),
     }
 }
