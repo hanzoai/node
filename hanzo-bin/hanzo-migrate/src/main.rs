@@ -4,7 +4,7 @@
 
 use anyhow::Result;
 use clap::Parser;
-use hanzo_lancedb::migration::run_migration_cli;
+use hanzo_db::migration::run_migration_cli;
 
 /// SQLite to LanceDB migration tool for Hanzo Node
 #[derive(Parser, Debug)]
