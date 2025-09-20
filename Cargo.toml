@@ -10,7 +10,8 @@ members = [
   "hanzo-libs/hanzo-http-api",
   "hanzo-libs/hanzo-tools-primitives",
   "hanzo-libs/hanzo-sqlite",
-  "hanzo-libs/hanzo-lancedb",
+  "hanzo-libs/hanzo-db",
+  "hanzo-libs/hanzo-hmm",
   "hanzo-libs/hanzo-non-rust-code",
   "hanzo-libs/hanzo-mcp",
   "hanzo-libs/hanzo-pqc",
@@ -41,7 +42,8 @@ hanzo_job_queue_manager = { path = "./hanzo-libs/hanzo-job-queue-manager" }
 hanzo_http_api = { path = "./hanzo-libs/hanzo-http-api" }
 hanzo_tools_primitives = { path = "./hanzo-libs/hanzo-tools-primitives" }
 hanzo_sqlite = { path = "./hanzo-libs/hanzo-sqlite" }
-hanzo_lancedb = { path = "./hanzo-libs/hanzo-lancedb" }
+hanzo_db = { path = "./hanzo-libs/hanzo-db" }
+hanzo_hmm = { path = "./hanzo-libs/hanzo-hmm" }
 hanzo_fs = { path = "./hanzo-libs/hanzo-fs" }
 hanzo_embedding = { path = "./hanzo-libs/hanzo-embedding" }
 hanzo_non_rust_code = { path = "./hanzo-libs/hanzo-non-rust-code" }

@@ -26,7 +26,7 @@ shinkai_tools_runner = { workspace = true, features = ["built-in-tools"] }
 # Features
 [features]
 default = ["lancedb"]
-lancedb = ["hanzo_lancedb"]
+lancedb = ["hanzo_db"]
 sqlite = ["hanzo_sqlite"]
 console = ["console-subscriber"]
 # Enable additional debug output when this feature is selected
@@ -83,7 +83,7 @@ hanzo_tools_primitives = { workspace = true }
 hanzo_libp2p_relayer = { workspace = true }
 hanzo_http_api = { workspace = true }
 hanzo_sqlite = { workspace = true, optional = true }
-hanzo_lancedb = { workspace = true, optional = true }
+hanzo_db = { workspace = true, optional = true }
 hanzo_embedding = { workspace = true }
 hanzo_fs = { workspace = true }
 hanzo_non_rust_code = { workspace = true }

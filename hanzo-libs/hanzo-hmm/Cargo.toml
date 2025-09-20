@@ -1,0 +1,21 @@
+[package]
+name = "hanzo_hmm"
+version = { workspace = true }
+edition = { workspace = true }
+authors = { workspace = true }
+description = "Hidden Markov Model implementation for state detection and prediction in Hanzo Node"
+license = "Apache-2.0"
+keywords = ["hmm", "markov", "state", "prediction", "ml"]
+categories = ["science", "algorithms"]
+
+[dependencies]
+nalgebra = "0.32"
+rand = "0.8"
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+anyhow = "1.0"
+log = "0.4"
+
+[dev-dependencies]
+tokio = { version = "1.0", features = ["full"] }
+pretty_assertions = "1.0"

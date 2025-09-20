@@ -1,11 +1,11 @@
 [package]
-name = "hanzo_lancedb"
+name = "hanzo_db"
 version = { workspace = true }
 edition = { workspace = true }
 authors = { workspace = true }
-description = "LanceDB integration for Hanzo Node - Multimodal vector database for AI workloads"
+description = "Multi-backend database abstraction for Hanzo Node - Supports LanceDB, DuckDB, PostgreSQL, and more"
 license = "Apache-2.0"
-keywords = ["lancedb", "vector", "database", "multimodal", "ai"]
+keywords = ["database", "vector", "multimodal", "lancedb", "duckdb"]
 categories = ["database", "science"]
 
 [dependencies]
