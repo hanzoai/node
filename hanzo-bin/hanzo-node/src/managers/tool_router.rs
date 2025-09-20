@@ -1388,6 +1388,18 @@ impl ToolRouter {
                     function_call,
                 });
             }
+            HanzoTool::Docker(_docker_tool, _is_enabled) => {
+                // Docker tools are executed through the Docker execution runtime
+                return Err(LLMProviderError::FunctionExecutionError(
+                    "Docker tool execution not yet implemented in this context".to_string(),
+                ));
+            }
+            HanzoTool::Kubernetes(_k8s_tool, _is_enabled) => {
+                // Kubernetes tools are executed through the Kubernetes execution runtime
+                return Err(LLMProviderError::FunctionExecutionError(
+                    "Kubernetes tool execution not yet implemented in this context".to_string(),
+                ));
+            }
         }
     }
 

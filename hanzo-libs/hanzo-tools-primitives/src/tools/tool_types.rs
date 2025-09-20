@@ -8,6 +8,8 @@ pub enum RunnerType {
     Any,
     OnlyHost,
     OnlyDocker,
+    Docker,      // Specific Docker runner for containerized tools
+    Kubernetes,  // Kubernetes runner for distributed execution
 }
 
 
@@ -17,6 +19,8 @@ impl RunnerType {
             RunnerType::Any => "any",
             RunnerType::OnlyHost => "only_host",
             RunnerType::OnlyDocker => "only_docker",
+            RunnerType::Docker => "docker",
+            RunnerType::Kubernetes => "kubernetes",
         }
     }
 
@@ -25,6 +29,8 @@ impl RunnerType {
             "any" => Ok(RunnerType::Any),
             "only_host" => Ok(RunnerType::OnlyHost),
             "only_docker" => Ok(RunnerType::OnlyDocker),
+            "docker" => Ok(RunnerType::Docker),
+            "kubernetes" | "k8s" => Ok(RunnerType::Kubernetes),
             _ => Err(format!("Invalid runner type: {s}")),
         }
     }

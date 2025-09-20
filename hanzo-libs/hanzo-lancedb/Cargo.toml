@@ -1,0 +1,65 @@
+[package]
+name = "hanzo_lancedb"
+version = { workspace = true }
+edition = { workspace = true }
+authors = { workspace = true }
+description = "LanceDB integration for Hanzo Node - Multimodal vector database for AI workloads"
+license = "Apache-2.0"
+keywords = ["lancedb", "vector", "database", "multimodal", "ai"]
+categories = ["database", "science"]
+
+[dependencies]
+# Core LanceDB with compatible arrow versions
+lancedb = "0.13.0"
+arrow-array = "53.0"
+arrow-schema = "53.0"
+arrow-ipc = "53.0"
+parquet = "53.0"
+
+# Async runtime
+tokio = { workspace = true }
+futures = { workspace = true }
+async-trait = { workspace = true }
+
+# Serialization
+serde = { workspace = true, features = ["derive"] }
+serde_json = { workspace = true }
+bincode = { workspace = true }
+
+# Error handling
+anyhow = { workspace = true }
+thiserror = { workspace = true }
+
+# Utilities
+log = { workspace = true }
+chrono = { workspace = true }
+uuid = { workspace = true, features = ["v4", "serde"] }
+base64 = { workspace = true }
+blake3 = { workspace = true }
+
+# Connection pooling
+deadpool = "0.12"
+deadpool-runtime = "0.1"
+
+# Image processing for multimodal
+image = { version = "0.25", optional = true }
+
+# Migration support
+rusqlite = { workspace = true, optional = true }
+
+# Hanzo dependencies
+hanzo_message_primitives = { workspace = true }
+hanzo_embedding = { workspace = true }
+
+[dev-dependencies]
+tokio-test = { workspace = true }
+tempfile = { workspace = true }
+criterion = { workspace = true }
+proptest = { workspace = true }
+env_logger = { workspace = true }
+
+[features]
+default = ["multimodal", "migration"]
+multimodal = ["image"]
+migration = ["rusqlite"]
+

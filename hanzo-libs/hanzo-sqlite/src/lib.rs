@@ -15,6 +15,7 @@ pub mod agent_manager;
 pub mod cron_task_manager;
 pub mod embedding_function;
 pub mod errors;
+pub mod performance;
 pub mod file_inbox_manager;
 pub mod file_system;
 pub mod files;

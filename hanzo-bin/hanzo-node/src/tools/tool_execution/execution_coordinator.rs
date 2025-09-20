@@ -1,5 +1,6 @@
 use crate::llm_provider::job_manager::JobManager;
 use crate::managers::IdentityManager;
+use crate::security::{SecurityManager, ToolSecurityRequirements, PrivacyTier};
 use crate::tools::tool_definitions::definition_generation::generate_tool_definitions;
 use crate::tools::tool_execution::execute_agent_dynamic::execute_agent_tool;
 use crate::tools::tool_execution::execute_mcp_server_dynamic::execute_mcp_server_dynamic;
@@ -7,6 +8,9 @@ use crate::tools::tool_execution::execution_custom::try_to_execute_rust_tool;
 use crate::tools::tool_execution::execution_deno_dynamic::{check_deno_tool, execute_deno_tool};
 use crate::tools::tool_execution::execution_header_generator::{check_tool, generate_execution_environment};
 use crate::tools::tool_execution::execution_python_dynamic::execute_python_tool;
+use crate::tools::tool_execution::execution_wasm::execute_wasm_tool;
+use crate::tools::tool_execution::execution_docker::execute_docker_tool;
+use crate::tools::tool_execution::execution_kubernetes;
 use crate::utils::environment::fetch_node_environment;
 use base64::{engine::general_purpose::URL_SAFE_NO_PAD, Engine};
 use chrono::Utc;
@@ -293,6 +297,95 @@ pub fn override_tool_config(tool_router_key: String, agent: Agent, extra_config:
     final_config
 }
 
+/// Execute tool with TEE security enforcement
+pub async fn execute_tool_cmd_secure(
+    bearer: String,
+    node_name: HanzoName,
+    db: Arc<SqliteManager>,
+    tool_router_key: String,
+    parameters: Map<String, Value>,
+    tool_id: String,
+    app_id: String,
+    agent_id: Option<String>,
+    llm_provider: String,
+    extra_config: Vec<ToolConfig>,
+    identity_manager: Arc<Mutex<IdentityManager>>,
+    job_manager: Arc<Mutex<JobManager>>,
+    encryption_secret_key: EncryptionStaticKey,
+    encryption_public_key: EncryptionPublicKey,
+    signing_secret_key: SigningKey,
+    mounts: Option<Vec<String>>,
+    security_manager: Option<Arc<SecurityManager>>,
+) -> Result<Value, ToolError> {
+    // Check if security is enabled and enforce privacy tier
+    if let Some(security) = &security_manager {
+        // Determine required tier from tool configuration
+        let required_tier = determine_tool_privacy_tier(&tool_router_key, &extra_config);
+
+        // Check if current tier meets requirements
+        security.check_tool_authorization(required_tier).await
+            .map_err(|e| ToolError::SecurityError(format!("TEE authorization failed: {}", e)))?;
+
+        // Refresh attestation if needed
+        security.refresh_attestation().await
+            .map_err(|e| ToolError::SecurityError(format!("Attestation refresh failed: {}", e)))?;
+
+        log::info!("🔐 Tool {} authorized at tier {:?}", tool_router_key, required_tier);
+    }
+
+    // Call the original function
+    execute_tool_cmd(
+        bearer,
+        node_name,
+        db,
+        tool_router_key,
+        parameters,
+        tool_id,
+        app_id,
+        agent_id,
+        llm_provider,
+        extra_config,
+        identity_manager,
+        job_manager,
+        encryption_secret_key,
+        encryption_public_key,
+        signing_secret_key,
+        mounts,
+    ).await
+}
+
+/// Determine privacy tier required for a tool
+fn determine_tool_privacy_tier(tool_key: &str, config: &[ToolConfig]) -> PrivacyTier {
+    // Check config for explicit tier requirement
+    for cfg in config {
+        if let ToolConfig::BasicConfig(basic) = cfg {
+            if basic.key_name == "privacy_tier" {
+                if let Some(tier_str) = basic.key_value.as_ref().and_then(|v| v.as_str()) {
+                    return match tier_str.to_lowercase().as_str() {
+                        "open" => PrivacyTier::Open,
+                        "at_rest" | "atrest" => PrivacyTier::AtRest,
+                        "cpu_tee" | "cputee" => PrivacyTier::CpuTee,
+                        "gpu_cc" | "gpucc" => PrivacyTier::GpuCc,
+                        "gpu_tee_io" | "gputeeio" | "blackwell" => PrivacyTier::GpuTeeIo,
+                        _ => PrivacyTier::Open,
+                    };
+                }
+            }
+        }
+    }
+
+    // Default tiers based on tool type patterns
+    if tool_key.contains("crypto") || tool_key.contains("wallet") || tool_key.contains("private") {
+        PrivacyTier::CpuTee
+    } else if tool_key.contains("ml") || tool_key.contains("gpu") || tool_key.contains("inference") {
+        PrivacyTier::GpuCc
+    } else if tool_key.contains("secure") || tool_key.contains("confidential") {
+        PrivacyTier::CpuTee
+    } else {
+        PrivacyTier::Open
+    }
+}
+
 pub async fn execute_tool_cmd(
     bearer: String,
     node_name: HanzoName,
@@ -502,6 +595,32 @@ pub async fn execute_tool_cmd(
                 .map(|result| json!(result.data))
                 .map_err(|e| ToolError::ExecutionError(e.to_string()))
         }
+        HanzoTool::Docker(docker_tool, _) => {
+            execute_docker_tool(
+                bearer,
+                db,
+                node_name,
+                parameters,
+                extra_config,
+                tool_id.clone(),
+                app_id.clone(),
+                agent_id.clone(),
+                docker_tool.code.clone(),
+                docker_tool.language.clone(),
+                mounts,
+            )
+            .await
+        }
+        HanzoTool::Kubernetes(k8s_tool, _) => {
+            execution_kubernetes::execute_kubernetes_tool(
+                k8s_tool,
+                parameters,
+                extra_config,
+                node_name,
+            )
+            .await
+            .map_err(|e| ToolError::ExecutionError(e.to_string()))
+        }
         _ => Err(ToolError::ExecutionError(format!("Unsupported tool type: {:?}", tool))),
     }
 }
@@ -678,6 +797,25 @@ pub async fn execute_code(
             )
             .await
         }
+        DynamicToolType::DockerDynamic => {
+            // For dynamic Docker execution, we need to determine the language
+            // from the code or use a default
+            let language = "python".to_string(); // Default to Python for now
+            execute_docker_tool(
+                bearer.clone(),
+                db.clone(),
+                node_name,
+                parameters,
+                extra_config,
+                tool_id.clone(),
+                app_id.clone(),
+                agent_id.clone(),
+                code,
+                language,
+                mounts,
+            )
+            .await
+        }
         DynamicToolType::AgentDynamic => {
             execute_agent_tool(
                 bearer,
@@ -735,6 +873,7 @@ pub async fn check_code(
             check_deno_tool(tool_id, app_id, support_files, code_extracted).await
         }
         DynamicToolType::PythonDynamic => Err(ToolError::ExecutionError("NYI Python".to_string())),
+        DynamicToolType::DockerDynamic => Err(ToolError::ExecutionError("NYI Docker".to_string())),
         DynamicToolType::AgentDynamic => Err(ToolError::ExecutionError("NYI Agent".to_string())),
         DynamicToolType::McpServerDynamic => Err(ToolError::ExecutionError("NYI MCP".to_string())),
     }

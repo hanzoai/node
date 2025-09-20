@@ -25,7 +25,9 @@ shinkai_tools_runner = { workspace = true, features = ["built-in-tools"] }
 
 # Features
 [features]
-default = []
+default = ["lancedb"]
+lancedb = ["hanzo_lancedb"]
+sqlite = ["hanzo_sqlite"]
 console = ["console-subscriber"]
 # Enable additional debug output when this feature is selected
 debug = []
@@ -80,21 +82,27 @@ hanzo_job_queue_manager = { workspace = true }
 hanzo_tools_primitives = { workspace = true }
 hanzo_libp2p_relayer = { workspace = true }
 hanzo_http_api = { workspace = true }
-hanzo_sqlite = { workspace = true }
+hanzo_sqlite = { workspace = true, optional = true }
+hanzo_lancedb = { workspace = true, optional = true }
 hanzo_embedding = { workspace = true }
 hanzo_fs = { workspace = true }
 hanzo_non_rust_code = { workspace = true }
 hanzo_mcp = { workspace = true }
+hanzo-kbs = { path = "../../hanzo-libs/hanzo-kbs" }
+hanzo-wasm-runtime = { path = "../../hanzo-libs/hanzo-wasm-runtime" }
 # hanzo_baml = { workspace = true }
 bincode = { workspace = true }
 urlencoding = "2.1.0"
 hex = { workspace = true }
+sha2 = "0.10"
 aes-gcm = "0.10.3"
 blake3 = { workspace = true }
 cron-parser = "0.8.1"
+libc = "0.2"
 dashmap = { workspace = true }
 async-lock = "2.4.0"
 governor = "0.6.3"
+bollard = "0.16"
 shinkai_tools_runner = { workspace = true, features = ["built-in-tools"] }
 console-subscriber = { version = "0.1", optional = true }
 downcast-rs = "1.2.1"
@@ -108,7 +116,6 @@ rusqlite = { workspace = true }
 env_logger = { workspace = true }
 zip = "2.2.1"
 open = "5.3.2"
-sha2 = "0.10"
 toml = "0.8.22"
 rustls = { workspace = true }
 ngrok = { version = "0.15.0", features = ["hyper"], optional = true }
@@ -117,6 +124,12 @@ serde_yaml = { workspace = true }
 thiserror = { workspace = true }
 ai-model-catalog = "0.1.0"
 dirs = "5.0"
+raw-cpuid = "11.0"
+kube = { version = "0.95", features = ["runtime", "client", "ws"] }
+k8s-openapi = { version = "0.23", features = ["v1_31"] }
+ethers = { version = "2", default-features = false, features = ["abigen", "ws", "rustls"] }
+prometheus = { version = "0.13", features = ["process"] }
+sys-info = "0.9"
 
 [dev-dependencies]
 mockito = "1.0.2"
@@ -126,3 +139,9 @@ fs_extra = "1.2.0"
 utoipa = { workspace = true, features = ["yaml"] }
 hanzo_test_framework = { path = "../../hanzo-test-framework" }
 hanzo_test_macro = { path = "../../hanzo-test-macro" }
+criterion = { version = "0.5", features = ["html_reports", "async_tokio"] }
+futures = "0.3"
+
+[[bench]]
+name = "performance_bench"
+harness = false

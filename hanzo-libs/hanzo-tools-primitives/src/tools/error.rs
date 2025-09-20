@@ -32,6 +32,7 @@ pub enum ToolError {
     AutocontainedError(String),
     NetworkError(String),
     FailedToResolveMCPServer(String),
+    SecurityError(String),
 }
 
 impl fmt::Display for ToolError {
@@ -66,6 +67,7 @@ impl fmt::Display for ToolError {
             ToolError::AutocontainedError(ref e) => write!(f, "{e}"),
             ToolError::NetworkError(ref e) => write!(f, "Network error: {e}"),
             ToolError::FailedToResolveMCPServer(ref e) => write!(f, "Failed to resolve MCP server: {e}"),
+            ToolError::SecurityError(ref e) => write!(f, "Security error: {e}"),
         }
     }
 }

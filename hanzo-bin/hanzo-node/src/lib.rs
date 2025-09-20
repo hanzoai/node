@@ -11,10 +11,13 @@ pub mod config;
 pub mod cron_tasks;
 pub mod llm_provider;
 pub mod managers;
+pub mod monitoring;
 pub mod network;
+pub mod security;
 pub mod tools;
 pub mod utils;
 pub mod wallet;
+pub mod compute_dex;
 
 // Re-export commonly used types
 pub use config::Config;

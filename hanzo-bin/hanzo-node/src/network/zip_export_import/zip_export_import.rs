@@ -112,6 +112,8 @@ async fn calculate_zip_dependencies(
                 ))
                 .await?;
             }
+            HanzoTool::Docker(_, _) => (),
+            HanzoTool::Kubernetes(_, _) => (),
         }
 
         // This tool might have dependendies, so let's check them.
@@ -242,6 +244,8 @@ async fn get_dependencies_for_zip(
             }
             HanzoTool::Network(_, _) => (),
             HanzoTool::MCPServer(_, _) => (),
+            HanzoTool::Docker(_, _) => (),
+            HanzoTool::Kubernetes(_, _) => (),
         }
 
         let tool_bytes = match Box::pin(generate_tool_zip(
@@ -1025,6 +1029,8 @@ pub async fn import_tool(
             }));
         }
         HanzoTool::MCPServer(_, _) => {}
+        HanzoTool::Docker(_, _) => {}
+        HanzoTool::Kubernetes(_, _) => {}
     }
 
     // check if any version of the tool exists in the database

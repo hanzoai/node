@@ -7,7 +7,7 @@ use crate::error::{Result, SecurityError};
 use crate::types::{AttestationType, PrivacyTier};
 
 /// Result of attestation verification
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct AttestationResult {
     pub verified: bool,
     pub max_tier: PrivacyTier,
@@ -16,14 +16,14 @@ pub struct AttestationResult {
     pub expires_at: chrono::DateTime<chrono::Utc>,
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Measurement {
     pub name: String,
     pub value: Vec<u8>,
     pub pcr_index: Option<u8>,
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct PlatformInfo {
     pub platform_type: String,
     pub tcb_version: String,

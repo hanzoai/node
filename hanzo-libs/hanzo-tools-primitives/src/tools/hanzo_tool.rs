@@ -14,7 +14,9 @@ use super::tool_config::OAuth;
 use super::tool_playground::{SqlQuery, SqlTable, ToolPlaygroundMetadata};
 use super::tool_types::{OperatingSystem, RunnerType};
 use super::{
-    deno_tools::DenoTool, mcp_server_tool::MCPServerTool, network_tool::NetworkTool, parameters::Parameters, python_tools::PythonTool, tool_config::ToolConfig, tool_output_arg::ToolOutputArg
+    deno_tools::DenoTool, docker_tools::DockerTool, kubernetes_tools::KubernetesTool,
+    mcp_server_tool::MCPServerTool, network_tool::NetworkTool, parameters::Parameters,
+    python_tools::PythonTool, tool_config::ToolConfig, tool_output_arg::ToolOutputArg
 };
 
 pub type IsEnabled = bool;
@@ -26,6 +28,8 @@ pub enum HanzoTool {
     Network(NetworkTool, IsEnabled),
     Deno(DenoTool, IsEnabled),
     Python(PythonTool, IsEnabled),
+    Docker(DockerTool, IsEnabled),
+    Kubernetes(KubernetesTool, IsEnabled),
     Agent(AgentToolWrapper, IsEnabled),
     MCPServer(MCPServerTool, IsEnabled),
 }
@@ -119,11 +123,25 @@ impl HanzoTool {
                     ToolRouterKey::new("local".to_string(), p.author.clone(), p.name.clone(), None)
                 }
             }
+            HanzoTool::Docker(d, _) => {
+                if let Some(key) = &d.tool_router_key {
+                    key.clone()
+                } else {
+                    ToolRouterKey::new("local".to_string(), d.author.clone(), d.name.clone(), None)
+                }
+            }
             HanzoTool::Agent(a, _) => {
                 ToolRouterKey::new("local".to_string(), a.author.clone(), a.agent_id.clone(), None)
             }
             HanzoTool::MCPServer(m, _) => {
                 MCPServerTool::create_tool_router_key(m.mcp_server_command_hash.clone(), m.mcp_server_tool.clone())
+            }
+            HanzoTool::Kubernetes(k, _) => {
+                if let Some(key) = &k.tool_router_key {
+                    key.clone()
+                } else {
+                    ToolRouterKey::new("local".to_string(), k.author.clone(), k.name.clone(), None)
+                }
             }
         }
     }
@@ -137,8 +155,14 @@ impl HanzoTool {
             HanzoTool::Python(p, _) => {
                 p.config = p.config.clone().iter().map(|config| config.sanitize()).collect();
             }
+            HanzoTool::Docker(d, _) => {
+                d.config = d.config.clone().iter().map(|config| config.sanitize()).collect();
+            }
             HanzoTool::MCPServer(m, _) => {
                 m.config = m.config.clone().iter().map(|config| config.sanitize()).collect();
+            }
+            HanzoTool::Kubernetes(k, _) => {
+                k.config = k.config.clone().iter().map(|config| config.sanitize()).collect();
             }
             _ => (),
         }
@@ -151,8 +175,10 @@ impl HanzoTool {
             HanzoTool::Network(n, _) => n.name.clone(),
             HanzoTool::Deno(d, _) => d.name.clone(),
             HanzoTool::Python(p, _) => p.name.clone(),
+            HanzoTool::Docker(d, _) => d.name.clone(),
             HanzoTool::Agent(a, _) => a.name.clone(),
             HanzoTool::MCPServer(m, _) => m.name.clone(),
+            HanzoTool::Kubernetes(k, _) => k.name.clone(),
         }
     }
     /// Tool description
@@ -162,8 +188,10 @@ impl HanzoTool {
             HanzoTool::Network(n, _) => n.description.clone(),
             HanzoTool::Deno(d, _) => d.description.clone(),
             HanzoTool::Python(p, _) => p.description.clone(),
+            HanzoTool::Docker(d, _) => d.description.clone(),
             HanzoTool::Agent(a, _) => a.description.clone(),
             HanzoTool::MCPServer(m, _) => m.description.clone(),
+            HanzoTool::Kubernetes(k, _) => k.description.clone(),
         }
     }
 
@@ -174,8 +202,10 @@ impl HanzoTool {
             HanzoTool::Network(n, _) => n.input_args.clone(),
             HanzoTool::Deno(d, _) => d.input_args.clone(),
             HanzoTool::Python(p, _) => p.input_args.clone(),
+            HanzoTool::Docker(d, _) => d.input_args.clone(),
             HanzoTool::Agent(a, _) => a.input_args.clone(),
             HanzoTool::MCPServer(m, _) => m.input_args.clone(),
+            HanzoTool::Kubernetes(k, _) => k.input_args.clone(),
         }
     }
 
@@ -186,8 +216,10 @@ impl HanzoTool {
             HanzoTool::Network(n, _) => n.output_arg.clone(),
             HanzoTool::Deno(d, _) => d.output_arg.clone(),
             HanzoTool::Python(p, _) => p.output_arg.clone(),
+            HanzoTool::Docker(d, _) => d.output_arg.clone(),
             HanzoTool::Agent(a, _) => a.output_arg.clone(),
             HanzoTool::MCPServer(m, _) => m.output_arg.clone(),
+            HanzoTool::Kubernetes(k, _) => k.output_arg.clone(),
         }
     }
 
@@ -198,8 +230,10 @@ impl HanzoTool {
             HanzoTool::Network(_, _) => "Network",
             HanzoTool::Deno(_, _) => "Deno",
             HanzoTool::Python(_, _) => "Python",
+            HanzoTool::Docker(_, _) => "Docker",
             HanzoTool::Agent(_, _) => "Agent",
             HanzoTool::MCPServer(_, _) => "MCPServer",
+            HanzoTool::Kubernetes(_, _) => "Kubernetes",
         }
     }
 
@@ -208,6 +242,8 @@ impl HanzoTool {
         match self {
             HanzoTool::Deno(d, _) => d.sql_queries.clone().unwrap_or_default(),
             HanzoTool::Python(p, _) => p.sql_queries.clone().unwrap_or_default(),
+            HanzoTool::Docker(d, _) => d.sql_queries.clone().unwrap_or_default(),
+            HanzoTool::Kubernetes(k, _) => k.sql_queries.clone().unwrap_or_default(),
             _ => vec![],
         }
     }
@@ -217,6 +253,8 @@ impl HanzoTool {
         match self {
             HanzoTool::Deno(d, _) => d.sql_tables.clone().unwrap_or_default(),
             HanzoTool::Python(p, _) => p.sql_tables.clone().unwrap_or_default(),
+            HanzoTool::Docker(d, _) => d.sql_tables.clone().unwrap_or_default(),
+            HanzoTool::Kubernetes(k, _) => k.sql_tables.clone().unwrap_or_default(),
             _ => vec![],
         }
     }
@@ -225,6 +263,8 @@ impl HanzoTool {
         match self {
             HanzoTool::Deno(d, _) => d.oauth.clone(),
             HanzoTool::Python(p, _) => p.oauth.clone(),
+            HanzoTool::Docker(d, _) => d.oauth.clone(),
+            HanzoTool::Kubernetes(k, _) => k.oauth.clone(),
             _ => None,
         }
     }
@@ -233,6 +273,8 @@ impl HanzoTool {
         match self {
             HanzoTool::Deno(d, _) => d.tools.clone(),
             HanzoTool::Python(p, _) => p.tools.clone(),
+            HanzoTool::Docker(d, _) => d.tools.clone(),
+            HanzoTool::Kubernetes(k, _) => k.tools.clone(),
             _ => vec![],
         }
     }
@@ -241,6 +283,10 @@ impl HanzoTool {
         match self {
             HanzoTool::Deno(d, _) => d.assets.clone(),
             HanzoTool::Python(p, _) => p.assets.clone(),
+            HanzoTool::Docker(d, _) => d.assets.clone(),
+            HanzoTool::Kubernetes(k, _) => k.assets.as_ref().map(|assets| {
+                assets.iter().map(|a| a.file_name.clone()).collect()
+            }),
             _ => None,
         }
     }
@@ -249,6 +295,8 @@ impl HanzoTool {
         match self {
             HanzoTool::Deno(d, _) => d.homepage.clone(),
             HanzoTool::Python(p, _) => p.homepage.clone(),
+            HanzoTool::Docker(d, _) => d.homepage.clone(),
+            HanzoTool::Kubernetes(k, _) => k.homepage.clone(),
             _ => None,
         }
     }
@@ -267,6 +315,8 @@ impl HanzoTool {
         match self {
             HanzoTool::Deno(d, _) => d.js_code.clone(),
             HanzoTool::Python(p, _) => p.py_code.clone(),
+            HanzoTool::Docker(d, _) => d.code.clone(),
+            HanzoTool::Kubernetes(k, _) => k.code.clone(),
             _ => unreachable!(),
         }
     }
@@ -275,7 +325,9 @@ impl HanzoTool {
         match self {
             HanzoTool::Deno(d, _) => d.name = name,
             HanzoTool::Python(p, _) => p.name = name,
+            HanzoTool::Docker(d, _) => d.name = name,
             HanzoTool::MCPServer(m, _) => m.name = name,
+            HanzoTool::Kubernetes(k, _) => k.name = name,
             _ => unreachable!(),
         }
     }
@@ -284,7 +336,9 @@ impl HanzoTool {
         match self {
             HanzoTool::Deno(d, _) => d.author = author,
             HanzoTool::Python(p, _) => p.author = author,
+            HanzoTool::Docker(d, _) => d.author = author,
             HanzoTool::MCPServer(m, _) => m.author = author,
+            HanzoTool::Kubernetes(k, _) => k.author = author,
             _ => unreachable!(),
         }
     }
@@ -293,6 +347,8 @@ impl HanzoTool {
         match self {
             HanzoTool::Deno(d, _) => d.runner,
             HanzoTool::Python(p, _) => p.runner,
+            HanzoTool::Docker(d, _) => d.runner,
+            HanzoTool::Kubernetes(k, _) => k.runner,
             _ => RunnerType::Any,
         }
     }
@@ -301,6 +357,8 @@ impl HanzoTool {
         match self {
             HanzoTool::Deno(d, _) => d.operating_system.clone(),
             HanzoTool::Python(p, _) => p.operating_system.clone(),
+            HanzoTool::Docker(d, _) => d.operating_system.clone(),
+            HanzoTool::Kubernetes(k, _) => k.operating_system.clone(),
             _ => vec![OperatingSystem::Linux, OperatingSystem::MacOS, OperatingSystem::Windows],
         }
     }
@@ -309,7 +367,9 @@ impl HanzoTool {
         match self {
             HanzoTool::Deno(d, _) => d.tool_set.clone(),
             HanzoTool::Python(p, _) => p.tool_set.clone(),
+            HanzoTool::Docker(d, _) => d.tool_set.clone(),
             HanzoTool::MCPServer(m, _) => m.tool_set.clone(),
+            HanzoTool::Kubernetes(k, _) => k.tool_set.clone(),
             _ => None,
         }
     }
@@ -321,8 +381,10 @@ impl HanzoTool {
             HanzoTool::Network(n, _) => n.embedding = Some(embedding),
             HanzoTool::Deno(d, _) => d.embedding = Some(embedding),
             HanzoTool::Python(p, _) => p.embedding = Some(embedding),
+            HanzoTool::Docker(d, _) => d.embedding = Some(embedding),
             HanzoTool::Agent(a, _) => a.embedding = Some(embedding),
             HanzoTool::MCPServer(m, _) => m.embedding = Some(embedding),
+            HanzoTool::Kubernetes(k, _) => k.embedding = Some(embedding),
         }
     }
 
@@ -365,8 +427,10 @@ impl HanzoTool {
             HanzoTool::Network(n, _) => n.embedding.clone(),
             HanzoTool::Deno(d, _) => d.embedding.clone(),
             HanzoTool::Python(p, _) => p.embedding.clone(),
+            HanzoTool::Docker(d, _) => d.embedding.clone(),
             HanzoTool::Agent(a, _) => a.embedding.clone(),
             HanzoTool::MCPServer(m, _) => m.embedding.clone(),
+            HanzoTool::Kubernetes(k, _) => k.embedding.clone(),
         }
     }
 
@@ -394,8 +458,10 @@ impl HanzoTool {
             HanzoTool::Network(n, _) => n.author.clone(),
             HanzoTool::Deno(d, _) => d.author.clone(),
             HanzoTool::Python(p, _) => p.author.clone(),
+            HanzoTool::Docker(d, _) => d.author.clone(),
             HanzoTool::Agent(a, _) => a.author.clone(),
             HanzoTool::MCPServer(m, _) => m.author.clone(),
+            HanzoTool::Kubernetes(k, _) => k.author.clone(),
         }
     }
 
@@ -406,8 +472,10 @@ impl HanzoTool {
             HanzoTool::Network(n, _) => n.version.clone(),
             HanzoTool::Deno(d, _) => d.version.clone(),
             HanzoTool::Python(p, _) => p.version.clone(),
+            HanzoTool::Docker(d, _) => d.version.clone(),
             HanzoTool::Agent(_a, _) => "1.0.0".to_string(),
             HanzoTool::MCPServer(m, _) => m.version.clone(),
+            HanzoTool::Kubernetes(k, _) => k.version.clone(),
         }
     }
 
@@ -427,8 +495,10 @@ impl HanzoTool {
             HanzoTool::Network(_, enabled) => *enabled,
             HanzoTool::Deno(_, enabled) => *enabled,
             HanzoTool::Python(_, enabled) => *enabled,
+            HanzoTool::Docker(_, enabled) => *enabled,
             HanzoTool::Agent(_a, enabled) => *enabled,
             HanzoTool::MCPServer(_, enabled) => *enabled,
+            HanzoTool::Kubernetes(_, enabled) => *enabled,
         }
     }
 
@@ -439,8 +509,10 @@ impl HanzoTool {
             HanzoTool::Network(tool, is_enabled) => *is_enabled && tool.mcp_enabled.unwrap_or(false),
             HanzoTool::Deno(tool, is_enabled) => *is_enabled && tool.mcp_enabled.unwrap_or(false),
             HanzoTool::Python(tool, is_enabled) => *is_enabled && tool.mcp_enabled.unwrap_or(false),
+            HanzoTool::Docker(tool, is_enabled) => *is_enabled && tool.mcp_enabled.unwrap_or(false),
             HanzoTool::Agent(a, is_enabled) => *is_enabled && a.mcp_enabled.unwrap_or(false),
             HanzoTool::MCPServer(a, is_enabled) => *is_enabled && a.mcp_enabled.unwrap_or(false),
+            HanzoTool::Kubernetes(k, is_enabled) => *is_enabled && k.mcp_enabled.unwrap_or(false),
         }
     }
 
@@ -451,8 +523,10 @@ impl HanzoTool {
             HanzoTool::Network(_, enabled) => *enabled = true,
             HanzoTool::Deno(_, enabled) => *enabled = true,
             HanzoTool::Python(_, enabled) => *enabled = true,
+            HanzoTool::Docker(_, enabled) => *enabled = true,
             HanzoTool::Agent(_, enabled) => *enabled = true,
             HanzoTool::MCPServer(_, enabled) => *enabled = true,
+            HanzoTool::Kubernetes(_, enabled) => *enabled = true,
         }
     }
 
@@ -462,8 +536,10 @@ impl HanzoTool {
             HanzoTool::Network(tool, _) => tool.mcp_enabled = Some(true),
             HanzoTool::Deno(tool, _) => tool.mcp_enabled = Some(true),
             HanzoTool::Python(tool, _) => tool.mcp_enabled = Some(true),
+            HanzoTool::Docker(tool, _) => tool.mcp_enabled = Some(true),
             HanzoTool::Agent(tool, _) => tool.mcp_enabled = Some(true),
             HanzoTool::MCPServer(tool, _) => tool.mcp_enabled = Some(true),
+            HanzoTool::Kubernetes(tool, _) => tool.mcp_enabled = Some(true),
         }
     }
 
@@ -474,8 +550,10 @@ impl HanzoTool {
             HanzoTool::Network(_, enabled) => *enabled = false,
             HanzoTool::Deno(_, enabled) => *enabled = false,
             HanzoTool::Python(_, enabled) => *enabled = false,
+            HanzoTool::Docker(_, enabled) => *enabled = false,
             HanzoTool::Agent(_, enabled) => *enabled = false,
             HanzoTool::MCPServer(_, enabled) => *enabled = false,
+            HanzoTool::Kubernetes(_, enabled) => *enabled = false,
         }
     }
 
@@ -485,8 +563,10 @@ impl HanzoTool {
             HanzoTool::Network(tool, _) => tool.mcp_enabled = Some(false),
             HanzoTool::Deno(tool, _) => tool.mcp_enabled = Some(false),
             HanzoTool::Python(tool, _) => tool.mcp_enabled = Some(false),
+            HanzoTool::Docker(tool, _) => tool.mcp_enabled = Some(false),
             HanzoTool::Agent(tool, _) => tool.mcp_enabled = Some(false),
             HanzoTool::MCPServer(tool, _) => tool.mcp_enabled = Some(false),
+            HanzoTool::Kubernetes(tool, _) => tool.mcp_enabled = Some(false),
         }
     }
 
@@ -505,8 +585,10 @@ impl HanzoTool {
             HanzoTool::Network(_, _) => vec![],
             HanzoTool::Deno(js_tool, _) => js_tool.config.clone(),
             HanzoTool::Python(python_tool, _) => python_tool.config.clone(),
+            HanzoTool::Docker(docker_tool, _) => docker_tool.config.clone(),
             HanzoTool::Agent(_a, _) => vec![],
             HanzoTool::MCPServer(mcp_tool, _) => mcp_tool.config.clone(),
+            HanzoTool::Kubernetes(k_tool, _) => k_tool.config.clone(),
         }
     }
 
@@ -517,8 +599,10 @@ impl HanzoTool {
             HanzoTool::Network(n_tool, _) => n_tool.check_required_config_fields(),
             HanzoTool::Deno(deno_tool, _) => deno_tool.check_required_config_fields(),
             HanzoTool::Python(_, _) => true,
+            HanzoTool::Docker(docker_tool, _) => docker_tool.check_required_config_fields(),
             HanzoTool::Agent(_, _) => true,
             HanzoTool::MCPServer(mcp_tool, _) => mcp_tool.check_required_config_fields(),
+            HanzoTool::Kubernetes(k_tool, _) => k_tool.check_required_config_fields(),
         }
     }
 
@@ -591,8 +675,10 @@ impl HanzoTool {
             HanzoTool::Network(_, _) => vec![],
             HanzoTool::Deno(d, _) => d.keywords.clone(),
             HanzoTool::Python(p, _) => p.keywords.clone(),
+            HanzoTool::Docker(d, _) => d.keywords.clone(),
             HanzoTool::Agent(_a, _) => vec![],
             HanzoTool::MCPServer(m, _) => m.keywords.clone(),
+            HanzoTool::Kubernetes(k, _) => k.keywords.clone(),
         }
     }
 
@@ -600,8 +686,10 @@ impl HanzoTool {
         match self {
             HanzoTool::Deno(d, _) => Some(d.get_metadata()),
             HanzoTool::Python(p, _) => Some(p.get_metadata()),
+            HanzoTool::Docker(d, _) => Some(d.get_metadata()),
             HanzoTool::Rust(r, _) => Some(r.get_metadata()),
             HanzoTool::MCPServer(r, _) => Some(r.get_metadata()),
+            HanzoTool::Kubernetes(k, _) => Some(k.get_metadata()),
             _ => None,
         }
     }
@@ -625,9 +713,21 @@ impl From<NetworkTool> for HanzoTool {
     }
 }
 
+impl From<DockerTool> for HanzoTool {
+    fn from(tool: DockerTool) -> Self {
+        HanzoTool::Docker(tool, true)
+    }
+}
+
 impl From<MCPServerTool> for HanzoTool {
     fn from(tool: MCPServerTool) -> Self {
         HanzoTool::MCPServer(tool, true)
+    }
+}
+
+impl From<KubernetesTool> for HanzoTool {
+    fn from(tool: KubernetesTool) -> Self {
+        HanzoTool::Kubernetes(tool, true)
     }
 }
 

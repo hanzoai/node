@@ -10,6 +10,7 @@ members = [
   "hanzo-libs/hanzo-http-api",
   "hanzo-libs/hanzo-tools-primitives",
   "hanzo-libs/hanzo-sqlite",
+  "hanzo-libs/hanzo-lancedb",
   "hanzo-libs/hanzo-non-rust-code",
   "hanzo-libs/hanzo-mcp",
   "hanzo-libs/hanzo-pqc",
@@ -18,6 +19,8 @@ members = [
   "hanzo-libs/hanzo-model-discovery",
   "hanzo-libs/hanzo-config",
   "hanzo-libs/hanzo-mining",
+  "hanzo-libs/hanzo-wasm-runtime",
+  "hanzo-libs/hanzo-hllm",
   "hanzo-test-framework",
   "hanzo-test-macro",
   "hanzo-bin/*",
@@ -38,15 +41,18 @@ hanzo_job_queue_manager = { path = "./hanzo-libs/hanzo-job-queue-manager" }
 hanzo_http_api = { path = "./hanzo-libs/hanzo-http-api" }
 hanzo_tools_primitives = { path = "./hanzo-libs/hanzo-tools-primitives" }
 hanzo_sqlite = { path = "./hanzo-libs/hanzo-sqlite" }
+hanzo_lancedb = { path = "./hanzo-libs/hanzo-lancedb" }
 hanzo_fs = { path = "./hanzo-libs/hanzo-fs" }
 hanzo_embedding = { path = "./hanzo-libs/hanzo-embedding" }
 hanzo_non_rust_code = { path = "./hanzo-libs/hanzo-non-rust-code" }
 hanzo_mcp = { path = "./hanzo-libs/hanzo-mcp" }
 hanzo_pqc = { path = "./hanzo-libs/hanzo-pqc" }
-hanzo_kbs = { path = "./hanzo-libs/hanzo-kbs" }
+hanzo-kbs = { path = "./hanzo-libs/hanzo-kbs" }
 hanzo_did = { path = "./hanzo-libs/hanzo-did" }
 hanzo_config = { path = "./hanzo-libs/hanzo-config" }
 hanzo_mining = { path = "./hanzo-libs/hanzo-mining" }
+hanzo_wasm_runtime = { path = "./hanzo-libs/hanzo-wasm-runtime" }
+hanzo_hllm = { path = "./hanzo-libs/hanzo-hllm" }
 
 rmcp = { version = "0.6" }
 futures = "0.3.30"

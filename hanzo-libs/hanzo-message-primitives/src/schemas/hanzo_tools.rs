@@ -6,6 +6,7 @@ use utoipa::ToSchema;
 pub enum DynamicToolType {
     DenoDynamic,
     PythonDynamic,
+    DockerDynamic,
     AgentDynamic,
     McpServerDynamic,
 }
@@ -15,6 +16,7 @@ impl std::fmt::Display for DynamicToolType {
         match self {
             DynamicToolType::DenoDynamic => write!(f, "deno_dynamic"),
             DynamicToolType::PythonDynamic => write!(f, "python_dynamic"),
+            DynamicToolType::DockerDynamic => write!(f, "docker_dynamic"),
             DynamicToolType::AgentDynamic => write!(f, "agent_dynamic"),
             DynamicToolType::McpServerDynamic => write!(f, "mcp_server_dynamic"),
         }

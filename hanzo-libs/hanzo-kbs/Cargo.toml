@@ -1,5 +1,5 @@
 [package]
-name = "hanzo_kbs"
+name = "hanzo-kbs"
 version.workspace = true
 edition.workspace = true
 authors.workspace = true
