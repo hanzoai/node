@@ -1,10 +1,10 @@
 openapi: 3.0.3
 info:
-  title: shinkai_node
+  title: hanzo_node
   description: ''
   contact:
     name: Nico Arqueros
-    email: nico@shinkai.com
+    email: nico@hanzo.ai
   license:
     name: ''
   version: 0.8.4
@@ -22,7 +22,7 @@ paths:
               schema:
                 type: array
                 items:
-                  $ref: '#/components/schemas/ShinkaiToolOffering'
+                  $ref: '#/components/schemas/HanzoToolOffering'
         '500':
           description: Internal server error
           content:
@@ -97,7 +97,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ShinkaiToolOffering'
+                $ref: '#/components/schemas/HanzoToolOffering'
         '400':
           description: Bad request
           content:
@@ -272,8 +272,8 @@ components:
           type: boolean
           default: true
         tool_offering:
-          $ref: '#/components/schemas/ShinkaiToolOffering'
-    ShinkaiToolOffering:
+          $ref: '#/components/schemas/HanzoToolOffering'
+    HanzoToolOffering:
       type: object
       required:
       - tool_key
