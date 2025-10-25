@@ -2,7 +2,7 @@
 .vscode
 target
 storage_debug_my_local_ai
-shinkai-tools-runner-execution-storage
-shinkai-bin/shinkai-node/internal_tools_storage
-shinkai-bin/shinkai-node/shinkai-tools-runner-resources
-shinkai-bin/shinkai-node/storage
+hanzo-tools-runner-execution-storage
+hanzo-bin/hanzo-node/internal_tools_storage
+hanzo-bin/hanzo-node/hanzo-tools-runner-resources
+hanzo-bin/hanzo-node/storage

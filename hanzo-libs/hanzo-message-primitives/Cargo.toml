@@ -1,0 +1,51 @@
+[package]
+name = "hanzo_message_primitives"
+version = { workspace = true }
+edition = { workspace = true }
+authors = { workspace = true }
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+serde_json = { workspace = true }
+chacha20poly1305 = "0.7.1"
+x25519-dalek = { workspace = true }
+ed25519-dalek = { workspace = true }
+rand = { workspace = true }
+chrono = { workspace = true, features = ["serde"] }
+regex = { workspace = true }
+thiserror = { workspace = true }
+hex = { workspace = true }
+aes-gcm = "0.10.3"
+blake3 = { workspace = true }
+rust_decimal = "1.17.0"
+base64 = { workspace = true }
+utoipa = { workspace = true }
+serde = { workspace = true, features = ["derive"] }
+tokio = { workspace = true }
+async-trait = { workspace = true }
+
+tracing = { version = "0.1.40", optional = true }
+
+tracing-subscriber = { version = "0.3", optional = true }
+
+os_path = { workspace = true }
+
+[lib]
+crate-type = ["rlib"]
+
+[dev-dependencies]
+serial_test = "0.5"
+tempfile = { workspace = true }
+
+[target.'cfg(not(target_arch = "wasm32"))'.dependencies]
+tracing = { workspace = true }
+tracing-subscriber = { version = "0.3", features = ["env-filter"] }
+
+[[test]]
+name = "hanzo_message_tests"
+path = "tests/hanzo_message_tests.rs"
+
+[[test]]
+name = "hanzo_name_tests"
+path = "tests/hanzo_name_tests.rs"
