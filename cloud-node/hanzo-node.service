@@ -1,0 +1,26 @@
+[Unit]
+Description=Hanzo Node Docker Service
+After=docker.service
+Requires=docker.service
+
+[Service]
+Type=simple
+Restart=always
+RestartSec=5
+TimeoutStopSec=60
+WorkingDirectory=/opt/hanzo-node
+EnvironmentFile=/opt/hanzo-node/env.conf
+ExecStartPre=/bin/mkdir -p /opt/hanzo-node/hanzo-storage
+ExecStart=/usr/bin/docker run --rm \
+    --name=hanzo-node \
+    -p 9550:9550 \
+    -p 9551:9551 \
+    -p 9552:9552 \
+    -p 9553:9553 \
+    -v /opt/hanzo-node/hanzo-storage:/app/hanzo-storage \
+    --env-file /opt/hanzo-node/env.conf \
+    hanzoai/hanzo-node:latest
+ExecStop=/usr/bin/docker stop --time=30 hanzo-node
+
+[Install]
+WantedBy=multi-user.target 

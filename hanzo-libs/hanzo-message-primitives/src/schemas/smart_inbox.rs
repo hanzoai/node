@@ -1,0 +1,78 @@
+use serde::{Deserialize, Serialize};
+use serde_json::Value;
+use utoipa::ToSchema;
+
+use crate::hanzo_message::{hanzo_message::HanzoMessage, hanzo_message_schemas::V2ChatMessage};
+
+use super::{
+    job_config::JobConfig,
+    llm_providers::{
+        agent::Agent,
+        serialized_llm_provider::{LLMProviderInterface, SerializedLLMProvider},
+    },
+    hanzo_name::HanzoName,
+};
+
+#[derive(Serialize, Deserialize, Debug, Clone, PartialEq, ToSchema)]
+pub struct LLMProviderSubset {
+    pub id: String,
+    pub full_identity_name: HanzoName,
+    pub model: LLMProviderInterface,
+    pub name: String,
+    pub description: String,
+}
+
+impl LLMProviderSubset {
+    pub fn from_serialized_llm_provider(serialized_llm_provider: SerializedLLMProvider) -> Self {
+        Self {
+            id: serialized_llm_provider.id,
+            full_identity_name: serialized_llm_provider.full_identity_name,
+            model: serialized_llm_provider.model,
+            name: serialized_llm_provider.name.unwrap_or_default(),
+            description: serialized_llm_provider.description.unwrap_or_default(),
+        }
+    }
+
+    pub fn from_agent(agent: Agent, serialized_llm_provider: SerializedLLMProvider) -> Self {
+        Self {
+            id: agent.agent_id,
+            full_identity_name: agent.full_identity_name,
+            model: serialized_llm_provider.model,
+            name: agent.name,
+            description: agent.ui_description,
+        }
+    }
+}
+
+#[derive(Serialize, Deserialize, Debug, Clone, PartialEq, ToSchema)]
+pub enum ProviderType {
+    Agent,
+    LLMProvider,
+    Unknown,
+}
+
+#[derive(Serialize, Deserialize, Debug, Clone, ToSchema)]
+pub struct SmartInbox {
+    pub inbox_id: String,
+    pub custom_name: String,
+    pub datetime_created: String,
+    pub last_message: Option<HanzoMessage>,
+    pub is_finished: bool,
+    pub job_scope: Option<Value>,
+    pub agent: Option<LLMProviderSubset>,
+    pub job_config: Option<JobConfig>,
+    pub provider_type: ProviderType,
+}
+
+#[derive(Serialize, Deserialize, Debug, Clone, ToSchema)]
+pub struct V2SmartInbox {
+    pub inbox_id: String,
+    pub custom_name: String,
+    pub datetime_created: String,
+    pub last_message: Option<V2ChatMessage>,
+    pub is_finished: bool,
+    pub agent: Option<LLMProviderSubset>,
+    pub job_scope: Option<Value>,
+    pub job_config: Option<JobConfig>,
+    pub provider_type: ProviderType,
+}

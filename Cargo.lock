@@ -5919,7 +5919,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "24188a676b6ae68c3b2cb3a01be17fbf7240ce009799bb56d5b1409051e78fde"
 
 [[package]]
-name = "shinkai_crypto_identities"
+name = "hanzo_crypto_identities"
 version = "1.1.10"
 dependencies = [
  "chrono",
@@ -5927,8 +5927,8 @@ dependencies = [
  "ed25519-dalek",
  "lazy_static",
  "serde_json",
- "shinkai_message_primitives",
- "shinkai_non_rust_code",
+ "hanzo_message_primitives",
+ "hanzo_non_rust_code",
  "tempfile",
  "tokio",
  "trust-dns-resolver",
@@ -5936,7 +5936,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "shinkai_embedding"
+name = "hanzo_embedding"
 version = "1.1.10"
 dependencies = [
  "async-trait",
@@ -5957,7 +5957,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "shinkai_fs"
+name = "hanzo_fs"
 version = "1.1.10"
 dependencies = [
  "async-trait",
@@ -5977,10 +5977,10 @@ dependencies = [
  "serde",
  "serde_json",
  "serial_test",
- "shinkai_embedding",
- "shinkai_message_primitives",
- "shinkai_non_rust_code",
- "shinkai_sqlite",
+ "hanzo_embedding",
+ "hanzo_message_primitives",
+ "hanzo_non_rust_code",
+ "hanzo_sqlite",
  "tempfile",
  "thiserror 2.0.12",
  "tokio",
@@ -5990,7 +5990,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "shinkai_http_api"
+name = "hanzo_http_api"
 version = "1.1.10"
 dependencies = [
  "anyhow",
@@ -6009,8 +6009,8 @@ dependencies = [
  "rustls-pemfile 1.0.4",
  "serde",
  "serde_json",
- "shinkai_message_primitives",
- "shinkai_tools_primitives",
+ "hanzo_message_primitives",
+ "hanzo_tools_primitives",
  "tokio",
  "tokio-rustls 0.23.4",
  "tokio-stream",
@@ -6026,21 +6026,21 @@ dependencies = [
 ]
 
 [[package]]
-name = "shinkai_job_queue_manager"
+name = "hanzo_job_queue_manager"
 version = "1.1.10"
 dependencies = [
  "chrono",
  "serde",
  "serde_json",
- "shinkai_embedding",
- "shinkai_message_primitives",
- "shinkai_sqlite",
+ "hanzo_embedding",
+ "hanzo_message_primitives",
+ "hanzo_sqlite",
  "tempfile",
  "tokio",
 ]
 
 [[package]]
-name = "shinkai_libp2p_relayer"
+name = "hanzo_libp2p_relayer"
 version = "1.1.10"
 dependencies = [
  "chrono",
@@ -6055,8 +6055,8 @@ dependencies = [
  "reqwest 0.11.27",
  "serde",
  "serde_json",
- "shinkai_crypto_identities",
- "shinkai_message_primitives",
+ "hanzo_crypto_identities",
+ "hanzo_message_primitives",
  "tempfile",
  "thiserror 2.0.12",
  "tokio",
@@ -6065,7 +6065,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "shinkai_mcp"
+name = "hanzo_mcp"
 version = "1.1.10"
 dependencies = [
  "async-trait",
@@ -6086,7 +6086,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "shinkai_message_primitives"
+name = "hanzo_message_primitives"
 version = "1.1.10"
 dependencies = [
  "aes-gcm",
@@ -6114,7 +6114,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "shinkai_node"
+name = "hanzo_node"
 version = "1.1.10"
 dependencies = [
  "aes-gcm",
@@ -6162,20 +6162,20 @@ dependencies = [
  "serde_json",
  "serde_yaml",
  "sha2",
- "shinkai_crypto_identities",
- "shinkai_embedding",
- "shinkai_fs",
- "shinkai_http_api",
- "shinkai_job_queue_manager",
- "shinkai_libp2p_relayer",
- "shinkai_mcp",
- "shinkai_message_primitives",
- "shinkai_non_rust_code",
- "shinkai_sqlite",
- "shinkai_test_framework",
- "shinkai_test_macro",
- "shinkai_tools_primitives",
- "shinkai_tools_runner",
+ "hanzo_crypto_identities",
+ "hanzo_embedding",
+ "hanzo_fs",
+ "hanzo_http_api",
+ "hanzo_job_queue_manager",
+ "hanzo_libp2p_relayer",
+ "hanzo_mcp",
+ "hanzo_message_primitives",
+ "hanzo_non_rust_code",
+ "hanzo_sqlite",
+ "hanzo_test_framework",
+ "hanzo_test_macro",
+ "hanzo_tools_primitives",
+ "hanzo_tools_runner",
  "tempfile",
  "thiserror 2.0.12",
  "tokio",
@@ -6192,20 +6192,20 @@ dependencies = [
 ]
 
 [[package]]
-name = "shinkai_non_rust_code"
+name = "hanzo_non_rust_code"
 version = "1.1.10"
 dependencies = [
  "log",
  "serde",
  "serde_json",
- "shinkai_message_primitives",
- "shinkai_tools_runner",
+ "hanzo_message_primitives",
+ "hanzo_tools_runner",
  "tempfile",
  "tokio",
 ]
 
 [[package]]
-name = "shinkai_sqlite"
+name = "hanzo_sqlite"
 version = "1.1.10"
 dependencies = [
  "bincode",
@@ -6225,9 +6225,9 @@ dependencies = [
  "semver",
  "serde",
  "serde_json",
- "shinkai_embedding",
- "shinkai_message_primitives",
- "shinkai_tools_primitives",
+ "hanzo_embedding",
+ "hanzo_message_primitives",
+ "hanzo_tools_primitives",
  "sqlite-vec",
  "tempfile",
  "thiserror 2.0.12",
@@ -6237,7 +6237,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "shinkai_test_framework"
+name = "hanzo_test_framework"
 version = "0.1.0"
 dependencies = [
  "anyhow",
@@ -6245,11 +6245,11 @@ dependencies = [
  "ed25519-dalek",
  "proc-macro2",
  "quote",
- "shinkai_embedding",
- "shinkai_http_api",
- "shinkai_message_primitives",
- "shinkai_node",
- "shinkai_sqlite",
+ "hanzo_embedding",
+ "hanzo_http_api",
+ "hanzo_message_primitives",
+ "hanzo_node",
+ "hanzo_sqlite",
  "syn 2.0.101",
  "tempfile",
  "tokio",
@@ -6257,17 +6257,17 @@ dependencies = [
 ]
 
 [[package]]
-name = "shinkai_test_macro"
+name = "hanzo_test_macro"
 version = "0.1.0"
 dependencies = [
  "proc-macro2",
  "quote",
- "shinkai_test_framework",
+ "hanzo_test_framework",
  "syn 2.0.101",
 ]
 
 [[package]]
-name = "shinkai_tools_primitives"
+name = "hanzo_tools_primitives"
 version = "1.1.10"
 dependencies = [
  "base64 0.22.1",
@@ -6278,14 +6278,14 @@ dependencies = [
  "rmcp",
  "serde",
  "serde_json",
- "shinkai_mcp",
- "shinkai_message_primitives",
- "shinkai_tools_runner",
+ "hanzo_mcp",
+ "hanzo_message_primitives",
+ "hanzo_tools_runner",
  "tokio",
 ]
 
 [[package]]
-name = "shinkai_tools_runner"
+name = "hanzo_tools_runner"
 version = "1.0.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "09b4259bb146459a2632ad024ff1d86c899160503f4d5113710097887d3c5937"

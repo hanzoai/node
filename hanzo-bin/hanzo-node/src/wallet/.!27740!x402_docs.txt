@@ -1,0 +1,2058 @@
+# clients/fetch/.prettierignore
+docs/
+dist/
+node_modules/
+coverage/
+.github/
+src/client
+**/**/*.json
+*.md
+# clients/fetch/README.md
+# x402-fetch Example Client
+
+This is an example client that demonstrates how to use the `x402-fetch` package to make HTTP requests to endpoints protected by the x402 payment protocol.
+
+## Prerequisites
+
+- Node.js v20+ (install via [nvm](https://github.com/nvm-sh/nvm))
+- pnpm v10 (install via [pnpm.io/installation](https://pnpm.io/installation))
+- A running x402 server (you can use the example express server at `examples/typescript/servers/express`)
+- A valid Ethereum private key for making payments
+
+## Setup
+
+1. Install and build all packages from the typescript examples root:
+```bash
+cd ../../
+pnpm install
+pnpm build
+cd clients/fetch
+```
+
+2. Copy `.env-local` to `.env` and add your Ethereum private key:
+```bash
+cp .env-local .env
+```
+
+3. Start the example client:
+```bash
+pnpm dev
+```
+
+## How It Works
+
+The example demonstrates how to:
+1. Create a wallet client using viem
+2. Wrap the native fetch function with x402 payment handling
+3. Make a request to a paid endpoint
+4. Handle the response or any errors
+
+## Example Code
+
+```typescript
+import { config } from "dotenv";
+import { createWalletClient, http } from "viem";
+import { privateKeyToAccount } from "viem/accounts";
+import { wrapFetchWithPayment } from "x402-fetch";
+import { baseSepolia } from "viem/chains";
+
+config();
+
+const { RESOURCE_SERVER_URL, PRIVATE_KEY, ENDPOINT_PATH } = process.env;
+
+// Create wallet client
+const account = privateKeyToAccount(PRIVATE_KEY as `0x${string}`);
+const client = createWalletClient({
+  account,
+  transport: http(),
+  chain: baseSepolia,
+});
+
+// Wrap fetch with payment handling
+const fetchWithPay = wrapFetchWithPayment(fetch, client);
+
+// Make request to paid endpoint
+fetchWithPay(`${RESOURCE_SERVER_URL}${ENDPOINT_PATH}`, {
+  method: "GET",
+})
+  .then(async response => {
+    const body = await response.json();
+    console.log(body);
+  })
+  .catch(error => {
+    console.error(error.response?.data?.error);
+  });
+```
+
+# clients/fetch/package.json
+{
+  "name": "fetch-client-example",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "tsx index.ts",
+    "format": "prettier -c .prettierrc --write \"**/*.{ts,js,cjs,json,md}\"",
+    "format:check": "prettier -c .prettierrc --check \"**/*.{ts,js,cjs,json,md}\"",
+    "lint": "eslint . --ext .ts --fix",
+    "lint:check": "eslint . --ext .ts"
+  },
+  "dependencies": {
+    "axios": "^1.7.9",
+    "dotenv": "^16.4.7",
+    "viem": "^2.23.1",
+    "x402-fetch": "workspace:*"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.24.0",
+    "eslint": "^9.24.0",
+    "eslint-plugin-jsdoc": "^50.6.9",
+    "eslint-plugin-prettier": "^5.2.6",
+    "@typescript-eslint/eslint-plugin": "^8.29.1",
+    "@typescript-eslint/parser": "^8.29.1",
+    "eslint-plugin-import": "^2.31.0",
+    "prettier": "3.5.2",
+    "tsx": "^4.7.0",
+    "typescript": "^5.3.0"
+  }
+}
+
+# clients/fetch/.prettierrc
+{
+  "tabWidth": 2,
+  "useTabs": false,
+  "semi": true,
+  "singleQuote": false,
+  "trailingComma": "all",
+  "bracketSpacing": true,
+  "arrowParens": "avoid",
+  "printWidth": 100,
+  "proseWrap": "never"
+}
+
+# clients/fetch/tsconfig.json
+{
+  "compilerOptions": {
+    "target": "ES2020",
+    "module": "ES2020",
+    "moduleResolution": "bundler",
+    "esModuleInterop": true,
+    "forceConsistentCasingInFileNames": true,
+    "skipLibCheck": true,
+    "strict": true,
+    "resolveJsonModule": true,
+    "baseUrl": ".",
+    "types": ["node"]
+  },
+  "include": ["index.ts"]
+}
+
+# clients/fetch/index.ts
+import { config } from "dotenv";
+import { Hex } from "viem";
+import { privateKeyToAccount } from "viem/accounts";
+import { decodeXPaymentResponse, wrapFetchWithPayment } from "x402-fetch";
+
+config();
+
+const privateKey = process.env.PRIVATE_KEY as Hex;
+const baseURL = process.env.RESOURCE_SERVER_URL as string; // e.g. https://example.com
+const endpointPath = process.env.ENDPOINT_PATH as string; // e.g. /weather
+const url = `${baseURL}${endpointPath}`; // e.g. https://example.com/weather
+
+if (!baseURL || !privateKey || !endpointPath) {
+  console.error("Missing required environment variables");
+  process.exit(1);
+}
+
+const account = privateKeyToAccount(privateKey);
+
+const fetchWithPayment = wrapFetchWithPayment(fetch, account);
+
+fetchWithPayment(url, {
+  method: "GET",
+})
+  .then(async response => {
+    const body = await response.json();
+    console.log(body);
+
+    const paymentResponse = decodeXPaymentResponse(response.headers.get("x-payment-response")!);
+    console.log(paymentResponse);
+  })
+  .catch(error => {
+    console.error(error.response?.data?.error);
+  });
+
+# clients/fetch/eslint.config.js
+import js from "@eslint/js";
+import ts from "@typescript-eslint/eslint-plugin";
+import tsParser from "@typescript-eslint/parser";
+import prettier from "eslint-plugin-prettier";
+import jsdoc from "eslint-plugin-jsdoc";
+import importPlugin from "eslint-plugin-import";
+
+export default [
+  {
+    ignores: ["dist/**", "node_modules/**"],
+  },
+  {
+    files: ["**/*.ts"],
+    languageOptions: {
+      parser: tsParser,
+      sourceType: "module",
+      ecmaVersion: 2020,
+      globals: {
+        process: "readonly",
+        __dirname: "readonly",
+        module: "readonly",
+        require: "readonly",
+        Buffer: "readonly",
+        exports: "readonly",
+        setTimeout: "readonly",
+        clearTimeout: "readonly",
+        setInterval: "readonly",
+        clearInterval: "readonly",
+      },
+    },
+    plugins: {
+      "@typescript-eslint": ts,
+      prettier: prettier,
+      jsdoc: jsdoc,
+      import: importPlugin,
+    },
+    rules: {
+      ...ts.configs.recommended.rules,
+      "import/first": "error",
+      "prettier/prettier": "error",
+      "@typescript-eslint/member-ordering": "error",
+      "@typescript-eslint/no-unused-vars": ["error", { argsIgnorePattern: "^_$" }],
+      "jsdoc/tag-lines": ["error", "any", { startLines: 1 }],
+      "jsdoc/check-alignment": "error",
+      "jsdoc/no-undefined-types": "off",
+      "jsdoc/check-param-names": "error",
+      "jsdoc/check-tag-names": "error",
+      "jsdoc/check-types": "error",
+      "jsdoc/implements-on-classes": "error",
+      "jsdoc/require-description": "error",
+      "jsdoc/require-jsdoc": [
+        "error",
+        {
+          require: {
+            FunctionDeclaration: true,
+            MethodDefinition: true,
+            ClassDeclaration: true,
+            ArrowFunctionExpression: false,
+            FunctionExpression: false,
+          },
+        },
+      ],
+      "jsdoc/require-param": "error",
+      "jsdoc/require-param-description": "error",
+      "jsdoc/require-param-type": "off",
+      "jsdoc/require-returns": "error",
+      "jsdoc/require-returns-description": "error",
+      "jsdoc/require-returns-type": "off",
+      "jsdoc/require-hyphen-before-param-description": ["error", "always"],
+    },
+  },
+];
+
+# clients/fetch/.env-local
+RESOURCE_SERVER_URL=http://localhost:4021
+ENDPOINT_PATH=/weather
+PRIVATE_KEY=
+
+# clients/axios/.prettierignore
+docs/
+dist/
+node_modules/
+coverage/
+.github/
+src/client
+**/**/*.json
+*.md
+# clients/axios/README.md
+# x402-axios Example Client
+
+This is an example client that demonstrates how to use the `x402-axios` package to make HTTP requests to endpoints protected by the x402 payment protocol.
+
+## Prerequisites
+
+- Node.js v20+ (install via [nvm](https://github.com/nvm-sh/nvm))
+- pnpm v10 (install via [pnpm.io/installation](https://pnpm.io/installation))
+- A running x402 server (you can use the example express server at `examples/typescript/servers/express`)
+- A valid Ethereum private key for making payments
+
+## Setup
+
+1. Install and build all packages from the typescript examples root:
+```bash
+cd ../../
+pnpm install
+pnpm build
+cd clients/axios
+```
+
+2. Copy `.env-local` to `.env` and add your Ethereum private key (remember it should have USDC on Base Sepolia, which you can provision using the [CDP Faucet](https://portal.cdp.coinbase.com/products/faucet)):
+```bash
+cp .env-local .env
+```
+
+3. Start the example client (remember you need to be running a server locally or point at an endpoint):
+```bash
+pnpm dev
+```
+
+## How It Works
+
+The example demonstrates how to:
+1. Create a wallet client using viem
+2. Create an Axios instance with x402 payment handling
+3. Make a request to a paid endpoint
+4. Handle the response or any errors
+
+## Example Code
+
+```typescript
+import { config } from "dotenv";
+import { createWalletClient, http, publicActions } from "viem";
+import { privateKeyToAccount } from "viem/accounts";
+import { withPaymentInterceptor } from "x402-axios";
+import axios from "axios";
+import { baseSepolia } from "viem/chains";
+
+config();
+
+const { RESOURCE_SERVER_URL, PRIVATE_KEY, ENDPOINT_PATH } = process.env;
+
+// Create wallet client
+const account = privateKeyToAccount(PRIVATE_KEY as "0x${string}");
+const client = createWalletClient({
+  account,
+  transport: http(),
+  chain: baseSepolia,
+}).extend(publicActions);
+
+// Create Axios instance with payment handling
+const api = withPaymentInterceptor(
+  axios.create({
+    baseURL: RESOURCE_SERVER_URL,
+  }),
+  client
+);
+
+// Make request to paid endpoint
+api
+  .get(ENDPOINT_PATH)
+  .then(response => {
+    console.log(response.headers);
+    console.log(response.data);
+  })
+  .catch(error => {
+    console.error(error.response?.data?.error);
+  });
+```
+
+# clients/axios/package.json
+{
+  "name": "axios-client-example",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "tsx index.ts",
+    "format": "prettier -c .prettierrc --write \"**/*.{ts,js,cjs,json,md}\"",
+    "format:check": "prettier -c .prettierrc --check \"**/*.{ts,js,cjs,json,md}\"",
+    "lint": "eslint . --ext .ts --fix",
+    "lint:check": "eslint . --ext .ts"
+  },
+  "dependencies": {
+    "axios": "^1.7.9",
+    "dotenv": "^16.5.0",
+    "viem": "^2.23.1",
+    "x402-axios": "workspace:*"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.24.0",
+    "@typescript-eslint/eslint-plugin": "^8.29.1",
+    "@typescript-eslint/parser": "^8.29.1",
+    "eslint": "^9.24.0",
+    "eslint-plugin-import": "^2.31.0",
+    "eslint-plugin-jsdoc": "^50.6.9",
+    "eslint-plugin-prettier": "^5.2.6",
+    "prettier": "3.5.2",
+    "tsx": "^4.7.0",
+    "typescript": "^5.3.0"
+  }
+}
+
+# clients/axios/.prettierrc
+{
+  "tabWidth": 2,
+  "useTabs": false,
+  "semi": true,
+  "singleQuote": false,
+  "trailingComma": "all",
+  "bracketSpacing": true,
+  "arrowParens": "avoid",
+  "printWidth": 100,
+  "proseWrap": "never"
+}
+
+# clients/axios/tsconfig.json
+{
+  "compilerOptions": {
+    "target": "ES2020",
+    "module": "ES2020",
+    "moduleResolution": "bundler",
+    "esModuleInterop": true,
+    "forceConsistentCasingInFileNames": true,
+    "skipLibCheck": true,
+    "strict": true,
+    "resolveJsonModule": true,
+    "baseUrl": ".",
+    "types": ["node"]
+  },
+  "include": ["index.ts"]
+}
+
+# clients/axios/index.ts
+import axios from "axios";
+import { config } from "dotenv";
+import { Hex } from "viem";
+import { privateKeyToAccount } from "viem/accounts";
+import { withPaymentInterceptor, decodeXPaymentResponse } from "x402-axios";
+
+config();
+
+const privateKey = process.env.PRIVATE_KEY as Hex;
+const baseURL = process.env.RESOURCE_SERVER_URL as string; // e.g. https://example.com
+const endpointPath = process.env.ENDPOINT_PATH as string; // e.g. /weather
+
+if (!baseURL || !privateKey || !endpointPath) {
+  console.error("Missing required environment variables");
+  process.exit(1);
+}
+
+const account = privateKeyToAccount(privateKey);
+
+const api = withPaymentInterceptor(
+  axios.create({
+    baseURL,
+  }),
+  account,
+);
+
+api
+  .get(endpointPath)
+  .then(response => {
+    console.log(response.data);
+
+    const paymentResponse = decodeXPaymentResponse(response.headers["x-payment-response"]);
+    console.log(paymentResponse);
+  })
+  .catch(error => {
+    console.error(error.response?.data);
+  });
+
+# clients/axios/eslint.config.js
+import js from "@eslint/js";
+import ts from "@typescript-eslint/eslint-plugin";
+import tsParser from "@typescript-eslint/parser";
+import prettier from "eslint-plugin-prettier";
+import jsdoc from "eslint-plugin-jsdoc";
+import importPlugin from "eslint-plugin-import";
+
+export default [
+  {
+    ignores: ["dist/**", "node_modules/**"],
+  },
+  {
+    files: ["**/*.ts"],
+    languageOptions: {
+      parser: tsParser,
+      sourceType: "module",
+      ecmaVersion: 2020,
+      globals: {
+        process: "readonly",
+        __dirname: "readonly",
+        module: "readonly",
+        require: "readonly",
+        Buffer: "readonly",
+        exports: "readonly",
+        setTimeout: "readonly",
+        clearTimeout: "readonly",
+        setInterval: "readonly",
+        clearInterval: "readonly",
+      },
+    },
+    plugins: {
+      "@typescript-eslint": ts,
+      prettier: prettier,
+      jsdoc: jsdoc,
+      import: importPlugin,
+    },
+    rules: {
+      ...ts.configs.recommended.rules,
+      "import/first": "error",
+      "prettier/prettier": "error",
+      "@typescript-eslint/member-ordering": "error",
+      "@typescript-eslint/no-unused-vars": ["error", { argsIgnorePattern: "^_$" }],
+      "jsdoc/tag-lines": ["error", "any", { startLines: 1 }],
+      "jsdoc/check-alignment": "error",
+      "jsdoc/no-undefined-types": "off",
+      "jsdoc/check-param-names": "error",
+      "jsdoc/check-tag-names": "error",
+      "jsdoc/check-types": "error",
+      "jsdoc/implements-on-classes": "error",
+      "jsdoc/require-description": "error",
+      "jsdoc/require-jsdoc": [
+        "error",
+        {
+          require: {
+            FunctionDeclaration: true,
+            MethodDefinition: true,
+            ClassDeclaration: true,
+            ArrowFunctionExpression: false,
+            FunctionExpression: false,
+          },
+        },
+      ],
+      "jsdoc/require-param": "error",
+      "jsdoc/require-param-description": "error",
+      "jsdoc/require-param-type": "off",
+      "jsdoc/require-returns": "error",
+      "jsdoc/require-returns-description": "error",
+      "jsdoc/require-returns-type": "off",
+      "jsdoc/require-hyphen-before-param-description": ["error", "always"],
+    },
+  },
+];
+
+# clients/axios/.env-local
+RESOURCE_SERVER_URL=http://localhost:4021
+ENDPOINT_PATH=/weather
+PRIVATE_KEY=
+
+# dynamic_agent/agent.ts
+/** Dynamic Agent
+ * Example of an agent that has dynamic, discoverable tools, enabled by x402 payments.
+ */
+import axios from "axios";
+import { withPaymentInterceptor } from "x402-axios";
+import { baseSepolia } from "viem/chains";
+import { privateKeyToAccount } from "viem/accounts";
+import { http, publicActions, createWalletClient } from "viem";
+import { Hex } from "viem";
+import { Anthropic } from "@llamaindex/anthropic";
+import { agent, tool } from "llamaindex";
+import { z } from "zod";
+
+const wallet = createWalletClient({
+  chain: baseSepolia,
+  transport: http(),
+  account: privateKeyToAccount(process.env.PRIVATE_KEY as Hex),
+}).extend(publicActions);
+
+const axiosWithPayment = withPaymentInterceptor(axios.create({}), wallet);
+
+const llm = new Anthropic({
+  apiKey: process.env.ANTHROPIC_API_KEY,
+  model: "claude-3-5-sonnet-20241022",
+});
+
+const indexTool = tool(
+  async () => {
+    const response = await axiosWithPayment.get("http://localhost:4021/");
+    const data = await response.data;
+    console.log("Available Resources:", data);
+    return data;
+  },
+  {
+    name: "api-index",
+    description:
+      "Returns to you a list of all the APIs available for you to access",
+    parameters: z.object({}),
+  }
+);
+
+const httpTool = tool(
+  async ({ url }: { url: string }) => {
+    console.log("Making http call to", url);
+    const response = await axiosWithPayment.get(url);
+    const data = await response.data;
+    return data;
+  },
+  {
+    name: "make-http-request",
+    description: "Allows you to make http calls to different APIs",
+    parameters: z.object({
+      url: z.string({ description: "The URL of the API to call" }),
+    }),
+  }
+);
+
+const bot = agent({
+  llm,
+  tools: [indexTool, httpTool],
+  timeout: 100000,
+});
+
+const response = await bot.run(`
+  You are a helpful assistant. You have access to an index of APIs you can use to dynamically get data.
+  
+  Make a pun based on the weather in San Francisco and the price of SPY
+`);
+
+console.log(response);
+
+# dynamic_agent/discover_server.ts
+/** This file is a server that proxies a few services and serves an index with descriptions of the resources available.
+ *
+ *
+ *
+ */
+
+import { Hono } from "hono";
+import { serve } from "@hono/node-server";
+import { logger } from "hono/logger";
+import { paymentMiddleware } from "x402-hono";
+
+const app = new Hono();
+const port = 4021;
+app.use("*", logger());
+
+type IndexEntry = {
+  resourceUrl: string;
+  resourceDescription: string;
+  price: {
+    amount: number;
+    currency: string;
+  };
+};
+
+app.use(
+  paymentMiddleware(process.env.PAY_TO_ADDRESS as `0x${string}`, {
+    "/weather": "$0.01",
+    "/stock": "$0.05",
+  })
+);
+
+app.get("/", (c) => {
+  const resources: IndexEntry[] = [
+    {
+      resourceUrl: "http://localhost:4021/weather",
+      resourceDescription:
+        "Returns the 7 day forecast for weather in a city. Must include city as a query parameter escaped properly to be url safe (ex: 'http://localhost:4021/weather?city=London')",
+      price: {
+        amount: 0.01,
+        currency: "USD",
+      },
+    },
+    {
+      resourceUrl: "http://localhost:4021/stock",
+      resourceDescription:
+        "Returns the last 5 days of stock data for a given stock symbol. Must include symbol as a query parameter escaped properly to be url safe (ex: 'http://localhost:4021/stock?symbol=AAPL')",
+      price: {
+        amount: 0.05,
+        currency: "USD",
+      },
+    },
+  ];
+  return c.json(resources);
+});
+
+
+app.get("/weather", async (c) => {
+  const city = c.req.query("city");
+  console.log("City", city);
+  const url = `http://api.weatherapi.com/v1/forecast.json?key=${process.env.WEATHER_API_KEY}&q=${city}&days=7`;
+
+  const response = await fetch(url);
+  const data = await response.json();
+
+  return c.json(data);
+});
+
+
+app.get("/stock", async (c) => {
+  const symbol = c.req.query("symbol")?.toUpperCase();
+  if (!symbol) {
+    return c.json({ error: "Symbol is required" }, 400);
+  }
+  const url = `https://api.marketstack.com/v2/eod?access_key=${process.env.MARKETSTACK_API_KEY}&symbols=${symbol}`;
+  const response = await fetch(url);
+  const data = await response.json();
+  const last5Days = data.data.slice(0, 5);
+  const last5DaysWithPrices = last5Days.map((day) => ({
+    open: day.open,
+    close: day.close,
+    high: day.high,
+    low: day.low,
+    volume: day.volume,
+    date: day.date,
+    symbol: day.symbol,
+  }));
+  return c.json(last5DaysWithPrices);
+});
+
+console.log(`Resource running on port ${port}`);
+
+serve({
+  port: port,
+  fetch: app.fetch,
+});
+
+# dynamic_agent/README.md
+# Dynamic Agent
+
+This example demonstrates an agent that can perform multi-tool tasks, without prior knowledge of the tools available to it. Each tool is paid for on a per-request basis using x402.
+
+## Run
+
+(All steps run from `examples/typescript/dynamic_agent`)
+
+1. Install dependencies
+
+```bash
+pnpm install
+```
+
+2. Configure environment variables
+
+```bash
+cp .env-local .env
+```
+
+Follow instructions in `.env` to get required API keys to proxy (they're all free).
+Add your Ethereum development private key to `.env` (remember it should have USDC on Base Sepolia, which you can provision using the [CDP Faucet](https://portal.cdp.coinbase.com/products/faucet)):
+
+3. Start index server
+
+This server mocks an index of tools that an agent may access via http.
+
+```
+pnpm run index-server
+```
+
+4. Run the agent
+
+In a new terminal, run
+
+```
+pnpm run agent
+```
+
+You should see the agent query the index server to see what tools are available, then pay to use several tools.
+Then in the agent's terminal you should see something like:
+
+```
+Available Resources: [
+  {
+    resourceUrl: 'http://localhost:4021/weather',
+    resourceDescription: "Returns the 7 day forecast for weather in a city. Must include city as a query parameter escaped properly to be url safe (ex: 'http://localhost:4021/weather?city=London')",
+    price: { amount: 0.01, currency: 'USD' }
+  },
+  {
+    resourceUrl: 'http://localhost:4021/stock',
+    resourceDescription: "Returns the last 5 days of stock data for a given stock symbol. Must include symbol as a query parameter escaped properly to be url safe (ex: 'http://localhost:4021/stock?symbol=AAPL')",
+    price: { amount: 0.05, currency: 'USD' }
+  }
+]
+Making http call to http://localhost:4021/weather?city=San%20Francisco
+Making http call to http://localhost:4021/stock?symbol=SPY
+StopEvent {
+  data: {
+    result: "Based on the current weather in San Francisco (partly cloudy with a temperature of 60.1°F) and the SPY stock price (which closed at $566.76 today), here's a weather and stock market pun:\n" +
+      '\n' +
+      '"The market is looking partly BULL-dy today, with SPY reaching new heights while San Francisco stays in the COLDateral damage of mild temperatures!"\n' +
+      '\n' +
+      'This pun combines:\n' +
+      '1. "Partly cloudy" weather condition with "partly BULL-dy" (playing on bullish market)\n' +
+      '2. "COLDateral" combines the cool temperature with "collateral"\n' +
+      '3. References both the high stock price and mild weather conditions'
+  },
+  displayName: 'StopEvent'
+}
+```
+
+## How it works
+
+The agent has 2 generic tools, neither of which are directly related to the task to perform:
+
+```typescript
+const indexTool = tool(
+  async () => {
+    const response = await axiosWithPayment.get("http://localhost:4021/");
+    const data = await response.data;
+    console.log("Available Resources:", data);
+    return data;
+  },
+  {
+    name: "api-index",
+    description:
+      "Returns to you a list of all the APIs available for you to access",
+    parameters: z.object({}),
+  }
+);
+
+const httpTool = tool(
+  async ({ url }: { url: string }) => {
+    console.log("Making http call to", url);
+    const response = await axiosWithPayment.get(url);
+    const data = await response.data;
+    return data;
+  },
+  {
+    name: "make-http-request",
+    description: "Allows you to make http calls to different APIs",
+    parameters: z.object({
+      url: z.string({ description: "The URL of the API to call" }),
+    }),
+  }
+);
+
+const bot = agent({
+  llm,
+  tools: [indexTool, httpTool],
+  timeout: 100000,
+});
+```
+
+`indexTool` makes a call to the index and receives a list of available tools, `httpTool` allows the agent to pay for http requests via x402.
+
+With these 2 tools and a small system prompt, the agent can now dynamically perform tasks with tools without tools being known to it ahead of time in code.
+
+```typescript
+const response = await bot.run(`
+  You are a helpful assistant. You have access to an index of APIs you can use to dynamically get data.
+  
+  Make a pun based on the weather in San Francisco and the price of SPY
+`);
+
+console.log(response);
+```
+
+# dynamic_agent/.gitignore
+proxies/proxy
+
+# dynamic_agent/package.json
+{
+  "name": "dynamic_agent",
+  "version": "1.0.0",
+  "description": "",
+  "license": "ISC",
+  "author": "",
+  "type": "module",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "index-server": "tsx --env-file=.env discover_server.ts",
+    "agent": "tsx --env-file=.env agent.ts"
+  },
+  "dependencies": {
+    "@anthropic-ai/sdk": "^0.39.0",
+    "@hono/node-server": "^1.14.1",
+    "@llamaindex/anthropic": "^0.3.3",
+    "@types/node": "^22.15.3",
+    "axios": "^1.8.4",
+    "hono": "^4.7.7",
+    "llamaindex": "^0.10.2",
+    "viem": "^2.28.3",
+    "x402": "^0.2.0",
+    "x402-axios": "^0.1.0",
+    "x402-hono": "^0.1.0",
+    "zod": "^3.24.3"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.24.0",
+    "@typescript-eslint/eslint-plugin": "^8.29.1",
+    "@typescript-eslint/parser": "^8.29.1",
+    "eslint": "^9.24.0",
+    "eslint-plugin-import": "^2.31.0",
+    "eslint-plugin-jsdoc": "^50.6.9",
+    "eslint-plugin-prettier": "^5.2.6",
+    "prettier": "3.5.2",
+    "tsup": "^7.2.0",
+    "tsx": "^4.7.0",
+    "typescript": "^5.3.0"
+  }
+}
+
+# dynamic_agent/tsconfig.json
+{
+  "compilerOptions": {
+    "target": "ES2020",
+    "module": "ES2020",
+    "moduleResolution": "bundler",
+    "esModuleInterop": true,
+    "forceConsistentCasingInFileNames": true,
+    "skipLibCheck": true,
+    "strict": true,
+    "resolveJsonModule": true,
+    "baseUrl": ".",
+    "types": ["node"]
+  },
+  "include": ["discover_server.ts", "agent.ts"]
+}
+
+# dynamic_agent/.env-local
+WEATHER_API_KEY="get from weatherapi.com"
+PRIVATE_KEY="generate with viem or cast"
+MARKETSTACK_API_KEY="get from marketstack.com"
+ANTHROPIC_API_KEY="get from anthropic.com"
+PAY_TO_ADDRESS="0xYourAddress"
+
+# turbo.json
+{
+  "$schema": "https://turborepo.org/schema.json",
+  "tasks": {
+    "build": {
+      "dependsOn": [
+        "^build"
+      ],
+      "outputs": [
+        "dist/**"
+      ]
+    },
+    "lint": {
+      "dependsOn": [
+        "^lint"
+      ],
+      "outputs": []
+    },
+    "lint:check": {
+      "dependsOn": [
+        "^lint:check"
+      ],
+      "outputs": []
+    },
+    "format": {
+      "dependsOn": [
+        "^format"
+      ],
+      "outputs": []
+    },
+    "format:check": {
+      "dependsOn": [
+        "^format:check"
+      ],
+      "outputs": []
+    }
+  }
+}
+# agent/.prettierignore
+docs/
+dist/
+node_modules/
+coverage/
+.github/
+src/client
+**/**/*.json
+*.md
+# agent/README.md
+# Demo of paying for Anthropic tokens via a proxy
+
+This example demonstrates how to use x402 to pay for Anthropic API calls using a proxy server. The setup involves configuring both a Go proxy server and a TypeScript agent.
+
+## Prerequisites
+
+- Node.js v20+ (install via [nvm](https://github.com/nvm-sh/nvm))
+- pnpm v10 (install via [pnpm.io/installation](https://pnpm.io/installation))
+- Go (install via `brew install go` on macOS or [golang.org/dl](https://golang.org/dl) for other platforms)
+- A valid Ethereum private key for making payments (must have Base Sepolia USDC)
+- An Anthropic API key
+
+## Setup
+
+1. Install and build all packages from the typescript examples root:
+```bash
+cd ../../
+pnpm install
+pnpm build
+cd clients/agent
+```
+
+2. Configure your environment:
+   - Create a `.env` file in the agent directory
+   - Add your private key (must be prefixed with `0x`):
+     ```
+     PRIVATE_KEY=0x<your-private-key>
+     ```
+   - Add your resource server URL (default: http://localhost:4021):
+     ```
+     RESOURCE_SERVER_URL=http://localhost:4021
+     ```
+
+### 1. Configure and Start the Proxy Server
+
+1. Navigate to the proxy directory:
+   ```bash
+   cd go/bin
+   ```
+
+2. Create an `anthropic_config.json` file with the following configuration:
+   ```json
+   {
+     "targetURL": "https://api.anthropic.com",
+     "amount": 0.01,
+     "payTo": "address to pay to",
+     "headers": {
+       "x-api-key": "<your-anthropic-api-key>",
+       "anthropic-version": "2023-06-01",
+       "content-type": "application/json"
+     }
+   }
+   ```
+
+3. Start the proxy server:
+   ```bash
+   go run proxy_demo.go anthropic_config.json
+   ```
+
+### 2. Run the Agent
+
+1. Navigate back to the agent directory:
+   ```bash
+   cd ../../examples/typescript/clients/agent
+   ```
+
+2. Run the agent:
+   ```bash
+   pnpm agent
+   ```
+
+## Troubleshooting
+
+### Common Issues
+
+1. **Go Command Not Found**
+   - Ensure Go is properly installed and in your PATH
+   - Verify installation with `go version`
+
+2. **Module Not Found**
+   - Make sure you've built the x402 package before running the agent
+   - Run `pnpm install` and `pnpm build` in the x402 package directory
+
+3. **Invalid Private Key**
+   - Ensure your private key is prefixed with `0x`
+   - Verify the key has the correct format and length
+
+4. **Proxy Connection Issues**
+   - Verify the proxy server is running
+   - Check that the `anthropic_config.json` has the correct configuration
+   - Ensure your Anthropic API key is valid
+
+## Security Notes
+
+- Never commit your private keys or API keys to version control
+- Always use testnet funds (Base Sepolia) for development
+- Keep your `.env` file secure and never share it
+# agent/package.json
+{
+  "name": "agent-client-example",
+  "version": "0.1.0",
+  "scripts": {
+    "dev": "tsx index.ts",
+    "format": "prettier -c .prettierrc --write \"**/*.{ts,js,cjs,json,md}\"",
+    "format:check": "prettier -c .prettierrc --check \"**/*.{ts,js,cjs,json,md}\"",
+    "lint": "eslint . --ext .ts --fix",
+    "lint:check": "eslint . --ext .ts"
+  },
+  "keywords": [],
+  "license": "Apache-2.0",
+  "author": "Coinbase Inc.",
+  "repository": "https://github.com/coinbase/x402",
+  "description": "x402 Payment Protocol",
+  "devDependencies": {
+    "@eslint/js": "^9.24.0",
+    "@types/node": "^22.13.4",
+    "@typescript-eslint/eslint-plugin": "^8.29.1",
+    "@typescript-eslint/parser": "^8.29.1",
+    "eslint": "^9.24.0",
+    "eslint-plugin-import": "^2.31.0",
+    "eslint-plugin-jsdoc": "^50.6.9",
+    "eslint-plugin-prettier": "^5.2.6",
+    "prettier": "3.5.2",
+    "tsx": "^4.19.2",
+    "typescript": "^5.7.3"
+  },
+  "dependencies": {
+    "@anthropic-ai/sdk": "^0.39.0",
+    "@coinbase/agentkit": "^0.5.0",
+    "@coinbase/agentkit-langchain": "^0.3.0",
+    "@langchain/core": "^0.3.43",
+    "@langchain/langgraph": "^0.2.62",
+    "@langchain/openai": "^0.5.2",
+    "dotenv": "^16.4.7",
+    "viem": "^2.26.2",
+    "x402-fetch": "workspace:*",
+    "zod": "^3.24.2"
+  },
+  "type": "module",
+  "files": [
+    "dist"
+  ]
+}
+
+# agent/.prettierrc
+{
+  "tabWidth": 2,
+  "useTabs": false,
+  "semi": true,
+  "singleQuote": false,
+  "trailingComma": "all",
+  "bracketSpacing": true,
+  "arrowParens": "avoid",
+  "printWidth": 100,
+  "proseWrap": "never"
+}
+
+# agent/tsconfig.json
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "module": "ES2022",
+    "moduleResolution": "bundler",
+    "esModuleInterop": true,
+    "forceConsistentCasingInFileNames": true,
+    "skipLibCheck": true,
+    "strict": true,
+    "resolveJsonModule": true,
+    "baseUrl": ".",
+    "types": ["node"]
+  },
+  "include": ["index.ts"]
+}
+
+# agent/index.ts
+import Anthropic from "@anthropic-ai/sdk";
+import { config } from "dotenv";
+import { Hex } from "viem";
+import { privateKeyToAccount } from "viem/accounts";
+import { wrapFetchWithPayment } from "x402-fetch";
+
+config();
+
+const privateKey = process.env.PRIVATE_KEY as Hex;
+const baseURL = process.env.RESOURCE_SERVER_URL as string;
+
+if (!baseURL || !privateKey) {
+  console.error("Missing required environment variables");
+  process.exit(1);
+}
+
+const account = privateKeyToAccount(privateKey);
+
+const anthropic = new Anthropic({
+  baseURL,
+  apiKey: "not needed",
+  fetch: wrapFetchWithPayment(fetch, account),
+});
+
+const msg = await anthropic.messages.create({
+  model: "claude-3-7-sonnet-20250219",
+  max_tokens: 1024,
+  messages: [{ role: "user", content: "Hello, Claude do you know what x402 is?" }],
+});
+console.log(msg);
+
+# agent/eslint.config.js
+import js from "@eslint/js";
+import ts from "@typescript-eslint/eslint-plugin";
+import tsParser from "@typescript-eslint/parser";
+import prettier from "eslint-plugin-prettier";
+import jsdoc from "eslint-plugin-jsdoc";
+import importPlugin from "eslint-plugin-import";
+
+export default [
+  {
+    ignores: ["dist/**", "node_modules/**"],
+  },
+  {
+    files: ["**/*.ts"],
+    languageOptions: {
+      parser: tsParser,
+      sourceType: "module",
+      ecmaVersion: 2020,
+      globals: {
+        process: "readonly",
+        __dirname: "readonly",
+        module: "readonly",
+        require: "readonly",
+        Buffer: "readonly",
+        exports: "readonly",
+        setTimeout: "readonly",
+        clearTimeout: "readonly",
+        setInterval: "readonly",
+        clearInterval: "readonly",
+      },
+    },
+    plugins: {
+      "@typescript-eslint": ts,
+      prettier: prettier,
+      jsdoc: jsdoc,
+      import: importPlugin,
+    },
+    rules: {
+      ...ts.configs.recommended.rules,
+      "import/first": "error",
+      "prettier/prettier": "error",
+      "@typescript-eslint/member-ordering": "error",
+      "@typescript-eslint/no-unused-vars": ["error", { argsIgnorePattern: "^_$" }],
+      "jsdoc/tag-lines": ["error", "any", { startLines: 1 }],
+      "jsdoc/check-alignment": "error",
+      "jsdoc/no-undefined-types": "off",
+      "jsdoc/check-param-names": "error",
+      "jsdoc/check-tag-names": "error",
+      "jsdoc/check-types": "error",
+      "jsdoc/implements-on-classes": "error",
+      "jsdoc/require-description": "error",
+      "jsdoc/require-jsdoc": [
+        "error",
+        {
+          require: {
+            FunctionDeclaration: true,
+            MethodDefinition: true,
+            ClassDeclaration: true,
+            ArrowFunctionExpression: false,
+            FunctionExpression: false,
+          },
+        },
+      ],
+      "jsdoc/require-param": "error",
+      "jsdoc/require-param-description": "error",
+      "jsdoc/require-param-type": "off",
+      "jsdoc/require-returns": "error",
+      "jsdoc/require-returns-description": "error",
+      "jsdoc/require-returns-type": "off",
+      "jsdoc/require-hyphen-before-param-description": ["error", "always"],
+    },
+  },
+];
+
+# agent/.env-local
+PRIVATE_KEY=
+RESOURCE_SERVER_URL=
+# mcp/.prettierignore
+docs/
+dist/
+node_modules/
+coverage/
+.github/
+src/client
+**/**/*.json
+*.md
+# mcp/README.md
+# x402 MCP Example Client
+
+This is an example client that demonstrates how to use the x402 payment protocol with the Model Context Protocol (MCP) to make paid API requests through an MCP server.
+
+## Prerequisites
+
+- Node.js v20+ (install via [nvm](https://github.com/nvm-sh/nvm))
+- pnpm v10 (install via [pnpm.io/installation](https://pnpm.io/installation))
+- A running x402 server (you can use the example express server at `examples/typescript/servers/express`)
+- A valid Ethereum private key for making payments
+- Claude Desktop with MCP support
+
+## Setup
+
+1. Install and build all packages from the typescript examples root:
+```bash
+cd ../../
+pnpm install
+pnpm build
+cd clients/mcp
+```
+
+2. Copy `.env-local` to `.env` and add your Ethereum private key:
+```bash
+cp .env-local .env
+```
+
+3. Configure Claude Desktop MCP settings:
+```json
+{
+  "mcpServers": {
+    "demo": {
+      "command": "pnpm",
+      "args": [
+        "--silent",
+        "-C",
+        "<absolute path to this repo>/examples/typescript/clients/mcp",
+        "dev"
+      ],
+      "env": {
+        "PRIVATE_KEY": "<private key of a wallet with USDC on Base Sepolia>",
+        "RESOURCE_SERVER_URL": "http://localhost:4021",
+        "ENDPOINT_PATH": "/weather"
+      }
+    }
+  }
+}
+```
+
+4. Start the example client (remember to be running a server or pointing to one in the .env file):
+```bash
+pnpm dev
+```
+
+## How It Works
+
+The example demonstrates how to:
+1. Create a wallet client using viem
+2. Set up an MCP server with x402 payment handling
+3. Create a tool that makes paid API requests
+4. Handle responses and errors through the MCP protocol
+
+## Example Code
+
+```typescript
+import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
+import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
+import axios from "axios";
+import { createWalletClient, Hex, http, publicActions } from "viem";
+import { privateKeyToAccount } from "viem/accounts";
+import { baseSepolia } from "viem/chains";
+import { withPaymentInterceptor } from "x402-axios";
+
+// Create wallet client
+const wallet = createWalletClient({
+  chain: baseSepolia,
+  transport: http(),
+  account: privateKeyToAccount(PRIVATE_KEY as Hex),
+}).extend(publicActions);
+
+// Create Axios instance with payment handling
+const client = withPaymentInterceptor(axios.create({ baseURL: RESOURCE_SERVER_URL }), wallet);
+
+// Create MCP server
+const server = new McpServer({
+  name: "x402 MCP Client Demo",
+  version: "1.0.0",
+});
+
+// Add tool for making paid requests
+server.tool("get-data-from-resource-server", "Get data from the resource server (in this example, the weather)",  {}, async () => {
+  const res = await client.post(`${ENDPOINT_PATH}`);
+  return {
+    content: [{ type: "text", text: JSON.stringify(res.data) }],
+  };
+});
+
+// Connect to MCP transport
+const transport = new StdioServerTransport();
+await server.connect(transport);
+```
+
+## Response Handling
+
+### Payment Required (402)
+When a payment is required, the MCP server will:
+1. Receive the 402 response
+2. Parse the payment requirements
+3. Create and sign a payment header
+4. Automatically retry the request with the payment header
+
+### Successful Response
+After payment is processed, the MCP server will return the response data through the MCP protocol:
+```json
+{
+  "content": [
+    {
+      "type": "text",
+      "text": "{\"report\":{\"weather\":\"sunny\",\"temperature\":70}}"
+    }
+  ]
+}
+```
+
+## Extending the Example
+
+To use this pattern in your own application:
+
+1. Install the required dependencies:
+```bash
+npm install @modelcontextprotocol/sdk x402-axios viem
+```
+
+2. Set up your environment variables
+3. Create a wallet client
+4. Set up your MCP server with x402 payment handling
+5. Define your tools for making paid requests
+6. Connect to the MCP transport
+
+## Integration with Claude Desktop
+
+This example is designed to work with Claude Desktop's MCP support. The MCP server will:
+1. Listen for tool requests from Claude
+2. Handle the payment process automatically
+3. Return the response data through the MCP protocol
+4. Allow Claude to process and display the results
+
+# mcp/package.json
+{
+  "name": "mcp-client-example",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "tsx index.ts",
+    "format": "prettier -c .prettierrc --write \"**/*.{ts,js,cjs,json,md}\"",
+    "format:check": "prettier -c .prettierrc --check \"**/*.{ts,js,cjs,json,md}\"",
+    "lint": "eslint . --ext .ts --fix",
+    "lint:check": "eslint . --ext .ts"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.9.0",
+    "axios": "^1.8.4",
+    "dotenv": "^16.5.0",
+    "viem": "^2.26.2",
+    "x402-axios": "workspace:*",
+    "zod": "^3.24.2"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.24.0",
+    "@typescript-eslint/eslint-plugin": "^8.29.1",
+    "@typescript-eslint/parser": "^8.29.1",
+    "eslint": "^9.24.0",
+    "eslint-plugin-import": "^2.31.0",
+    "eslint-plugin-jsdoc": "^50.6.9",
+    "eslint-plugin-prettier": "^5.2.6",
+    "prettier": "3.5.2",
+    "tsx": "^4.7.0",
+    "typescript": "^5.3.0"
+  }
+}
+
+# mcp/.prettierrc
+{
+  "tabWidth": 2,
+  "useTabs": false,
+  "semi": true,
+  "singleQuote": false,
+  "trailingComma": "all",
+  "bracketSpacing": true,
+  "arrowParens": "avoid",
+  "printWidth": 100,
+  "proseWrap": "never"
+}
+
+# mcp/tsconfig.json
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "module": "ES2022",
+    "moduleResolution": "bundler",
+    "esModuleInterop": true,
+    "forceConsistentCasingInFileNames": true,
+    "skipLibCheck": true,
+    "strict": true,
+    "resolveJsonModule": true,
+    "baseUrl": ".",
+    "types": ["node"]
+  },
+  "include": ["index.ts"]
+}
+
+# mcp/index.ts
+/**
+ * Need:
+ * - MCP server to be able to verify token (SSE should be able to do this)
+ * - Need client to be able to send header
+ * - Each client application would need to implement a wallet type
+ */
+
+import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
+import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
+import axios from "axios";
+import { config } from "dotenv";
+import { Hex } from "viem";
+import { privateKeyToAccount } from "viem/accounts";
+import { withPaymentInterceptor } from "x402-axios";
+
+config();
+
+const privateKey = process.env.PRIVATE_KEY as Hex;
+const baseURL = process.env.RESOURCE_SERVER_URL as string; // e.g. https://example.com
+const endpointPath = process.env.ENDPOINT_PATH as string; // e.g. /weather
+
+if (!privateKey || !baseURL || !endpointPath) {
+  throw new Error("Missing environment variables");
+}
+
+const account = privateKeyToAccount(privateKey);
+
+const client = withPaymentInterceptor(axios.create({ baseURL }), account);
+
+// Create an MCP server
+const server = new McpServer({
+  name: "x402 MCP Client Demo",
+  version: "1.0.0",
+});
+
+// Add an addition tool
+server.tool(
+  "get-data-from-resource-server",
+  "Get data from the resource server (in this example, the weather)",
+  {},
+  async () => {
+    const res = await client.get(endpointPath);
+    return {
+      content: [{ type: "text", text: JSON.stringify(res.data) }],
+    };
+  },
+);
+
+const transport = new StdioServerTransport();
+await server.connect(transport);
+
+# mcp/eslint.config.js
+import js from "@eslint/js";
+import ts from "@typescript-eslint/eslint-plugin";
+import tsParser from "@typescript-eslint/parser";
+import prettier from "eslint-plugin-prettier";
+import jsdoc from "eslint-plugin-jsdoc";
+import importPlugin from "eslint-plugin-import";
+
+export default [
+  {
+    ignores: ["dist/**", "node_modules/**"],
+  },
+  {
+    files: ["**/*.ts"],
+    languageOptions: {
+      parser: tsParser,
+      sourceType: "module",
+      ecmaVersion: 2022,
+      globals: {
+        process: "readonly",
+        __dirname: "readonly",
+        module: "readonly",
+        require: "readonly",
+        Buffer: "readonly",
+        exports: "readonly",
+        setTimeout: "readonly",
+        clearTimeout: "readonly",
+        setInterval: "readonly",
+        clearInterval: "readonly",
+      },
+    },
+    plugins: {
+      "@typescript-eslint": ts,
+      prettier: prettier,
+      jsdoc: jsdoc,
+      import: importPlugin,
+    },
+    rules: {
+      ...ts.configs.recommended.rules,
+      "import/first": "error",
+      "prettier/prettier": "error",
+      "@typescript-eslint/member-ordering": "error",
+      "@typescript-eslint/no-unused-vars": ["error", { argsIgnorePattern: "^_$" }],
+      "jsdoc/tag-lines": ["error", "any", { startLines: 1 }],
+      "jsdoc/check-alignment": "error",
+      "jsdoc/no-undefined-types": "off",
+      "jsdoc/check-param-names": "error",
+      "jsdoc/check-tag-names": "error",
+      "jsdoc/check-types": "error",
+      "jsdoc/implements-on-classes": "error",
+      "jsdoc/require-description": "error",
+      "jsdoc/require-jsdoc": [
+        "error",
+        {
+          require: {
+            FunctionDeclaration: true,
+            MethodDefinition: true,
+            ClassDeclaration: true,
+            ArrowFunctionExpression: false,
+            FunctionExpression: false,
+          },
+        },
+      ],
+      "jsdoc/require-param": "error",
+      "jsdoc/require-param-description": "error",
+      "jsdoc/require-param-type": "off",
+      "jsdoc/require-returns": "error",
+      "jsdoc/require-returns-description": "error",
+      "jsdoc/require-returns-type": "off",
+      "jsdoc/require-hyphen-before-param-description": ["error", "always"],
+    },
+  },
+];
+
+# mcp/.env-local
+RESOURCE_SERVER_URL=http://localhost:4021
+ENDPOINT_PATH=/weather
+PRIVATE_KEY=
+
+# facilitator/.prettierignore
+docs/
+dist/
+node_modules/
+coverage/
+.github/
+src/client
+**/**/*.json
+*.md
+# facilitator/README.md
+# x402 Facilitator Example
+
+This is an example implementation of an x402 facilitator service that handles payment verification and settlement for the x402 payment protocol. This implementation is for learning purposes and demonstrates how to build a facilitator service.
+
+For production use, we recommend using:
+- Testnet: https://x402.org/facilitator
+- Production: https://api.cdp.coinbase.com/platform/v2/x402
+
+## Overview
+
+The facilitator provides two main endpoints:
+- `/verify`: Verifies x402 payment payloads
+- `/settle`: Settles x402 payments by signing and broadcasting transactions
+
+This example demonstrates how to:
+1. Set up a basic Express server to handle x402 payment verification and settlement
+2. Integrate with the x402 protocol's verification and settlement functions
+3. Handle payment payload validation and error cases
+
+## Prerequisites
+
+- Node.js v20+ (install via [nvm](https://github.com/nvm-sh/nvm))
+- pnpm v10 (install via [pnpm.io/installation](https://pnpm.io/installation))
+- A valid Ethereum private key for Base Sepolia
+- Base Sepolia testnet ETH for transaction fees
+
+## Setup
+
+1. Install and build all packages from the typescript examples root:
+```bash
+cd ..
+pnpm install
+pnpm build
+cd facilitator
+```
+
+2. Create a `.env` file with the following variables:
+```env
+PRIVATE_KEY=0xYourPrivateKey
+```
+
+3. Start the server:
+```bash
+pnpm dev
+```
+
+The server will start on http://localhost:3000
+
+## API Endpoints
+
+### GET /verify
+Returns information about the verify endpoint.
+
+### POST /verify
+Verifies an x402 payment payload.
+
+Request body:
+```typescript
+{
+  payload: string;  // x402 payment payload
+  details: PaymentRequirements;  // Payment requirements
+}
+```
+
+### GET /settle
+Returns information about the settle endpoint.
+
+### POST /settle
+Settles an x402 payment by signing and broadcasting the transaction.
+
+Request body:
+```typescript
+{
+  payload: string;  // x402 payment payload
+  details: PaymentRequirements;  // Payment requirements
+}
+```
+
+## Learning Resources
+
+This example is designed to help you understand how x402 facilitators work. For more information about the x402 protocol and its implementation, visit:
+- [x402 Protocol Documentation](https://x402.org)
+- [Coinbase Developer Platform](https://www.coinbase.com/developer-platform)
+
+
+# facilitator/package.json
+{
+  "name": "facilitator-example",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "tsx index.ts",
+    "format": "prettier -c .prettierrc --write \"**/*.{ts,js,cjs,json,md}\"",
+    "format:check": "prettier -c .prettierrc --check \"**/*.{ts,js,cjs,json,md}\"",
+    "lint": "eslint . --ext .ts --fix",
+    "lint:check": "eslint . --ext .ts"
+  },
+  "dependencies": {
+    "dotenv": "^16.4.7",
+    "express": "^4.18.2",
+    "x402": "workspace:*"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.24.0",
+    "eslint": "^9.24.0",
+    "eslint-plugin-jsdoc": "^50.6.9",
+    "eslint-plugin-prettier": "^5.2.6",
+    "@typescript-eslint/eslint-plugin": "^8.29.1",
+    "@typescript-eslint/parser": "^8.29.1",
+    "eslint-plugin-import": "^2.31.0",
+    "prettier": "3.5.2",
+    "tsx": "^4.7.0",
+    "typescript": "^5.3.0"
+  }
+}
+
+# facilitator/.prettierrc
+{
+  "tabWidth": 2,
+  "useTabs": false,
+  "semi": true,
+  "singleQuote": false,
+  "trailingComma": "all",
+  "bracketSpacing": true,
+  "arrowParens": "avoid",
+  "printWidth": 100,
+  "proseWrap": "never"
+}
+
+# facilitator/tsconfig.json
+{
+  "compilerOptions": {
+    "target": "ES2020",
+    "module": "ES2020",
+    "moduleResolution": "bundler",
+    "esModuleInterop": true,
+    "forceConsistentCasingInFileNames": true,
+    "skipLibCheck": true,
+    "strict": true,
+    "resolveJsonModule": true,
+    "baseUrl": ".",
+    "types": ["node"]
+  },
+  "include": ["index.ts"]
+}
+
+# facilitator/index.ts
+/* eslint-env node */
+import { config } from "dotenv";
+import express from "express";
+import { verify, settle } from "x402/facilitator";
+import {
+  PaymentRequirementsSchema,
+  PaymentRequirements,
+  evm,
+  PaymentPayload,
+  PaymentPayloadSchema,
+} from "x402/types";
+
+config();
+
+const PRIVATE_KEY = process.env.PRIVATE_KEY;
+
+if (!PRIVATE_KEY) {
+  console.error("Missing required environment variables");
+  process.exit(1);
+}
+
+const { createClientSepolia, createSignerSepolia } = evm;
+
+const app = express();
+
+// Configure express to parse JSON bodies
+app.use(express.json());
+
+type VerifyRequest = {
+  paymentPayload: PaymentPayload;
+  paymentRequirements: PaymentRequirements;
+};
+
+type SettleRequest = {
+  paymentPayload: PaymentPayload;
+  paymentRequirements: PaymentRequirements;
+};
+
+const client = createClientSepolia();
+
+app.get("/verify", (req, res) => {
+  res.json({
+    endpoint: "/verify",
+    description: "POST to verify x402 payments",
+    body: {
+      paymentPayload: "PaymentPayload",
+      paymentRequirements: "PaymentRequirements",
+    },
+  });
+});
+
+app.post("/verify", async (req, res) => {
+  try {
+    const body: VerifyRequest = req.body;
+    const paymentRequirements = PaymentRequirementsSchema.parse(body.paymentRequirements);
+    const paymentPayload = PaymentPayloadSchema.parse(body.paymentPayload);
+    const valid = await verify(client, paymentPayload, paymentRequirements);
+    res.json(valid);
+  } catch {
+    res.status(400).json({ error: "Invalid request" });
+  }
+});
+
+app.get("/settle", (req, res) => {
+  res.json({
+    endpoint: "/settle",
+    description: "POST to settle x402 payments",
+    body: {
+      paymentPayload: "PaymentPayload",
+      paymentRequirements: "PaymentRequirements",
+    },
+  });
+});
+
+app.get("/supported", (req, res) => {
+  res.json({
+    kinds: [
+      {
+        x402Version: 1,
+        scheme: "exact",
+        network: "base-sepolia",
+      },
+    ],
+  });
+});
+
+app.post("/settle", async (req, res) => {
+  try {
+    const signer = createSignerSepolia(PRIVATE_KEY as `0x${string}`);
+    const body: SettleRequest = req.body;
+    const paymentRequirements = PaymentRequirementsSchema.parse(body.paymentRequirements);
+    const paymentPayload = PaymentPayloadSchema.parse(body.paymentPayload);
+    const response = await settle(signer, paymentPayload, paymentRequirements);
+    res.json(response);
+  } catch {
+    res.status(400).json({ error: "Invalid request" });
+  }
+});
+
+app.listen(3000, () => {
+  console.log(`Server listening at http://localhost:3000`);
+});
+
+# facilitator/eslint.config.js
+import js from "@eslint/js";
+import ts from "@typescript-eslint/eslint-plugin";
+import tsParser from "@typescript-eslint/parser";
+import prettier from "eslint-plugin-prettier";
+import jsdoc from "eslint-plugin-jsdoc";
+import importPlugin from "eslint-plugin-import";
+
+export default [
+  {
+    ignores: ["dist/**", "node_modules/**"],
+  },
+  {
+    files: ["**/*.ts"],
+    languageOptions: {
+      parser: tsParser,
+      sourceType: "module",
+      ecmaVersion: 2020,
+      globals: {
+        process: "readonly",
+        __dirname: "readonly",
+        module: "readonly",
+        require: "readonly",
+        Buffer: "readonly",
+        console: "readonly",
+        exports: "readonly",
+        setTimeout: "readonly",
+        clearTimeout: "readonly",
+        setInterval: "readonly",
+        clearInterval: "readonly",
+      },
+    },
+    plugins: {
+      "@typescript-eslint": ts,
+      prettier: prettier,
+      jsdoc: jsdoc,
+      import: importPlugin,
+    },
+    rules: {
+      ...ts.configs.recommended.rules,
+      "import/first": "error",
+      "prettier/prettier": "error",
+      "@typescript-eslint/member-ordering": "error",
+      "@typescript-eslint/no-unused-vars": ["error", { argsIgnorePattern: "^_$" }],
+      "jsdoc/tag-lines": ["error", "any", { startLines: 1 }],
+      "jsdoc/check-alignment": "error",
+      "jsdoc/no-undefined-types": "off",
+      "jsdoc/check-param-names": "error",
+      "jsdoc/check-tag-names": "error",
+      "jsdoc/check-types": "error",
+      "jsdoc/implements-on-classes": "error",
+      "jsdoc/require-description": "error",
+      "jsdoc/require-jsdoc": [
+        "error",
+        {
+          require: {
+            FunctionDeclaration: true,
+            MethodDefinition: true,
+            ClassDeclaration: true,
+            ArrowFunctionExpression: false,
+            FunctionExpression: false,
+          },
+        },
+      ],
+      "jsdoc/require-param": "error",
+      "jsdoc/require-param-description": "error",
+      "jsdoc/require-param-type": "off",
+      "jsdoc/require-returns": "error",
+      "jsdoc/require-returns-description": "error",
+      "jsdoc/require-returns-type": "off",
+      "jsdoc/require-hyphen-before-param-description": ["error", "always"],
+    },
+  },
+];
+
+# facilitator/.env-local
+PRIVATE_KEY=
+PORT=3002
+# README.md
+# X402 TypeScript Examples
+
+This directory contains a collection of TypeScript examples demonstrating how to use the X402 protocol in various contexts. These examples are designed to work with the X402 npm packages and share a workspace with the main X402 packages.
+
+## Setup
+
+Before running any examples, you need to install dependencies and build the packages:
+
+```bash
+# From the examples/typescript directory
+pnpm install
+pnpm build
+```
+
+## Example Structure
+
+The examples are organized into several categories:
+
+### Clients
+
+Examples of different client implementations for interacting with X402 services:
+
+- `agent/` - Example using an Anthropic agent implementation using `x402-fetch`
+- `axios/` - Example using the Axios interceptor from `x402-axios`
+- `fetch/` - Example using the fetch wrapper from `x402-fetch`
+- `mcp/` - Example using MCP (Multi-Chain Protocol) as a client using `x402-axios`
+
+### Facilitator
+
+- `facilitator/` - Example implementation of an X402 payment facilitator
+
+### Fullstack
+
+- `next/` - Example Next.js application demonstrating full-stack X402 integration using `x402-next`
+
+### Servers
+
+Examples of different server implementations:
+
+- `express/` - Example using Express.js with `x402-express`
+- `hono/` - Example using Hono framework with `x402-hono`
+
+## Running Examples
+
+Each example directory contains its own README with specific instructions for running that example. Navigate to the desired example directory and follow its instructions.
+
+## Development
+
+This workspace uses:
+
+- pnpm for package management
+- Turborepo for monorepo management
+- TypeScript for type safety
+
+The examples are designed to work with the main X402 packages, so they must be built before running any examples.
+
+## A note on private keys
+
+The examples in this folder commonly use private keys to sign messages. **Never put a private key with mainnet funds in a `.env` file**. This can result in keys getting checked into codebases and being drained.
+
+There are many ways to generate a keypair to use exclusively for development, one way is via foundry:
+
+```
+# install foundry
+curl -L https://foundry.paradigm.xyz | bash
+
+# generate a new wallet
+cast w new
+```
+
+You can fund your new wallet on most networks via the testnet [CDP Faucet](https://portal.cdp.coinbase.com/products/faucet), simply provide the address generated by cast.
+
+# package.json
+{
+  "name": "x402_examples",
+  "private": "true",
+  "version": "0.0.2",
+  "description": "x402 Payment Protocol Monorepo",
+  "main": "index.js",
+  "scripts": {
+    "build": "turbo run build",
+    "lint": "turbo run lint",
+    "lint:check": "turbo run lint:check",
+    "format": "turbo run format",
+    "format:check": "turbo run format:check"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "packageManager": "pnpm@10.7.0",
+  "devDependencies": {
+    "tsup": "^8.4.0",
+    "turbo": "^2.5.0",
+    "typescript": "^5.8.3"
+  }
+}
+# fullstack/next/middleware.ts
+import { Address } from "viem";
+import { paymentMiddleware, Network, Resource } from "x402-next";
+
+const facilitatorUrl = process.env.NEXT_PUBLIC_FACILITATOR_URL as Resource;
+const payTo = process.env.RESOURCE_WALLET_ADDRESS as Address;
+const network = process.env.NETWORK as Network;
+
+export const middleware = paymentMiddleware(
+  payTo,
+  {
+    "/protected": {
+      price: "$0.01",
+      network,
+      config: {
+        description: "Access to protected content",
+      },
+    },
+  },
+  {
+    url: facilitatorUrl,
+  },
+);
+
+// Configure which paths the middleware should run on
+export const config = {
+  matcher: ["/protected/:path*"],
+};
+
+# fullstack/next/types/svg.d.ts
+declare module "*.svg" {
+  import React from "react";
+  const SVG: React.FC<React.SVGProps<SVGSVGElement>>;
+  export default SVG;
+}
+
+# fullstack/next/app/favicon.ico
