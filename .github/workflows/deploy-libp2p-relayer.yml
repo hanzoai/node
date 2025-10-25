@@ -38,17 +38,17 @@ jobs:
         uses: docker/build-push-action@v5
         with:
           context: .
-          file: ./shinkai-libs/shinkai-libp2p-relayer/Dockerfile
+          file: ./hanzo-libs/hanzo-libp2p-relayer/Dockerfile
           push: true
           build-args: |
             BUILD_TYPE=${{ inputs.build_type }}
           tags: |
-            dcspark/shinkai-libp2p-relayer:${{ inputs.tag }}
-            dcspark/shinkai-libp2p-relayer:${{ inputs.build_type }}-latest
+            dcspark/hanzo-libp2p-relayer:${{ inputs.tag }}
+            dcspark/hanzo-libp2p-relayer:${{ inputs.build_type }}-latest
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
       - name: Summary
         run: |
           echo "🚀 Deployment completed successfully!"
-          echo "📦 Image: dcspark/shinkai-libp2p-relayer:${{ inputs.tag }}"
+          echo "📦 Image: dcspark/hanzo-libp2p-relayer:${{ inputs.tag }}"
