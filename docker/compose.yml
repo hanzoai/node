@@ -1,0 +1,159 @@
+# ============================================================================
+# Hanzo Gateway Docker Compose Configuration
+# ============================================================================
+# This file defines the complete Hanzo inference stack including:
+# - Hanzo Node (AI inference engine)
+# - Gateway services (optional)
+# - Supporting infrastructure
+#
+# Usage:
+#   docker compose up -d                 # Start all services
+#   docker compose logs -f hanzo-node    # View logs
+#   docker compose down                  # Stop all services
+#   docker compose down -v               # Stop and remove volumes
+#
+# Configuration:
+#   1. Copy .env.example to .env
+#   2. Edit .env with your API keys and configuration
+#   3. Run: docker compose up -d
+# ============================================================================
+
+version: '3.9'
+
+services:
+  # ==========================================================================
+  # Hanzo Gateway Node
+  # ==========================================================================
+  hanzo-node:
+    image: hanzoai/inference:${HANZO_VERSION:-latest}
+    container_name: hanzo-inference
+    restart: unless-stopped
+
+    # Port mappings
+    ports:
+      - "${NODE_API_PORT:-9550}:9550"    # HTTP API
+      - "${NODE_WS_PORT:-9551}:9551"      # WebSocket
+      - "${NODE_PORT:-9552}:9552"         # P2P
+      - "${NODE_HTTPS_PORT:-9553}:9553"   # HTTPS API
+
+    # Environment variables (loaded from .env file)
+    environment:
+      # Network Configuration
+      - NODE_API_IP=${NODE_API_IP:-0.0.0.0}
+      - NODE_IP=${NODE_IP:-0.0.0.0}
+      - NODE_API_PORT=9550
+      - NODE_WS_PORT=9551
+      - NODE_PORT=9552
+      - NODE_HTTPS_PORT=9553
+
+      # Identity and Security
+      - IDENTITY_SECRET_KEY=${IDENTITY_SECRET_KEY}
+      - ENCRYPTION_SECRET_KEY=${ENCRYPTION_SECRET_KEY}
+      - GLOBAL_IDENTITY_NAME=${GLOBAL_IDENTITY_NAME:-@@my_local_ai.sep-hanzo}
+
+      # Node Behavior
+      - PING_INTERVAL_SECS=${PING_INTERVAL_SECS:-0}
+      - STARTING_NUM_QR_PROFILES=${STARTING_NUM_QR_PROFILES:-1}
+      - STARTING_NUM_QR_DEVICES=${STARTING_NUM_QR_DEVICES:-1}
+      - FIRST_DEVICE_NEEDS_REGISTRATION_CODE=${FIRST_DEVICE_NEEDS_REGISTRATION_CODE:-false}
+      - SKIP_IMPORT_FROM_DIRECTORY=${SKIP_IMPORT_FROM_DIRECTORY:-false}
+      - NO_SECRET_FILE=${NO_SECRET_FILE:-true}
+
+      # Logging
+      - RUST_LOG=${RUST_LOG:-debug,error,info}
+      - LOG_SIMPLE=${LOG_SIMPLE:-true}
+      - LOG_ALL=${LOG_ALL:-1}
+
+      # AI Configuration
+      - EMBEDDINGS_SERVER_URL=${EMBEDDINGS_SERVER_URL}
+      - PROXY_IDENTITY=${PROXY_IDENTITY:-@@relayer_pub_01.sep-hanzo}
+
+      # Multi-Provider AI Agents (comma-separated lists)
+      - INITIAL_AGENT_NAMES=${INITIAL_AGENT_NAMES:-do_qwen32b}
+      - INITIAL_AGENT_URLS=${INITIAL_AGENT_URLS:-https://inference.do-ai.run}
+      - INITIAL_AGENT_MODELS=${INITIAL_AGENT_MODELS:-openai:alibaba-qwen3-32b}
+      - INITIAL_AGENT_API_KEYS=${INITIAL_AGENT_API_KEYS}
+
+      # Storage
+      - NODE_STORAGE_PATH=/data
+
+    # Persistent storage
+    volumes:
+      - hanzo-data:/data
+      - hanzo-logs:/app/logs
+
+    # Resource limits
+    deploy:
+      resources:
+        limits:
+          cpus: '2'
+          memory: 4G
+        reservations:
+          cpus: '1'
+          memory: 2G
+
+    # Health check
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9550/v2/health_check"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+    # Logging
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "100m"
+        max-file: "5"
+
+    networks:
+      - hanzo-network
+
+  # ==========================================================================
+  # Inference Gateway (Optional)
+  # ==========================================================================
+  # Uncomment if you need the Node.js gateway for additional features
+  #
+  # inference-gateway:
+  #   build:
+  #     context: ./gateway/inference
+  #     dockerfile: Dockerfile
+  #   container_name: hanzo-inference-gateway
+  #   restart: unless-stopped
+  #   ports:
+  #     - "3001:3001"
+  #   environment:
+  #     - DIGITALOCEAN_API_KEY=${DIGITALOCEAN_API_KEY}
+  #     - OPENAI_API_KEY=${OPENAI_API_KEY}
+  #     - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY}
+  #     - JWT_SECRET=${JWT_SECRET}
+  #     - NODE_ENV=production
+  #   depends_on:
+  #     - hanzo-node
+  #   networks:
+  #     - hanzo-network
+
+  # ==========================================================================
+  # Supporting Services (Optional)
+  # ==========================================================================
+  # Add PostgreSQL, Redis, Prometheus, etc. as needed
+
+# ==========================================================================
+# Volumes
+# ==========================================================================
+volumes:
+  hanzo-data:
+    driver: local
+    name: hanzo-inference-data
+  hanzo-logs:
+    driver: local
+    name: hanzo-inference-logs
+
+# ==========================================================================
+# Networks
+# ==========================================================================
+networks:
+  hanzo-network:
+    driver: bridge
+    name: hanzo-inference-network
