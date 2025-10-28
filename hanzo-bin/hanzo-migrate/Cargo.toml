@@ -1,0 +1,18 @@
+[package]
+name = "hanzo-migrate"
+version = { workspace = true }
+edition = { workspace = true }
+authors = { workspace = true }
+description = "Migration tool for Hanzo Node - SQLite to LanceDB"
+
+[[bin]]
+name = "hanzo-migrate"
+path = "src/main.rs"
+
+[dependencies]
+hanzo_db = { workspace = true, features = ["migration"] }
+tokio = { workspace = true }
+anyhow = { workspace = true }
+clap = { version = "4.5", features = ["derive"] }
+log = { workspace = true }
+env_logger = { workspace = true }

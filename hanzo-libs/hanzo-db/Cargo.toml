@@ -1,0 +1,75 @@
+[package]
+name = "hanzo_db"
+version = { workspace = true }
+edition = { workspace = true }
+authors = { workspace = true }
+description = "Multi-backend database abstraction for Hanzo Node - Supports LanceDB, DuckDB, PostgreSQL, and more"
+license = "Apache-2.0"
+keywords = ["database", "vector", "multimodal", "lancedb", "duckdb"]
+categories = ["database", "science"]
+
+[dependencies]
+# Core LanceDB with latest version (uses arrow 55.2)
+lancedb = "0.22.0"
+arrow-array = "55.2"
+arrow-schema = "55.2"
+arrow-ipc = "55.2"
+parquet = "55.2"
+
+# Async runtime
+tokio = { workspace = true }
+futures = { workspace = true }
+async-trait = { workspace = true }
+
+# Serialization
+serde = { workspace = true, features = ["derive"] }
+serde_json = { workspace = true }
+bincode = { workspace = true }
+
+# Error handling
+anyhow = { workspace = true }
+thiserror = { workspace = true }
+
+# Utilities
+log = { workspace = true }
+chrono = { workspace = true }
+uuid = { workspace = true, features = ["v4", "serde"] }
+base64 = { workspace = true }
+blake3 = { workspace = true }
+
+# Connection pooling
+deadpool = "0.12"
+deadpool-runtime = "0.1"
+
+# Image processing for multimodal
+image = { version = "0.25", optional = true }
+
+# Migration support
+rusqlite = { workspace = true, optional = true }
+
+# Backend-specific dependencies
+duckdb = { version = "0.10", optional = true }
+sqlx = { version = "0.8", features = ["postgres", "runtime-tokio-rustls", "sqlite"], optional = true }
+redis = { version = "0.25", features = ["aio", "tokio-comp"], optional = true }
+
+# Hanzo dependencies
+hanzo_message_primitives = { workspace = true }
+hanzo_embedding = { workspace = true }
+
+[dev-dependencies]
+tokio-test = { workspace = true }
+tempfile = { workspace = true }
+criterion = { workspace = true }
+proptest = { workspace = true }
+env_logger = { workspace = true }
+
+[features]
+default = ["multimodal", "migration"]
+multimodal = ["image"]
+migration = ["rusqlite"]
+all-backends = ["backend-duckdb", "backend-postgres", "backend-redis", "backend-sqlite"]
+backend-duckdb = ["duckdb"]
+backend-postgres = ["sqlx"]
+backend-redis = ["redis"]
+backend-sqlite = ["rusqlite"]
+
