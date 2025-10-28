@@ -1,0 +1,596 @@
+openapi: 3.0.3
+info:
+  title: Hanzo Key Broker Service (KBS) API
+  description: |
+    Key Broker Service for attestation-based key release in confidential computing environments.
+    
+    The KBS validates hardware attestations and enforces policy before releasing encryption keys
+    to trusted execution environments (TEEs).
+  version: 1.0.0
+  contact:
+    name: Hanzo Security Team
+    email: security@hanzo.ai
+    
+servers:
+  - url: https://kbs.hanzo.ai/v1
+    description: Production KBS
+  - url: https://kbs-staging.hanzo.ai/v1
+    description: Staging KBS
+    
+paths:
+  /authorize:
+    post:
+      summary: Authorize key release based on attestation
+      description: |
+        Validates attestation evidence and capability token, then returns HPKE-wrapped
+        session keys if all policy checks pass.
+      operationId: authorize
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/KeyAuthorizationRequest'
+      responses:
+        '200':
+          description: Authorization successful
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/KeyAuthorizationResponse'
+        '401':
+          description: Invalid attestation or unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Policy violation or tier mismatch
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '429':
+          description: Rate limit exceeded
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+                
+  /renew:
+    post:
+      summary: Renew an existing session with fresh attestation
+      description: |
+        Extends the TTL of an active session after re-validating attestation.
+        Sessions must be renewed before expiration.
+      operationId: renew
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - session_id
+                - attestation
+              properties:
+                session_id:
+                  type: string
+                  format: uuid
+                  description: Existing session ID to renew
+                attestation:
+                  $ref: '#/components/schemas/AttestationType'
+      responses:
+        '200':
+          description: Session renewed successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenewResponse'
+        '401':
+          description: Invalid attestation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Session not found or expired
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+                
+  /revoke:
+    post:
+      summary: Revoke a session
+      description: |
+        Immediately revokes a session. Can be triggered by admin action or
+        on-chain policy changes.
+      operationId: revoke
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - session_id
+                - reason
+              properties:
+                session_id:
+                  type: string
+                  format: uuid
+                reason:
+                  $ref: '#/components/schemas/RevocationReason'
+      responses:
+        '204':
+          description: Session revoked successfully
+        '404':
+          description: Session not found
+          
+  /session/{session_id}/status:
+    get:
+      summary: Get session status
+      description: Check if a session is still active and get metadata
+      operationId: getSessionStatus
+      parameters:
+        - name: session_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Session status retrieved
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SessionStatus'
+        '404':
+          description: Session not found
+          
+  /policy/tier/{tier}:
+    get:
+      summary: Get policy for a privacy tier
+      description: Returns the attestation and key usage policy for a specific privacy tier
+      operationId: getTierPolicy
+      parameters:
+        - name: tier
+          in: path
+          required: true
+          schema:
+            type: integer
+            minimum: 0
+            maximum: 4
+            description: Privacy tier (0=Open, 1=AtRest, 2=CpuTee, 3=GpuCc, 4=GpuTeeIo)
+      responses:
+        '200':
+          description: Tier policy retrieved
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TierPolicy'
+                
+components:
+  schemas:
+    KeyAuthorizationRequest:
+      type: object
+      required:
+        - attestation
+        - capability_token
+        - session_public_key
+        - requested_keys
+        - nonce
+      properties:
+        attestation:
+          $ref: '#/components/schemas/AttestationType'
+        capability_token:
+          $ref: '#/components/schemas/CapabilityToken'
+        session_public_key:
+          type: string
+          format: byte
+          description: HPKE public key for wrapping response (base64)
+        requested_keys:
+          type: array
+          items:
+            $ref: '#/components/schemas/KeyRequest'
+          minItems: 1
+        nonce:
+          type: string
+          format: byte
+          description: Random nonce to prevent replay (base64)
+          
+    KeyAuthorizationResponse:
+      type: object
+      required:
+        - session_id
+        - authorized_keys
+        - expires_at
+      properties:
+        session_id:
+          type: string
+          format: uuid
+        authorized_keys:
+          type: array
+          items:
+            $ref: '#/components/schemas/AuthorizedKey'
+        expires_at:
+          type: string
+          format: date-time
+          
+    AttestationType:
+      oneOf:
+        - $ref: '#/components/schemas/SevSnpAttestation'
+        - $ref: '#/components/schemas/TdxAttestation'
+        - $ref: '#/components/schemas/H100CcAttestation'
+        - $ref: '#/components/schemas/BlackwellTeeIoAttestation'
+        - $ref: '#/components/schemas/SimEidAttestation'
+      discriminator:
+        propertyName: type
+        
+    SevSnpAttestation:
+      type: object
+      required:
+        - type
+        - report
+        - vcek_cert
+        - platform_cert_chain
+      properties:
+        type:
+          type: string
+          enum: [SevSnp]
+        report:
+          type: string
+          format: byte
+          description: SEV-SNP attestation report (base64)
+        vcek_cert:
+          type: string
+          format: byte
+          description: VCEK certificate (base64)
+        platform_cert_chain:
+          type: string
+          format: byte
+          description: Platform certificate chain (base64)
+          
+    TdxAttestation:
+      type: object
+      required:
+        - type
+        - quote
+        - collateral
+      properties:
+        type:
+          type: string
+          enum: [Tdx]
+        quote:
+          type: string
+          format: byte
+          description: TDX quote (base64)
+        collateral:
+          type: string
+          format: byte
+          description: Quote verification collateral (base64)
+          
+    H100CcAttestation:
+      type: object
+      required:
+        - type
+        - gpu_attestation
+        - cpu_attestation
+      properties:
+        type:
+          type: string
+          enum: [H100Cc]
+        gpu_attestation:
+          type: string
+          format: byte
+          description: NVIDIA H100 CC attestation (base64)
+        cpu_attestation:
+          $ref: '#/components/schemas/AttestationType'
+          
+    BlackwellTeeIoAttestation:
+      type: object
+      required:
+        - type
+        - tee_io_report
+      properties:
+        type:
+          type: string
+          enum: [BlackwellTeeIo]
+        tee_io_report:
+          type: string
+          format: byte
+          description: Blackwell TEE-I/O report (base64)
+        mig_config:
+          $ref: '#/components/schemas/MigConfiguration'
+          
+    SimEidAttestation:
+      type: object
+      required:
+        - type
+        - eid
+        - signature
+      properties:
+        type:
+          type: string
+          enum: [SimEid]
+        eid:
+          type: string
+          description: SIM EID
+        signature:
+          type: string
+          format: byte
+          description: EID signature (base64)
+          
+    MigConfiguration:
+      type: object
+      required:
+        - instance_id
+        - memory_size_mb
+        - compute_units
+      properties:
+        instance_id:
+          type: integer
+          format: int32
+        memory_size_mb:
+          type: integer
+          format: int64
+        compute_units:
+          type: integer
+          format: int32
+          
+    CapabilityToken:
+      type: object
+      required:
+        - id
+        - subject
+        - tier
+        - permissions
+        - issued_at
+        - chain_signature
+      properties:
+        id:
+          type: string
+        subject:
+          type: string
+          description: Agent or tenant ID
+        tier:
+          type: integer
+          minimum: 0
+          maximum: 4
+          description: Required privacy tier
+        permissions:
+          type: array
+          items:
+            type: string
+        issued_at:
+          type: string
+          format: date-time
+        expires_at:
+          type: string
+          format: date-time
+        chain_signature:
+          type: string
+          format: byte
+          description: On-chain signature (base64)
+          
+    KeyRequest:
+      type: object
+      required:
+        - key_type
+        - agent_id
+      properties:
+        key_type:
+          $ref: '#/components/schemas/KeyRequestType'
+        agent_id:
+          type: string
+        tenant_id:
+          type: string
+          
+    KeyRequestType:
+      oneOf:
+        - type: string
+          enum: [TenantKek]
+        - type: string
+          enum: [AgentDek]
+        - type: object
+          required:
+            - type
+            - duration_secs
+          properties:
+            type:
+              type: string
+              enum: [SessionKey]
+            duration_secs:
+              type: integer
+              format: int64
+              
+    AuthorizedKey:
+      type: object
+      required:
+        - key_id
+        - hpke_wrapped_key
+        - metadata
+      properties:
+        key_id:
+          type: string
+          format: uuid
+        hpke_wrapped_key:
+          type: string
+          format: byte
+          description: HPKE-wrapped key material (base64)
+        metadata:
+          $ref: '#/components/schemas/KeyMetadata'
+          
+    KeyMetadata:
+      type: object
+      required:
+        - key_type
+        - tier
+        - restrictions
+      properties:
+        key_type:
+          type: string
+        tier:
+          type: integer
+          minimum: 0
+          maximum: 4
+        restrictions:
+          type: array
+          items:
+            type: string
+            
+    RenewResponse:
+      type: object
+      required:
+        - session_id
+        - new_expires_at
+      properties:
+        session_id:
+          type: string
+          format: uuid
+        new_expires_at:
+          type: string
+          format: date-time
+          
+    RevocationReason:
+      oneOf:
+        - type: object
+          required:
+            - type
+            - admin_id
+            - reason
+          properties:
+            type:
+              type: string
+              enum: [AdminAction]
+            admin_id:
+              type: string
+            reason:
+              type: string
+        - type: object
+          required:
+            - type
+            - transaction_hash
+          properties:
+            type:
+              type: string
+              enum: [ChainTriggered]
+            transaction_hash:
+              type: string
+        - type: object
+          required:
+            - type
+            - details
+          properties:
+            type:
+              type: string
+              enum: [PolicyViolation]
+            details:
+              type: string
+        - type: string
+          enum: [Expired]
+          
+    SessionStatus:
+      type: object
+      required:
+        - session_id
+        - agent_id
+        - tier
+        - created_at
+        - expires_at
+        - renewals
+        - active
+      properties:
+        session_id:
+          type: string
+          format: uuid
+        agent_id:
+          type: string
+        tier:
+          type: integer
+          minimum: 0
+          maximum: 4
+        created_at:
+          type: string
+          format: date-time
+        expires_at:
+          type: string
+          format: date-time
+        renewals:
+          type: integer
+          format: int32
+        active:
+          type: boolean
+          
+    TierPolicy:
+      type: object
+      required:
+        - tier
+        - required_attestations
+        - max_session_duration
+        - allowed_operations
+        - key_restrictions
+      properties:
+        tier:
+          type: integer
+          minimum: 0
+          maximum: 4
+        required_attestations:
+          type: array
+          items:
+            $ref: '#/components/schemas/AttestationRequirement'
+        max_session_duration:
+          type: integer
+          format: int64
+          description: Maximum session duration in seconds
+        allowed_operations:
+          type: array
+          items:
+            type: string
+        key_restrictions:
+          type: array
+          items:
+            $ref: '#/components/schemas/KeyRestriction'
+            
+    AttestationRequirement:
+      type: object
+      required:
+        - attestation_type
+      properties:
+        attestation_type:
+          type: string
+        min_tcb_version:
+          type: string
+        allowed_measurements:
+          type: array
+          items:
+            type: string
+            
+    KeyRestriction:
+      type: object
+      required:
+        - key_type
+        - require_audit
+      properties:
+        key_type:
+          type: string
+        max_usage_count:
+          type: integer
+          format: int64
+        require_audit:
+          type: boolean
+          
+    Error:
+      type: object
+      required:
+        - error
+        - message
+      properties:
+        error:
+          type: string
+        message:
+          type: string
+        details:
+          type: object

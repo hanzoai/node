@@ -1,0 +1,50 @@
+[package]
+name = "hanzo_llm"
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+
+[dependencies]
+# Core dependencies
+serde = { workspace = true, features = ["derive"] }
+serde_json = { workspace = true }
+tokio = { workspace = true }
+async-trait = { workspace = true }
+anyhow = { workspace = true }
+thiserror = { workspace = true }
+tracing = { workspace = true }
+
+# Math and ML
+nalgebra = "0.33"
+ndarray = "0.16"
+statrs = "0.17"
+rand = { workspace = true }
+rand_distr = "0.4"
+num-traits = "0.2"
+
+# Database and storage
+rusqlite = { workspace = true }
+r2d2 = { workspace = true }
+r2d2_sqlite = { workspace = true }
+dashmap = { workspace = true }
+chrono = { workspace = true }
+bincode = { workspace = true }
+
+# Internal dependencies
+hanzo_message_primitives = { workspace = true }
+hanzo_sqlite = { workspace = true }
+hanzo_embedding = { workspace = true }
+
+# For BitDelta quantization
+bitvec = { version = "1.0", features = ["serde"] }
+half = { version = "2.4", features = ["serde"] }
+
+# For Hamiltonian dynamics
+ode_solvers = "0.3"
+
+[dev-dependencies]
+tokio-test = { workspace = true }
+criterion = { workspace = true }
+proptest = { workspace = true }
+tempfile = { workspace = true }
+

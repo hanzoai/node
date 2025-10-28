@@ -1,0 +1,60 @@
+[package]
+name = "hanzo_pqc"
+version = { workspace = true }
+edition = { workspace = true }
+authors = { workspace = true }
+
+[features]
+default = ["ml-kem", "ml-dsa", "hybrid"]
+ml-kem = []
+ml-dsa = []
+slh-dsa = []
+hybrid = ["x25519-dalek"]
+fips-mode = []
+gpu-cc = []
+tee-io = []
+
+[dependencies]
+# Core PQC implementation - using latest version
+oqs = { version = "0.11", default-features = false, features = ["std"] }
+
+# Classical crypto for hybrid mode
+x25519-dalek = { workspace = true, optional = true }
+ed25519-dalek = { workspace = true }
+
+# KDF and utilities
+hkdf = "0.12"
+sha2 = { workspace = true }
+sha3 = "0.10"
+blake3 = { workspace = true }
+
+# Serialization
+serde = { workspace = true, features = ["derive"] }
+serde_json = { workspace = true }
+bincode = { workspace = true }
+base64 = { workspace = true }
+
+# Error handling
+thiserror = { workspace = true }
+anyhow = { workspace = true }
+
+# Async support
+async-trait = { workspace = true }
+tokio = { workspace = true }
+
+# Random number generation (FIPS compliant)
+rand = { workspace = true }
+getrandom = { version = "0.2", features = ["std"] }
+
+# Attestation support
+hex = { workspace = true }
+zeroize = { version = "1.8", features = ["derive"] }
+
+[dev-dependencies]
+tokio-test = { workspace = true }
+criterion = { workspace = true }
+proptest = "1.0"
+
+[[bench]]
+name = "pqc_benchmarks"
+harness = false

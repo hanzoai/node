@@ -1,0 +1,45 @@
+[package]
+name = "hanzo-kbs"
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+
+[features]
+default = ["pqc"]
+pqc = ["hanzo_pqc"]
+
+[dependencies]
+# Core dependencies
+serde = { workspace = true, features = ["derive"] }
+serde_json = { workspace = true }
+async-trait = { workspace = true }
+anyhow = { workspace = true }
+thiserror = { workspace = true }
+chrono = { workspace = true }
+tokio = { workspace = true }
+log = { workspace = true }
+dashmap = { workspace = true }
+rand = { workspace = true }
+
+# Cryptography
+hpke = "0.12"
+chacha20poly1305 = "0.10"
+x25519-dalek = { workspace = true }
+ed25519-dalek = { workspace = true }
+blake3 = { workspace = true }
+hex = { workspace = true }
+
+# For attestation
+base64 = { workspace = true }
+bincode = { workspace = true }
+uuid = { workspace = true, features = ["v4", "serde"] }
+
+# Hanzo dependencies
+hanzo_message_primitives = { workspace = true }
+hanzo_pqc = { workspace = true, optional = true }
+
+# API dependencies
+warp = { workspace = true }
+
+[dev-dependencies]
+tokio-test = "0.4"

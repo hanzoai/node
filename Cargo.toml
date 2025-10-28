@@ -9,9 +9,20 @@ members = [
   "hanzo-libs/hanzo-embedding",
   "hanzo-libs/hanzo-http-api",
   "hanzo-libs/hanzo-tools-primitives",
+  "hanzo-libs/hanzo-tools-runner",
   "hanzo-libs/hanzo-sqlite",
+  "hanzo-libs/hanzo-db",
+  "hanzo-libs/hanzo-hmm",
   "hanzo-libs/hanzo-non-rust-code",
   "hanzo-libs/hanzo-mcp",
+  "hanzo-libs/hanzo-pqc",
+  "hanzo-libs/hanzo-kbs",
+  "hanzo-libs/hanzo-did",
+  "hanzo-libs/hanzo-model-discovery",
+  "hanzo-libs/hanzo-config",
+  "hanzo-libs/hanzo-mining",
+  "hanzo-libs/hanzo-wasm-runtime",
+  "hanzo-libs/hanzo-llm",
   "hanzo-test-framework",
   "hanzo-test-macro",
   "hanzo-bin/*",
@@ -31,11 +42,21 @@ hanzo_job_queue_manager = { path = "./hanzo-libs/hanzo-job-queue-manager" }
 # hanzo_baml = { path = "./hanzo-libs/hanzo-baml" }
 hanzo_http_api = { path = "./hanzo-libs/hanzo-http-api" }
 hanzo_tools_primitives = { path = "./hanzo-libs/hanzo-tools-primitives" }
+hanzo_tools_runner = { path = "./hanzo-libs/hanzo-tools-runner" }
 hanzo_sqlite = { path = "./hanzo-libs/hanzo-sqlite" }
+hanzo_db = { path = "./hanzo-libs/hanzo-db" }
+hanzo_hmm = { path = "./hanzo-libs/hanzo-hmm" }
 hanzo_fs = { path = "./hanzo-libs/hanzo-fs" }
 hanzo_embedding = { path = "./hanzo-libs/hanzo-embedding" }
 hanzo_non_rust_code = { path = "./hanzo-libs/hanzo-non-rust-code" }
 hanzo_mcp = { path = "./hanzo-libs/hanzo-mcp" }
+hanzo_pqc = { path = "./hanzo-libs/hanzo-pqc" }
+hanzo-kbs = { path = "./hanzo-libs/hanzo-kbs" }
+hanzo_did = { path = "./hanzo-libs/hanzo-did" }
+hanzo_config = { path = "./hanzo-libs/hanzo-config" }
+hanzo_mining = { path = "./hanzo-libs/hanzo-mining" }
+hanzo_wasm_runtime = { path = "./hanzo-libs/hanzo-wasm-runtime" }
+hanzo_llm = { path = "./hanzo-libs/hanzo-llm" }
 
 rmcp = { version = "0.6" }
 futures = "0.3.30"
@@ -57,7 +78,7 @@ chrono = "0.4"
 serde_json = "1.0.117"
 anyhow = "1.0.94"
 blake3 = "1.2.0"
-hanzo_tools_runner = "1.0.0"
+sha2 = "0.10"
 serde = "1.0.219"
 base64 = "0.22.0"
 reqwest = "0.11.27"
@@ -75,6 +96,8 @@ async-channel = "1.6.1"
 csv = "1.1.6"
 thiserror = "2.0.3"
 dashmap = "5.5.3"
+hpke = "0.12"
+chacha20poly1305 = "0.10"
 clap = "3.0.0-beta.5"
 r2d2 = "0.8.10"
 r2d2_sqlite = "0.25"
@@ -89,6 +112,14 @@ tracing = "0.1.40"
 serde_yaml = "0.9.34-deprecated"
 tokio-tungstenite = "0.26.2"
 rustls = "0.23.27"
+# Native embedding support via hanzoai/engine (our mistral.rs fork)
+# hanzo_engine = { git = "https://github.com/hanzoai/engine.git", default-features = false }
+# candle-core = "0.8"
+# candle-nn = "0.8"
+# candle-transformers = "0.8"
+# hf-hub = "0.3"
+# tokenizers = "0.20"
+dirs = "5.0"
 libp2p = { version = "0.55.0", features = [
   "noise",
   "yamux",
@@ -103,3 +134,8 @@ libp2p = { version = "0.55.0", features = [
   "tokio",
   "macros",
 ] }
+
+# Dev dependencies
+criterion = "0.5"
+proptest = "1.0"
+tokio-test = "0.4"
