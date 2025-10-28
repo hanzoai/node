@@ -525,3 +525,246 @@ cargo run --example basic_usage --features "ml-kem ml-dsa hybrid"
 *Hanzo Node Version: 1.1.8*
 *PQC Status: 100% Complete*
 *Maintained for: Hanzo Node Development Team*
+---
+
+# GRPO and Experience-Based Learning System Analysis (Oct 28, 2025)
+
+## Executive Summary
+
+**Assessment of GRPO Implementation Feasibility in Hanzo Node**
+
+The Hanzo Node codebase has **foundational infrastructure components** that can support GRPO implementation, but **lacks explicit training loops, reward mechanisms, and policy optimization frameworks**. The system is primarily designed for agent execution and routing, not for learning-based adaptation.
+
+**Current State**: Capable of capturing execution traces, but missing core RL/learning components.
+**Readiness for GRPO**: **40% - Requires significant new implementation**
+**MVP Timeline**: 4 weeks for basic local rollouts
+**Production Timeline**: 8 weeks for distributed optimization
+
+## Current Relevant Capabilities
+
+### Experience Storage & Trajectory Tracking
+
+**inbox_messages Table** (`hanzo-sqlite/src/lib.rs`):
+- Parent-child message hashing for implicit trajectory tracking
+- Full message history storage per job/inbox
+- Temporal ordering via time_key
+- BLOB storage for complete message state
+
+**Job System** (`hanzo-sqlite/src/job_manager.rs`):
+- Step-by-step execution history in `step_history: Vec<HanzoMessage>`
+- Job completion status tracking
+- Fork/branch support for alternative trajectories
+- Config snapshots per job
+
+**Limitation**: Steps are HanzoMessages (general purpose), not structured (state, action, reward) tuples
+
+### Agent Execution & Tool Orchestration
+
+**Agent Framework** (`hanzo-sqlite/src/agent_manager.rs`):
+- Agent identity and configuration with tools list
+- Tool routing and execution capability
+- Knowledge base association
+- Per-agent configuration overrides
+
+**Tools Runner** (`hanzo-tools-runner/src/`):
+- Multiple execution runtimes (Deno, Python, containers)
+- Execution context preservation
+- Result capture and serialization
+- Error tracking
+
+**Limitation**: No trajectory collection across tool calls or reward signals
+
+### Adaptive Learning System (HLLM)
+
+Located in: `hanzo-libs/hanzo-llm/src/`
+
+**Existing Components**:
+- `UserAdapter` with BitDelta compression
+- `AdapterManager` for per-user model selection
+- Feedback mechanism with gradient-based updates
+- Adaptive learning rate scheduling
+- Expected Free Energy (EFE) calculations
+
+**Current Scope**: Only for LLM provider routing (model selection), NOT policy optimization
+
+### Job Queue Management
+
+**JobQueueManager** (`hanzo-job-queue-manager/src/`):
+- In-memory + persistent queue system
+- Pub/sub for job updates
+- FIFO with priority support
+- Multi-key queue management
+
+**Limitation**: Generic job queuing, not rollout orchestration
+
+## Critical Gaps for GRPO
+
+| Component | Status | Impact |
+|-----------|--------|--------|
+| **Reward Functions** | ❌ Not implemented | Cannot measure trajectory quality |
+| **Policy Representation** | ❌ Not implemented | Cannot store policy states |
+| **Experience Buffers** | ⚠️ Partial | Job history only, not RL format |
+| **Group Rollouts** | ❌ Not implemented | Cannot run parallel experiments |
+| **Relative Ranking** | ❌ Not implemented | Cannot compute relative scores |
+| **Policy Loss Functions** | ❌ Not implemented | Cannot optimize |
+| **Distributed Rollouts** | ❌ Not implemented | Single-node only |
+
+### Missing Data Structures
+
+Not found in codebase:
+```rust
+struct Experience {
+    state: State,
+    action: Action,
+    reward: f64,
+    next_state: State,
+    trajectory_id: String,
+    group_id: String,
+}
+
+struct PolicyVersion {
+    version_id: String,
+    parameters: Vec<f32>,
+    timestamp: DateTime,
+}
+
+struct RolloutGroup {
+    trajectories: Vec<Trajectory>,
+    relative_rewards: Vec<f64>,
+}
+```
+
+### Missing API Endpoints
+
+Current endpoints (`api_v2_handlers_jobs.rs`):
+- POST /create_job, /job_message, /last_messages, /update_job_config
+
+**Missing for GRPO**:
+- POST /v1/rollouts/create - Initialize rollout group
+- POST /v1/rollouts/submit - Submit trajectory batch
+- POST /v1/rollouts/get_results - Get ranked results
+- POST /v1/policy/update - Apply gradient updates
+- POST /v1/policy/checkpoint - Save policy version
+- POST /v1/experiences/query - Retrieve experience buffer
+
+### Missing Database Tables
+
+```sql
+CREATE TABLE rollouts (
+    rollout_id TEXT PRIMARY KEY,
+    group_count INT,
+    trajectory_count INT,
+    created_at INTEGER,
+    metadata TEXT
+);
+
+CREATE TABLE rollout_trajectories (
+    trajectory_id TEXT PRIMARY KEY,
+    rollout_id TEXT,
+    job_id TEXT,
+    experiences_blob BLOB,
+    total_reward REAL,
+    relative_rank REAL,
+    group_position INT,
+    created_at INTEGER
+);
+
+CREATE TABLE policy_checkpoints (
+    checkpoint_id TEXT PRIMARY KEY,
+    version INT,
+    parameters_blob BLOB,
+    training_loss REAL,
+    training_metadata TEXT,
+    created_at INTEGER
+);
+```
+
+## Recommended Integration Approach
+
+### Phase 1: Foundation (Weeks 1-2)
+
+1. **Create hanzo-grpo-core crate**
+   - Experience/Trajectory data structures
+   - Reward function trait system
+   - State/Action abstractions
+
+2. **Extend SQLite schema** in hanzo-sqlite
+   - Add rollout tables
+   - Add policy checkpoint tables
+   - Add trajectory storage
+
+3. **Basic reward framework**
+   - Task success rewards
+   - Execution time rewards
+   - Composite reward functions
+
+### Phase 2: Execution Layer (Weeks 3-4)
+
+1. **Create RolloutOrchestrator**
+   - Local rollout execution
+   - Parallel trajectory generation
+   - Relative reward computation
+
+2. **Integrate with Job system**
+   - Use job_id as trajectory_id
+   - Add reward tracking to execution flow
+   - New GRPO REST endpoints
+
+3. **Trajectory collection**
+   - Capture states from message context
+   - Extract actions from tool calls
+   - Compute rewards from execution results
+
+### Phase 3: Policy Learning (Weeks 5-6)
+
+1. **Policy gradient computation**
+   - GRPO loss calculation
+   - Relative ranking integration
+   - Entropy regularization
+
+2. **Policy checkpointing**
+   - Save/load parameter versions
+   - Training metadata tracking
+   - Version comparison
+
+### Phase 4: Integration & Testing (Week 7)
+
+1. **End-to-end testing**
+2. **Performance optimization**
+3. **Production documentation**
+
+## File Locations Reference
+
+### Current Infrastructure
+- Job Management: `hanzo-libs/hanzo-sqlite/src/job_manager.rs`
+- Message Storage: `hanzo-libs/hanzo-sqlite/src/inbox_manager.rs`
+- Agent System: `hanzo-libs/hanzo-sqlite/src/agent_manager.rs`
+- Tool Runner: `hanzo-libs/hanzo-tools-runner/src/`
+- HTTP API: `hanzo-libs/hanzo-http-api/src/api_v2/`
+- Routing/Learning: `hanzo-libs/hanzo-llm/src/`
+
+### Recommended New Locations
+- GRPO Core: `hanzo-libs/hanzo-grpo-core/src/`
+- GRPO API: `hanzo-libs/hanzo-http-api/src/api_v2/grpo_handlers.rs`
+- Config: Extend `hanzo.toml` with `[grpo]` section
+
+## Key Integration Points
+
+**Leverage Existing Components**:
+1. Job System → Use job_id as trajectory_id (add reward tracking)
+2. Message History → Store trajectory states in inbox (add serialization)
+3. Agent System → Agent becomes policy executor (add policy storage)
+4. Tool Execution → Reward computation from tool outputs (new reward service)
+5. DB Layer → Persistence for trajectories (new tables + migrations)
+6. HTTP API → REST endpoints for GRPO (new handlers)
+
+## Conclusion
+
+**Hanzo Node** has solid foundational infrastructure (persistent storage, agent execution, tool orchestration) but needs explicit GRPO components (experience representation, policy storage, reward functions, gradient computation).
+
+**Effort Estimate**:
+- MVP (4 weeks): Basic local rollouts + policy storage
+- Production (8 weeks): Distributed rollouts + full optimization loop
+
+**Quick Win**: Start with experience buffer storage and simple reward functions while keeping job IDs as trajectory IDs. Reuse existing message history infrastructure for trajectory storage.
+
