@@ -109,5 +109,5 @@ jobs:
             BUILD_TYPE=release
             AI_MODEL_CATALOG_BUILD=1
           tags: |
-            dcspark/hanzo-node:${{ github.ref_name }}
-            dcspark/hanzo-node:release-latest
+            hanzoai/hanzo-node:${{ github.ref_name }}
+            hanzoai/hanzo-node:release-latest
