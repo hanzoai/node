@@ -6,7 +6,7 @@ use std::{
 };
 
 use hanzo_message_primitives::schemas::hanzo_name::HanzoName;
-use hanzo_tools_runner::tools::run_result::RunResult;
+use shinkai_tools_runner::tools::run_result::RunResult;
 
 use super::error::ToolError;
 

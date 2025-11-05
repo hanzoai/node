@@ -9,7 +9,7 @@ use serde_json::Value;
 use hanzo_mcp::mcp_methods::{run_tool_via_command, run_tool_via_http, run_tool_via_sse};
 use hanzo_message_primitives::schemas::mcp_server::{MCPServer, MCPServerType};
 use hanzo_message_primitives::schemas::tool_router_key::ToolRouterKey;
-use hanzo_tools_runner::tools::run_result::RunResult;
+use shinkai_tools_runner::tools::run_result::RunResult;
 use std::collections::HashMap;
 
 #[derive(Debug, Clone, PartialEq, serde::Serialize, serde::Deserialize)]
