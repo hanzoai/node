@@ -634,7 +634,7 @@ mod tests {
     use crate::tools::tool_types::{OperatingSystem, RunnerType, ToolResult};
     use serde_json::json;
     use hanzo_message_primitives::schemas::tool_router_key::ToolRouterKey;
-    use hanzo_tools_runner::tools::tool_definition::ToolDefinition;
+    use shinkai_tools_runner::tools::tool_definition::ToolDefinition;
 
     #[test]
     fn test_gen_router_key() {

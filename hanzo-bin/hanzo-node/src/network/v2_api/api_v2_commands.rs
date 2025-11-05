@@ -3246,10 +3246,10 @@ impl Node {
     }
 
     pub async fn v2_api_docker_status(res: Sender<Result<serde_json::Value, APIError>>) -> Result<(), NodeError> {
-        let docker_status = match hanzo_tools_runner::tools::container_utils::is_docker_available() {
-            hanzo_tools_runner::tools::container_utils::DockerStatus::NotInstalled => "not-installed",
-            hanzo_tools_runner::tools::container_utils::DockerStatus::NotRunning => "not-running",
-            hanzo_tools_runner::tools::container_utils::DockerStatus::Running => "running",
+        let docker_status = match shinkai_tools_runner::tools::container_utils::is_docker_available() {
+            shinkai_tools_runner::tools::container_utils::DockerStatus::NotInstalled => "not-installed",
+            shinkai_tools_runner::tools::container_utils::DockerStatus::NotRunning => "not-running",
+            shinkai_tools_runner::tools::container_utils::DockerStatus::Running => "running",
         };
 
         let _ = res
