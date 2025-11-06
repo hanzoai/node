@@ -2573,9 +2573,9 @@ dependencies = [
 
 [[package]]
 name = "hanzo_tools_runner"
-version = "1.0.1"
+version = "1.0.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "01f7569c92abbe3bb5687bcb5f6a4f2d3ee41b686673877d23b74d9304467fbd"
+checksum = "637ddc53fd1bf47fa0177b3ae980b8a3c90d4c163b0684550257dbcf4063356f"
 dependencies = [
  "anyhow",
  "base64-simd",
