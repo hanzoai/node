@@ -43,12 +43,12 @@ jobs:
           build-args: |
             BUILD_TYPE=${{ inputs.build_type }}
           tags: |
-            dcspark/hanzo-libp2p-relayer:${{ inputs.tag }}
-            dcspark/hanzo-libp2p-relayer:${{ inputs.build_type }}-latest
+            hanzoai/hanzo-libp2p-relayer:${{ inputs.tag }}
+            hanzoai/hanzo-libp2p-relayer:${{ inputs.build_type }}-latest
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
       - name: Summary
         run: |
           echo "🚀 Deployment completed successfully!"
-          echo "📦 Image: dcspark/hanzo-libp2p-relayer:${{ inputs.tag }}"
+          echo "📦 Image: hanzoai/hanzo-libp2p-relayer:${{ inputs.tag }}"

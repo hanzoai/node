@@ -48,5 +48,5 @@ jobs:
             BUILD_TYPE=${{ inputs.build_type }}
             AI_MODEL_CATALOG_BUILD=1
           tags: |
-            dcspark/hanzo-node:${{ inputs.tag }}
-            dcspark/hanzo-node:${{ inputs.build_type }}-latest
+            hanzoai/hanzo-node:${{ inputs.tag }}
+            hanzoai/hanzo-node:${{ inputs.build_type }}-latest
