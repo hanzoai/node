@@ -11,7 +11,7 @@ regex = { workspace = true }
 hanzo_message_primitives = { workspace = true }
 # hanzo_vector_resources = { workspace = true }
 reqwest = { workspace = true, features = ["json", "tokio-native-tls"] }
-shinkai_tools_runner = { workspace = true, features = ["built-in-tools"] }
+hanzo_tools_runner = { workspace = true, features = ["built-in-tools"] }
 serde = { workspace = true, features = ["derive"] }
 base64 = { workspace = true }
 rmcp = { workspace = true, features = ["client", "transport-child-process", "transport-sse-client"] }

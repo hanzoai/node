@@ -8,7 +8,7 @@ authors = { workspace = true }
 serde = { workspace = true }
 serde_json = { workspace = true }
 tokio = { workspace = true }
-shinkai_tools_runner = { workspace = true }
+hanzo_tools_runner = { workspace = true }
 tempfile = { workspace = true }
 hanzo_message_primitives = { workspace = true }
 log = { workspace = true }
