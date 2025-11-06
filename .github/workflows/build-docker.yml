@@ -42,11 +42,10 @@ jobs:
         uses: docker/build-push-action@v5
         with:
           context: .
-          file: ./cloud-node/Dockerfile
+          file: ./docker/Dockerfile
           push: true
           build-args: |
             BUILD_TYPE=${{ inputs.build_type }}
-            AI_MODEL_CATALOG_BUILD=1
           tags: |
             hanzoai/hanzo-node:${{ inputs.tag }}
             hanzoai/hanzo-node:${{ inputs.build_type }}-latest
