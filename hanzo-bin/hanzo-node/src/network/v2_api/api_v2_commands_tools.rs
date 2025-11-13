@@ -2333,11 +2333,14 @@ impl Node {
             }
         };
 
+        // Sanitize llm_provider to only allow alphanumeric and underscore
+        let sanitized_provider = llm_provider.replace("-", "_").replace(" ", "_");
+
         let recipient = match HanzoName::from_node_and_profile_names_and_type_and_name(
             node_name.node_name.clone(),
             "main".to_string(),
             HanzoSubidentityType::Agent,
-            llm_provider,
+            sanitized_provider,
         ) {
             Ok(name) => name,
             Err(err) => {
