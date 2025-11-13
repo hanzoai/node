@@ -111,7 +111,7 @@ async fn run_with_hanzo_node_location_host(
     let code = r#"
 import os
 def run(configurations, parameters):
-    return os.getenv('SHINKAI_NODE_LOCATION')
+    return os.getenv('HANZO_NODE_LOCATION')
             "#;
 
     let code_files = CodeFiles {
@@ -562,7 +562,7 @@ async def run(c, p):
     for entry in os.listdir("./"):
         print(entry)
     
-    home_path = pathlib.Path(os.environ["SHINKAI_HOME"]) / "test.txt"
+    home_path = pathlib.Path(os.environ["HANZO_HOME"]) / "test.txt"
     with open(home_path, "w") as f:
         f.write(content)
     
@@ -622,7 +622,7 @@ async fn mount_file_in_mount(#[case] runner_type: RunnerType) {
 import os
 
 def run(c, p):
-    mount = os.environ["SHINKAI_MOUNT"].split(',')
+    mount = os.environ["HANZO_MOUNT"].split(',')
     for file in mount:
         print("file in mount: ", file)
     with open(mount[0]) as f:
@@ -688,7 +688,7 @@ async fn mount_and_edit_file_in_mount(#[case] runner_type: RunnerType) {
 import os
 
 def run(c, p):
-    mount = os.environ["SHINKAI_MOUNT"].split(',')
+    mount = os.environ["HANZO_MOUNT"].split(',')
     with open(mount[0], 'w') as f:
         f.write("2")
     return None
@@ -750,7 +750,7 @@ async fn mount_file_in_assets(#[case] runner_type: RunnerType) {
 import os
 
 def run(c, p):
-    assets = os.environ["SHINKAI_ASSETS"].split(',')
+    assets = os.environ["HANZO_ASSETS"].split(',')
     with open(assets[0]) as f:
         content = f.read()
     print(content)
@@ -924,8 +924,8 @@ import os
 
 def run(configurations, params):
     return {
-        'contextId': os.environ['SHINKAI_CONTEXT_ID'],
-        'executionId': os.environ['SHINKAI_EXECUTION_ID']
+        'contextId': os.environ['HANZO_CONTEXT_ID'],
+        'executionId': os.environ['HANZO_EXECUTION_ID']
     }
 "#
             .to_string(),
@@ -1375,7 +1375,7 @@ async def run(c: CONFIG, p: INPUTS) -> OUTPUT:
     from urllib.parse import urlparse
 
     # Get home path from environment variable
-    home_path = os.environ.get('SHINKAI_HOME')
+    home_path = os.environ.get('HANZO_HOME')
     output_path = os.path.join(home_path, 'output.png')
 
     print(f"Home path: {home_path}")
