@@ -306,24 +306,24 @@ impl DenoRunner {
 
         container_envs.push(String::from("-e"));
         container_envs.push(format!(
-            "SHINKAI_NODE_LOCATION={}://host.docker.internal:{}",
+            "HANZO_NODE_LOCATION={}://host.docker.internal:{}",
             self.options.hanzo_node_location.protocol, self.options.hanzo_node_location.port
         ));
 
         container_envs.push(String::from("-e"));
-        container_envs.push(String::from("SHINKAI_HOME=/app/home"));
+        container_envs.push(String::from("HANZO_HOME=/app/home"));
         container_envs.push(String::from("-e"));
-        container_envs.push(format!("SHINKAI_ASSETS={}", mount_assets_env));
+        container_envs.push(format!("HANZO_ASSETS={}", mount_assets_env));
         container_envs.push(String::from("-e"));
-        container_envs.push(format!("SHINKAI_MOUNT={}", mount_env));
+        container_envs.push(format!("HANZO_MOUNT={}", mount_env));
         container_envs.push(String::from("-e"));
         container_envs.push(format!(
-            "SHINKAI_CONTEXT_ID={}",
+            "HANZO_CONTEXT_ID={}",
             self.options.context.context_id
         ));
         container_envs.push(String::from("-e"));
         container_envs.push(format!(
-            "SHINKAI_EXECUTION_ID={}",
+            "HANZO_EXECUTION_ID={}",
             self.options.context.execution_id
         ));
 
@@ -520,7 +520,7 @@ impl DenoRunner {
                 .clone(),
         );
         command.env(
-            "SHINKAI_NODE_LOCATION",
+            "HANZO_NODE_LOCATION",
             format!(
                 "{}://{}:{}",
                 self.options.hanzo_node_location.protocol,
@@ -529,9 +529,9 @@ impl DenoRunner {
             ),
         );
 
-        command.env("SHINKAI_HOME", execution_storage.home_folder_path.clone());
+        command.env("HANZO_HOME", execution_storage.home_folder_path.clone());
         command.env(
-            "SHINKAI_ASSETS",
+            "HANZO_ASSETS",
             self.options
                 .context
                 .assets_files
@@ -541,7 +541,7 @@ impl DenoRunner {
                 .join(","),
         );
         command.env(
-            "SHINKAI_MOUNT",
+            "HANZO_MOUNT",
             self.options
                 .context
                 .mount_files
@@ -552,11 +552,11 @@ impl DenoRunner {
         );
 
         command.env(
-            "SHINKAI_CONTEXT_ID",
+            "HANZO_CONTEXT_ID",
             self.options.context.context_id.clone(),
         );
         command.env(
-            "SHINKAI_EXECUTION_ID",
+            "HANZO_EXECUTION_ID",
             self.options.context.execution_id.clone(),
         );
 
