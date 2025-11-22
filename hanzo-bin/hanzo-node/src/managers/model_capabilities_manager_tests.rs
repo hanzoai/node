@@ -4,7 +4,7 @@
 mod tests {
     use std::fs;
 
-    use hanzo_message_primitives::schemas::llm_message::LlmMessage;
+    use hanzo_messages::schemas::llm_message::LlmMessage;
 
     use crate::managers::model_capabilities_manager::ModelCapabilitiesManager;
 

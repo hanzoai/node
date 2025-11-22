@@ -1,5 +1,5 @@
 [package]
-name = "hanzo_mining"
+name = "hanzo-mining"
 version.workspace = true
 edition.workspace = true
 authors.workspace = true

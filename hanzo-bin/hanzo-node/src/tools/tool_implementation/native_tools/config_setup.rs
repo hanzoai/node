@@ -1,15 +1,15 @@
-use hanzo_sqlite::SqliteManager;
-use hanzo_tools_primitives::tools::parameters::Parameters;
-use hanzo_tools_primitives::tools::{hanzo_tool::HanzoToolHeader, tool_output_arg::ToolOutputArg};
+use hanzo_db_sqlite::SqliteManager;
+use hanzo_tools::tools::parameters::Parameters;
+use hanzo_tools::tools::{hanzo_tool::HanzoToolHeader, tool_output_arg::ToolOutputArg};
 use std::sync::Arc;
 
 use serde_json::{json, Map, Value};
-use hanzo_tools_primitives::tools::error::ToolError;
-use hanzo_tools_primitives::tools::tool_config::ToolConfig;
+use hanzo_tools::tools::error::ToolError;
+use hanzo_tools::tools::tool_config::ToolConfig;
 
 use ed25519_dalek::SigningKey;
 
-use hanzo_message_primitives::schemas::hanzo_name::HanzoName;
+use hanzo_messages::schemas::hanzo_name::HanzoName;
 
 use x25519_dalek::PublicKey as EncryptionPublicKey;
 use x25519_dalek::StaticSecret as EncryptionStaticKey;
@@ -104,10 +104,10 @@ async fn config_update(
     }
     // Update the tool's config based on its type
     match &mut tool {
-        hanzo_tools_primitives::tools::hanzo_tool::HanzoTool::Deno(deno_tool, _) => {
+        hanzo_tools::tools::hanzo_tool::HanzoTool::Deno(deno_tool, _) => {
             deno_tool.config = new_configs;
         }
-        hanzo_tools_primitives::tools::hanzo_tool::HanzoTool::Python(python_tool, _) => {
+        hanzo_tools::tools::hanzo_tool::HanzoTool::Python(python_tool, _) => {
             python_tool.config = new_configs;
         }
         _ => {
@@ -308,11 +308,11 @@ impl ToolExecutor for ConfigSetupTool {
 mod tests {
     use super::*;
 
-    use hanzo_embedding::model_type::{EmbeddingModelType, OllamaTextEmbeddingsInference};
-    use hanzo_message_primitives::schemas::tool_router_key::ToolRouterKey;
-    use hanzo_tools_primitives::tools::tool_config::BasicConfig;
-    use hanzo_tools_primitives::tools::tool_types::{OperatingSystem, RunnerType, ToolResult};
-    use hanzo_tools_primitives::tools::{deno_tools::DenoTool, hanzo_tool::HanzoTool};
+    use hanzo_embed::model_type::{EmbeddingModelType, OllamaTextEmbeddingsInference};
+    use hanzo_messages::schemas::tool_router_key::ToolRouterKey;
+    use hanzo_tools::tools::tool_config::BasicConfig;
+    use hanzo_tools::tools::tool_types::{OperatingSystem, RunnerType, ToolResult};
+    use hanzo_tools::tools::{deno_tools::DenoTool, hanzo_tool::HanzoTool};
     use std::path::PathBuf;
     use std::sync::Arc;
     use tempfile::NamedTempFile;

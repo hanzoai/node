@@ -5,7 +5,7 @@ use reqwest::StatusCode;
 use serde::de::DeserializeOwned;
 
 use hanzo_http_api::node_api_router::APIError;
-use hanzo_message_primitives::{
+use hanzo_messages::{
     schemas::{identity::Identity, hanzo_name::HanzoName},
     hanzo_message::{hanzo_message::HanzoMessage, hanzo_message_schemas::MessageSchemaType},
 };

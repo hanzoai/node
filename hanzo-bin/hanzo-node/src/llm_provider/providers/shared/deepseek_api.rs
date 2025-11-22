@@ -4,9 +4,9 @@
 use crate::llm_provider::error::LLMProviderError;
 use crate::llm_provider::providers::shared::openai_api;
 use crate::managers::model_capabilities_manager::{ModelCapabilitiesManager, PromptResult, PromptResultEnum};
-use hanzo_message_primitives::schemas::llm_providers::serialized_llm_provider::LLMProviderInterface;
-use hanzo_message_primitives::schemas::prompts::Prompt;
-use hanzo_message_primitives::schemas::subprompts::{SubPrompt, SubPromptType};
+use hanzo_messages::schemas::llm_providers::serialized_llm_provider::LLMProviderInterface;
+use hanzo_messages::schemas::prompts::Prompt;
+use hanzo_messages::schemas::subprompts::{SubPrompt, SubPromptType};
 
 // DeepSeek is compatible with the OpenAI API, so we reuse its message
 // preparation and response handling logic.
@@ -91,8 +91,8 @@ mod tests {
     use super::*;
     use uuid::Uuid;
 
-    use hanzo_message_primitives::schemas::llm_providers::serialized_llm_provider::DeepSeek;
-    use hanzo_message_primitives::schemas::subprompts::{SubPrompt, SubPromptType};
+    use hanzo_messages::schemas::llm_providers::serialized_llm_provider::DeepSeek;
+    use hanzo_messages::schemas::subprompts::{SubPrompt, SubPromptType};
 
     #[test]
     fn test_deepseek_prepare_messages() {

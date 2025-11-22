@@ -1,11 +1,11 @@
 use std::sync::{Arc, Weak};
 
-use hanzo_message_primitives::{
+use hanzo_messages::{
     schemas::{identity::StandardIdentity, hanzo_proxy_builder_info::HanzoProxyBuilderInfo},
     hanzo_message::hanzo_message::HanzoMessage,
     hanzo_utils::hanzo_logging::{hanzo_log, HanzoLogLevel, HanzoLogOption},
 };
-use hanzo_sqlite::SqliteManager;
+use hanzo_db_sqlite::SqliteManager;
 use tokio::sync::Mutex;
 
 use crate::{managers::identity_manager::IdentityManagerTrait, network::libp2p_manager::NetworkEvent};

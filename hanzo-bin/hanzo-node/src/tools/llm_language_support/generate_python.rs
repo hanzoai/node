@@ -1,6 +1,6 @@
 use super::language_helpers::to_snake_case;
 use serde_json::Value;
-use hanzo_tools_primitives::tools::{
+use hanzo_tools::tools::{
     hanzo_tool::HanzoToolHeader,
     tool_playground::{SqlQuery, SqlTable},
     tool_types::ToolResult,
@@ -303,7 +303,7 @@ pub fn generate_python_definition(
         if generate_pyi {
             python_output.push_str("    pass\n");
         } else {
-            python_output.push_str("    return hanzo_sqlite_query_executor({'query': query, 'params': params})\n");
+            python_output.push_str("    return hanzo_db_sqlite_query_executor({'query': query, 'params': params})\n");
         }
     }
 
@@ -314,7 +314,7 @@ pub fn generate_python_definition(
 mod tests {
     use super::*;
     use serde_json::json;
-    use hanzo_tools_primitives::tools::parameters::{Parameters, Property};
+    use hanzo_tools::tools::parameters::{Parameters, Property};
 
     #[test]
     fn test_generate_python_definition() {
@@ -342,7 +342,7 @@ mod tests {
                 params.required.push("string_param".to_string());
                 params
             },
-            output_arg: hanzo_tools_primitives::tools::tool_output_arg::ToolOutputArg { json: "{}".to_string() },
+            output_arg: hanzo_tools::tools::tool_output_arg::ToolOutputArg { json: "{}".to_string() },
             config: None,
             usage_type: None,
             tool_offering: None,
@@ -393,7 +393,7 @@ mod tests {
             version: "1.0.0".to_string(),
             enabled: true,
             input_args: Parameters::new(),
-            output_arg: hanzo_tools_primitives::tools::tool_output_arg::ToolOutputArg { json: "{}".to_string() },
+            output_arg: hanzo_tools::tools::tool_output_arg::ToolOutputArg { json: "{}".to_string() },
             config: None,
             usage_type: None,
             tool_offering: None,
@@ -436,7 +436,7 @@ mod tests {
             version: "1.0.0".to_string(),
             enabled: true,
             input_args: Parameters::new(),
-            output_arg: hanzo_tools_primitives::tools::tool_output_arg::ToolOutputArg { json: "{}".to_string() },
+            output_arg: hanzo_tools::tools::tool_output_arg::ToolOutputArg { json: "{}".to_string() },
             config: None,
             usage_type: None,
             tool_offering: None,

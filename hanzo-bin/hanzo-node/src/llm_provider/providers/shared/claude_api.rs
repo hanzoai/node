@@ -4,9 +4,9 @@ use crate::managers::model_capabilities_manager::ModelCapabilitiesManager;
 use crate::managers::model_capabilities_manager::PromptResult;
 use crate::managers::model_capabilities_manager::PromptResultEnum;
 use serde_json::{self};
-use hanzo_message_primitives::schemas::llm_message::LlmMessage;
-use hanzo_message_primitives::schemas::llm_providers::serialized_llm_provider::LLMProviderInterface;
-use hanzo_message_primitives::schemas::prompts::Prompt;
+use hanzo_messages::schemas::llm_message::LlmMessage;
+use hanzo_messages::schemas::llm_providers::serialized_llm_provider::LLMProviderInterface;
+use hanzo_messages::schemas::prompts::Prompt;
 use std::collections::HashMap;
 use uuid::Uuid;
 
@@ -254,7 +254,7 @@ mod tests {
     use super::*;
     use regex::Regex;
     use serde_json::json;
-    use hanzo_message_primitives::schemas::{
+    use hanzo_messages::schemas::{
         llm_message::DetailedFunctionCall,
         llm_providers::serialized_llm_provider::{Claude, SerializedLLMProvider},
         subprompts::{SubPrompt, SubPromptType},

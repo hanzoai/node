@@ -1,7 +1,7 @@
 use regex::Error as RegexError;
 use serde_json::Error as SerdeError;
-use hanzo_embedding::hanzo_embedding_errors::HanzoEmbeddingError;
-use hanzo_sqlite::errors::SqliteManagerError;
+use hanzo_embed::hanzo_embedding_errors::HanzoEmbeddingError;
+use hanzo_db_sqlite::errors::SqliteManagerError;
 use std::io;
 use thiserror::Error;
 

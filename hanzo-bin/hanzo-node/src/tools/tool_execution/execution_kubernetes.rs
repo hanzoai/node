@@ -22,10 +22,10 @@ use tokio::time::timeout;
 use futures::{Stream, StreamExt, TryStreamExt};
 use tokio::io::AsyncBufReadExt;
 use base64::Engine;
-use hanzo_tools_primitives::tools::kubernetes_tools::{KubernetesTool, K8sResourceRequirements as ToolK8sResourceRequirements};
-use hanzo_tools_primitives::tools::tool_config::ToolConfig;
-use hanzo_tools_primitives::tools::error::ToolError;
-use hanzo_message_primitives::schemas::hanzo_name::HanzoName;
+use hanzo_tools::tools::kubernetes_tools::{KubernetesTool, K8sResourceRequirements as ToolK8sResourceRequirements};
+use hanzo_tools::tools::tool_config::ToolConfig;
+use hanzo_tools::tools::error::ToolError;
+use hanzo_messages::schemas::hanzo_name::HanzoName;
 
 /// Simple result structure for Kubernetes tool execution
 #[derive(Debug)]
@@ -683,7 +683,7 @@ mod tests {
 
     #[tokio::test]
     async fn test_k8s_config_extraction() {
-        use hanzo_tools_primitives::tools::tool_config::BasicConfig;
+        use hanzo_tools::tools::tool_config::BasicConfig;
 
         let config = vec![
             ToolConfig::BasicConfig(BasicConfig {

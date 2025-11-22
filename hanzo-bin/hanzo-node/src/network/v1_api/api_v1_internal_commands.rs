@@ -12,16 +12,16 @@ use log::{error, info};
 use hanzo_fs;
 
 use hanzo_fs::hanzo_file_manager::HanzoFileManager;
-use hanzo_message_primitives::schemas::identity::{Identity, StandardIdentity};
-use hanzo_message_primitives::schemas::inbox_permission::InboxPermission;
-use hanzo_message_primitives::schemas::smart_inbox::SmartInbox;
-use hanzo_message_primitives::schemas::ws_types::WSUpdateHandler;
-use hanzo_message_primitives::hanzo_message::hanzo_message_schemas::JobCreationInfo;
-use hanzo_message_primitives::hanzo_utils::job_scope::MinimalJobScope;
-use hanzo_message_primitives::hanzo_utils::search_mode::VectorSearchMode;
-use hanzo_message_primitives::hanzo_utils::hanzo_message_builder::HanzoMessageBuilder;
-use hanzo_message_primitives::hanzo_utils::hanzo_path::HanzoPath;
-use hanzo_message_primitives::{
+use hanzo_messages::schemas::identity::{Identity, StandardIdentity};
+use hanzo_messages::schemas::inbox_permission::InboxPermission;
+use hanzo_messages::schemas::smart_inbox::SmartInbox;
+use hanzo_messages::schemas::ws_types::WSUpdateHandler;
+use hanzo_messages::hanzo_message::hanzo_message_schemas::JobCreationInfo;
+use hanzo_messages::hanzo_utils::job_scope::MinimalJobScope;
+use hanzo_messages::hanzo_utils::search_mode::VectorSearchMode;
+use hanzo_messages::hanzo_utils::hanzo_message_builder::HanzoMessageBuilder;
+use hanzo_messages::hanzo_utils::hanzo_path::HanzoPath;
+use hanzo_messages::{
     schemas::{
         inbox_name::InboxName,
         llm_providers::serialized_llm_provider::{LLMProviderInterface, Ollama, SerializedLLMProvider},
@@ -33,8 +33,8 @@ use hanzo_message_primitives::{
         signatures::clone_signature_secret_key,
     },
 };
-use hanzo_sqlite::errors::SqliteManagerError;
-use hanzo_sqlite::SqliteManager;
+use hanzo_db_sqlite::errors::SqliteManagerError;
+use hanzo_db_sqlite::SqliteManager;
 use std::{io::Error, net::SocketAddr};
 use std::{str::FromStr, sync::Arc};
 use tokio::sync::Mutex;

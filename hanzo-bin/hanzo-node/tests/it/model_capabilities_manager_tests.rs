@@ -1,9 +1,9 @@
 #[cfg(test)]
 mod tests {
-    use hanzo_message_primitives::schemas::llm_providers::serialized_llm_provider::{
+    use hanzo_messages::schemas::llm_providers::serialized_llm_provider::{
         LLMProviderInterface, OpenAI, SerializedLLMProvider,
     };
-    use hanzo_message_primitives::schemas::hanzo_name::HanzoName;
+    use hanzo_messages::schemas::hanzo_name::HanzoName;
 
     use hanzo_node::managers::model_capabilities_manager::{
         ModelCapabilitiesManager, ModelCapability, ModelCost, ModelPrivacy,
@@ -12,8 +12,8 @@ mod tests {
     use std::path::PathBuf;
     use std::sync::Arc;
 
-    use hanzo_embedding::model_type::{EmbeddingModelType, OllamaTextEmbeddingsInference};
-    use hanzo_sqlite::SqliteManager;
+    use hanzo_embed::model_type::{EmbeddingModelType, OllamaTextEmbeddingsInference};
+    use hanzo_db_sqlite::SqliteManager;
     use tempfile::NamedTempFile;
 
     fn setup_test_db() -> SqliteManager {

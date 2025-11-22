@@ -5,12 +5,12 @@ use std::time::SystemTime;
 use chrono::{DateTime, Utc};
 use serde::Serializer;
 use serde::{Deserialize, Serialize};
-use hanzo_embedding::embedding_generator::EmbeddingGenerator;
-use hanzo_message_primitives::schemas::hanzo_fs::{ParsedFile, HanzoFileChunk};
-use hanzo_message_primitives::hanzo_utils::hanzo_path::HanzoPath;
-use hanzo_message_primitives::hanzo_utils::utils::count_tokens_from_message_llama3;
-use hanzo_sqlite::errors::SqliteManagerError;
-use hanzo_sqlite::SqliteManager;
+use hanzo_embed::embedding_generator::EmbeddingGenerator;
+use hanzo_messages::schemas::hanzo_fs::{ParsedFile, HanzoFileChunk};
+use hanzo_messages::hanzo_utils::hanzo_path::HanzoPath;
+use hanzo_messages::hanzo_utils::utils::count_tokens_from_message_llama3;
+use hanzo_db_sqlite::errors::SqliteManagerError;
+use hanzo_db_sqlite::SqliteManager;
 use utoipa::ToSchema;
 
 use crate::hanzo_fs_error::HanzoFsError;
@@ -662,10 +662,10 @@ where
 mod tests {
     use super::*;
     use serial_test::serial;
-    use hanzo_embedding::mock_generator::MockGenerator;
-    use hanzo_embedding::model_type::EmbeddingModelType;
-    use hanzo_message_primitives::schemas::hanzo_fs::ParsedFile;
-    use hanzo_message_primitives::hanzo_utils::job_scope::MinimalJobScope;
+    use hanzo_embed::mock_generator::MockGenerator;
+    use hanzo_embed::model_type::EmbeddingModelType;
+    use hanzo_messages::schemas::hanzo_fs::ParsedFile;
+    use hanzo_messages::hanzo_utils::job_scope::MinimalJobScope;
     use std::fs::{self, File};
     use std::io::Write;
     use std::path::{Path, PathBuf};

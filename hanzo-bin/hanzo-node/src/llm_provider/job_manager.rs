@@ -7,14 +7,14 @@ use crate::network::agent_payments_manager::external_agent_offerings_manager::Ex
 use crate::network::agent_payments_manager::my_agent_offerings_manager::MyAgentOfferingsManager;
 use ed25519_dalek::SigningKey;
 use futures::Future;
-use hanzo_embedding::embedding_generator::RemoteEmbeddingGenerator;
+use hanzo_embed::embedding_generator::RemoteEmbeddingGenerator;
 use hanzo_fs::hanzo_file_manager::HanzoFileManager;
 use hanzo_job_queue_manager::job_queue_manager::{JobForProcessing, JobQueueManager};
-use hanzo_message_primitives::schemas::inbox_name::InboxName;
-use hanzo_message_primitives::schemas::job::JobLike;
-use hanzo_message_primitives::schemas::ws_types::WSUpdateHandler;
-use hanzo_message_primitives::hanzo_utils::hanzo_logging::{hanzo_log, HanzoLogLevel, HanzoLogOption};
-use hanzo_message_primitives::{
+use hanzo_messages::schemas::inbox_name::InboxName;
+use hanzo_messages::schemas::job::JobLike;
+use hanzo_messages::schemas::ws_types::WSUpdateHandler;
+use hanzo_messages::hanzo_utils::hanzo_logging::{hanzo_log, HanzoLogLevel, HanzoLogOption};
+use hanzo_messages::{
     schemas::hanzo_name::HanzoName,
     hanzo_message::{
         hanzo_message::{MessageBody, MessageData, HanzoMessage},
@@ -22,7 +22,7 @@ use hanzo_message_primitives::{
     },
     hanzo_utils::signatures::clone_signature_secret_key,
 };
-use hanzo_sqlite::SqliteManager;
+use hanzo_db_sqlite::SqliteManager;
 use std::collections::HashSet;
 use std::env;
 use std::pin::Pin;

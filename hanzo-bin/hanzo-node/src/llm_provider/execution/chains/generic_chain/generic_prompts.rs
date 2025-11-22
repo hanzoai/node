@@ -1,17 +1,17 @@
 use serde_json::json;
 use hanzo_fs::hanzo_file_manager::HanzoFileManager;
-use hanzo_sqlite::SqliteManager;
+use hanzo_db_sqlite::SqliteManager;
 use std::collections::{HashMap, HashSet};
 
 use crate::llm_provider::execution::prompts::general_prompts::JobPromptGenerator;
 use crate::managers::tool_router::ToolCallFunctionResponse;
 
 use crate::tools::tool_implementation::native_tools::sql_processor::get_current_tables;
-use hanzo_message_primitives::schemas::prompts::Prompt;
-use hanzo_message_primitives::schemas::hanzo_fs::HanzoFileChunkCollection;
-use hanzo_message_primitives::schemas::subprompts::SubPromptType;
-use hanzo_message_primitives::hanzo_message::hanzo_message::HanzoMessage;
-use hanzo_tools_primitives::tools::hanzo_tool::HanzoTool;
+use hanzo_messages::schemas::prompts::Prompt;
+use hanzo_messages::schemas::hanzo_fs::HanzoFileChunkCollection;
+use hanzo_messages::schemas::subprompts::SubPromptType;
+use hanzo_messages::hanzo_message::hanzo_message::HanzoMessage;
+use hanzo_tools::tools::hanzo_tool::HanzoTool;
 use std::sync::Arc;
 
 impl JobPromptGenerator {
@@ -58,7 +58,7 @@ impl JobPromptGenerator {
                     match tool_content.get("function") {
                         Some(function) => {
                             let tool_router_key = function["tool_router_key"].as_str().unwrap_or("");
-                            if tool_router_key == "local:::__official_hanzo:::hanzo_sqlite_query_executor" {
+                            if tool_router_key == "local:::__official_hanzo:::hanzo_db_sqlite_query_executor" {
                                 let job_id_clone = job_id.clone();
                                 if let Ok(current_tables) = get_current_tables(job_id_clone).await {
                                     if !current_tables.is_empty() {

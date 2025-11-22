@@ -7,7 +7,7 @@ use hanzo_node::security::{TEEAttestation, AttestationCache, PrivacyTier};
 use hanzo_node::managers::{NodeManager, JobQueueManager};
 use hanzo_kbs::{AttestationReport, TEEEnvironment};
 use hanzo_wasm_runtime::WasmRuntime;
-use hanzo_sqlite::Database;
+use hanzo_db_sqlite::Database;
 use std::sync::Arc;
 use tokio::sync::RwLock;
 use tokio::runtime::Runtime;

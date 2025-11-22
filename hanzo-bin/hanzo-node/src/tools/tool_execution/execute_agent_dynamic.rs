@@ -5,9 +5,9 @@ use crate::tools::agent_execution::v2_create_and_send_job_message_for_agent;
 use crate::tools::tool_generation::v2_send_basic_job_message_for_existing_job;
 use ed25519_dalek::SigningKey;
 use serde_json::{Map, Value};
-use hanzo_message_primitives::schemas::{inbox_name::InboxName, hanzo_name::HanzoName};
-use hanzo_sqlite::SqliteManager;
-use hanzo_tools_primitives::tools::error::ToolError;
+use hanzo_messages::schemas::{inbox_name::InboxName, hanzo_name::HanzoName};
+use hanzo_db_sqlite::SqliteManager;
+use hanzo_tools::tools::error::ToolError;
 use std::sync::Arc;
 use tokio::{
     sync::Mutex,

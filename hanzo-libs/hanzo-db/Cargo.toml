@@ -1,5 +1,5 @@
 [package]
-name = "hanzo_db"
+name = "hanzo-db"
 version = { workspace = true }
 edition = { workspace = true }
 authors = { workspace = true }
@@ -53,8 +53,8 @@ sqlx = { version = "0.8", features = ["postgres", "runtime-tokio-rustls", "sqlit
 redis = { version = "0.25", features = ["aio", "tokio-comp"], optional = true }
 
 # Hanzo dependencies
-hanzo_message_primitives = { workspace = true }
-hanzo_embedding = { workspace = true }
+hanzo-messages = { workspace = true }
+hanzo-embed = { workspace = true }
 
 [dev-dependencies]
 tokio-test = { workspace = true }

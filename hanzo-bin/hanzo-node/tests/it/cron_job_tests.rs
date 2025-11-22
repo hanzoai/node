@@ -3,7 +3,7 @@
 //     use core::panic;
 //     use ed25519_dalek::SigningKey;
 //     use futures::Future;
-//     use hanzo_message_primitives::{
+//     use hanzo_messages::{
 //         schemas::{
 //             llm_providers::serialized_llm_provider::{LLMProviderInterface, OpenAI, SerializedLLMProvider},
 //             hanzo_name::HanzoName,

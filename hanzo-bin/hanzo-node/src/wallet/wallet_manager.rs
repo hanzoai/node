@@ -2,7 +2,7 @@ use std::sync::Arc;
 
 use chrono::Utc;
 use serde::{ser::SerializeStruct, Deserialize, Deserializer, Serialize, Serializer};
-use hanzo_message_primitives::schemas::{
+use hanzo_messages::schemas::{
     coinbase_mpc_config::CoinbaseMPCWalletConfig,
     invoices::{Invoice, Payment, PaymentStatusEnum},
     hanzo_name::HanzoName,
@@ -11,7 +11,7 @@ use hanzo_message_primitives::schemas::{
     wallet_mixed::{Asset, Balance, PublicAddress},
     x402_types::Network,
 };
-use hanzo_sqlite::SqliteManager;
+use hanzo_db_sqlite::SqliteManager;
 use uuid::Uuid;
 
 use super::{
@@ -134,7 +134,7 @@ impl WalletManager {
     pub async fn check_balances_payment_wallet(
         &self,
         node_name: HanzoName,
-    ) -> Result<hanzo_message_primitives::schemas::wallet_mixed::AddressBalanceList, WalletError> {
+    ) -> Result<hanzo_messages::schemas::wallet_mixed::AddressBalanceList, WalletError> {
         self.payment_wallet.check_balances(node_name).await
     }
 

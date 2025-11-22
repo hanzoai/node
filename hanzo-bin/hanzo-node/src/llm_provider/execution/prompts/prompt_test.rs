@@ -1,11 +1,11 @@
 #[cfg(test)]
 mod tests {
-    use hanzo_message_primitives::schemas::{
+    use hanzo_messages::schemas::{
         llm_message::{DetailedFunctionCall, FunctionDetails, FunctionParameters, LlmMessage},
         prompts::Prompt,
         subprompts::{SubPrompt, SubPromptType},
     };
-    use hanzo_tools_primitives::tools::{
+    use hanzo_tools::tools::{
         parameters::Parameters, rust_tools::RustTool, hanzo_tool::HanzoTool, tool_output_arg::ToolOutputArg,
     };
 

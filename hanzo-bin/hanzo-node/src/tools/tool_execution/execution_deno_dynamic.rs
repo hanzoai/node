@@ -2,18 +2,18 @@ use std::collections::HashMap;
 use std::path::PathBuf;
 
 use serde_json::{Map, Value};
-use hanzo_message_primitives::schemas::hanzo_name::HanzoName;
-use hanzo_message_primitives::schemas::tool_router_key::ToolRouterKey;
-use hanzo_tools_primitives::tools::deno_tools::DenoTool;
-use hanzo_tools_primitives::tools::error::ToolError;
-use hanzo_tools_primitives::tools::parameters::Parameters;
-use hanzo_tools_primitives::tools::tool_config::{OAuth, ToolConfig};
-use hanzo_tools_primitives::tools::tool_output_arg::ToolOutputArg;
-use hanzo_tools_primitives::tools::tool_types::{OperatingSystem, RunnerType, ToolResult};
+use hanzo_messages::schemas::hanzo_name::HanzoName;
+use hanzo_messages::schemas::tool_router_key::ToolRouterKey;
+use hanzo_tools::tools::deno_tools::DenoTool;
+use hanzo_tools::tools::error::ToolError;
+use hanzo_tools::tools::parameters::Parameters;
+use hanzo_tools::tools::tool_config::{OAuth, ToolConfig};
+use hanzo_tools::tools::tool_output_arg::ToolOutputArg;
+use hanzo_tools::tools::tool_types::{OperatingSystem, RunnerType, ToolResult};
 
 use super::execution_header_generator::{check_tool, generate_execution_environment};
 use crate::utils::environment::fetch_node_environment;
-use hanzo_sqlite::SqliteManager;
+use hanzo_db_sqlite::SqliteManager;
 use std::sync::Arc;
 
 pub async fn execute_deno_tool(

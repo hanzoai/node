@@ -16,17 +16,17 @@ use reqwest::Client;
 use serde_json::json;
 use serde_json::{Map, Value};
 use sha2::{Digest, Sha256};
-use hanzo_message_primitives::schemas::llm_providers::agent::Agent;
-use hanzo_message_primitives::schemas::hanzo_name::HanzoName;
-use hanzo_message_primitives::schemas::hanzo_tools::CodeLanguage;
-use hanzo_message_primitives::schemas::hanzo_tools::DynamicToolType;
-use hanzo_message_primitives::schemas::tool_router_key::ToolRouterKey;
-use hanzo_sqlite::oauth_manager::OAuthToken;
-use hanzo_sqlite::SqliteManager;
-use hanzo_tools_primitives::tools::error::ToolError;
-use hanzo_tools_primitives::tools::hanzo_tool::HanzoTool;
-use hanzo_tools_primitives::tools::tool_config::{BasicConfig, OAuth, ToolConfig};
-use hanzo_tools_primitives::tools::tool_types::{OperatingSystem, RunnerType};
+use hanzo_messages::schemas::llm_providers::agent::Agent;
+use hanzo_messages::schemas::hanzo_name::HanzoName;
+use hanzo_messages::schemas::hanzo_tools::CodeLanguage;
+use hanzo_messages::schemas::hanzo_tools::DynamicToolType;
+use hanzo_messages::schemas::tool_router_key::ToolRouterKey;
+use hanzo_db_sqlite::oauth_manager::OAuthToken;
+use hanzo_db_sqlite::SqliteManager;
+use hanzo_tools::tools::error::ToolError;
+use hanzo_tools::tools::hanzo_tool::HanzoTool;
+use hanzo_tools::tools::tool_config::{BasicConfig, OAuth, ToolConfig};
+use hanzo_tools::tools::tool_types::{OperatingSystem, RunnerType};
 use std::collections::HashMap;
 use std::sync::Arc;
 use tokio::sync::Mutex;
@@ -754,7 +754,7 @@ fn extract_fenced_code_blocks(unfiltered_code: &str) -> Vec<String> {
 
 #[cfg(test)]
 mod tests {
-    use hanzo_message_primitives::hanzo_utils::job_scope::MinimalJobScope;
+    use hanzo_messages::hanzo_utils::job_scope::MinimalJobScope;
 
     use super::*;
 

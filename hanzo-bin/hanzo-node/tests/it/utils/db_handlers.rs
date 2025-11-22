@@ -1,9 +1,9 @@
 use std::fs;
 use std::path::{Path, PathBuf};
 
-use hanzo_embedding::model_type::{EmbeddingModelType, OllamaTextEmbeddingsInference};
-use hanzo_message_primitives::hanzo_utils::hanzo_path::HanzoPath;
-use hanzo_sqlite::SqliteManager;
+use hanzo_embed::model_type::{EmbeddingModelType, OllamaTextEmbeddingsInference};
+use hanzo_messages::hanzo_utils::hanzo_path::HanzoPath;
+use hanzo_db_sqlite::SqliteManager;
 use tempfile::NamedTempFile;
 
 pub fn setup() {

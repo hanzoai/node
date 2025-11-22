@@ -15,12 +15,12 @@ use libp2p::{
 };
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
-use hanzo_crypto_identities::HanzoRegistry;
-use hanzo_message_primitives::schemas::agent_network_offering::AgentNetworkOfferingRequest;
-use hanzo_message_primitives::hanzo_message::hanzo_message::{MessageBody, MessageData, HanzoMessage};
-use hanzo_message_primitives::hanzo_message::hanzo_message_schemas::MessageSchemaType;
-use hanzo_message_primitives::hanzo_utils::encryption::encryption_public_key_to_string;
-use hanzo_message_primitives::hanzo_utils::hanzo_message_builder::HanzoMessageBuilder;
+use hanzo_identity::HanzoRegistry;
+use hanzo_messages::schemas::agent_network_offering::AgentNetworkOfferingRequest;
+use hanzo_messages::hanzo_message::hanzo_message::{MessageBody, MessageData, HanzoMessage};
+use hanzo_messages::hanzo_message::hanzo_message_schemas::MessageSchemaType;
+use hanzo_messages::hanzo_utils::encryption::encryption_public_key_to_string;
+use hanzo_messages::hanzo_utils::hanzo_message_builder::HanzoMessageBuilder;
 use std::time::{Duration, Instant, SystemTime};
 use x25519_dalek::StaticSecret as EncryptionStaticKey;
 
@@ -180,7 +180,7 @@ pub struct RelayManager {
     idle_timeout: Duration,
     max_ping_failures: u32,
     // Identity verification caching
-    identity_cache: DashMap<String, (hanzo_crypto_identities::OnchainIdentity, Instant)>,
+    identity_cache: DashMap<String, (hanzo_identity::OnchainIdentity, Instant)>,
     cache_ttl: Duration,
     // HTTP client for status updates
     http_client: reqwest::Client,
@@ -633,7 +633,7 @@ impl RelayManager {
 
             // Get the node's encryption public key from blockchain registry
             let node_name = if let Ok(parsed_name) =
-                hanzo_message_primitives::schemas::hanzo_name::HanzoName::new(identity.clone())
+                hanzo_messages::schemas::hanzo_name::HanzoName::new(identity.clone())
             {
                 parsed_name.get_node_name_string()
             } else {
@@ -642,7 +642,7 @@ impl RelayManager {
 
             let node_encryption_public_key = match self.registry.get_identity_record(node_name.clone(), None).await {
                 Ok(identity_record) => {
-                    match hanzo_message_primitives::hanzo_utils::encryption::string_to_encryption_public_key(
+                    match hanzo_messages::hanzo_utils::encryption::string_to_encryption_public_key(
                         &identity_record.encryption_key,
                     ) {
                         Ok(key) => key,
@@ -686,7 +686,7 @@ impl RelayManager {
             .internal_metadata(
                 "main".to_string(),
                 "main".to_string(),
-                hanzo_message_primitives::hanzo_utils::encryption::EncryptionMethod::None,
+                hanzo_messages::hanzo_utils::encryption::EncryptionMethod::None,
                 None,
             )
             .external_metadata(identity.clone(), self.config.relay_node_name.clone())
@@ -1262,7 +1262,7 @@ impl RelayManager {
                                 // Try to find the target peer by their identity
                                 let target_identity = &request.external_metadata.recipient;
                                 let target_node = if let Ok(parsed_name) =
-                                    hanzo_message_primitives::schemas::hanzo_name::HanzoName::new(
+                                    hanzo_messages::schemas::hanzo_name::HanzoName::new(
                                         target_identity.clone(),
                                     ) {
                                     parsed_name.get_node_name_string()
@@ -1546,7 +1546,7 @@ impl RelayManager {
         // Get sender's encryption key from registry or use other field for localhost
         let sender_enc_key = if sender_identity.contains("localhost") {
             println!("🔑 Relay: Using other field for localhost sender");
-            match hanzo_message_primitives::hanzo_utils::encryption::string_to_encryption_public_key(
+            match hanzo_messages::hanzo_utils::encryption::string_to_encryption_public_key(
                 &request.external_metadata.other,
             ) {
                 Ok(key) => key,
@@ -1562,7 +1562,7 @@ impl RelayManager {
             // For registered nodes, get from blockchain registry
             match self.registry.get_identity_record(sender_identity.clone(), None).await {
                 Ok(identity_record) => {
-                    match hanzo_message_primitives::hanzo_utils::encryption::string_to_encryption_public_key(
+                    match hanzo_messages::hanzo_utils::encryption::string_to_encryption_public_key(
                         &identity_record.encryption_key,
                     ) {
                         Ok(key) => key,
@@ -1684,12 +1684,12 @@ impl RelayManager {
 
         // Check if the response is encrypted and needs decryption
         let decrypted_response = if response.encryption
-            != hanzo_message_primitives::hanzo_utils::encryption::EncryptionMethod::None
+            != hanzo_messages::hanzo_utils::encryption::EncryptionMethod::None
         {
             // Get sender's encryption key for decryption
             let sender_enc_key = if sender_identity.contains("localhost") {
                 println!("🔑 Relay: Using other field for localhost sender");
-                match hanzo_message_primitives::hanzo_utils::encryption::string_to_encryption_public_key(
+                match hanzo_messages::hanzo_utils::encryption::string_to_encryption_public_key(
                     &response.external_metadata.other,
                 ) {
                     Ok(key) => key,
@@ -1705,7 +1705,7 @@ impl RelayManager {
                 // For registered nodes, get from blockchain registry
                 match self.registry.get_identity_record(sender_identity.clone(), None).await {
                     Ok(identity_record) => {
-                        match hanzo_message_primitives::hanzo_utils::encryption::string_to_encryption_public_key(
+                        match hanzo_messages::hanzo_utils::encryption::string_to_encryption_public_key(
                             &identity_record.encryption_key,
                         ) {
                             Ok(key) => key,
@@ -1775,7 +1775,7 @@ impl RelayManager {
     async fn relay_message_encryption(&mut self, request: &mut HanzoMessage, target_node: &String) {
         // Parse recipient name
         let recipient_name =
-            match hanzo_message_primitives::schemas::hanzo_name::HanzoName::new(target_node.clone()) {
+            match hanzo_messages::schemas::hanzo_name::HanzoName::new(target_node.clone()) {
                 Ok(name) => name,
                 Err(_) => {
                     println!("❌ Relay: Failed to parse recipient name");
@@ -1789,7 +1789,7 @@ impl RelayManager {
         let recipient_enc_key = if target_node.contains("localhost") {
             println!("🔑 Relay: Using other field for localhost node");
             // Parse recipient's encryption key
-            match hanzo_message_primitives::hanzo_utils::encryption::string_to_encryption_public_key(
+            match hanzo_messages::hanzo_utils::encryption::string_to_encryption_public_key(
                 &request.external_metadata.other,
             ) {
                 Ok(key) => key,
@@ -1814,7 +1814,7 @@ impl RelayManager {
             };
 
             // Parse recipient's encryption key
-            match hanzo_message_primitives::hanzo_utils::encryption::string_to_encryption_public_key(
+            match hanzo_messages::hanzo_utils::encryption::string_to_encryption_public_key(
                 &recipient_identity.encryption_key,
             ) {
                 Ok(key) => key,
@@ -1840,7 +1840,7 @@ impl RelayManager {
 
         // Parse original sender's encryption key
         let original_sender_enc_key =
-            match hanzo_message_primitives::hanzo_utils::encryption::string_to_encryption_public_key(
+            match hanzo_messages::hanzo_utils::encryption::string_to_encryption_public_key(
                 &original_sender_identity.encryption_key,
             ) {
                 Ok(key) => key,

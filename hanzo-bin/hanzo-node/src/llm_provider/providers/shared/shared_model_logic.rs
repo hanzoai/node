@@ -1,20 +1,20 @@
 use base64::engine::general_purpose::STANDARD as BASE64;
 use base64::Engine as _;
-use hanzo_embedding::embedding_generator::RemoteEmbeddingGenerator;
+use hanzo_embed::embedding_generator::RemoteEmbeddingGenerator;
 use hanzo_fs::hanzo_file_manager::{FileProcessingMode, HanzoFileManager};
-use hanzo_message_primitives::{
+use hanzo_messages::{
     schemas::{inbox_name::InboxName, llm_providers::serialized_llm_provider::LLMProviderInterface, prompts::Prompt},
     hanzo_utils::{hanzo_path::HanzoPath, utils::count_tokens_from_message_llama3},
 };
-use hanzo_sqlite::SqliteManager;
+use hanzo_db_sqlite::SqliteManager;
 
 use crate::{
     llm_provider::error::LLMProviderError,
     managers::model_capabilities_manager::{ModelCapabilitiesManager, PromptResult, PromptResultEnum},
 };
-use hanzo_message_primitives::schemas::ws_types::{WSMessageType, WSMetadata, WSUpdateHandler};
-use hanzo_message_primitives::hanzo_message::hanzo_message_schemas::WSTopic;
-use hanzo_message_primitives::hanzo_utils::hanzo_logging::{hanzo_log, HanzoLogLevel, HanzoLogOption};
+use hanzo_messages::schemas::ws_types::{WSMessageType, WSMetadata, WSUpdateHandler};
+use hanzo_messages::hanzo_message::hanzo_message_schemas::WSTopic;
+use hanzo_messages::hanzo_utils::hanzo_logging::{hanzo_log, HanzoLogLevel, HanzoLogOption};
 use std::sync::Arc;
 use tokio::sync::Mutex;
 
@@ -226,9 +226,9 @@ pub async fn send_tool_ws_update_with_status(
     inbox_name: Option<InboxName>,
     function_call: &crate::llm_provider::execution::chains::inference_chain_trait::FunctionCall,
     result: Option<serde_json::Value>,
-    status_type: Option<hanzo_message_primitives::schemas::ws_types::ToolStatusType>,
+    status_type: Option<hanzo_messages::schemas::ws_types::ToolStatusType>,
 ) -> Result<(), LLMProviderError> {
-    use hanzo_message_primitives::schemas::ws_types::{
+    use hanzo_messages::schemas::ws_types::{
         ToolMetadata, ToolStatus, ToolStatusType, WSMessageType, WidgetMetadata,
     };
 

@@ -1,0 +1,78 @@
+[package]
+name = "hanzo-database"
+version = "1.1.11"
+edition = "2021"
+authors = ["Hanzo AI Inc"]
+description = "Multi-backend database abstraction for Hanzo Node - Supports LanceDB, DuckDB, PostgreSQL, and more"
+license = "Apache-2.0"
+repository = "https://github.com/hanzoai/hanzo-node"
+homepage = "https://hanzo.ai"
+keywords = ["database", "vector", "multimodal", "lancedb", "duckdb"]
+categories = ["database", "science"]
+
+[dependencies]
+# Core LanceDB with latest version (currently disabled pending API migration)
+lancedb = { version = "0.22.3", optional = true }
+arrow-array = { version = "55.2", optional = true }
+arrow-schema = { version = "55.2", optional = true }
+arrow-ipc = { version = "55.2", optional = true }
+parquet = { version = "55.2", optional = true }
+
+# Async runtime
+tokio = { version = "1.36", features = ['rt', 'rt-multi-thread', 'macros', 'fs', 'io-util', 'net', 'sync', 'time'] }
+futures = "0.3.30"
+async-trait = "0.1.81"
+
+# Serialization
+serde = { version = "1.0.219", features = ['derive'] }
+serde_json = "1.0.117"
+bincode = "1.3.3"
+
+# Error handling
+anyhow = "1.0.86"
+thiserror = "2.0"
+
+# Utilities
+log = "0.4.20"
+chrono = { version = "0.4", features = ['serde'] }
+uuid = { version = "1.8.0", features = ["v4", "serde"] }
+base64 = "0.22.0"
+blake3 = "1.5"
+
+# Connection pooling
+deadpool = "0.12"
+deadpool-runtime = "0.1"
+
+# Image processing for multimodal
+image = { version = "0.25", optional = true }
+
+# Migration support
+rusqlite = { workspace = true, optional = true }
+
+# Backend-specific dependencies
+duckdb = { version = "0.10", optional = true }
+sqlx = { version = "0.8", features = ["postgres", "runtime-tokio-rustls", "sqlite"], optional = true }
+redis = { version = "0.25", features = ["aio", "tokio-comp"], optional = true }
+
+# Hanzo dependencies
+hanzo-messages = { workspace = true }
+hanzo-embed = { workspace = true }
+
+[dev-dependencies]
+tokio-test = "0.4"
+tempfile = "3.8"
+criterion = "0.5"
+proptest = "1.4"
+env_logger = "0.11"
+
+[features]
+default = []
+multimodal = ["image", "arrow-array", "arrow-schema"]
+migration = ["backend-sqlite"]
+all-backends = ["backend-lancedb", "backend-duckdb", "backend-postgres", "backend-redis", "backend-sqlite"]
+backend-lancedb = ["lancedb", "arrow-array", "arrow-schema", "arrow-ipc", "parquet", "multimodal"]
+backend-duckdb = ["duckdb"]
+backend-postgres = ["sqlx"]
+backend-redis = ["redis"]
+backend-sqlite = ["rusqlite"]
+

@@ -1,7 +1,7 @@
 use async_channel::{bounded, Receiver, Sender};
 use hanzo_http_api::node_commands::NodeCommand;
-use hanzo_message_primitives::hanzo_utils::encryption::unsafe_deterministic_encryption_keypair;
-use hanzo_message_primitives::hanzo_utils::signatures::{
+use hanzo_messages::hanzo_utils::encryption::unsafe_deterministic_encryption_keypair;
+use hanzo_messages::hanzo_utils::signatures::{
     clone_signature_secret_key, unsafe_deterministic_signature_keypair,
 };
 use hanzo_node::network::Node;
@@ -16,7 +16,7 @@ mod tests {
 
     use super::*;
 
-    use hanzo_message_primitives::hanzo_utils::hanzo_logging::{hanzo_log, HanzoLogLevel, HanzoLogOption};
+    use hanzo_messages::hanzo_utils::hanzo_logging::{hanzo_log, HanzoLogLevel, HanzoLogOption};
     use tokio::runtime::Runtime;
 
     // #[test]

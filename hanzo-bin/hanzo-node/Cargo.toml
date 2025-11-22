@@ -1,14 +1,14 @@
 [package]
-name = "hanzo_node"
+name = "hanzo-node"
 version = { workspace = true }
 edition = { workspace = true }
 authors = { workspace = true }
 
 # this makes `cargo run` in the workspace root to run this package
-default-run = "hanzo_node"
+default-run = "hanzo-node"
 
 [build-dependencies]
-hanzo_tools_runner = { workspace = true, features = ["built-in-tools"] }
+hanzo-tools-runner = { workspace = true, features = ["built-in-tools"] }
 
 # Features
 [features]
@@ -19,8 +19,8 @@ debug = []
 # Enable ngrok support when the `ngrok` feature is selected
 ngrok = ["dep:ngrok"]
 # Enable swagger-ui when this feature is selected
-swagger-ui = ["hanzo_http_api/swagger-ui"]
-# static-pdf-parser = ["hanzo_vector_resources/static-pdf-parser"]
+swagger-ui = ["hanzo-http-api/swagger-ui"]
+# static-pdf-parser = ["hanzo-vector_resources/static-pdf-parser"]
 
 [lib]
 doctest = false
@@ -59,18 +59,18 @@ reqwest = { workspace = true, features = [
     "stream",
 ] }
 keyphrases = { workspace = true }
-hanzo_message_primitives = { workspace = true }
-hanzo_crypto_identities = { workspace = true }
-hanzo_job_queue_manager = { workspace = true }
-hanzo_tools_primitives = { workspace = true }
-hanzo_libp2p_relayer = { workspace = true }
-hanzo_http_api = { workspace = true }
-hanzo_sqlite = { workspace = true }
-hanzo_embedding = { workspace = true }
-hanzo_fs = { workspace = true }
-hanzo_non_rust_code = { workspace = true }
-hanzo_mcp = { workspace = true }
-# hanzo_baml = { workspace = true }
+hanzo-messages = { workspace = true }
+hanzo-identity = { workspace = true }
+hanzo-job-queue-manager = { workspace = true }
+hanzo-tools = { workspace = true }
+hanzo-libp2p-relayer = { workspace = true }
+hanzo-http-api = { workspace = true }
+hanzo-db-sqlite = { workspace = true }
+hanzo-embed = { workspace = true }
+hanzo-fs = { workspace = true }
+hanzo-runtime = { workspace = true }
+hanzo-mcp = { workspace = true }
+# hanzo-baml = { workspace = true }
 bincode = { workspace = true }
 urlencoding = "2.1.0"
 hex = { workspace = true }
@@ -80,7 +80,7 @@ cron-parser = "0.8.1"
 dashmap = { workspace = true }
 async-lock = "2.4.0"
 governor = "0.6.3"
-hanzo_tools_runner = { workspace = true, features = ["built-in-tools"] }
+hanzo-tools-runner = { workspace = true, features = ["built-in-tools"] }
 console-subscriber = { version = "0.1", optional = true }
 downcast-rs = "1.2.1"
 bigdecimal = "0.2.2"
@@ -108,5 +108,5 @@ tokio-tungstenite = { workspace = true }
 tempfile = { workspace = true }
 fs_extra = "1.2.0"
 utoipa = { workspace = true, features = ["yaml"] }
-hanzo_test_framework = { path = "../../hanzo-test-framework" }
-hanzo_test_macro = { path = "../../hanzo-test-macro" }
+hanzo-test-framework = { path = "../../hanzo-test-framework" }
+hanzo-test-macro = { path = "../../hanzo-test-macro" }

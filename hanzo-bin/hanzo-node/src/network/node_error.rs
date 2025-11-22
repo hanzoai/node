@@ -1,9 +1,9 @@
-use hanzo_message_primitives::{
+use hanzo_messages::{
     schemas::{inbox_name::InboxNameError, hanzo_name::HanzoNameError},
     hanzo_message::hanzo_message_error::HanzoMessageError,
 };
-use hanzo_sqlite::errors::SqliteManagerError;
-use hanzo_tools_primitives::tools::error::ToolError;
+use hanzo_db_sqlite::errors::SqliteManagerError;
+use hanzo_tools::tools::error::ToolError;
 
 use crate::llm_provider::error::LLMProviderError;
 

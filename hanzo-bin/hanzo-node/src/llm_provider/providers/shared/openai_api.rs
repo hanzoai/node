@@ -5,8 +5,8 @@ use crate::managers::model_capabilities_manager::PromptResultEnum;
 use serde::ser::{SerializeStruct, Serializer};
 use serde::{Deserialize, Serialize};
 use serde_json::{self};
-use hanzo_message_primitives::schemas::llm_providers::serialized_llm_provider::LLMProviderInterface;
-use hanzo_message_primitives::schemas::prompts::Prompt;
+use hanzo_messages::schemas::llm_providers::serialized_llm_provider::LLMProviderInterface;
+use hanzo_messages::schemas::prompts::Prompt;
 
 use super::shared_model_logic::{self, sanitize_tool_name};
 
@@ -322,8 +322,8 @@ pub fn openai_prepare_messages(model: &LLMProviderInterface, prompt: Prompt) -> 
 mod tests {
     use super::*;
     use serde_json::json;
-    use hanzo_message_primitives::schemas::llm_providers::serialized_llm_provider::SerializedLLMProvider;
-    use hanzo_message_primitives::schemas::subprompts::{SubPrompt, SubPromptAssetType, SubPromptType};
+    use hanzo_messages::schemas::llm_providers::serialized_llm_provider::SerializedLLMProvider;
+    use hanzo_messages::schemas::subprompts::{SubPrompt, SubPromptAssetType, SubPromptType};
 
     #[test]
     fn test_openai_from_llm_messages() {

@@ -1,5 +1,5 @@
-use hanzo_embedding::model_type::{EmbeddingModelType, OllamaTextEmbeddingsInference};
-use hanzo_sqlite::SqliteManager;
+use hanzo_embed::model_type::{EmbeddingModelType, OllamaTextEmbeddingsInference};
+use hanzo_db_sqlite::SqliteManager;
 use std::path::PathBuf;
 use std::sync::Arc;
 use tempfile::NamedTempFile;
@@ -15,11 +15,11 @@ fn setup_test_db() -> SqliteManager {
 
 #[cfg(test)]
 mod tests {
-    use hanzo_message_primitives::schemas::{
+    use hanzo_messages::schemas::{
         llm_providers::serialized_llm_provider::{LLMProviderInterface, OpenAI, SerializedLLMProvider},
         hanzo_name::HanzoName,
     };
-    use hanzo_sqlite::errors::SqliteManagerError;
+    use hanzo_db_sqlite::errors::SqliteManagerError;
 
     use super::*;
 

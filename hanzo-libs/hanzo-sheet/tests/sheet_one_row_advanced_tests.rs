@@ -2,7 +2,7 @@
 mod tests {
     use std::sync::Arc;
 
-    use hanzo_message_primitives::schemas::sheet::{CellStatus, ColumnBehavior, ColumnDefinition};
+    use hanzo_messages::schemas::sheet::{CellStatus, ColumnBehavior, ColumnDefinition};
     use hanzo_sheet::sheet::Sheet;
     use tokio::sync::Mutex;
     use uuid::Uuid;

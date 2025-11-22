@@ -1,4 +1,4 @@
-use hanzo_message_primitives::{
+use hanzo_messages::{
     hanzo_utils::job_scope::MinimalJobScope,
     schemas::{
         assistant_node::{AssistantNodeRequest, AssistantNodeRequestData, JobCreationInfo},

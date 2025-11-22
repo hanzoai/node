@@ -1,4 +1,4 @@
-use hanzo_message_primitives::schemas::llm_providers::serialized_llm_provider::SerializedLLMProvider;
+use hanzo_messages::schemas::llm_providers::serialized_llm_provider::SerializedLLMProvider;
 
 use super::llm_provider::LLMProvider;
 

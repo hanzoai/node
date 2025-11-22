@@ -1,5 +1,5 @@
 use regex::Regex;
-use hanzo_message_primitives::schemas::sheet::CellId;
+use hanzo_messages::schemas::sheet::CellId;
 
 pub struct CellNameConverter;
 

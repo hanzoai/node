@@ -1,5 +1,5 @@
 [package]
-name = "hanzo_pqc"
+name = "hanzo-pqc"
 version = { workspace = true }
 edition = { workspace = true }
 authors = { workspace = true }

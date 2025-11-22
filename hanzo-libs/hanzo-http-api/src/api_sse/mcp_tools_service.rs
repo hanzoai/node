@@ -109,6 +109,8 @@ impl McpToolsService {
                             input_schema: Arc::new(schema_map),
                             output_schema: None,
                             annotations: None,
+                            icons: None,
+                            title: None,
                         };
                         mcp_tools_list.push(mcp_tool);
 
@@ -226,6 +228,9 @@ impl ServerHandler for McpToolsService {
             server_info: Implementation {
                 name: "Hanzo MCP Server".to_string(),
                 version: "1.0.0".to_string(),
+                icons: None,
+                title: None,
+                website_url: None,
             },
             instructions: Some(format!("Hanzo Node {} command interface", self.node_name)),
         }
@@ -251,6 +256,9 @@ impl ServerHandler for McpToolsService {
             server_info: Implementation {
                 name: "Hanzo MCP Server".to_string(),
                 version: "1.0.0".to_string(),
+                icons: None,
+                title: None,
+                website_url: None,
             },
             instructions: Some(format!("Hanzo Node {} command interface", self.node_name)),
         };

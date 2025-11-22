@@ -1,5 +1,5 @@
 [package]
-name = "hanzo_test_framework"
+name = "hanzo-test-framework"
 version = "0.1.0"
 edition = "2021"
 
@@ -11,11 +11,11 @@ name = "hanzo_test_framework"
 tokio = { workspace = true }
 async-channel = { workspace = true }
 anyhow = { workspace = true }
-hanzo_http_api = { workspace = true }
-hanzo_message_primitives = { workspace = true }
-hanzo_embedding = { workspace = true }
-hanzo_sqlite = { workspace = true }
-hanzo_node = { path = "../hanzo-bin/hanzo-node" }
+hanzo-http-api = { workspace = true }
+hanzo-messages = { workspace = true }
+hanzo-embed = { workspace = true }
+hanzo-db-sqlite = { workspace = true }
+hanzo-node = { path = "../hanzo-bin/hanzo-node" }
 proc-macro2 = "1"
 quote = "1"
 syn = { version = "2", features = ["full"] }

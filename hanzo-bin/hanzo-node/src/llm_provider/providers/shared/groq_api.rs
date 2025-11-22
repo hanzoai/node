@@ -2,9 +2,9 @@ use crate::llm_provider::error::LLMProviderError;
 use crate::managers::model_capabilities_manager::PromptResult;
 use crate::managers::model_capabilities_manager::PromptResultEnum;
 use serde_json::{self, Value as JsonValue};
-use hanzo_message_primitives::schemas::llm_providers::serialized_llm_provider::LLMProviderInterface;
-use hanzo_message_primitives::schemas::prompts::Prompt;
-use hanzo_message_primitives::schemas::subprompts::SubPrompt;
+use hanzo_messages::schemas::llm_providers::serialized_llm_provider::LLMProviderInterface;
+use hanzo_messages::schemas::prompts::Prompt;
+use hanzo_messages::schemas::subprompts::SubPrompt;
 
 use super::openai_api::openai_prepare_messages;
 
@@ -117,8 +117,8 @@ pub fn groq_prepare_messages(model: &LLMProviderInterface, prompt: Prompt) -> Re
 mod tests {
     use super::*;
     use serde_json::json;
-    use hanzo_message_primitives::schemas::llm_providers::serialized_llm_provider::SerializedLLMProvider;
-    use hanzo_message_primitives::schemas::subprompts::{SubPrompt, SubPromptAssetType, SubPromptType};
+    use hanzo_messages::schemas::llm_providers::serialized_llm_provider::SerializedLLMProvider;
+    use hanzo_messages::schemas::subprompts::{SubPrompt, SubPromptAssetType, SubPromptType};
 
     #[test]
     fn test_groq_no_system_from_llm_messages() {

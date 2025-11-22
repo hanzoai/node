@@ -1,16 +1,16 @@
 use hanzo_http_api::node_commands::NodeCommand;
-use hanzo_message_primitives::schemas::llm_providers::serialized_llm_provider::{
+use hanzo_messages::schemas::llm_providers::serialized_llm_provider::{
     LLMProviderInterface, Ollama, SerializedLLMProvider,
 };
-use hanzo_message_primitives::schemas::hanzo_name::HanzoName;
-use hanzo_message_primitives::schemas::tool_router_key::ToolRouterKey;
-use hanzo_message_primitives::hanzo_utils::encryption::clone_static_secret_key;
-use hanzo_message_primitives::hanzo_utils::signatures::clone_signature_secret_key;
-use hanzo_tools_primitives::tools::deno_tools::DenoTool;
-use hanzo_tools_primitives::tools::hanzo_tool::{HanzoTool, HanzoToolWithAssets};
-use hanzo_tools_primitives::tools::tool_config::ToolConfig;
-use hanzo_tools_primitives::tools::tool_output_arg::ToolOutputArg;
-use hanzo_tools_primitives::tools::{
+use hanzo_messages::schemas::hanzo_name::HanzoName;
+use hanzo_messages::schemas::tool_router_key::ToolRouterKey;
+use hanzo_messages::hanzo_utils::encryption::clone_static_secret_key;
+use hanzo_messages::hanzo_utils::signatures::clone_signature_secret_key;
+use hanzo_tools::tools::deno_tools::DenoTool;
+use hanzo_tools::tools::hanzo_tool::{HanzoTool, HanzoToolWithAssets};
+use hanzo_tools::tools::tool_config::ToolConfig;
+use hanzo_tools::tools::tool_output_arg::ToolOutputArg;
+use hanzo_tools::tools::{
     parameters::Parameters,
     tool_types::{OperatingSystem, RunnerType, ToolResult},
 };

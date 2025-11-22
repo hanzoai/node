@@ -3,11 +3,11 @@ use core::panic;
 use ed25519_dalek::SigningKey;
 use hanzo_http_api::node_api_router::APIError;
 use hanzo_http_api::node_commands::NodeCommand;
-use hanzo_message_primitives::schemas::identity::{Identity, IdentityType, StandardIdentity};
-use hanzo_message_primitives::schemas::hanzo_name::HanzoName;
-use hanzo_message_primitives::hanzo_message::hanzo_message_schemas::{IdentityPermissions, RegistrationCodeType};
-use hanzo_message_primitives::hanzo_utils::hanzo_message_builder::HanzoMessageBuilder;
-use hanzo_message_primitives::hanzo_utils::signatures::clone_signature_secret_key;
+use hanzo_messages::schemas::identity::{Identity, IdentityType, StandardIdentity};
+use hanzo_messages::schemas::hanzo_name::HanzoName;
+use hanzo_messages::hanzo_message::hanzo_message_schemas::{IdentityPermissions, RegistrationCodeType};
+use hanzo_messages::hanzo_utils::hanzo_message_builder::HanzoMessageBuilder;
+use hanzo_messages::hanzo_utils::signatures::clone_signature_secret_key;
 use std::time::Duration;
 use x25519_dalek::{PublicKey as EncryptionPublicKey, StaticSecret as EncryptionStaticKey};
 

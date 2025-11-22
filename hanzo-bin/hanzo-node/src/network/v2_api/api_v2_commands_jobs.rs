@@ -6,7 +6,7 @@ use reqwest::StatusCode;
 use serde_json::{json, Value};
 
 use hanzo_http_api::node_api_router::{APIError, SendResponseBody, SendResponseBodyData};
-use hanzo_message_primitives::{
+use hanzo_messages::{
     schemas::{
         identity::Identity,
         inbox_name::InboxName,
@@ -30,8 +30,8 @@ use hanzo_message_primitives::{
     },
 };
 
-use hanzo_sqlite::inbox_manager::PaginatedSmartInboxes;
-use hanzo_sqlite::SqliteManager;
+use hanzo_db_sqlite::inbox_manager::PaginatedSmartInboxes;
+use hanzo_db_sqlite::SqliteManager;
 
 use tokio::sync::Mutex;
 use x25519_dalek::PublicKey as EncryptionPublicKey;

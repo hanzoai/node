@@ -1,5 +1,5 @@
 use hanzo_http_api::node_api_router::APIError;
-use hanzo_message_primitives::schemas::identity::{Identity, StandardIdentityType};
+use hanzo_messages::schemas::identity::{Identity, StandardIdentityType};
 use std::io::Read;
 use std::sync::Arc;
 use tokio::sync::Mutex;
@@ -10,7 +10,7 @@ use ed25519_dalek::{ed25519::signature::SignerMut, SigningKey};
 use hex;
 use log::error;
 use reqwest::StatusCode;
-use hanzo_message_primitives::{
+use hanzo_messages::{
     schemas::hanzo_name::HanzoName,
     hanzo_message::{hanzo_message::HanzoMessage, hanzo_message_schemas::MessageSchemaType},
     hanzo_utils::encryption::string_to_encryption_public_key,

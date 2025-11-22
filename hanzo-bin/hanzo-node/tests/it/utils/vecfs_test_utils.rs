@@ -7,7 +7,7 @@ use serde_json::Value;
 use hanzo_fs::hanzo_fs_error::HanzoFsError;
 use hanzo_http_api::node_api_router::APIError;
 use hanzo_http_api::node_commands::NodeCommand;
-use hanzo_message_primitives::hanzo_message::hanzo_message_schemas::APIVecFsCreateFolder;
+use hanzo_messages::hanzo_message::hanzo_message_schemas::APIVecFsCreateFolder;
 
 #[allow(clippy::too_many_arguments)]
 pub async fn create_folder(

@@ -8,8 +8,8 @@ use reqwest::Client;
 use rmcp::model::Tool;
 use serde_json::Value;
 use hanzo_http_api::api_v2::api_v2_handlers_mcp_servers::AddMCPServerRequest;
-use hanzo_message_primitives::schemas::mcp_server::MCPServerType;
-use hanzo_tools_primitives::tools::{
+use hanzo_messages::schemas::mcp_server::MCPServerType;
+use hanzo_tools::tools::{
     mcp_server_tool::MCPServerTool,
     parameters::{Parameters, Property},
     hanzo_tool::HanzoTool,
@@ -263,7 +263,7 @@ pub mod tests_mcp_manager {
     use super::*;
     use rmcp::model::Tool;
     use serde_json::json;
-    use hanzo_tools_primitives::tools::tool_config::BasicConfig;
+    use hanzo_tools::tools::tool_config::BasicConfig;
     use std::sync::Arc;
 
     /// Creates mock Tool objects for testing purposes

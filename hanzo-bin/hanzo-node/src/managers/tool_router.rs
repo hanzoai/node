@@ -19,13 +19,13 @@ use crate::utils::environment::{fetch_node_environment, NodeEnvironment};
 use ed25519_dalek::SigningKey;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
-use hanzo_embedding::embedding_generator::EmbeddingGenerator;
+use hanzo_embed::embedding_generator::EmbeddingGenerator;
 use hanzo_fs::hanzo_file_manager::HanzoFileManager;
-use hanzo_message_primitives::schemas::llm_providers::agent::Agent;
-use hanzo_message_primitives::schemas::hanzo_tools::CodeLanguage;
-use hanzo_message_primitives::schemas::wallet_mixed::AddressBalanceList;
-use hanzo_message_primitives::schemas::x402_types::Network;
-use hanzo_message_primitives::schemas::{
+use hanzo_messages::schemas::llm_providers::agent::Agent;
+use hanzo_messages::schemas::hanzo_tools::CodeLanguage;
+use hanzo_messages::schemas::wallet_mixed::AddressBalanceList;
+use hanzo_messages::schemas::x402_types::Network;
+use hanzo_messages::schemas::{
     indexable_version::IndexableVersion,
     invoices::{Invoice, InvoiceStatusEnum},
     job::JobLike,
@@ -37,14 +37,14 @@ use hanzo_message_primitives::schemas::{
     ws_types::{PaymentMetadata, WSMessageType, WidgetMetadata},
     x402_types::PaymentRequirements,
 };
-use hanzo_message_primitives::hanzo_message::hanzo_message_schemas::{AssociatedUI, WSTopic};
-use hanzo_message_primitives::hanzo_utils::hanzo_logging::{hanzo_log, HanzoLogLevel, HanzoLogOption};
-use hanzo_sqlite::errors::SqliteManagerError;
-use hanzo_sqlite::files::prompts_data;
-use hanzo_sqlite::SqliteManager;
-use hanzo_tools_primitives::tools::mcp_server_tool::MCPServerTool;
-use hanzo_tools_primitives::tools::tool_types::ToolResult;
-use hanzo_tools_primitives::tools::{
+use hanzo_messages::hanzo_message::hanzo_message_schemas::{AssociatedUI, WSTopic};
+use hanzo_messages::hanzo_utils::hanzo_logging::{hanzo_log, HanzoLogLevel, HanzoLogOption};
+use hanzo_db_sqlite::errors::SqliteManagerError;
+use hanzo_db_sqlite::files::prompts_data;
+use hanzo_db_sqlite::SqliteManager;
+use hanzo_tools::tools::mcp_server_tool::MCPServerTool;
+use hanzo_tools::tools::tool_types::ToolResult;
+use hanzo_tools::tools::{
     error::ToolError,
     network_tool::NetworkTool,
     parameters::Parameters,

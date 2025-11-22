@@ -2,14 +2,14 @@ use crate::it::utils::vecfs_test_utils::{get_files_for_job, get_folder_name_for_
 
 use super::utils::test_boilerplate::run_test_one_node_network;
 use hanzo_http_api::node_commands::NodeCommand;
-use hanzo_message_primitives::schemas::llm_providers::serialized_llm_provider::{
+use hanzo_messages::schemas::llm_providers::serialized_llm_provider::{
     LLMProviderInterface, Ollama, SerializedLLMProvider,
 };
-use hanzo_message_primitives::schemas::hanzo_name::HanzoName;
-use hanzo_message_primitives::hanzo_message::hanzo_message_schemas::JobMessage;
-use hanzo_message_primitives::hanzo_utils::encryption::clone_static_secret_key;
-use hanzo_message_primitives::hanzo_utils::hanzo_path::HanzoPath;
-use hanzo_message_primitives::hanzo_utils::signatures::clone_signature_secret_key;
+use hanzo_messages::schemas::hanzo_name::HanzoName;
+use hanzo_messages::hanzo_message::hanzo_message_schemas::JobMessage;
+use hanzo_messages::hanzo_utils::encryption::clone_static_secret_key;
+use hanzo_messages::hanzo_utils::hanzo_path::HanzoPath;
+use hanzo_messages::hanzo_utils::signatures::clone_signature_secret_key;
 use std::path::Path;
 use std::time::Duration;
 use std::time::Instant;

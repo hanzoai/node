@@ -1,11 +1,11 @@
 use super::db_handlers::{setup, setup_node_storage_path};
 use async_channel::{bounded, Receiver, Sender};
 
-use hanzo_embedding::embedding_generator::RemoteEmbeddingGenerator;
-use hanzo_embedding::model_type::{EmbeddingModelType, OllamaTextEmbeddingsInference};
+use hanzo_embed::embedding_generator::RemoteEmbeddingGenerator;
+use hanzo_embed::model_type::{EmbeddingModelType, OllamaTextEmbeddingsInference};
 use hanzo_node::llm_provider::job_callback_manager::JobCallbackManager;
 use hanzo_node::managers::tool_router::ToolRouter;
-use hanzo_sqlite::SqliteManager;
+use hanzo_db_sqlite::SqliteManager;
 
 use tokio::sync::Mutex;
 
@@ -16,8 +16,8 @@ use std::sync::Arc;
 use std::time::Duration;
 
 use hanzo_http_api::node_commands::NodeCommand;
-use hanzo_message_primitives::hanzo_utils::encryption::unsafe_deterministic_encryption_keypair;
-use hanzo_message_primitives::hanzo_utils::signatures::{
+use hanzo_messages::hanzo_utils::encryption::unsafe_deterministic_encryption_keypair;
+use hanzo_messages::hanzo_utils::signatures::{
     clone_signature_secret_key, hash_signature_public_key, unsafe_deterministic_signature_keypair,
 };
 use hanzo_node::network::Node;

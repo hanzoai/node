@@ -1,7 +1,7 @@
 #[cfg(test)]
 mod kubernetes_integration_tests {
-    use hanzo_tools_primitives::tools::kubernetes_tools::{KubernetesTool, K8sResourceRequirements};
-    use hanzo_tools_primitives::tools::hanzo_tool::HanzoTool;
+    use hanzo_tools::tools::kubernetes_tools::{KubernetesTool, K8sResourceRequirements};
+    use hanzo_tools::tools::hanzo_tool::HanzoTool;
     use serde_json::json;
 
     #[test]

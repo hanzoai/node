@@ -10,7 +10,7 @@ Use generator: &dyn EmbeddingGenerator for converting chunks to embeddings
 also use the generator to know how big the chunks could be
 */
 
-use hanzo_message_primitives::hanzo_utils::hanzo_path::HanzoPath;
+use hanzo_messages::hanzo_utils::hanzo_path::HanzoPath;
 
 use crate::hanzo_fs_error::HanzoFsError;
 

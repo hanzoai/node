@@ -10,7 +10,7 @@ mod utils;
 mod wallet;
 
 use runner::{initialize_node, run_node_tasks};
-use hanzo_message_primitives::hanzo_utils::hanzo_logging::init_default_tracing;
+use hanzo_messages::hanzo_utils::hanzo_logging::init_default_tracing;
 
 #[cfg(feature = "console")]
 use console_subscriber;
