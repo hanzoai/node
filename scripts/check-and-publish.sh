@@ -38,15 +38,12 @@ get_local_version() {
 # Get published version from crates.io
 get_crates_io_version() {
     local crate_name="$1"
-    local response=$(curl -s "https://crates.io/api/v1/crates/$crate_name" || echo "")
 
-    if [ -z "$response" ]; then
-        echo ""
-        return
-    fi
+    # Use Python to properly parse JSON response
+    local version=$(curl -s "https://crates.io/api/v1/crates/$crate_name" 2>/dev/null | \
+        python3 -c "import sys, json; data=json.load(sys.stdin); print(data.get('crate', {}).get('max_version', ''))" 2>/dev/null || echo "")
 
-    # Extract max_version using grep
-    echo "$response" | grep -o '"max_version":"[^"]*"' | sed 's/"max_version":"\(.*\)"/\1/' || echo ""
+    echo "$version"
 }
 
 # Compare versions (returns 0 if v1 > v2, 1 otherwise)
@@ -120,20 +117,23 @@ publish_crate() {
 
         if needs_no_verify "$crate_name"; then
             print_action "Publishing $crate_name with --no-verify..."
-            if cargo publish --token "$CARGO_REGISTRY_TOKEN" --no-verify; then
-                print_info "✅ Successfully published $crate_name"
-            else
-                print_error "Failed to publish $crate_name"
-                return 1
-            fi
+            publish_output=$(cargo publish --token "$CARGO_REGISTRY_TOKEN" --no-verify 2>&1)
+            publish_result=$?
         else
             print_action "Publishing $crate_name..."
-            if cargo publish --token "$CARGO_REGISTRY_TOKEN"; then
-                print_info "✅ Successfully published $crate_name"
-            else
-                print_error "Failed to publish $crate_name"
-                return 1
-            fi
+            publish_output=$(cargo publish --token "$CARGO_REGISTRY_TOKEN" 2>&1)
+            publish_result=$?
+        fi
+
+        # Check if publish succeeded or already exists
+        if [ $publish_result -eq 0 ]; then
+            print_info "✅ Successfully published $crate_name"
+        elif echo "$publish_output" | grep -q "already exists"; then
+            print_info "✅ $crate_name is already published at this version"
+        else
+            print_error "Failed to publish $crate_name"
+            echo "$publish_output"
+            return 1
         fi
 
         # Wait for crates.io indexing
