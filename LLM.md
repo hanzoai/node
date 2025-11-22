@@ -31,7 +31,22 @@ Integrated comprehensive feature set from hanzo-node-next branch, adding 11 new 
 - All workspace members updated to hanzo naming conventions
 - Maintains backward compatibility with existing hanzo-desktop integration
 
-## Recent Improvements (Sep 2025)
+## Recent Improvements (Nov 2025)
+
+### hanzo-db-sqlite Compilation Fixes
+- Fixed unused mutable variable warning in `tool_payment_req_manager.rs:62` - removed unnecessary `mut` from `transaction` variable
+- hanzo-db-sqlite now compiles cleanly with zero warnings
+- All 138 tests pass successfully
+- Verified clean build: `cargo build -p hanzo-db-sqlite` passes without errors
+- Test suite verified: `cargo test -p hanzo-db-sqlite` shows all tests passing
+
+### hanzo-tools Compilation Fixes
+- Fixed unused variable warning in `mcp_server_tool.rs:118` - prefixed error variable with underscore
+- Fixed irrefutable if-let pattern in `mcp_server_tool.rs:153` - replaced pattern match with direct assignment
+- All hanzo-tools crate warnings resolved
+- Verified clean build: `cargo build -p hanzo-tools` passes without errors
+
+### Prior Improvements (Sep 2025)
 
 ### Build System Enhancements
 - Added comprehensive Makefile for easier building and development
