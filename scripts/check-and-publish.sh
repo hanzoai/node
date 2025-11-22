@@ -209,33 +209,33 @@ main() {
     # Process each group in order
     for crate in "${FOUNDATION_CRATES[@]}"; do
         if publish_crate "$crate" "hanzo-libs/$crate"; then
-            ((success++))
+            success=$((success + 1))
         else
-            ((failed++))
+            failed=$((failed + 1))
         fi
     done
 
     for crate in "${CORE_CRATES[@]}"; do
         if publish_crate "$crate" "hanzo-libs/$crate"; then
-            ((success++))
+            success=$((success + 1))
         else
-            ((failed++))
+            failed=$((failed + 1))
         fi
     done
 
     for crate in "${SERVICE_CRATES[@]}"; do
         if publish_crate "$crate" "hanzo-libs/$crate"; then
-            ((success++))
+            success=$((success + 1))
         else
-            ((failed++))
+            failed=$((failed + 1))
         fi
     done
 
     for crate in "${INTEGRATION_CRATES[@]}"; do
         if publish_crate "$crate" "hanzo-libs/$crate"; then
-            ((success++))
+            success=$((success + 1))
         else
-            ((failed++))
+            failed=$((failed + 1))
         fi
     done
 
