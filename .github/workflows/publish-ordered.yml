@@ -1,0 +1,169 @@
+name: Publish Crates (Dependency Order)
+
+on:
+  workflow_dispatch:
+    inputs:
+      dry-run:
+        description: 'Dry run (no actual publish)'
+        required: false
+        default: 'false'
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  publish-foundation:
+    name: Publish Foundation Crates
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        crate:
+          - hanzo-messages
+          - hanzo-embed
+          - hanzo-runner
+          - hanzo-tools-runner
+          - hanzo-models
+          - hanzo-model-discovery
+      fail-fast: false
+      max-parallel: 1
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Publish ${{ matrix.crate }}
+        working-directory: hanzo-libs/${{ matrix.crate }}
+        run: |
+          if [ "${{ github.event.inputs.dry-run }}" == "true" ]; then
+            cargo publish --dry-run
+          else
+            cargo publish --token ${{ secrets.CARGO_REGISTRY_TOKEN }} || echo "Already published or error"
+          fi
+
+      - name: Wait for indexing
+        if: github.event.inputs.dry-run != 'true'
+        run: sleep 30
+
+  publish-core:
+    name: Publish Core Crates
+    needs: publish-foundation
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        crate:
+          - hanzo-identity
+          - hanzo-pqc
+          - hanzo-did
+          - hanzo-db-sqlite
+          - hanzo-runtime
+          - hanzo-tools
+      fail-fast: false
+      max-parallel: 1
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Publish ${{ matrix.crate }}
+        working-directory: hanzo-libs/${{ matrix.crate }}
+        run: |
+          if [ "${{ github.event.inputs.dry-run }}" == "true" ]; then
+            cargo publish --dry-run
+          else
+            cargo publish --token ${{ secrets.CARGO_REGISTRY_TOKEN }} || echo "Already published or error"
+          fi
+
+      - name: Wait for indexing
+        if: github.event.inputs.dry-run != 'true'
+        run: sleep 30
+
+  publish-services:
+    name: Publish Service Crates
+    needs: publish-core
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        crate:
+          - hanzo-mcp
+          - hanzo-fs
+          - hanzo-kbs
+          - hanzo-llm
+          - hanzo-jobs
+          - hanzo-database
+          - hanzo-wasm
+          - hanzo-wasm-runtime
+      fail-fast: false
+      max-parallel: 1
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Publish ${{ matrix.crate }}
+        working-directory: hanzo-libs/${{ matrix.crate }}
+        run: |
+          if [ "${{ github.event.inputs.dry-run }}" == "true" ]; then
+            cargo publish --dry-run
+          else
+            cargo publish --token ${{ secrets.CARGO_REGISTRY_TOKEN }} || echo "Already published or error"
+          fi
+
+      - name: Wait for indexing
+        if: github.event.inputs.dry-run != 'true'
+        run: sleep 30
+
+  publish-integration:
+    name: Publish Integration Crates
+    needs: publish-services
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        crate:
+          - hanzo-libp2p
+          - hanzo-libp2p-relayer
+          - hanzo-http-api
+          - hanzo-api
+          - hanzo-job-queue-manager
+      fail-fast: false
+      max-parallel: 1
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Publish ${{ matrix.crate }}
+        working-directory: hanzo-libs/${{ matrix.crate }}
+        run: |
+          if [ "${{ github.event.inputs.dry-run }}" == "true" ]; then
+            cargo publish --dry-run
+          else
+            cargo publish --token ${{ secrets.CARGO_REGISTRY_TOKEN }} || echo "Already published or error"
+          fi
+
+      - name: Wait for indexing
+        if: github.event.inputs.dry-run != 'true'
+        run: sleep 30
+
+  summary:
+    name: Publication Summary
+    needs: [publish-foundation, publish-core, publish-services, publish-integration]
+    if: always()
+    runs-on: ubuntu-latest
+    steps:
+      - name: Create Summary
+        run: |
+          echo "## Crate Publication Complete" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Publication Status" >> $GITHUB_STEP_SUMMARY
+          echo "- Foundation: ${{ needs.publish-foundation.result }}" >> $GITHUB_STEP_SUMMARY
+          echo "- Core: ${{ needs.publish-core.result }}" >> $GITHUB_STEP_SUMMARY
+          echo "- Services: ${{ needs.publish-services.result }}" >> $GITHUB_STEP_SUMMARY
+          echo "- Integration: ${{ needs.publish-integration.result }}" >> $GITHUB_STEP_SUMMARY
