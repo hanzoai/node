@@ -18,8 +18,8 @@ tracing = { workspace = true }
 rmcp = { workspace = true, features = [
     "client",
     "transport-child-process",
-    "transport-sse-client",
-    "transport-streamable-http-client",
+    "transport-sse-client-reqwest",
+    "transport-streamable-http-client-reqwest",
     "reqwest"
 ] }
 regex = { workspace = true }

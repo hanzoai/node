@@ -13,7 +13,7 @@ pub mod storage;
 pub mod free_energy;
 
 use std::sync::Arc;
-use async_trait::async_trait;
+
 use serde::{Serialize, Deserialize};
 use anyhow::Result;
 

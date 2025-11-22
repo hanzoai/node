@@ -6,7 +6,7 @@ use std::sync::Arc;
 use std::collections::HashMap;
 use serde::{Serialize, Deserialize};
 use anyhow::{Result, anyhow};
-use async_trait::async_trait;
+
 
 use crate::{
     Regime, RegimeDetector,

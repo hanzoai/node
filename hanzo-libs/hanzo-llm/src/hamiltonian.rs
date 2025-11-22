@@ -2,12 +2,9 @@
 //! 
 //! Models price evolution using classical mechanics principles
 
-use std::sync::Arc;
 use serde::{Serialize, Deserialize};
-use anyhow::{Result, anyhow};
+use anyhow::Result;
 use nalgebra::{DVector, DMatrix};
-use ode_solvers::{Rk4, System, Vector3, Dop853};
-use num_traits::Float;
 
 /// Hamiltonian dynamics system
 pub struct HamiltonianDynamics {

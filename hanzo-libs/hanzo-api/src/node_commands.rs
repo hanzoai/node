@@ -16,10 +16,10 @@ use hanzo_messages::{
         hanzo_name::HanzoName,
         hanzo_tool_offering::{HanzoToolOffering, UsageTypeInquiry},
         hanzo_tools::{CodeLanguage, DynamicToolType},
-        smart_inbox::{SmartInbox, V2SmartInbox},
+        smart_inbox::V2SmartInbox,
         tool_router_key::ToolRouterKey,
         wallet_complementary::{WalletRole, WalletSource},
-        wallet_mixed::NetworkIdentifier,
+
         x402_types::Network,
     },
     hanzo_message::{

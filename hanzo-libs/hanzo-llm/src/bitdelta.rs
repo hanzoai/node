@@ -2,7 +2,6 @@
 //! 
 //! Implements extreme quantization for personalized model adaptation
 
-use std::collections::HashMap;
 use std::sync::Arc;
 use serde::{Serialize, Deserialize};
 use anyhow::{Result, anyhow};
