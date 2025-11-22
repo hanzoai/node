@@ -1,5 +1,7 @@
 [package]
 name = "hanzo-job-queue-manager"
+description = "Hanzo AI - Job Queue Manager Library"
+license = "MIT"
 version = { workspace = true }
 edition = { workspace = true }
 authors = { workspace = true }
