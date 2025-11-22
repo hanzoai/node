@@ -39,9 +39,16 @@ get_local_version() {
 get_crates_io_version() {
     local crate_name="$1"
 
-    # Use Python to properly parse JSON response
-    local version=$(curl -s "https://crates.io/api/v1/crates/$crate_name" 2>/dev/null | \
-        python3 -c "import sys, json; data=json.load(sys.stdin); print(data.get('crate', {}).get('max_version', ''))" 2>/dev/null || echo "")
+    # Try jq first (faster), fall back to grep if not available
+    local version=""
+    if command -v jq &> /dev/null; then
+        version=$(curl -s "https://crates.io/api/v1/crates/$crate_name" 2>/dev/null | \
+            jq -r '.crate.max_version // empty' 2>/dev/null || echo "")
+    else
+        # Fallback: extract using grep and sed
+        local response=$(curl -s "https://crates.io/api/v1/crates/$crate_name" 2>/dev/null)
+        version=$(echo "$response" | grep -o '"max_version":"[^"]*"' | head -1 | sed 's/"max_version":"\([^"]*\)"/\1/')
+    fi
 
     echo "$version"
 }
