@@ -112,7 +112,8 @@ publish_crate() {
             return 1
         fi
 
-        # Publish the crate
+        # Publish the crate (save current directory)
+        local original_dir=$(pwd)
         cd "$crate_dir"
 
         if needs_no_verify "$crate_name"; then
@@ -124,6 +125,9 @@ publish_crate() {
             publish_output=$(cargo publish --token "$CARGO_REGISTRY_TOKEN" 2>&1)
             publish_result=$?
         fi
+
+        # Return to original directory
+        cd "$original_dir"
 
         # Check if publish succeeded or already exists
         if [ $publish_result -eq 0 ]; then
