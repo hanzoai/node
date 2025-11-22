@@ -1,5 +1,7 @@
 [package]
 name = "hanzo-kbs"
+description = "Hanzo AI - Kbs Library"
+license = "MIT"
 version.workspace = true
 edition.workspace = true
 authors.workspace = true

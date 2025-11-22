@@ -1,5 +1,7 @@
 [package]
 name = "hanzo-llm"
+description = "Hanzo AI - Llm Library"
+license = "MIT"
 version.workspace = true
 edition.workspace = true
 authors.workspace = true
