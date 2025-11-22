@@ -87,7 +87,7 @@ mod tests {
                 "https://base-sepolia.gateway.tenderly.co".to_string(),
             ],
             "0x425Fb20ba3874e887336aAa7f3fab32D08135BA9".to_string(),
-            include_str!("../../../hanzo-crypto-identities/src/abi/HanzoRegistry.sol/HanzoRegistry.json")
+            include_str!("../../../hanzo-identity/src/abi/HanzoRegistry.sol/HanzoRegistry.json")
                 .to_string(),
             "official.sep-hanzo".to_string(),
         )
@@ -122,7 +122,7 @@ mod tests {
                 "https://base-sepolia-rpc.publicnode.com".to_string(),
             ],
             "0x425Fb20ba3874e887336aAa7f3fab32D08135BA9".to_string(),
-            include_str!("../../../hanzo-crypto-identities/src/abi/HanzoRegistry.sol/HanzoRegistry.json")
+            include_str!("../../../hanzo-identity/src/abi/HanzoRegistry.sol/HanzoRegistry.json")
                 .to_string(),
             "official.sep-hanzo".to_string(),
         )
@@ -142,7 +142,7 @@ mod tests {
                 "https://base-sepolia-rpc.publicnode.com".to_string(),
             ],
             "0x425Fb20ba3874e887336aAa7f3fab32D08135BA9".to_string(),
-            include_str!("../../../hanzo-crypto-identities/src/abi/HanzoRegistry.sol/HanzoRegistry.json")
+            include_str!("../../../hanzo-identity/src/abi/HanzoRegistry.sol/HanzoRegistry.json")
                 .to_string(),
             "official.sep-hanzo".to_string(),
         )

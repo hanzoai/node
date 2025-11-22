@@ -8,7 +8,7 @@ use serde::{Serialize, Deserialize};
 use anyhow::{Result, anyhow};
 use nalgebra::{DMatrix, DVector};
 use rand::Rng;
-use rand_distr::{Distribution, Normal};
+// rand_distr not needed for current implementation
 
 /// System regime states
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]

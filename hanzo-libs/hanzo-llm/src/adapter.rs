@@ -5,12 +5,12 @@
 use std::sync::Arc;
 use std::collections::HashMap;
 use serde::{Serialize, Deserialize};
-use anyhow::{Result, anyhow};
+use anyhow::Result;
 use dashmap::DashMap;
 use tokio::sync::RwLock;
 
 use crate::{
-    bitdelta::{BitDeltaAdapter, AdapterCache, CompressedAdapter},
+    bitdelta::{BitDeltaAdapter, AdapterCache},
     storage::HLLMStorage,
     routing::RoutingDecision,
     RoutingRequest,
@@ -209,7 +209,7 @@ impl AdapterManager {
         &self,
         user_id: &str,
         decision: &RoutingDecision,
-        request: &RoutingRequest,
+        _request: &RoutingRequest,
     ) -> Result<()> {
         let adapter = self.get_or_create(user_id).await?;
         
@@ -377,7 +377,7 @@ impl UserStatistics {
         *self.regime_distribution.entry(format!("{:?}", decision.regime)).or_insert(0) += 1;
     }
     
-    fn update(&mut self, decision: &RoutingDecision, feedback: &Feedback) {
+    fn update(&mut self, _decision: &RoutingDecision, feedback: &Feedback) {
         if feedback.success {
             self.successful_requests += 1;
         }

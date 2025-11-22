@@ -85,6 +85,7 @@ pub trait ModelDiscovery {
 
 pub struct HanzoModelDiscovery {
     client: Client,
+    #[allow(dead_code)]
     cache: HashMap<String, Vec<ModelInfo>>,
 }
 
