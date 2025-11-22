@@ -1,5 +1,5 @@
 use lazy_static::lazy_static;
-use hanzo_message_primitives::schemas::{
+use hanzo_messages::schemas::{
     prompts::Prompt,
     subprompts::{SubPromptAssetType, SubPromptType},
 };

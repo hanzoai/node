@@ -4,9 +4,9 @@ use crate::managers::model_capabilities_manager::ModelCapabilitiesManager;
 use crate::managers::model_capabilities_manager::PromptResult;
 use crate::managers::model_capabilities_manager::PromptResultEnum;
 use serde_json::{self};
-use hanzo_message_primitives::schemas::llm_message::FunctionParameters;
-use hanzo_message_primitives::schemas::llm_providers::serialized_llm_provider::LLMProviderInterface;
-use hanzo_message_primitives::schemas::prompts::Prompt;
+use hanzo_messages::schemas::llm_message::FunctionParameters;
+use hanzo_messages::schemas::llm_providers::serialized_llm_provider::LLMProviderInterface;
+use hanzo_messages::schemas::prompts::Prompt;
 
 pub fn gemini_prepare_messages(model: &LLMProviderInterface, prompt: Prompt) -> Result<PromptResult, LLMProviderError> {
     eprintln!("Preparing messages for Gemini... {:?}", prompt);
@@ -468,8 +468,8 @@ fn fix_object_in_place(obj: &mut serde_json::Map<String, serde_json::Value>) {
 mod tests {
     use super::*;
     use serde_json::json;
-    use hanzo_message_primitives::schemas::llm_providers::serialized_llm_provider::SerializedLLMProvider;
-    use hanzo_message_primitives::schemas::subprompts::{SubPrompt, SubPromptAssetType, SubPromptType};
+    use hanzo_messages::schemas::llm_providers::serialized_llm_provider::SerializedLLMProvider;
+    use hanzo_messages::schemas::subprompts::{SubPrompt, SubPromptAssetType, SubPromptType};
 
     fn generate_test_payload(
         prompt: Prompt,

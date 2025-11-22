@@ -1,4 +1,4 @@
-use hanzo_message_primitives::hanzo_utils::{
+use hanzo_messages::hanzo_utils::{
     encryption::{
         encryption_public_key_to_string, encryption_secret_key_to_string, unsafe_deterministic_encryption_keypair,
     },

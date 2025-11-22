@@ -7,11 +7,11 @@ use reqwest::StatusCode;
 use chrono::Utc;
 use serde_json::{json, Value};
 use hanzo_http_api::node_api_router::APIError;
-use hanzo_message_primitives::schemas::{
+use hanzo_messages::schemas::{
     hanzo_name::HanzoName, hanzo_tool_offering::HanzoToolOffering, tool_router_key::ToolRouterKey,
 };
-use hanzo_sqlite::{errors::SqliteManagerError, SqliteManager};
-use hanzo_tools_primitives::tools::{
+use hanzo_db_sqlite::{errors::SqliteManagerError, SqliteManager};
+use hanzo_tools::tools::{
     network_tool::NetworkTool,
     hanzo_tool::{HanzoTool, HanzoToolHeader},
 };

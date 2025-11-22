@@ -1,6 +1,6 @@
 #[cfg(test)]
 mod tests {
-    use hanzo_message_primitives::schemas::{
+    use hanzo_messages::schemas::{
         prompts::Prompt,
         subprompts::{SubPrompt, SubPromptType},
     };

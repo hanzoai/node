@@ -1,5 +1,5 @@
 [package]
-name = "hanzo_http_api"
+name = "hanzo-http-api"
 version = { workspace = true }
 edition = { workspace = true }
 authors = { workspace = true }
@@ -17,8 +17,8 @@ futures = { workspace = true }
 async-channel = { workspace = true }
 x25519-dalek = { workspace = true }
 ed25519-dalek = { workspace = true }
-hanzo_message_primitives = { workspace = true }
-hanzo_tools_primitives = { workspace = true }
+hanzo-messages = { workspace = true }
+hanzo-tools = { workspace = true }
 reqwest = { workspace = true }
 tokio-stream = "0.1.10"
 rand = { workspace = true }

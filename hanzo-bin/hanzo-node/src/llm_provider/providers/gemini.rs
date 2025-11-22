@@ -13,14 +13,14 @@ use reqwest::Client;
 use serde::{Deserialize, Serialize};
 use serde_json::json;
 use serde_json::Value as JsonValue;
-use hanzo_message_primitives::schemas::inbox_name::InboxName;
-use hanzo_message_primitives::schemas::job_config::JobConfig;
-use hanzo_message_primitives::schemas::llm_providers::serialized_llm_provider::{Gemini, LLMProviderInterface};
-use hanzo_message_primitives::schemas::prompts::Prompt;
-use hanzo_message_primitives::schemas::ws_types::WSUpdateHandler;
-use hanzo_message_primitives::hanzo_utils::hanzo_logging::{hanzo_log, HanzoLogLevel, HanzoLogOption};
-use hanzo_message_primitives::hanzo_utils::hanzo_path::HanzoPath;
-use hanzo_sqlite::SqliteManager;
+use hanzo_messages::schemas::inbox_name::InboxName;
+use hanzo_messages::schemas::job_config::JobConfig;
+use hanzo_messages::schemas::llm_providers::serialized_llm_provider::{Gemini, LLMProviderInterface};
+use hanzo_messages::schemas::prompts::Prompt;
+use hanzo_messages::schemas::ws_types::WSUpdateHandler;
+use hanzo_messages::hanzo_utils::hanzo_logging::{hanzo_log, HanzoLogLevel, HanzoLogOption};
+use hanzo_messages::hanzo_utils::hanzo_path::HanzoPath;
+use hanzo_db_sqlite::SqliteManager;
 use std::error::Error;
 use tokio::sync::Mutex;
 use uuid::Uuid;
@@ -526,9 +526,9 @@ async fn process_function_call(
 #[cfg(test)]
 mod tests {
     use super::*;
-    use hanzo_embedding::model_type::EmbeddingModelType;
-    use hanzo_embedding::model_type::OllamaTextEmbeddingsInference;
-    use hanzo_sqlite::SqliteManager;
+    use hanzo_embed::model_type::EmbeddingModelType;
+    use hanzo_embed::model_type::OllamaTextEmbeddingsInference;
+    use hanzo_db_sqlite::SqliteManager;
     use std::sync::Arc;
     use tempfile::NamedTempFile;
     use tokio::sync::Mutex;
@@ -1123,8 +1123,8 @@ mod tests {
         let db = setup_test_db().await;
 
         // Create the job in the database so save_and_process_file_with_jobid won't fail
-        use hanzo_message_primitives::schemas::job_config::JobConfig;
-        use hanzo_message_primitives::hanzo_utils::job_scope::MinimalJobScope;
+        use hanzo_messages::schemas::job_config::JobConfig;
+        use hanzo_messages::hanzo_utils::job_scope::MinimalJobScope;
 
         let scope = MinimalJobScope::default();
         let config = JobConfig::empty();

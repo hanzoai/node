@@ -17,9 +17,9 @@ tokio = { version = "1.35", features = ["full"] }
 async-trait = "0.1"
 
 # Hanzo libraries
-hanzo_model_discovery = { path = "../../hanzo-libs/hanzo-model-discovery" }
-hanzo_message_primitives = { path = "../../hanzo-libs/hanzo-message-primitives" }
-hanzo_embedding = { path = "../../hanzo-libs/hanzo-embedding" }
+hanzo-model-discovery = { path = "../../hanzo-libs/hanzo-model-discovery" }
+hanzo-messages = { path = "../../hanzo-libs/hanzo-messages" }
+hanzo-embed = { path = "../../hanzo-libs/hanzo-embed" }
 
 # HTTP and API
 reqwest = { version = "0.11", features = ["json", "stream"] }

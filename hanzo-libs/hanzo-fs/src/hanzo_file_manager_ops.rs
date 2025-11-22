@@ -1,9 +1,9 @@
 use std::fs;
 
-use hanzo_message_primitives::hanzo_utils::hanzo_path::HanzoPath;
-use hanzo_sqlite::SqliteManager;
+use hanzo_messages::hanzo_utils::hanzo_path::HanzoPath;
+use hanzo_db_sqlite::SqliteManager;
 
-use hanzo_message_primitives::schemas::hanzo_fs::ParsedFile;
+use hanzo_messages::schemas::hanzo_fs::ParsedFile;
 
 use crate::hanzo_file_manager::HanzoFileManager;
 use crate::hanzo_fs_error::HanzoFsError;
@@ -216,9 +216,9 @@ mod tests {
 
     use super::*;
     use serial_test::serial;
-    use hanzo_embedding::mock_generator::MockGenerator;
-    use hanzo_embedding::model_type::EmbeddingModelType;
-    use hanzo_message_primitives::schemas::hanzo_fs::HanzoFileChunk;
+    use hanzo_embed::mock_generator::MockGenerator;
+    use hanzo_embed::model_type::EmbeddingModelType;
+    use hanzo_messages::schemas::hanzo_fs::HanzoFileChunk;
     use std::fs::{self, File};
     use std::io::Read;
     use std::path::PathBuf;

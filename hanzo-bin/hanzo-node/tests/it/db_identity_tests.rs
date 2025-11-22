@@ -1,15 +1,15 @@
-use hanzo_embedding::model_type::{EmbeddingModelType, OllamaTextEmbeddingsInference};
-use hanzo_message_primitives::schemas::identity::{StandardIdentity, StandardIdentityType};
-use hanzo_message_primitives::schemas::hanzo_name::{HanzoName, HanzoSubidentityType};
-use hanzo_message_primitives::hanzo_message::hanzo_message_schemas::{IdentityPermissions, RegistrationCodeType};
-use hanzo_message_primitives::hanzo_utils::encryption::{
+use hanzo_embed::model_type::{EmbeddingModelType, OllamaTextEmbeddingsInference};
+use hanzo_messages::schemas::identity::{StandardIdentity, StandardIdentityType};
+use hanzo_messages::schemas::hanzo_name::{HanzoName, HanzoSubidentityType};
+use hanzo_messages::hanzo_message::hanzo_message_schemas::{IdentityPermissions, RegistrationCodeType};
+use hanzo_messages::hanzo_utils::encryption::{
     encryption_public_key_to_string, unsafe_deterministic_encryption_keypair,
 };
-use hanzo_message_primitives::hanzo_utils::signatures::{
+use hanzo_messages::hanzo_utils::signatures::{
     signature_public_key_to_string, unsafe_deterministic_signature_keypair,
 };
-use hanzo_sqlite::errors::SqliteManagerError;
-use hanzo_sqlite::SqliteManager;
+use hanzo_db_sqlite::errors::SqliteManagerError;
+use hanzo_db_sqlite::SqliteManager;
 
 use std::path::PathBuf;
 use std::sync::Arc;

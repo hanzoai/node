@@ -2,28 +2,28 @@ use async_channel::{bounded, Receiver, Sender};
 use serde_json::Value;
 use hanzo_http_api::node_api_router::APIError;
 use hanzo_http_api::node_commands::NodeCommand;
-use hanzo_message_primitives::schemas::invoices::{Invoice, InvoiceStatusEnum};
-use hanzo_message_primitives::schemas::hanzo_name::HanzoName;
-use hanzo_message_primitives::schemas::hanzo_tool_offering::{
+use hanzo_messages::schemas::invoices::{Invoice, InvoiceStatusEnum};
+use hanzo_messages::schemas::hanzo_name::HanzoName;
+use hanzo_messages::schemas::hanzo_tool_offering::{
     HanzoToolOffering, ToolPrice, UsageType, UsageTypeInquiry,
 };
-use hanzo_message_primitives::schemas::tool_router_key::ToolRouterKey;
-use hanzo_message_primitives::schemas::wallet_complementary::{WalletRole, WalletSource};
-use hanzo_message_primitives::schemas::x402_types::{self, Network, PaymentRequirements};
-use hanzo_message_primitives::hanzo_utils::encryption::{
+use hanzo_messages::schemas::tool_router_key::ToolRouterKey;
+use hanzo_messages::schemas::wallet_complementary::{WalletRole, WalletSource};
+use hanzo_messages::schemas::x402_types::{self, Network, PaymentRequirements};
+use hanzo_messages::hanzo_utils::encryption::{
     encryption_public_key_to_string, encryption_secret_key_to_string, unsafe_deterministic_encryption_keypair,
 };
-use hanzo_message_primitives::hanzo_utils::signatures::{
+use hanzo_messages::hanzo_utils::signatures::{
     clone_signature_secret_key, signature_public_key_to_string, signature_secret_key_to_string,
     unsafe_deterministic_signature_keypair,
 };
-use hanzo_message_primitives::hanzo_utils::utils::hash_string;
+use hanzo_messages::hanzo_utils::utils::hash_string;
 use hanzo_node::network::Node;
-use hanzo_tools_primitives::tools::deno_tools::DenoTool;
-use hanzo_tools_primitives::tools::network_tool::NetworkTool;
-use hanzo_tools_primitives::tools::parameters::Parameters;
-use hanzo_tools_primitives::tools::hanzo_tool::{HanzoTool, HanzoToolHeader, HanzoToolWithAssets};
-use hanzo_tools_primitives::tools::tool_output_arg::ToolOutputArg;
+use hanzo_tools::tools::deno_tools::DenoTool;
+use hanzo_tools::tools::network_tool::NetworkTool;
+use hanzo_tools::tools::parameters::Parameters;
+use hanzo_tools::tools::hanzo_tool::{HanzoTool, HanzoToolHeader, HanzoToolWithAssets};
+use hanzo_tools::tools::tool_output_arg::ToolOutputArg;
 use std::net::{IpAddr, Ipv4Addr, TcpListener};
 use std::sync::Arc;
 use std::{net::SocketAddr, time::Duration};

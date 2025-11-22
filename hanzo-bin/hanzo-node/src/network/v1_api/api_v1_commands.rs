@@ -15,17 +15,17 @@ use log::error;
 use reqwest::StatusCode;
 use serde_json::{json, Value as JsonValue};
 
-use hanzo_embedding::embedding_generator::RemoteEmbeddingGenerator;
-use hanzo_embedding::model_type::EmbeddingModelType;
+use hanzo_embed::embedding_generator::RemoteEmbeddingGenerator;
+use hanzo_embed::model_type::EmbeddingModelType;
 use hanzo_http_api::node_api_router::{APIError, APIUseRegistrationCodeSuccessResponse, SendResponseBodyData};
-use hanzo_message_primitives::schemas::identity::{
+use hanzo_messages::schemas::identity::{
     DeviceIdentity, Identity, IdentityType, RegistrationCode, StandardIdentity, StandardIdentityType,
 };
-use hanzo_message_primitives::schemas::inbox_permission::InboxPermission;
-use hanzo_message_primitives::schemas::smart_inbox::SmartInbox;
-use hanzo_message_primitives::schemas::ws_types::WSUpdateHandler;
-use hanzo_message_primitives::hanzo_utils::encryption::encryption_secret_key_to_string;
-use hanzo_message_primitives::{
+use hanzo_messages::schemas::inbox_permission::InboxPermission;
+use hanzo_messages::schemas::smart_inbox::SmartInbox;
+use hanzo_messages::schemas::ws_types::WSUpdateHandler;
+use hanzo_messages::hanzo_utils::encryption::encryption_secret_key_to_string;
+use hanzo_messages::{
     schemas::{
         inbox_name::InboxName,
         llm_providers::serialized_llm_provider::SerializedLLMProvider,
@@ -47,9 +47,9 @@ use hanzo_message_primitives::{
         signatures::{clone_signature_secret_key, signature_public_key_to_string, string_to_signature_public_key},
     },
 };
-use hanzo_sqlite::errors::SqliteManagerError;
-use hanzo_sqlite::SqliteManager;
-use hanzo_tools_primitives::tools::hanzo_tool::HanzoTool;
+use hanzo_db_sqlite::errors::SqliteManagerError;
+use hanzo_db_sqlite::SqliteManager;
+use hanzo_tools::tools::hanzo_tool::HanzoTool;
 
 use std::{convert::TryInto, env, sync::Arc, time::Instant};
 use tokio::sync::Mutex;
@@ -952,7 +952,7 @@ impl Node {
                     }
                     IdentityType::Device => {
                         // use get_code_info to get the profile name
-                        let code_info: hanzo_message_primitives::schemas::identity_registration::RegistrationCodeInfo = db.get_registration_code_info(code.clone().as_str()).unwrap();
+                        let code_info: hanzo_messages::schemas::identity_registration::RegistrationCodeInfo = db.get_registration_code_info(code.clone().as_str()).unwrap();
                         let profile_name = match code_info.code_type {
                             RegistrationCodeType::Device(profile_name) => profile_name,
                             _ => return Err(Box::new(SqliteManagerError::InvalidData)),

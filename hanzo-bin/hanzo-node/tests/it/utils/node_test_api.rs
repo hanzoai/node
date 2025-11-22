@@ -4,18 +4,18 @@ use ed25519_dalek::SigningKey;
 use serde_json::{Map, Value};
 use hanzo_http_api::node_api_router::APIError;
 use hanzo_http_api::node_commands::NodeCommand;
-use hanzo_message_primitives::schemas::identity::{Identity, IdentityType, StandardIdentity};
-use hanzo_message_primitives::schemas::llm_providers::serialized_llm_provider::SerializedLLMProvider;
-use hanzo_message_primitives::schemas::hanzo_name::HanzoName;
-use hanzo_message_primitives::hanzo_message::hanzo_message_schemas::{
+use hanzo_messages::schemas::identity::{Identity, IdentityType, StandardIdentity};
+use hanzo_messages::schemas::llm_providers::serialized_llm_provider::SerializedLLMProvider;
+use hanzo_messages::schemas::hanzo_name::HanzoName;
+use hanzo_messages::hanzo_message::hanzo_message_schemas::{
     IdentityPermissions, MessageSchemaType, RegistrationCodeType,
 };
-use hanzo_message_primitives::hanzo_utils::encryption::encryption_public_key_to_string;
-use hanzo_message_primitives::hanzo_utils::job_scope::MinimalJobScope;
-use hanzo_message_primitives::hanzo_utils::hanzo_logging::{hanzo_log, HanzoLogLevel, HanzoLogOption};
-use hanzo_message_primitives::hanzo_utils::hanzo_message_builder::HanzoMessageBuilder;
-use hanzo_message_primitives::hanzo_utils::hanzo_path::HanzoPath;
-use hanzo_message_primitives::hanzo_utils::signatures::clone_signature_secret_key;
+use hanzo_messages::hanzo_utils::encryption::encryption_public_key_to_string;
+use hanzo_messages::hanzo_utils::job_scope::MinimalJobScope;
+use hanzo_messages::hanzo_utils::hanzo_logging::{hanzo_log, HanzoLogLevel, HanzoLogOption};
+use hanzo_messages::hanzo_utils::hanzo_message_builder::HanzoMessageBuilder;
+use hanzo_messages::hanzo_utils::hanzo_path::HanzoPath;
+use hanzo_messages::hanzo_utils::signatures::clone_signature_secret_key;
 use std::time::Duration;
 use x25519_dalek::{PublicKey as EncryptionPublicKey, StaticSecret as EncryptionStaticKey};
 

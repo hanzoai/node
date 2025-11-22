@@ -1,0 +1,22 @@
+[package]
+name = "hanzo-models"
+version = "1.1.11"
+edition = "2021"
+authors = ["Hanzo AI Inc"]
+license = "MIT"
+repository = "https://github.com/hanzoai/hanzo-node"
+homepage = "https://hanzo.ai"
+description = "Model discovery for Hanzo AI platform"
+
+[dependencies]
+async-trait = "0.1"
+reqwest = { version = "0.11", features = ["json"] }
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+tokio = { version = "1.35", features = ["full"] }
+chrono = { version = "0.4", features = ["serde"] }
+regex = "1.10"
+percent-encoding = "2.3"
+
+[dev-dependencies]
+tokio-test = "0.4"

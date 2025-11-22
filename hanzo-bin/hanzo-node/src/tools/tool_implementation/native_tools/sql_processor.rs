@@ -1,15 +1,15 @@
-use hanzo_sqlite::SqliteManager;
-use hanzo_tools_primitives::tools::parameters::Parameters;
-use hanzo_tools_primitives::tools::{hanzo_tool::HanzoToolHeader, tool_output_arg::ToolOutputArg};
+use hanzo_db_sqlite::SqliteManager;
+use hanzo_tools::tools::parameters::Parameters;
+use hanzo_tools::tools::{hanzo_tool::HanzoToolHeader, tool_output_arg::ToolOutputArg};
 use std::path::{Path, PathBuf};
 use std::sync::Arc;
 
 use serde_json::{json, Map, Value};
-use hanzo_tools_primitives::tools::error::ToolError;
+use hanzo_tools::tools::error::ToolError;
 
 use ed25519_dalek::SigningKey;
 
-use hanzo_message_primitives::schemas::hanzo_name::HanzoName;
+use hanzo_messages::schemas::hanzo_name::HanzoName;
 
 use x25519_dalek::PublicKey as EncryptionPublicKey;
 use x25519_dalek::StaticSecret as EncryptionStaticKey;
@@ -63,7 +63,7 @@ SELECT field_1, field_3 FROM table_name WHERE field_3 > 100 ORDER BY field_2 DES
 -- Changelog:
 - 1.0.1: Fixed parameters to be compliant with JSON schema."#
                     .to_string(),
-                tool_router_key: "local:::__official_hanzo:::hanzo_sqlite_query_executor".to_string(),
+                tool_router_key: "local:::__official_hanzo:::hanzo_db_sqlite_query_executor".to_string(),
                 tool_type: "Rust".to_string(),
                 formatted_tool_summary_for_ui: "Execute SQLite queries".to_string(),
                 author: "@@official.hanzo".to_string(),
@@ -71,7 +71,7 @@ SELECT field_1, field_3 FROM table_name WHERE field_3 > 100 ORDER BY field_2 DES
                 enabled: true,
                 mcp_enabled: Some(false),
                 input_args: {
-                    use hanzo_tools_primitives::tools::parameters::Property;
+                    use hanzo_tools::tools::parameters::Property;
                     let mut params = Parameters::new();
                     params.add_property("query".to_string(), "string".to_string(), "The SQL query to execute".to_string(), true, None);
                     
@@ -291,7 +291,7 @@ impl ToolExecutor for SQLProcessorTool {
 
 #[cfg(test)]
 mod tests {
-    use hanzo_tools_primitives::tools::rust_tools::RustTool;
+    use hanzo_tools::tools::rust_tools::RustTool;
 
     use super::*;
 
@@ -300,7 +300,7 @@ mod tests {
         let sql_processor_tool = SQLProcessorTool::new();
         assert_eq!(
             sql_processor_tool.tool.tool_router_key,
-            "local:::__official_hanzo:::hanzo_sqlite_query_executor"
+            "local:::__official_hanzo:::hanzo_db_sqlite_query_executor"
         );
     }
 

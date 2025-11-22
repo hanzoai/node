@@ -1,0 +1,54 @@
+[package]
+name = "hanzo-simulation"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+# Core
+tokio = { version = "1.38", features = ["full"] }
+anyhow = "1.0"
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+tracing = "0.1"
+dashmap = "5.5"
+
+# Database
+sqlx = { version = "0.8", features = ["runtime-tokio", "sqlite", "macros", "json"] }
+sqlite-vec = "0.1"  # Vector search in SQLite
+
+# USD support
+openusd = "0.1"  # OpenUSD bindings
+usd-rs = "0.1"   # Alternative USD library
+
+# Math & Physics
+nalgebra = "0.33"
+rapier3d = "0.22"  # Rust physics engine
+parry3d = "0.17"   # Collision detection
+
+# Graphics formats
+gltf = "1.4"
+image = "0.25"
+basis-universal = "0.3"  # KTX2 texture compression
+
+# Web/Networking
+warp = "0.3"
+tower = "0.4"
+tower-http = { version = "0.5", features = ["cors", "compression"] }
+
+# ML Integration
+candle-core = "0.7"
+candle-nn = "0.7"
+ort = "2.0"  # ONNX Runtime for V-JEPA2
+
+# Compute orchestration
+bollard = "0.17"  # Docker API
+kube = { version = "0.95", features = ["runtime", "derive"] }
+k8s-openapi = { version = "0.23", features = ["latest"] }
+
+# Security
+firecracker-sdk = "0.1"  # MicroVM isolation
+hanzo_pqc = { path = "../hanzo-pqc" }
+
+[dev-dependencies]
+criterion = "0.5"
+tempfile = "3.10"

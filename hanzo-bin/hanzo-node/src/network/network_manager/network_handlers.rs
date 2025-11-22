@@ -15,11 +15,11 @@ use ed25519_dalek::{SigningKey, VerifyingKey};
 use libp2p::{request_response::ResponseChannel, PeerId};
 use serde_json::json;
 use serde_json::Value;
-use hanzo_message_primitives::schemas::agent_network_offering::{
+use hanzo_messages::schemas::agent_network_offering::{
     AgentNetworkOfferingRequest, AgentNetworkOfferingResponse,
 };
-use hanzo_message_primitives::schemas::ws_types::WSUpdateHandler;
-use hanzo_message_primitives::{
+use hanzo_messages::schemas::ws_types::WSUpdateHandler;
+use hanzo_messages::{
     schemas::{
         invoices::{Invoice, InvoiceRequest, InvoiceRequestNetworkError},
         hanzo_name::HanzoName,
@@ -37,7 +37,7 @@ use hanzo_message_primitives::{
         signatures::{clone_signature_secret_key, signature_public_key_to_string},
     },
 };
-use hanzo_sqlite::SqliteManager;
+use hanzo_db_sqlite::SqliteManager;
 use std::sync::{Arc, Weak};
 use std::{io, net::SocketAddr};
 use tokio::sync::Mutex;

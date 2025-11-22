@@ -5,7 +5,7 @@
 /// Create a temporary directory and set the NODE_STORAGE_PATH environment variable
 /// Return the TempDir object (required so it doesn't get deleted when the function returns)
 pub fn testing_create_tempdir_and_set_env_var() -> tempfile::TempDir {
-    use hanzo_message_primitives::hanzo_utils::hanzo_path::HanzoPath;
+    use hanzo_messages::hanzo_utils::hanzo_path::HanzoPath;
     use std::env;
     use std::fs;
     use std::path::PathBuf;

@@ -1,5 +1,5 @@
 [package]
-name = "hanzo_mcp"
+name = "hanzo-mcp"
 version = { workspace = true }
 edition = { workspace = true }
 description = "Methods to interact with MCP servers"

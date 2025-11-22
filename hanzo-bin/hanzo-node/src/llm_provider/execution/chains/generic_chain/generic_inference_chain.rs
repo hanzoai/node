@@ -13,24 +13,24 @@ use crate::managers::tool_router::{ToolCallFunctionResponse, ToolRouter};
 use crate::network::agent_payments_manager::external_agent_offerings_manager::ExtAgentOfferingsManager;
 use crate::network::agent_payments_manager::my_agent_offerings_manager::MyAgentOfferingsManager;
 use hanzo_fs::hanzo_file_manager::HanzoFileManager;
-use hanzo_message_primitives::schemas::tool_router_key::ToolRouterKey;
-use hanzo_message_primitives::hanzo_message::hanzo_message::HanzoMessage;
+use hanzo_messages::schemas::tool_router_key::ToolRouterKey;
+use hanzo_messages::hanzo_message::hanzo_message::HanzoMessage;
 
 use crate::utils::environment::{fetch_node_environment, NodeEnvironment};
 use async_trait::async_trait;
-use hanzo_embedding::embedding_generator::RemoteEmbeddingGenerator;
+use hanzo_embed::embedding_generator::RemoteEmbeddingGenerator;
 use hanzo_fs::hanzo_fs_error::HanzoFsError;
-use hanzo_message_primitives::schemas::inbox_name::InboxName;
-use hanzo_message_primitives::schemas::job::{Job, JobLike};
-use hanzo_message_primitives::schemas::llm_providers::common_agent_llm_provider::ProviderOrAgent;
-use hanzo_message_primitives::schemas::hanzo_fs::HanzoFileChunkCollection;
-use hanzo_message_primitives::schemas::hanzo_name::HanzoName;
-use hanzo_message_primitives::schemas::ws_types::WSUpdateHandler;
-use hanzo_message_primitives::hanzo_utils::job_scope::MinimalJobScope;
-use hanzo_message_primitives::hanzo_utils::hanzo_logging::{hanzo_log, HanzoLogLevel, HanzoLogOption};
-use hanzo_message_primitives::hanzo_utils::hanzo_path::HanzoPath;
-use hanzo_message_primitives::hanzo_utils::utils::count_tokens_from_message_llama3;
-use hanzo_sqlite::SqliteManager;
+use hanzo_messages::schemas::inbox_name::InboxName;
+use hanzo_messages::schemas::job::{Job, JobLike};
+use hanzo_messages::schemas::llm_providers::common_agent_llm_provider::ProviderOrAgent;
+use hanzo_messages::schemas::hanzo_fs::HanzoFileChunkCollection;
+use hanzo_messages::schemas::hanzo_name::HanzoName;
+use hanzo_messages::schemas::ws_types::WSUpdateHandler;
+use hanzo_messages::hanzo_utils::job_scope::MinimalJobScope;
+use hanzo_messages::hanzo_utils::hanzo_logging::{hanzo_log, HanzoLogLevel, HanzoLogOption};
+use hanzo_messages::hanzo_utils::hanzo_path::HanzoPath;
+use hanzo_messages::hanzo_utils::utils::count_tokens_from_message_llama3;
+use hanzo_db_sqlite::SqliteManager;
 
 use base64::Engine;
 use chrono;
@@ -1560,7 +1560,7 @@ impl GenericInferenceChain {
                 Some(inbox_name),
                 &updated_function_call,
                 result,
-                Some(hanzo_message_primitives::schemas::ws_types::ToolStatusType::Complete),
+                Some(hanzo_messages::schemas::ws_types::ToolStatusType::Complete),
             )
             .await;
         }
@@ -1582,7 +1582,7 @@ impl GenericInferenceChain {
         additional_files.extend(f);
 
         // Get Job files
-        let folder_path: Result<HanzoPath, hanzo_sqlite::errors::SqliteManagerError> =
+        let folder_path: Result<HanzoPath, hanzo_db_sqlite::errors::SqliteManagerError> =
             db.get_job_folder_name(&full_job.job_id.clone());
 
         if let Ok(folder_path) = folder_path {

@@ -1,4 +1,4 @@
-use hanzo_message_primitives::hanzo_message::hanzo_message::{MessageBody, MessageData, HanzoMessage};
+use hanzo_messages::hanzo_message::hanzo_message::{MessageBody, MessageData, HanzoMessage};
 
 #[allow(dead_code)]
 pub fn print_content_time_messages(messages: Vec<HanzoMessage>) {

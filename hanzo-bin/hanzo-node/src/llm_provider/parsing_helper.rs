@@ -4,8 +4,8 @@ use super::job_manager::JobManager;
 use super::llm_stopper::LLMStopper;
 use hanzo_fs::simple_parser::file_parser_helper::HanzoFileParser;
 use hanzo_fs::simple_parser::text_group::TextGroup;
-use hanzo_message_primitives::schemas::llm_providers::common_agent_llm_provider::ProviderOrAgent;
-use hanzo_sqlite::SqliteManager;
+use hanzo_messages::schemas::llm_providers::common_agent_llm_provider::ProviderOrAgent;
+use hanzo_db_sqlite::SqliteManager;
 use std::sync::Arc;
 
 pub struct ParsingHelper {}

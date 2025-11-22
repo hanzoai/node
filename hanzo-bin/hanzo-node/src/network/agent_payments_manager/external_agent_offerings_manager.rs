@@ -10,26 +10,26 @@ use chrono::{Duration, Utc};
 use ed25519_dalek::SigningKey;
 use futures::Future;
 use hanzo_job_queue_manager::job_queue_manager::JobQueueManager;
-use hanzo_message_primitives::schemas::invoices::{
+use hanzo_messages::schemas::invoices::{
     Invoice, InvoiceError, InvoiceRequest, InvoiceRequestNetworkError, InvoiceStatusEnum,
 };
-use hanzo_message_primitives::schemas::hanzo_name::HanzoName;
-use hanzo_message_primitives::schemas::hanzo_tool_offering::{
+use hanzo_messages::schemas::hanzo_name::HanzoName;
+use hanzo_messages::schemas::hanzo_tool_offering::{
     HanzoToolOffering, ToolPrice, UsageType, UsageTypeInquiry,
 };
-use hanzo_message_primitives::schemas::tool_router_key::ToolRouterKey;
-use hanzo_message_primitives::hanzo_message::hanzo_message::ExternalMetadata;
-use hanzo_message_primitives::hanzo_message::hanzo_message_schemas::MessageSchemaType;
-use hanzo_message_primitives::hanzo_utils::encryption::clone_static_secret_key;
-use hanzo_message_primitives::hanzo_utils::hanzo_logging::{hanzo_log, HanzoLogLevel, HanzoLogOption};
-use hanzo_message_primitives::hanzo_utils::hanzo_message_builder::HanzoMessageBuilder;
-use hanzo_message_primitives::hanzo_utils::signatures::clone_signature_secret_key;
-use hanzo_non_rust_code::functions::x402;
-use hanzo_non_rust_code::functions::x402::settle_payment::settle_payment;
-use hanzo_non_rust_code::functions::x402::settle_payment::Input as SettleInput;
-use hanzo_non_rust_code::functions::x402::verify_payment::verify_payment;
-use hanzo_sqlite::SqliteManager;
-use hanzo_tools_primitives::tools::network_tool::NetworkTool;
+use hanzo_messages::schemas::tool_router_key::ToolRouterKey;
+use hanzo_messages::hanzo_message::hanzo_message::ExternalMetadata;
+use hanzo_messages::hanzo_message::hanzo_message_schemas::MessageSchemaType;
+use hanzo_messages::hanzo_utils::encryption::clone_static_secret_key;
+use hanzo_messages::hanzo_utils::hanzo_logging::{hanzo_log, HanzoLogLevel, HanzoLogOption};
+use hanzo_messages::hanzo_utils::hanzo_message_builder::HanzoMessageBuilder;
+use hanzo_messages::hanzo_utils::signatures::clone_signature_secret_key;
+use hanzo_runtime::functions::x402;
+use hanzo_runtime::functions::x402::settle_payment::settle_payment;
+use hanzo_runtime::functions::x402::settle_payment::Input as SettleInput;
+use hanzo_runtime::functions::x402::verify_payment::verify_payment;
+use hanzo_db_sqlite::SqliteManager;
+use hanzo_tools::tools::network_tool::NetworkTool;
 use std::collections::HashSet;
 use std::pin::Pin;
 use std::result::Result::Ok;
@@ -37,7 +37,7 @@ use std::sync::{Arc, Weak};
 use std::{env, fmt};
 use tokio::sync::{Mutex, Semaphore};
 
-use hanzo_message_primitives::schemas::x402_types::{
+use hanzo_messages::schemas::x402_types::{
     ERC20Asset, ERC20TokenAmount, FacilitatorConfig, Network, Price, EIP712,
 };
 use x25519_dalek::StaticSecret as EncryptionStaticKey;
@@ -1144,7 +1144,7 @@ mod tests {
 
     use super::*;
     use async_trait::async_trait;
-    use hanzo_message_primitives::{
+    use hanzo_messages::{
         schemas::identity::{Identity, StandardIdentity, StandardIdentityType},
         hanzo_message::hanzo_message_schemas::IdentityPermissions,
         hanzo_utils::{

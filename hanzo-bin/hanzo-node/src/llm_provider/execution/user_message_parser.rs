@@ -1,5 +1,5 @@
 use serde::{Deserialize, Serialize};
-use hanzo_embedding::embedding_generator::{EmbeddingGenerator, RemoteEmbeddingGenerator};
+use hanzo_embed::embedding_generator::{EmbeddingGenerator, RemoteEmbeddingGenerator};
 use hanzo_fs::hanzo_fs_error::HanzoFsError;
 // use hanzo_vector_resources::{
 //     embedding_generator::{EmbeddingGenerator, RemoteEmbeddingGenerator},

@@ -4,8 +4,8 @@ use async_channel::Sender;
 use reqwest::StatusCode;
 
 use hanzo_http_api::node_api_router::APIError;
-use hanzo_message_primitives::schemas::custom_prompt::CustomPrompt;
-use hanzo_sqlite::SqliteManager;
+use hanzo_messages::schemas::custom_prompt::CustomPrompt;
+use hanzo_db_sqlite::SqliteManager;
 
 use crate::network::{node_error::NodeError, Node};
 

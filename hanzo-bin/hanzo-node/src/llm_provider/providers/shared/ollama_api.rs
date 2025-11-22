@@ -1,7 +1,7 @@
 use super::shared_model_logic::sanitize_tool_name;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
-use hanzo_message_primitives::schemas::{
+use hanzo_messages::schemas::{
     llm_message::LlmMessage, llm_providers::serialized_llm_provider::LLMProviderInterface, prompts::Prompt,
 };
 
@@ -299,7 +299,7 @@ pub fn ollama_conversation_prepare_messages_with_tooling(
 #[cfg(test)]
 mod tests {
     use serde_json::json;
-    use hanzo_message_primitives::schemas::{
+    use hanzo_messages::schemas::{
         llm_message::DetailedFunctionCall,
         llm_providers::serialized_llm_provider::SerializedLLMProvider,
         subprompts::{SubPrompt, SubPromptAssetType, SubPromptType},

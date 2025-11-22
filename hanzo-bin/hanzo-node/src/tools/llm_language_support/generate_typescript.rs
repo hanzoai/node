@@ -37,7 +37,7 @@ export async function hanzoDownloadPages(input: {urls: any[]}): Promise<{
 }
 */
 use serde_json::Value;
-use hanzo_tools_primitives::tools::{
+use hanzo_tools::tools::{
     hanzo_tool::HanzoToolHeader,
     tool_playground::{SqlQuery, SqlTable},
     tool_types::ToolResult,
@@ -305,7 +305,7 @@ const manageAxiosError = (error: any) => {
 mod tests {
     use super::*;
     use serde_json::json;
-    use hanzo_tools_primitives::tools::parameters::{Parameters, Property};
+    use hanzo_tools::tools::parameters::{Parameters, Property};
 
     #[test]
     fn test_generate_typescript_definition() {
@@ -333,7 +333,7 @@ mod tests {
                 params.required.push("stringParam".to_string());
                 params
             },
-            output_arg: hanzo_tools_primitives::tools::tool_output_arg::ToolOutputArg { json: "{}".to_string() },
+            output_arg: hanzo_tools::tools::tool_output_arg::ToolOutputArg { json: "{}".to_string() },
             config: None,
             usage_type: None,
             tool_offering: None,
@@ -384,7 +384,7 @@ mod tests {
             version: "1.0.0".to_string(),
             enabled: true,
             input_args: Parameters::new(),
-            output_arg: hanzo_tools_primitives::tools::tool_output_arg::ToolOutputArg { json: "{}".to_string() },
+            output_arg: hanzo_tools::tools::tool_output_arg::ToolOutputArg { json: "{}".to_string() },
             config: None,
             usage_type: None,
             tool_offering: None,
@@ -427,7 +427,7 @@ mod tests {
             version: "1.0.0".to_string(),
             enabled: true,
             input_args: Parameters::new(),
-            output_arg: hanzo_tools_primitives::tools::tool_output_arg::ToolOutputArg { json: "{}".to_string() },
+            output_arg: hanzo_tools::tools::tool_output_arg::ToolOutputArg { json: "{}".to_string() },
             config: None,
             usage_type: None,
             tool_offering: None,
@@ -512,7 +512,7 @@ mod tests {
                 );
                 params
             },
-            output_arg: hanzo_tools_primitives::tools::tool_output_arg::ToolOutputArg { json: "{}".to_string() },
+            output_arg: hanzo_tools::tools::tool_output_arg::ToolOutputArg { json: "{}".to_string() },
             config: None,
             usage_type: None,
             tool_offering: None,
@@ -567,7 +567,7 @@ mod tests {
                 );
                 params
             },
-            output_arg: hanzo_tools_primitives::tools::tool_output_arg::ToolOutputArg { json: "{}".to_string() },
+            output_arg: hanzo_tools::tools::tool_output_arg::ToolOutputArg { json: "{}".to_string() },
             config: None,
             usage_type: None,
             tool_offering: None,
@@ -614,7 +614,7 @@ mod tests {
                 mcp_enabled: Some(false),
                 enabled: true,
                 input_args: Parameters::new(),
-                output_arg: hanzo_tools_primitives::tools::tool_output_arg::ToolOutputArg { json: "{}".to_string() },
+                output_arg: hanzo_tools::tools::tool_output_arg::ToolOutputArg { json: "{}".to_string() },
                 config: None,
                 usage_type: None,
                 tool_offering: None,

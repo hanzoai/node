@@ -1,6 +1,6 @@
 use ed25519_dalek::{SigningKey, VerifyingKey};
 use rcgen::{CertificateParams, DistinguishedName, DnType, KeyPair};
-use hanzo_message_primitives::hanzo_utils::{
+use hanzo_messages::hanzo_utils::{
     encryption::{
         clone_static_secret_key, encryption_secret_key_to_string, ephemeral_encryption_keys,
         string_to_encryption_static_key,

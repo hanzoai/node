@@ -1,5 +1,5 @@
 [package]
-name = "hanzo_model_discovery"
+name = "hanzo-model-discovery"
 version = "1.1.10"
 edition = "2021"
 

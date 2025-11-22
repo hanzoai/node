@@ -19,8 +19,8 @@ use ed25519_dalek::{SigningKey, VerifyingKey};
 use reqwest::StatusCode;
 use rusqlite::params;
 use serde_json::{json, Value};
-use hanzo_embedding::embedding_generator::EmbeddingGenerator;
-use hanzo_embedding::{embedding_generator::RemoteEmbeddingGenerator, model_type::EmbeddingModelType};
+use hanzo_embed::embedding_generator::EmbeddingGenerator;
+use hanzo_embed::{embedding_generator::RemoteEmbeddingGenerator, model_type::EmbeddingModelType};
 use hanzo_http_api::api_v2::api_v2_handlers_mcp_servers::{
     AddMCPServerRequest, DeleteMCPServerResponse, UpdateMCPServerRequest,
 };
@@ -31,10 +31,10 @@ use hanzo_http_api::{
     node_commands::EmbeddingMigrationRequest,
 };
 use hanzo_mcp::mcp_methods::{list_tools_via_command, list_tools_via_http, list_tools_via_sse};
-use hanzo_message_primitives::schemas::llm_providers::hanzo_backend::QuotaResponse;
-use hanzo_message_primitives::schemas::mcp_server::{MCPServer, MCPServerType};
-use hanzo_message_primitives::schemas::hanzo_preferences::HanzoInternalComms;
-use hanzo_message_primitives::{
+use hanzo_messages::schemas::llm_providers::hanzo_backend::QuotaResponse;
+use hanzo_messages::schemas::mcp_server::{MCPServer, MCPServerType};
+use hanzo_messages::schemas::hanzo_preferences::HanzoInternalComms;
+use hanzo_messages::{
     schemas::ws_types::WSUpdateHandler,
     schemas::{
         identity::{Identity, IdentityType, RegistrationCode},
@@ -57,10 +57,10 @@ use hanzo_message_primitives::{
     },
     hanzo_utils::{job_scope::MinimalJobScope, hanzo_time::HanzoStringTime},
 };
-use hanzo_sqlite::regex_pattern_manager::RegexPattern;
-use hanzo_sqlite::SqliteManager;
-use hanzo_tools_primitives::tools::mcp_server_tool::MCPServerTool;
-use hanzo_tools_primitives::tools::{
+use hanzo_db_sqlite::regex_pattern_manager::RegexPattern;
+use hanzo_db_sqlite::SqliteManager;
+use hanzo_tools::tools::mcp_server_tool::MCPServerTool;
+use hanzo_tools::tools::{
     agent_tool_wrapper::AgentToolWrapper,
     parameters::Parameters,
     hanzo_tool::HanzoTool,

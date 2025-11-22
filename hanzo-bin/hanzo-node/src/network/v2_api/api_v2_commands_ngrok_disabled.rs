@@ -4,7 +4,7 @@ use async_channel::Sender;
 use reqwest::StatusCode;
 use serde_json::Value;
 use hanzo_http_api::node_api_router::APIError;
-use hanzo_sqlite::SqliteManager;
+use hanzo_db_sqlite::SqliteManager;
 use std::sync::Arc;
 
 impl Node {
