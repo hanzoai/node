@@ -1,5 +1,5 @@
 [package]
-name = "hanzo_llm"
+name = "hanzo-llm"
 version.workspace = true
 edition.workspace = true
 authors.workspace = true
@@ -31,9 +31,9 @@ chrono = { workspace = true }
 bincode = { workspace = true }
 
 # Internal dependencies
-hanzo_message_primitives = { workspace = true }
-hanzo_sqlite = { workspace = true }
-hanzo_embedding = { workspace = true }
+hanzo-messages = { workspace = true }
+hanzo-db-sqlite = { workspace = true }
+hanzo-embed = { workspace = true }
 
 # For BitDelta quantization
 bitvec = { version = "1.0", features = ["serde"] }

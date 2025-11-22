@@ -1,9 +1,9 @@
 use ed25519_dalek::SigningKey;
-use hanzo_message_primitives::hanzo_message::hanzo_message_schemas::MessageSchemaType;
-use hanzo_message_primitives::hanzo_utils::encryption::EncryptionMethod;
-use hanzo_message_primitives::hanzo_utils::hanzo_message_builder::HanzoMessageBuilder;
-use hanzo_message_primitives::hanzo_utils::signatures::clone_signature_secret_key;
-use hanzo_message_primitives::{
+use hanzo_messages::hanzo_message::hanzo_message_schemas::MessageSchemaType;
+use hanzo_messages::hanzo_utils::encryption::EncryptionMethod;
+use hanzo_messages::hanzo_utils::hanzo_message_builder::HanzoMessageBuilder;
+use hanzo_messages::hanzo_utils::signatures::clone_signature_secret_key;
+use hanzo_messages::{
     hanzo_message::hanzo_message::HanzoMessage,
     hanzo_utils::{
         encryption::unsafe_deterministic_encryption_keypair, signatures::unsafe_deterministic_signature_keypair,

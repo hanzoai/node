@@ -1,6 +1,6 @@
 use keyphrases::KeyPhraseExtractor;
 use regex::Regex;
-use hanzo_embedding::embedding_generator::EmbeddingGenerator;
+use hanzo_embed::embedding_generator::EmbeddingGenerator;
 
 use std::{future::Future, pin::Pin};
 

@@ -1,8 +1,8 @@
 use std::{collections::HashMap, sync::Arc};
 
 use serde_json::{Map, Value};
-use hanzo_sqlite::SqliteManager;
-use hanzo_tools_primitives::tools::{
+use hanzo_db_sqlite::SqliteManager;
+use hanzo_tools::tools::{
     error::ToolError,
     parameters::{Parameters, Property},
     tool_config::{OAuth, ToolConfig},
@@ -212,7 +212,7 @@ fn check_tool_parameters(parameters: Parameters, value: Map<String, Value>) -> R
 mod tests {
     use super::*;
     use serde_json::json;
-    use hanzo_tools_primitives::tools::tool_config::BasicConfig;
+    use hanzo_tools::tools::tool_config::BasicConfig;
 
     fn create_test_parameters() -> Parameters {
         let mut params = Parameters::new();

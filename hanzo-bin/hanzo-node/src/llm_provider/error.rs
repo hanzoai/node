@@ -1,12 +1,12 @@
 use crate::managers::model_capabilities_manager::ModelCapabilitiesManagerError;
 use anyhow::Error as AnyhowError;
 use hanzo_fs::hanzo_fs_error::HanzoFsError;
-use hanzo_message_primitives::{
+use hanzo_messages::{
     schemas::{inbox_name::InboxNameError, prompts::PromptError, hanzo_name::HanzoNameError},
     hanzo_message::hanzo_message_error::HanzoMessageError,
 };
-use hanzo_sqlite::errors::SqliteManagerError;
-use hanzo_tools_primitives::tools::{error::ToolError, rust_tools::RustToolError};
+use hanzo_db_sqlite::errors::SqliteManagerError;
+use hanzo_tools::tools::{error::ToolError, rust_tools::RustToolError};
 use std::fmt;
 use tokio::task::JoinError;
 

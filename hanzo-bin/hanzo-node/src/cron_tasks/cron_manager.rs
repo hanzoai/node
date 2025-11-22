@@ -8,7 +8,7 @@ use std::{
 use chrono::{Local, Utc};
 use ed25519_dalek::SigningKey;
 use futures::Future;
-use hanzo_message_primitives::{
+use hanzo_messages::{
     schemas::{
         crontab::{CronTask, CronTaskAction},
         inbox_name::InboxNameError,
@@ -21,7 +21,7 @@ use hanzo_message_primitives::{
         signatures::clone_signature_secret_key,
     },
 };
-use hanzo_sqlite::{errors::SqliteManagerError, SqliteManager};
+use hanzo_db_sqlite::{errors::SqliteManagerError, SqliteManager};
 use tokio::sync::Mutex;
 use x25519_dalek::{PublicKey as EncryptionPublicKey, StaticSecret as EncryptionStaticKey};
 
@@ -621,7 +621,7 @@ impl CronManager {
 mod tests {
     use super::*;
     use chrono::Timelike;
-    use hanzo_message_primitives::schemas::crontab::CronTaskAction;
+    use hanzo_messages::schemas::crontab::CronTaskAction;
 
     fn create_test_cron_task(cron: &str) -> CronTask {
         let job_message = JobMessage {

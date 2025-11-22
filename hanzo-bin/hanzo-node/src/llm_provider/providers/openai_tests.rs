@@ -3,7 +3,7 @@ mod tests {
     use super::super::openai::parse_openai_stream_chunk;
     use super::super::openai::PartialFunctionCall;
     use serde_json;
-    use hanzo_message_primitives::schemas::ws_types::WSUpdateHandler;
+    use hanzo_messages::schemas::ws_types::WSUpdateHandler;
     use std::sync::Arc;
     use tokio;
     use tokio::sync::Mutex;

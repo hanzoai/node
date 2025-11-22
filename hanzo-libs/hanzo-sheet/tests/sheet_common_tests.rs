@@ -4,7 +4,7 @@ use chrono::Utc;
 mod tests {
     use std::collections::HashSet;
 
-    use hanzo_message_primitives::schemas::sheet::{ColumnBehavior, ColumnDefinition, UuidString};
+    use hanzo_messages::schemas::sheet::{ColumnBehavior, ColumnDefinition, UuidString};
     use hanzo_sheet::sheet::Sheet;
     use uuid::Uuid;
 

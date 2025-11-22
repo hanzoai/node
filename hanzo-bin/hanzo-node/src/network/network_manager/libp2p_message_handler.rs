@@ -9,13 +9,13 @@ use crate::network::{
 };
 use ed25519_dalek::SigningKey;
 use libp2p::{request_response::ResponseChannel, PeerId};
-use hanzo_message_primitives::hanzo_utils::encryption::string_to_encryption_public_key;
-use hanzo_message_primitives::{
+use hanzo_messages::hanzo_utils::encryption::string_to_encryption_public_key;
+use hanzo_messages::{
     schemas::{hanzo_name::HanzoName, ws_types::WSUpdateHandler},
     hanzo_message::hanzo_message::HanzoMessage,
     hanzo_utils::hanzo_logging::{hanzo_log, HanzoLogLevel, HanzoLogOption},
 };
-use hanzo_sqlite::SqliteManager;
+use hanzo_db_sqlite::SqliteManager;
 use std::{
     net::SocketAddr,
     sync::{Arc, Weak},

@@ -1,5 +1,5 @@
 use serde_json::Value;
-use hanzo_non_rust_code::functions::parse_xlsx::parse_xlsx;
+use hanzo_runtime::functions::parse_xlsx::parse_xlsx;
 
 use crate::{hanzo_fs_error::HanzoFsError, simple_parser::text_group::TextGroup};
 

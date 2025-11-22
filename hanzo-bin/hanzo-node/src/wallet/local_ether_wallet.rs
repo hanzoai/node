@@ -1,11 +1,11 @@
 use serde::{Deserialize, Serialize};
-use hanzo_message_primitives::schemas::hanzo_name::HanzoName;
-use hanzo_message_primitives::schemas::wallet_complementary::WalletSource;
-use hanzo_message_primitives::schemas::wallet_mixed::{
+use hanzo_messages::schemas::hanzo_name::HanzoName;
+use hanzo_messages::schemas::wallet_complementary::WalletSource;
+use hanzo_messages::schemas::wallet_mixed::{
     Address, AddressBalanceList, Asset, Balance, PublicAddress, Transaction,
 };
-use hanzo_message_primitives::schemas::x402_types::{Network, PaymentRequirements};
-use hanzo_non_rust_code::functions::x402;
+use hanzo_messages::schemas::x402_types::{Network, PaymentRequirements};
+use hanzo_runtime::functions::x402;
 use std::future::Future;
 use std::pin::Pin;
 
@@ -13,14 +13,14 @@ use crate::wallet::wallet_error::WalletError;
 
 use super::wallet_manager::WalletEnum;
 use super::wallet_traits::{CommonActions, IsWallet, PaymentWallet, ReceivingWallet, SendActions, TransactionHash};
-use hanzo_non_rust_code::functions::ethers_wallet::create_wallet::{
+use hanzo_runtime::functions::ethers_wallet::create_wallet::{
     self as ethers_create_wallet, Input as EthersWalletInput,
 };
-use hanzo_non_rust_code::functions::ethers_wallet::get_balance;
-use hanzo_non_rust_code::functions::ethers_wallet::recover_wallet::{
+use hanzo_runtime::functions::ethers_wallet::get_balance;
+use hanzo_runtime::functions::ethers_wallet::recover_wallet::{
     self as ethers_recover_wallet, Input as EthersRecoverInput, RecoverySource,
 };
-use hanzo_non_rust_code::functions::x402::create_payment::{self, Input};
+use hanzo_runtime::functions::x402::create_payment::{self, Input};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct LocalEthersWallet {
@@ -244,7 +244,7 @@ impl CommonActions for LocalEthersWallet {
 
             // Main token balance (ETH)
             let eth_asset = Asset::new(
-                hanzo_message_primitives::schemas::wallet_mixed::AssetType::ETH,
+                hanzo_messages::schemas::wallet_mixed::AssetType::ETH,
                 &network,
             )
             .ok_or_else(|| WalletError::UnsupportedAsset("ETH".to_string()))?;
@@ -266,7 +266,7 @@ impl CommonActions for LocalEthersWallet {
 
             // USDC token balance if available on this network
             if let Some(usdc_asset) = Asset::new(
-                hanzo_message_primitives::schemas::wallet_mixed::AssetType::USDC,
+                hanzo_messages::schemas::wallet_mixed::AssetType::USDC,
                 &network,
             ) {
                 let token_address = usdc_asset

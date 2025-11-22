@@ -1,5 +1,5 @@
 [package]
-name = "hanzo_libp2p_relayer"
+name = "hanzo-libp2p-relayer"
 version = { workspace = true }
 edition = { workspace = true }
 authors = { workspace = true }
@@ -9,8 +9,8 @@ tokio = { workspace = true, features = ["full"] }
 serde_json = { workspace = true }
 serde = { workspace = true, features = ["derive"] }
 clap = { workspace = true, features = ["derive", "env"] }
-hanzo_message_primitives = { workspace = true }
-hanzo_crypto_identities = { workspace = true }
+hanzo-messages = { workspace = true }
+hanzo-identity = { workspace = true }
 x25519-dalek = { workspace = true }
 ed25519-dalek = { workspace = true }
 rand = { workspace = true }

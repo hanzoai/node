@@ -1,6 +1,6 @@
-use hanzo_message_primitives::schemas::hanzo_tools::DynamicToolType;
-use hanzo_message_primitives::schemas::tool_router_key::ToolRouterKey;
-use hanzo_message_primitives::hanzo_utils::hanzo_message_builder::HanzoMessageBuilder;
+use hanzo_messages::schemas::hanzo_tools::DynamicToolType;
+use hanzo_messages::schemas::tool_router_key::ToolRouterKey;
+use hanzo_messages::hanzo_utils::hanzo_message_builder::HanzoMessageBuilder;
 use std::sync::Arc;
 use tokio::sync::Mutex;
 
@@ -11,9 +11,9 @@ use crate::llm_provider::error::LLMProviderError;
 use crate::network::Node;
 use crate::tools::tool_execution::execution_coordinator::check_code;
 use ed25519_dalek::SigningKey;
-use hanzo_message_primitives::schemas::hanzo_name::HanzoName;
-use hanzo_message_primitives::hanzo_utils::signatures::clone_signature_secret_key;
-use hanzo_sqlite::SqliteManager;
+use hanzo_messages::schemas::hanzo_name::HanzoName;
+use hanzo_messages::hanzo_utils::signatures::clone_signature_secret_key;
+use hanzo_db_sqlite::SqliteManager;
 
 /// The `JobCallbackManager` is responsible for handling incoming job requests
 /// and delegating them to the appropriate manager (JobManager, SheetManager, or CronManager).

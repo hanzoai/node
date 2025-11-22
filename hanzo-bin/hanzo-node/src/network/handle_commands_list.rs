@@ -2621,7 +2621,7 @@ impl Node {
             }
 
             NodeCommand::V2ApiListMCPServers { bearer, res } => {
-                let db_clone: Arc<hanzo_sqlite::SqliteManager> = Arc::clone(&self.db);
+                let db_clone: Arc<hanzo_db_sqlite::SqliteManager> = Arc::clone(&self.db);
                 tokio::spawn(async move {
                     let _ = Node::v2_api_list_mcp_servers(db_clone, bearer, res).await;
                 });

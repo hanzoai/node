@@ -1,13 +1,13 @@
 [package]
-name = "hanzo_job_queue_manager"
+name = "hanzo-job-queue-manager"
 version = { workspace = true }
 edition = { workspace = true }
 authors = { workspace = true }
 
 [dependencies]
-hanzo_message_primitives = { workspace = true }
-hanzo_sqlite = { workspace = true }
-hanzo_embedding = { workspace = true }
+hanzo-messages = { workspace = true }
+hanzo-db-sqlite = { workspace = true }
+hanzo-embed = { workspace = true }
 tokio = { workspace = true }
 chrono = { workspace = true, features = ["serde"] }
 serde_json = { workspace = true }
@@ -17,5 +17,5 @@ workspace = true
 features = ["derive"]
 
 [dev-dependencies]
-# hanzo_vector_resources = { workspace = true }
+# hanzo-vector_resources = { workspace = true }
 tempfile = { workspace = true }

@@ -12,7 +12,7 @@ tokio = { version = "1.38", features = ["full"] }
 anyhow = "1.0"
 tracing = "0.1"
 base64 = "0.22"
-hanzo_tools_primitives = { path = "../hanzo-tools-primitives" }
+hanzo-tools = { path = "../hanzo-tools" }
 rand = "0.8"
 uuid = { version = "1.6", features = ["v4"] }
 md5 = "0.7"

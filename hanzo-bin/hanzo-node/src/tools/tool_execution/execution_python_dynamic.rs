@@ -3,9 +3,9 @@ use std::{collections::HashMap, path::PathBuf};
 use super::execution_header_generator::{check_tool, generate_execution_environment};
 use crate::utils::environment::fetch_node_environment;
 use serde_json::{Map, Value};
-use hanzo_message_primitives::schemas::{hanzo_name::HanzoName, tool_router_key::ToolRouterKey};
-use hanzo_sqlite::SqliteManager;
-use hanzo_tools_primitives::tools::{
+use hanzo_messages::schemas::{hanzo_name::HanzoName, tool_router_key::ToolRouterKey};
+use hanzo_db_sqlite::SqliteManager;
+use hanzo_tools::tools::{
     error::ToolError,
     parameters::Parameters,
     python_tools::PythonTool,

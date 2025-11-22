@@ -1,5 +1,5 @@
 [package]
-name = "hanzo_hmm"
+name = "hanzo-hmm"
 version = { workspace = true }
 edition = { workspace = true }
 authors = { workspace = true }

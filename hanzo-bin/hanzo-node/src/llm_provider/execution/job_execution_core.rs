@@ -11,20 +11,20 @@ use crate::network::agent_payments_manager::my_agent_offerings_manager::MyAgentO
 use ed25519_dalek::SigningKey;
 
 use base64::Engine;
-use hanzo_embedding::embedding_generator::RemoteEmbeddingGenerator;
+use hanzo_embed::embedding_generator::RemoteEmbeddingGenerator;
 use hanzo_fs::hanzo_file_manager::HanzoFileManager;
 use hanzo_job_queue_manager::job_queue_manager::{JobForProcessing, JobQueueManager};
-use hanzo_message_primitives::schemas::job::{Job, JobLike};
-use hanzo_message_primitives::schemas::llm_providers::common_agent_llm_provider::ProviderOrAgent;
-use hanzo_message_primitives::schemas::ws_types::WSUpdateHandler;
-use hanzo_message_primitives::hanzo_message::hanzo_message_schemas::{CallbackAction, MessageMetadata};
-use hanzo_message_primitives::hanzo_utils::hanzo_logging::{hanzo_log, HanzoLogLevel, HanzoLogOption};
-use hanzo_message_primitives::{
+use hanzo_messages::schemas::job::{Job, JobLike};
+use hanzo_messages::schemas::llm_providers::common_agent_llm_provider::ProviderOrAgent;
+use hanzo_messages::schemas::ws_types::WSUpdateHandler;
+use hanzo_messages::hanzo_message::hanzo_message_schemas::{CallbackAction, MessageMetadata};
+use hanzo_messages::hanzo_utils::hanzo_logging::{hanzo_log, HanzoLogLevel, HanzoLogOption};
+use hanzo_messages::{
     schemas::hanzo_name::HanzoName,
     hanzo_message::hanzo_message_schemas::JobMessage,
     hanzo_utils::{hanzo_message_builder::HanzoMessageBuilder, signatures::clone_signature_secret_key},
 };
-use hanzo_sqlite::SqliteManager;
+use hanzo_db_sqlite::SqliteManager;
 use std::result::Result::Ok;
 use std::sync::Weak;
 use std::time::Instant;

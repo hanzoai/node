@@ -5,7 +5,7 @@ use async_channel::Sender;
 use chrono::Utc;
 use reqwest::StatusCode;
 use serde_json::Value;
-use hanzo_sqlite::SqliteManager;
+use hanzo_db_sqlite::SqliteManager;
 
 use base64::Engine;
 use std::sync::Arc;

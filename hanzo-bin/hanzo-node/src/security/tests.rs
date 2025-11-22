@@ -295,8 +295,8 @@ mod secure_execution_tests {
     use super::super::secure_execution::*;
     use super::super::tee_attestation::*;
     use hanzo_kbs::types::PrivacyTier;
-    use hanzo_tools_primitives::tools::hanzo_tool::HanzoTool;
-    use hanzo_message_primitives::schemas::hanzo_tools::HanzoToolMetadata;
+    use hanzo_tools::tools::hanzo_tool::HanzoTool;
+    use hanzo_messages::schemas::hanzo_tools::HanzoToolMetadata;
     use serde_json::Value;
     use std::sync::Arc;
 

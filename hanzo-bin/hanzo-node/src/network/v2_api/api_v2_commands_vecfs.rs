@@ -6,13 +6,13 @@ use chrono::{DateTime, Utc};
 use reqwest::StatusCode;
 use serde_json::Value;
 
-use hanzo_embedding::embedding_generator::EmbeddingGenerator;
+use hanzo_embed::embedding_generator::EmbeddingGenerator;
 use hanzo_fs::{
     hanzo_file_manager::{FileProcessingMode, HanzoFileManager},
     hanzo_fs_error::HanzoFsError,
 };
 use hanzo_http_api::node_api_router::APIError;
-use hanzo_message_primitives::{
+use hanzo_messages::{
     schemas::hanzo_fs::HanzoFileChunkCollection,
     hanzo_message::hanzo_message_schemas::{
         APIVecFsCopyFolder, APIVecFsCopyItem, APIVecFsCreateFolder, APIVecFsDeleteFolder, APIVecFsDeleteItem,
@@ -21,7 +21,7 @@ use hanzo_message_primitives::{
     },
     hanzo_utils::hanzo_path::HanzoPath,
 };
-use hanzo_sqlite::SqliteManager;
+use hanzo_db_sqlite::SqliteManager;
 use tokio::sync::Mutex;
 
 use crate::{

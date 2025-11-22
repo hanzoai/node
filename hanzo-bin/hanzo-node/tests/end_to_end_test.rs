@@ -6,7 +6,7 @@ use hanzo_node::tools::tool_execution::*;
 use hanzo_node::security::{TEEAttestation, AttestationCache, PrivacyTier};
 use hanzo_node::hllm::{HLLMRouter, Regime};
 use hanzo_node::dex::{ComputeMarketplace, Order, OrderType, ComputeResource};
-use hanzo_message_primitives::{JobForWorker, ToolCallConfig, HardwareCapability};
+use hanzo_messages::{JobForWorker, ToolCallConfig, HardwareCapability};
 use hanzo_kbs::{AttestationReport, TEEEnvironment};
 use std::sync::Arc;
 use tokio::sync::RwLock;

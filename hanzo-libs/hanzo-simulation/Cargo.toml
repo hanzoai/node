@@ -38,7 +38,7 @@ tower-http = { version = "0.5", features = ["cors", "compression"] }
 # ML Integration
 candle-core = "0.7"
 candle-nn = "0.7"
-ort = "2.0"  # ONNX Runtime for V-JEPA2
+ort = "2.0.0-rc.10"  # ONNX Runtime for V-JEPA2
 
 # Compute orchestration
 bollard = "0.17"  # Docker API
@@ -46,8 +46,8 @@ kube = { version = "0.95", features = ["runtime", "derive"] }
 k8s-openapi = { version = "0.23", features = ["latest"] }
 
 # Security
-firecracker-sdk = "0.1"  # MicroVM isolation
-hanzo_pqc = { path = "../hanzo-pqc" }
+firecracker-sdk = "0.0.3"  # MicroVM isolation
+hanzo-pqc = { path = "../hanzo-pqc" }
 
 [dev-dependencies]
 criterion = "0.5"

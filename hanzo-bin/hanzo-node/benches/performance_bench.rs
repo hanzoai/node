@@ -4,9 +4,9 @@
 
 use criterion::{black_box, criterion_group, criterion_main, Criterion, BenchmarkId};
 use hanzo_node::monitoring::PerfTimer;
-use hanzo_sqlite::{SqliteManager, performance::*};
-use hanzo_message_primitives::schemas::hanzo_name::HanzoName;
-use hanzo_embedding::model_type::EmbeddingModelType;
+use hanzo_db_sqlite::{SqliteManager, performance::*};
+use hanzo_messages::schemas::hanzo_name::HanzoName;
+use hanzo_embed::model_type::EmbeddingModelType;
 use std::sync::Arc;
 use std::time::Duration;
 use tempfile::tempdir;

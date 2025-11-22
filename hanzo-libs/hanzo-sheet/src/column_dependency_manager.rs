@@ -1,7 +1,7 @@
 use std::collections::{HashMap, HashSet};
 
 use serde::{Deserialize, Serialize};
-use hanzo_message_primitives::schemas::sheet::UuidString;
+use hanzo_messages::schemas::sheet::UuidString;
 
 #[derive(Default, Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 pub struct ColumnDependencyManager {

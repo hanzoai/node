@@ -1,17 +1,17 @@
 use std::sync::Arc;
 
-use hanzo_message_primitives::schemas::ws_types::WSUpdateHandler;
+use hanzo_messages::schemas::ws_types::WSUpdateHandler;
 
 use super::{
     error::LLMProviderError, execution::chains::inference_chain_trait::LLMInferenceResponse, llm_stopper::LLMStopper,
 };
 use async_trait::async_trait;
 use reqwest::Client;
-use hanzo_message_primitives::schemas::{
+use hanzo_messages::schemas::{
     inbox_name::InboxName, job_config::JobConfig, llm_providers::serialized_llm_provider::LLMProviderInterface,
     prompts::Prompt,
 };
-use hanzo_sqlite::SqliteManager;
+use hanzo_db_sqlite::SqliteManager;
 use tokio::sync::Mutex;
 
 pub mod claude;

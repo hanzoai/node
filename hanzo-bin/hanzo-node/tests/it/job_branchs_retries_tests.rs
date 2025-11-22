@@ -1,11 +1,11 @@
 use hanzo_http_api::node_commands::NodeCommand;
-use hanzo_message_primitives::schemas::job_config::JobConfig;
-use hanzo_message_primitives::schemas::llm_providers::serialized_llm_provider::{
+use hanzo_messages::schemas::job_config::JobConfig;
+use hanzo_messages::schemas::llm_providers::serialized_llm_provider::{
     LLMProviderInterface, OpenAI, SerializedLLMProvider,
 };
-use hanzo_message_primitives::schemas::hanzo_name::HanzoName;
-use hanzo_message_primitives::hanzo_utils::encryption::clone_static_secret_key;
-use hanzo_message_primitives::hanzo_utils::signatures::clone_signature_secret_key;
+use hanzo_messages::schemas::hanzo_name::HanzoName;
+use hanzo_messages::hanzo_utils::encryption::clone_static_secret_key;
+use hanzo_messages::hanzo_utils::signatures::clone_signature_secret_key;
 use std::time::Duration;
 use std::time::Instant;
 use utils::test_boilerplate::run_test_one_node_network;

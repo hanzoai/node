@@ -7,11 +7,11 @@ use crate::llm_provider::providers::shared::openai_api::openai_prepare_messages;
 use crate::managers::galxe_quests::generate_proof;
 use crate::managers::model_capabilities_manager::{ModelCapabilitiesManager, PromptResultEnum};
 use rusqlite::params;
-use hanzo_message_primitives::schemas::job_config::JobConfig;
-use hanzo_message_primitives::schemas::llm_providers::hanzo_backend::QuotaResponse;
-use hanzo_message_primitives::schemas::prompts::Prompt;
-use hanzo_message_primitives::schemas::ws_types::WSUpdateHandler;
-use hanzo_sqlite::SqliteManager;
+use hanzo_messages::schemas::job_config::JobConfig;
+use hanzo_messages::schemas::llm_providers::hanzo_backend::QuotaResponse;
+use hanzo_messages::schemas::prompts::Prompt;
+use hanzo_messages::schemas::ws_types::WSUpdateHandler;
+use hanzo_db_sqlite::SqliteManager;
 
 use super::super::error::LLMProviderError;
 use super::openai::{
@@ -22,11 +22,11 @@ use async_trait::async_trait;
 use reqwest::Client;
 use serde_json::json;
 use serde_json::{self};
-use hanzo_message_primitives::schemas::inbox_name::InboxName;
-use hanzo_message_primitives::schemas::llm_providers::serialized_llm_provider::{
+use hanzo_messages::schemas::inbox_name::InboxName;
+use hanzo_messages::schemas::llm_providers::serialized_llm_provider::{
     LLMProviderInterface, HanzoBackend,
 };
-use hanzo_message_primitives::hanzo_utils::hanzo_logging::{hanzo_log, HanzoLogLevel, HanzoLogOption};
+use hanzo_messages::hanzo_utils::hanzo_logging::{hanzo_log, HanzoLogLevel, HanzoLogOption};
 use tokio::sync::Mutex;
 use uuid::Uuid;
 

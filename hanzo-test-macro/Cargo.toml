@@ -1,5 +1,5 @@
 [package]
-name = "hanzo_test_macro"
+name = "hanzo-test-macro"
 version = "0.1.0"
 edition = "2021"
 
@@ -10,4 +10,4 @@ proc-macro = true
 proc-macro2 = "1"
 quote = "1"
 syn = { version = "2", features = ["full"] }
-hanzo_test_framework = { path = "../hanzo-test-framework" }
+hanzo-test-framework = { path = "../hanzo-test-framework" }

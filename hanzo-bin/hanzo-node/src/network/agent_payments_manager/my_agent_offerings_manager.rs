@@ -5,9 +5,9 @@ use ed25519_dalek::SigningKey;
 use serde_json::{json, Value};
 
 use dashmap::DashMap;
-use hanzo_message_primitives::schemas::agent_network_offering::AgentNetworkOfferingRequest;
-use hanzo_message_primitives::schemas::tool_router_key::ToolRouterKey;
-use hanzo_message_primitives::{
+use hanzo_messages::schemas::agent_network_offering::AgentNetworkOfferingRequest;
+use hanzo_messages::schemas::tool_router_key::ToolRouterKey;
+use hanzo_messages::{
     schemas::{
         invoices::{InternalInvoiceRequest, Invoice, InvoiceStatusEnum, Payment},
         hanzo_name::HanzoName,
@@ -21,8 +21,8 @@ use hanzo_message_primitives::{
         signatures::clone_signature_secret_key,
     },
 };
-use hanzo_sqlite::SqliteManager;
-use hanzo_tools_primitives::tools::{
+use hanzo_db_sqlite::SqliteManager;
+use hanzo_tools::tools::{
     network_tool::NetworkTool, parameters::Parameters, hanzo_tool::HanzoToolHeader, tool_output_arg::ToolOutputArg,
 };
 use tokio::sync::Mutex;
@@ -305,7 +305,7 @@ impl MyAgentOfferingsManager {
                 mock_tx_hash,
                 invoice.invoice_id.clone(),
                 Some(chrono::Utc::now().to_rfc3339()),
-                hanzo_message_primitives::schemas::invoices::PaymentStatusEnum::Signed,
+                hanzo_messages::schemas::invoices::PaymentStatusEnum::Signed,
             );
 
             println!("Free tool payment created: {:?}", payment);
@@ -906,7 +906,7 @@ mod tests {
     use crate::managers::identity_manager::IdentityManagerTrait;
     use async_trait::async_trait;
 
-    use hanzo_message_primitives::{
+    use hanzo_messages::{
         schemas::identity::{Identity, StandardIdentity, StandardIdentityType},
         hanzo_message::hanzo_message_schemas::IdentityPermissions,
         hanzo_utils::{

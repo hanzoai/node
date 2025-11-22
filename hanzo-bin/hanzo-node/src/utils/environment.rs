@@ -2,11 +2,11 @@ use std::env;
 use std::net::{IpAddr, SocketAddr};
 use std::str::FromStr;
 
-use hanzo_embedding::model_type::EmbeddingModelType;
-use hanzo_message_primitives::schemas::llm_providers::serialized_llm_provider::{
+use hanzo_embed::model_type::EmbeddingModelType;
+use hanzo_messages::schemas::llm_providers::serialized_llm_provider::{
     LLMProviderInterface, SerializedLLMProvider,
 };
-use hanzo_message_primitives::schemas::hanzo_name::HanzoName;
+use hanzo_messages::schemas::hanzo_name::HanzoName;
 
 #[derive(Debug, Clone)]
 pub struct NodeEnvironment {

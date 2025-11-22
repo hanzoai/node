@@ -10,7 +10,7 @@ name = "hanzo-migrate"
 path = "src/main.rs"
 
 [dependencies]
-hanzo_db = { workspace = true, features = ["migration"] }
+hanzo-db = { workspace = true, features = ["migration"] }
 tokio = { workspace = true }
 anyhow = { workspace = true }
 clap = { version = "4.5", features = ["derive"] }

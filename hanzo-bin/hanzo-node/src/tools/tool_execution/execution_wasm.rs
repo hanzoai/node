@@ -5,11 +5,11 @@ use std::time::Duration;
 
 use serde_json::{Map, Value};
 use log::{debug, error, info, warn};
-use hanzo_message_primitives::schemas::hanzo_name::HanzoName;
-use hanzo_tools_primitives::tools::error::ToolError;
-use hanzo_tools_primitives::tools::tool_config::{OAuth, ToolConfig};
-use hanzo_tools_primitives::tools::tool_types::{OperatingSystem, RunnerType};
-use hanzo_sqlite::SqliteManager;
+use hanzo_messages::schemas::hanzo_name::HanzoName;
+use hanzo_tools::tools::error::ToolError;
+use hanzo_tools::tools::tool_config::{OAuth, ToolConfig};
+use hanzo_tools::tools::tool_types::{OperatingSystem, RunnerType};
+use hanzo_db_sqlite::SqliteManager;
 use hanzo_wasm_runtime::{WasmRuntime, WasmConfig, WasmModuleInfo};
 
 /// Global WASM runtime instance (lazy initialized)

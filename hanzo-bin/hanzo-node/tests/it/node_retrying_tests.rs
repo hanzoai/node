@@ -1,15 +1,15 @@
 use async_channel::{bounded, Receiver, Sender};
 use hanzo_http_api::node_api_router::{APIError, SendResponseBodyData};
 use hanzo_http_api::node_commands::NodeCommand;
-use hanzo_message_primitives::hanzo_message::hanzo_message_schemas::MessageSchemaType;
-use hanzo_message_primitives::hanzo_utils::encryption::{
+use hanzo_messages::hanzo_message::hanzo_message_schemas::MessageSchemaType;
+use hanzo_messages::hanzo_utils::encryption::{
     unsafe_deterministic_encryption_keypair, EncryptionMethod,
 };
-use hanzo_message_primitives::hanzo_utils::hanzo_message_builder::HanzoMessageBuilder;
-use hanzo_message_primitives::hanzo_utils::signatures::{
+use hanzo_messages::hanzo_utils::hanzo_message_builder::HanzoMessageBuilder;
+use hanzo_messages::hanzo_utils::signatures::{
     clone_signature_secret_key, unsafe_deterministic_signature_keypair,
 };
-use hanzo_message_primitives::hanzo_utils::utils::hash_string;
+use hanzo_messages::hanzo_utils::utils::hash_string;
 use hanzo_node::network::Node;
 use std::net::{IpAddr, Ipv4Addr, TcpListener};
 use std::sync::Arc;

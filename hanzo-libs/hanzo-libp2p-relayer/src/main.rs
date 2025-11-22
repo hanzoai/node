@@ -1,7 +1,7 @@
 use clap::{App, Arg};
 use dotenv::dotenv;
 use hanzo_libp2p_relayer::{LibP2PProxy, LibP2PRelayError};
-use hanzo_message_primitives::hanzo_utils::{
+use hanzo_messages::hanzo_utils::{
     encryption::string_to_encryption_static_key, signatures::string_to_signature_secret_key,
 };
 use std::env;

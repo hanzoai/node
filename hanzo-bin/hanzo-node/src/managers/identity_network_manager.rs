@@ -1,5 +1,5 @@
-use hanzo_crypto_identities::{OnchainIdentity, HanzoRegistry};
-use hanzo_message_primitives::hanzo_utils::hanzo_logging::{hanzo_log, HanzoLogLevel, HanzoLogOption};
+use hanzo_identity::{OnchainIdentity, HanzoRegistry};
+use hanzo_messages::hanzo_utils::hanzo_logging::{hanzo_log, HanzoLogLevel, HanzoLogOption};
 use std::{env, sync::Arc};
 use tokio::sync::Mutex;
 

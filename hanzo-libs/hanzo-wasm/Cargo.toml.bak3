@@ -1,0 +1,23 @@
+[package]
+name = "hanzo-wasm-runtime"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+wasmtime = "23.0"
+wasmtime-wasi = "23.0"
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+tokio = { version = "1.38", features = ["full"] }
+anyhow = "1.0"
+tracing = "0.1"
+base64 = "0.22"
+hanzo_tools_primitives = { path = "../hanzo-tools-primitives" }
+rand = "0.8"
+uuid = { version = "1.6", features = ["v4"] }
+md5 = "0.7"
+
+[dev-dependencies]
+wat = "1.217"
+tempfile = "3.10"
+tracing-subscriber = "0.3"

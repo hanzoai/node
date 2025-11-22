@@ -3,12 +3,12 @@ use bigdecimal::BigDecimal;
 use serde::ser::SerializeStruct;
 use serde::{Deserialize, Deserializer, Serialize, Serializer};
 use serde_json::Value;
-use hanzo_message_primitives::schemas::coinbase_mpc_config::CoinbaseMPCWalletConfig;
-use hanzo_message_primitives::schemas::hanzo_name::HanzoName;
-use hanzo_non_rust_code::functions::x402;
-use hanzo_sqlite::SqliteManager;
-use hanzo_tools_primitives::tools::hanzo_tool::HanzoTool;
-use hanzo_tools_primitives::tools::tool_config::ToolConfig;
+use hanzo_messages::schemas::coinbase_mpc_config::CoinbaseMPCWalletConfig;
+use hanzo_messages::schemas::hanzo_name::HanzoName;
+use hanzo_runtime::functions::x402;
+use hanzo_db_sqlite::SqliteManager;
+use hanzo_tools::tools::hanzo_tool::HanzoTool;
+use hanzo_tools::tools::tool_config::ToolConfig;
 use std::collections::HashMap;
 use std::future::Future;
 use std::pin::Pin;
@@ -19,10 +19,10 @@ use super::wallet_manager::WalletEnum;
 use super::wallet_traits::{CommonActions, IsWallet, PaymentWallet, ReceivingWallet, SendActions, TransactionHash};
 use crate::utils::environment::fetch_node_environment;
 use crate::wallet::wallet_error::WalletError;
-use hanzo_message_primitives::schemas::wallet_mixed::{
+use hanzo_messages::schemas::wallet_mixed::{
     Address, AddressBalanceList, Asset, AssetType, Balance, PublicAddress,
 };
-use hanzo_message_primitives::schemas::x402_types::{Network, PaymentRequirements};
+use hanzo_messages::schemas::x402_types::{Network, PaymentRequirements};
 
 #[derive(Debug, Clone)]
 pub struct CoinbaseMPCWallet {
@@ -660,7 +660,7 @@ impl SendActions for CoinbaseMPCWallet {
 
     fn sign_transaction(
         &self,
-        _tx: hanzo_message_primitives::schemas::wallet_mixed::Transaction,
+        _tx: hanzo_messages::schemas::wallet_mixed::Transaction,
     ) -> Pin<Box<dyn Future<Output = Result<String, WalletError>> + Send + 'static>> {
         let fut = async move {
             // Mock implementation for signing a transaction
@@ -716,7 +716,7 @@ impl HanzoToolCoinbase {
 mod tests {
     use super::*;
     use bigdecimal::BigDecimal;
-    use hanzo_message_primitives::schemas::x402_types::Network;
+    use hanzo_messages::schemas::x402_types::Network;
     use std::str::FromStr;
 
     #[tokio::test]

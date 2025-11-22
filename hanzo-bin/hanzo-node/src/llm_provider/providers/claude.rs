@@ -6,8 +6,8 @@ use futures::StreamExt;
 use reqwest::Client;
 use serde_json::json;
 use serde_json::Value as JsonValue;
-use hanzo_message_primitives::schemas::ws_types::WSUpdateHandler;
-use hanzo_message_primitives::{
+use hanzo_messages::schemas::ws_types::WSUpdateHandler;
+use hanzo_messages::{
     schemas::{
         inbox_name::InboxName,
         job_config::JobConfig,
@@ -16,7 +16,7 @@ use hanzo_message_primitives::{
     },
     hanzo_utils::hanzo_logging::{hanzo_log, HanzoLogLevel, HanzoLogOption},
 };
-use hanzo_sqlite::SqliteManager;
+use hanzo_db_sqlite::SqliteManager;
 use tokio::sync::Mutex;
 use uuid::Uuid;
 

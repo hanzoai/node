@@ -6,7 +6,7 @@ authors.workspace = true
 
 [features]
 default = ["pqc"]
-pqc = ["hanzo_pqc"]
+pqc = ["hanzo-pqc"]
 
 [dependencies]
 # Core dependencies
@@ -35,8 +35,8 @@ bincode = { workspace = true }
 uuid = { workspace = true, features = ["v4", "serde"] }
 
 # Hanzo dependencies
-hanzo_message_primitives = { workspace = true }
-hanzo_pqc = { workspace = true, optional = true }
+hanzo-messages = { workspace = true }
+hanzo-pqc = { workspace = true, optional = true }
 
 # API dependencies
 warp = { workspace = true }

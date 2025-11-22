@@ -2,11 +2,11 @@ use async_trait::async_trait;
 use regex::Regex;
 use reqwest::Client;
 use serde_json::json;
-use hanzo_sqlite::SqliteManager;
+use hanzo_db_sqlite::SqliteManager;
 use std::sync::Arc;
 use tokio::sync::Mutex;
 
-use hanzo_message_primitives::schemas::{
+use hanzo_messages::schemas::{
     inbox_name::InboxName,
     job_config::JobConfig,
     llm_providers::serialized_llm_provider::{LLMProviderInterface, LocalRegex},

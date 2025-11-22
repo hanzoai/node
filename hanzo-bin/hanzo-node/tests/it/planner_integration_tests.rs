@@ -4,20 +4,20 @@
 // use aes_gcm::KeyInit;
 // use mockito::{Matcher, Mock};
 // use serde_json::Value as JsonValue;
-// use hanzo_message_primitives::schemas::llm_providers::serialized_llm_provider::{
+// use hanzo_messages::schemas::llm_providers::serialized_llm_provider::{
 //     LLMProviderInterface, OpenAI, SerializedLLMProvider,
 // };
-// use hanzo_message_primitives::schemas::inbox_name::InboxName;
-// use hanzo_message_primitives::schemas::hanzo_name::HanzoName;
-// use hanzo_message_primitives::hanzo_message::hanzo_message_schemas::{JobMessage, MessageSchemaType};
-// use hanzo_message_primitives::hanzo_utils::encryption::{clone_static_secret_key, EncryptionMethod};
-// use hanzo_message_primitives::hanzo_utils::file_encryption::{
+// use hanzo_messages::schemas::inbox_name::InboxName;
+// use hanzo_messages::schemas::hanzo_name::HanzoName;
+// use hanzo_messages::hanzo_message::hanzo_message_schemas::{JobMessage, MessageSchemaType};
+// use hanzo_messages::hanzo_utils::encryption::{clone_static_secret_key, EncryptionMethod};
+// use hanzo_messages::hanzo_utils::file_encryption::{
 //     aes_encryption_key_to_string, aes_nonce_to_hex_string, hash_of_aes_encryption_key_hex,
 //     unsafe_deterministic_aes_encryption_key,
 // };
-// use hanzo_message_primitives::hanzo_utils::hanzo_logging::init_default_tracing;
-// use hanzo_message_primitives::hanzo_utils::hanzo_message_builder::HanzoMessageBuilder;
-// use hanzo_message_primitives::hanzo_utils::signatures::clone_signature_secret_key;
+// use hanzo_messages::hanzo_utils::hanzo_logging::init_default_tracing;
+// use hanzo_messages::hanzo_utils::hanzo_message_builder::HanzoMessageBuilder;
+// use hanzo_messages::hanzo_utils::signatures::clone_signature_secret_key;
 // use hanzo_node::llm_provider::error::LLMProviderError;
 // use hanzo_node::cron_tasks::web_scrapper::CronTaskRequest;
 // use hanzo_node::db::db_cron_task::CronTask;
