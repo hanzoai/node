@@ -25,17 +25,17 @@ use reqwest::Client;
 use serde_json::json;
 use serde_json::{Map, Value};
 use sha2::{Digest, Sha256};
-use hanzo_message_primitives::schemas::llm_providers::agent::Agent;
-use hanzo_message_primitives::schemas::hanzo_name::HanzoName;
-use hanzo_message_primitives::schemas::hanzo_tools::CodeLanguage;
-use hanzo_message_primitives::schemas::hanzo_tools::DynamicToolType;
-use hanzo_message_primitives::schemas::tool_router_key::ToolRouterKey;
-use hanzo_sqlite::oauth_manager::OAuthToken;
-use hanzo_sqlite::SqliteManager;
-use hanzo_tools_primitives::tools::error::ToolError;
-use hanzo_tools_primitives::tools::hanzo_tool::HanzoTool;
-use hanzo_tools_primitives::tools::tool_config::{BasicConfig, OAuth, ToolConfig};
-use hanzo_tools_primitives::tools::tool_types::{OperatingSystem, RunnerType};
+use hanzo_messages::schemas::llm_providers::agent::Agent;
+use hanzo_messages::schemas::hanzo_name::HanzoName;
+use hanzo_messages::schemas::hanzo_tools::CodeLanguage;
+use hanzo_messages::schemas::hanzo_tools::DynamicToolType;
+use hanzo_messages::schemas::tool_router_key::ToolRouterKey;
+use hanzo_db_sqlite::oauth_manager::OAuthToken;
+use hanzo_db_sqlite::SqliteManager;
+use hanzo_tools::tools::error::ToolError;
+use hanzo_tools::tools::hanzo_tool::HanzoTool;
+use hanzo_tools::tools::tool_config::{BasicConfig, OAuth, ToolConfig};
+use hanzo_tools::tools::tool_types::{OperatingSystem, RunnerType};
 use std::collections::HashMap;
 use std::sync::Arc;
 use tokio::sync::Mutex;
@@ -295,7 +295,7 @@ fn determine_tool_privacy_tier(tool_key: &str, config: &[ToolConfig]) -> Privacy
 
 async fn execute_mcp_tool_optimized<'a>(
     _ctx: &ExecutionContext<'a>,
-    _tool: hanzo_tools_primitives::tools::mcp_server_tool::MCPServerTool,
+    _tool: hanzo_tools::tools::mcp_server_tool::MCPServerTool,
     _parameters: Map<String, Value>,
 ) -> Result<Value, ToolError> {
     // TODO: Implement optimized MCP execution
@@ -313,7 +313,7 @@ async fn execute_rust_tool_optimized<'a>(
 
 async fn execute_agent_tool_optimized<'a>(
     _ctx: &ExecutionContext<'a>,
-    _tool: hanzo_tools_primitives::tools::agent_tool::AgentTool,
+    _tool: hanzo_tools::tools::agent_tool::AgentTool,
     _parameters: Map<String, Value>,
 ) -> Result<Value, ToolError> {
     // TODO: Implement optimized agent execution
@@ -322,7 +322,7 @@ async fn execute_agent_tool_optimized<'a>(
 
 async fn execute_python_tool_optimized<'a>(
     _ctx: &ExecutionContext<'a>,
-    _tool: hanzo_tools_primitives::tools::python_tool::PythonTool,
+    _tool: hanzo_tools::tools::python_tool::PythonTool,
     _parameters: Map<String, Value>,
     _config: Vec<ToolConfig>,
 ) -> Result<Value, ToolError> {
@@ -332,7 +332,7 @@ async fn execute_python_tool_optimized<'a>(
 
 async fn execute_deno_tool_optimized<'a>(
     _ctx: &ExecutionContext<'a>,
-    _tool: hanzo_tools_primitives::tools::deno_tool::DenoTool,
+    _tool: hanzo_tools::tools::deno_tool::DenoTool,
     _parameters: Map<String, Value>,
     _config: Vec<ToolConfig>,
 ) -> Result<Value, ToolError> {
@@ -342,7 +342,7 @@ async fn execute_deno_tool_optimized<'a>(
 
 async fn execute_docker_tool_optimized<'a>(
     _ctx: &ExecutionContext<'a>,
-    _tool: hanzo_tools_primitives::tools::docker_tool::DockerTool,
+    _tool: hanzo_tools::tools::docker_tool::DockerTool,
     _parameters: Map<String, Value>,
     _config: Vec<ToolConfig>,
 ) -> Result<Value, ToolError> {
@@ -352,7 +352,7 @@ async fn execute_docker_tool_optimized<'a>(
 
 async fn execute_k8s_tool_optimized<'a>(
     _ctx: &ExecutionContext<'a>,
-    _tool: hanzo_tools_primitives::tools::kubernetes_tool::KubernetesTool,
+    _tool: hanzo_tools::tools::kubernetes_tool::KubernetesTool,
     _parameters: Map<String, Value>,
     _config: Vec<ToolConfig>,
 ) -> Result<Value, ToolError> {

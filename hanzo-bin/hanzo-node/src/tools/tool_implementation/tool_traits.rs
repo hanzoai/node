@@ -1,9 +1,9 @@
 use ed25519_dalek::SigningKey;
 use serde_json::{Map, Value};
 
-use hanzo_message_primitives::schemas::hanzo_name::HanzoName;
-use hanzo_sqlite::SqliteManager;
-use hanzo_tools_primitives::tools::error::ToolError;
+use hanzo_messages::schemas::hanzo_name::HanzoName;
+use hanzo_db_sqlite::SqliteManager;
+use hanzo_tools::tools::error::ToolError;
 use std::sync::Arc;
 use tokio::sync::Mutex;
 use x25519_dalek::{PublicKey as EncryptionPublicKey, StaticSecret as EncryptionStaticKey};

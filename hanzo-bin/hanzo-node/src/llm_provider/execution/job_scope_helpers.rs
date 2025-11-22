@@ -1,11 +1,11 @@
 use crate::llm_provider::job_manager::JobManager;
 use hanzo_fs::hanzo_file_manager::HanzoFileManager;
-use hanzo_message_primitives::schemas::hanzo_fs::HanzoFileChunkCollection;
-use hanzo_message_primitives::hanzo_utils::job_scope::MinimalJobScope;
-use hanzo_message_primitives::hanzo_utils::hanzo_logging::{hanzo_log, HanzoLogLevel, HanzoLogOption};
-use hanzo_message_primitives::hanzo_utils::hanzo_path::HanzoPath;
-use hanzo_sqlite::errors::SqliteManagerError;
-use hanzo_sqlite::SqliteManager;
+use hanzo_messages::schemas::hanzo_fs::HanzoFileChunkCollection;
+use hanzo_messages::hanzo_utils::job_scope::MinimalJobScope;
+use hanzo_messages::hanzo_utils::hanzo_logging::{hanzo_log, HanzoLogLevel, HanzoLogOption};
+use hanzo_messages::hanzo_utils::hanzo_path::HanzoPath;
+use hanzo_db_sqlite::errors::SqliteManagerError;
+use hanzo_db_sqlite::SqliteManager;
 use std::collections::HashMap;
 use std::result::Result::Ok;
 

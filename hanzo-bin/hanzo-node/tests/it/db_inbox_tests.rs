@@ -1,15 +1,15 @@
-use hanzo_embedding::model_type::{EmbeddingModelType, OllamaTextEmbeddingsInference};
-use hanzo_message_primitives::schemas::inbox_name::InboxName;
-use hanzo_message_primitives::hanzo_message::hanzo_message::{MessageBody, HanzoMessage};
-use hanzo_message_primitives::hanzo_message::hanzo_message_schemas::MessageSchemaType;
-use hanzo_message_primitives::hanzo_utils::encryption::{
+use hanzo_embed::model_type::{EmbeddingModelType, OllamaTextEmbeddingsInference};
+use hanzo_messages::schemas::inbox_name::InboxName;
+use hanzo_messages::hanzo_message::hanzo_message::{MessageBody, HanzoMessage};
+use hanzo_messages::hanzo_message::hanzo_message_schemas::MessageSchemaType;
+use hanzo_messages::hanzo_utils::encryption::{
     unsafe_deterministic_encryption_keypair, EncryptionMethod,
 };
-use hanzo_message_primitives::hanzo_utils::hanzo_message_builder::HanzoMessageBuilder;
-use hanzo_message_primitives::hanzo_utils::signatures::{
+use hanzo_messages::hanzo_utils::hanzo_message_builder::HanzoMessageBuilder;
+use hanzo_messages::hanzo_utils::signatures::{
     clone_signature_secret_key, unsafe_deterministic_signature_keypair,
 };
-use hanzo_sqlite::SqliteManager;
+use hanzo_db_sqlite::SqliteManager;
 
 use std::path::PathBuf;
 use std::sync::Arc;

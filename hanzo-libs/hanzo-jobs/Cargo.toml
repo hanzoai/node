@@ -1,0 +1,25 @@
+[package]
+name = "hanzo-jobs"
+version = "1.1.11"
+edition = "2021"
+authors = ["Hanzo AI Inc"]
+license = "MIT"
+repository = "https://github.com/hanzoai/hanzo-node"
+homepage = "https://hanzo.ai"
+description = "Job Queue Manager for Hanzo AI platform"
+
+[dependencies]
+serde = { version = "1.0", features = ["derive"] }
+hanzo-messages = { workspace = true }
+hanzo-db-sqlite = { workspace = true }
+hanzo-embed = { workspace = true }
+tokio = { version = "1.36", features = ['rt', 'rt-multi-thread', 'macros', 'fs', 'io-util', 'net', 'sync', 'time'] }
+chrono = { version = "0.4", features = ['serde'] }
+serde_json = "1.0.117"
+
+[features]
+default = []
+
+[dev-dependencies]
+# hanzo-vector_resources = {  }
+tempfile = "3.8"

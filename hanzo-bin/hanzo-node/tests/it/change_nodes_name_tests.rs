@@ -8,7 +8,7 @@ use std::{
 use crate::it::utils::node_test_api::api_registration_device_node_profile_main;
 use async_channel::{bounded, Receiver, Sender};
 use hanzo_http_api::node_commands::NodeCommand;
-use hanzo_message_primitives::hanzo_utils::{
+use hanzo_messages::hanzo_utils::{
     encryption::unsafe_deterministic_encryption_keypair,
     hanzo_message_builder::HanzoMessageBuilder,
     signatures::{clone_signature_secret_key, hash_signature_public_key, unsafe_deterministic_signature_keypair},

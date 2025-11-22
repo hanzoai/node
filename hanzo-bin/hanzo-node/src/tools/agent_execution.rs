@@ -2,11 +2,11 @@ use ed25519_dalek::SigningKey;
 
 use reqwest::StatusCode;
 use hanzo_http_api::node_api_router::APIError;
-use hanzo_message_primitives::schemas::hanzo_name::HanzoName;
+use hanzo_messages::schemas::hanzo_name::HanzoName;
 
-use hanzo_message_primitives::hanzo_message::hanzo_message_schemas::JobCreationInfo;
-use hanzo_message_primitives::hanzo_utils::job_scope::MinimalJobScope;
-use hanzo_sqlite::SqliteManager;
+use hanzo_messages::hanzo_message::hanzo_message_schemas::JobCreationInfo;
+use hanzo_messages::hanzo_utils::job_scope::MinimalJobScope;
+use hanzo_db_sqlite::SqliteManager;
 use std::sync::Arc;
 use tokio::sync::Mutex;
 

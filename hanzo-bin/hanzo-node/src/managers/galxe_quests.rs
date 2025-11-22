@@ -6,10 +6,10 @@ use reqwest;
 use rusqlite::params;
 use serde::{Deserialize, Serialize};
 use serde_json;
-use hanzo_crypto_identities::HanzoRegistry;
-use hanzo_message_primitives::schemas::hanzo_name::HanzoName;
-use hanzo_message_primitives::hanzo_utils::signatures::unsafe_deterministic_signature_keypair;
-use hanzo_sqlite::SqliteManager;
+use hanzo_identity::HanzoRegistry;
+use hanzo_messages::schemas::hanzo_name::HanzoName;
+use hanzo_messages::hanzo_utils::signatures::unsafe_deterministic_signature_keypair;
+use hanzo_db_sqlite::SqliteManager;
 use std::sync::Arc;
 use x25519_dalek::PublicKey as EncryptionPublicKey;
 

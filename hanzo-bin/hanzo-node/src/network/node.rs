@@ -26,23 +26,23 @@ use libp2p::Multiaddr;
 use rand::rngs::OsRng;
 use rand::RngCore;
 use reqwest::StatusCode;
-use hanzo_embedding::embedding_generator::RemoteEmbeddingGenerator;
-use hanzo_embedding::model_type::EmbeddingModelType;
+use hanzo_embed::embedding_generator::RemoteEmbeddingGenerator;
+use hanzo_embed::model_type::EmbeddingModelType;
 use hanzo_http_api::node_api_router::APIError;
 use hanzo_http_api::node_commands::NodeCommand;
-use hanzo_message_primitives::schemas::llm_providers::serialized_llm_provider::SerializedLLMProvider;
+use hanzo_messages::schemas::llm_providers::serialized_llm_provider::SerializedLLMProvider;
 
-use hanzo_message_primitives::schemas::hanzo_name::HanzoName;
-use hanzo_message_primitives::schemas::ws_types::WSUpdateHandler;
-use hanzo_message_primitives::hanzo_message::hanzo_message::HanzoMessage;
-use hanzo_message_primitives::hanzo_utils::encryption::{
+use hanzo_messages::schemas::hanzo_name::HanzoName;
+use hanzo_messages::schemas::ws_types::WSUpdateHandler;
+use hanzo_messages::hanzo_message::hanzo_message::HanzoMessage;
+use hanzo_messages::hanzo_utils::encryption::{
     clone_static_secret_key, encryption_public_key_to_string, encryption_secret_key_to_string,
 };
-use hanzo_message_primitives::hanzo_utils::hanzo_logging::{hanzo_log, HanzoLogLevel, HanzoLogOption};
-use hanzo_message_primitives::hanzo_utils::hanzo_path::HanzoPath;
-use hanzo_message_primitives::hanzo_utils::signatures::clone_signature_secret_key;
-use hanzo_sqlite::errors::SqliteManagerError;
-use hanzo_sqlite::SqliteManager;
+use hanzo_messages::hanzo_utils::hanzo_logging::{hanzo_log, HanzoLogLevel, HanzoLogOption};
+use hanzo_messages::hanzo_utils::hanzo_path::HanzoPath;
+use hanzo_messages::hanzo_utils::signatures::clone_signature_secret_key;
+use hanzo_db_sqlite::errors::SqliteManagerError;
+use hanzo_db_sqlite::SqliteManager;
 use std::fs;
 use std::path::Path;
 use std::sync::Arc;

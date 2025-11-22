@@ -1,15 +1,15 @@
 use async_trait::async_trait;
 use ed25519_dalek::SigningKey;
 use serde_json::{Map, Value};
-use hanzo_message_primitives::schemas::{
+use hanzo_messages::schemas::{
     hanzo_name::HanzoName,
     hanzo_tools::DynamicToolType,
 };
-use hanzo_sqlite::SqliteManager;
-use hanzo_tools_primitives::tools::error::ToolError;
-use hanzo_tools_primitives::tools::parameters::Parameters;
-use hanzo_tools_primitives::tools::hanzo_tool::HanzoToolHeader;
-use hanzo_tools_primitives::tools::tool_output_arg::ToolOutputArg;
+use hanzo_db_sqlite::SqliteManager;
+use hanzo_tools::tools::error::ToolError;
+use hanzo_tools::tools::parameters::Parameters;
+use hanzo_tools::tools::hanzo_tool::HanzoToolHeader;
+use hanzo_tools::tools::tool_output_arg::ToolOutputArg;
 use std::sync::Arc;
 use tokio::sync::Mutex;
 use x25519_dalek::{PublicKey as EncryptionPublicKey, StaticSecret as EncryptionStaticKey};

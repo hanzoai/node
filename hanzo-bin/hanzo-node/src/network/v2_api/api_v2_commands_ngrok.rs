@@ -5,7 +5,7 @@ use async_channel::Sender;
 use reqwest::StatusCode;
 use serde::Serialize;
 use serde_json::Value;
-use hanzo_sqlite::SqliteManager;
+use hanzo_db_sqlite::SqliteManager;
 
 use std::sync::Arc;
 
@@ -196,9 +196,9 @@ impl Node {
                 let authtoken_for_status = match db.read_ngrok_auth_token() {
                     Ok(token_opt) => token_opt,
                     Err(e) => {
-                        hanzo_message_primitives::hanzo_utils::hanzo_logging::hanzo_log(
-                            hanzo_message_primitives::hanzo_utils::hanzo_logging::HanzoLogOption::Node,
-                            hanzo_message_primitives::hanzo_utils::hanzo_logging::HanzoLogLevel::Info,
+                        hanzo_messages::hanzo_utils::hanzo_logging::hanzo_log(
+                            hanzo_messages::hanzo_utils::hanzo_logging::HanzoLogOption::Node,
+                            hanzo_messages::hanzo_utils::hanzo_logging::HanzoLogLevel::Info,
                             &format!(
                                 "Failed to read ngrok auth token for status (tunnel already active): {}",
                                 e
@@ -238,9 +238,9 @@ impl Node {
                 // Scoped to manage the lock on ACTIVE_NGROK_SESSION
                 let active_ngrok_session_guard = ACTIVE_NGROK_SESSION.lock().await;
                 if let Some(cached_session) = active_ngrok_session_guard.as_ref() {
-                    hanzo_message_primitives::hanzo_utils::hanzo_logging::hanzo_log(
-                        hanzo_message_primitives::hanzo_utils::hanzo_logging::HanzoLogOption::Node,
-                        hanzo_message_primitives::hanzo_utils::hanzo_logging::HanzoLogLevel::Info,
+                    hanzo_messages::hanzo_utils::hanzo_logging::hanzo_log(
+                        hanzo_messages::hanzo_utils::hanzo_logging::HanzoLogOption::Node,
+                        hanzo_messages::hanzo_utils::hanzo_logging::HanzoLogLevel::Info,
                         &format!("Reusing existing ngrok session: {}", cached_session.id()),
                     );
                     session_for_tunnel_creation = cached_session.clone();
@@ -249,9 +249,9 @@ impl Node {
                     // No cached session, so release the lock before .await for connect()
                     drop(active_ngrok_session_guard);
 
-                    hanzo_message_primitives::hanzo_utils::hanzo_logging::hanzo_log(
-                        hanzo_message_primitives::hanzo_utils::hanzo_logging::HanzoLogOption::Node,
-                        hanzo_message_primitives::hanzo_utils::hanzo_logging::HanzoLogLevel::Info,
+                    hanzo_messages::hanzo_utils::hanzo_logging::hanzo_log(
+                        hanzo_messages::hanzo_utils::hanzo_logging::HanzoLogOption::Node,
+                        hanzo_messages::hanzo_utils::hanzo_logging::HanzoLogLevel::Info,
                         "No existing ngrok session found, creating a new one.",
                     );
 
@@ -334,9 +334,9 @@ impl Node {
             };
 
             let tunnel_url = ngrok_tunnel.url().to_string();
-            hanzo_message_primitives::hanzo_utils::hanzo_logging::hanzo_log(
-                hanzo_message_primitives::hanzo_utils::hanzo_logging::HanzoLogOption::Node,
-                hanzo_message_primitives::hanzo_utils::hanzo_logging::HanzoLogLevel::Info,
+            hanzo_messages::hanzo_utils::hanzo_logging::hanzo_log(
+                hanzo_messages::hanzo_utils::hanzo_logging::HanzoLogOption::Node,
+                hanzo_messages::hanzo_utils::hanzo_logging::HanzoLogLevel::Info,
                 &format!("NGROK Tunnel Started: {} (id: {})", tunnel_url, ngrok_tunnel.id()),
             );
 
@@ -352,15 +352,15 @@ impl Node {
         } else {
             // Disabling ngrok
             if let Some(mut tunnel_to_close) = active_tunnel_guard.take() {
-                hanzo_message_primitives::hanzo_utils::hanzo_logging::hanzo_log(
-                    hanzo_message_primitives::hanzo_utils::hanzo_logging::HanzoLogOption::Node,
-                    hanzo_message_primitives::hanzo_utils::hanzo_logging::HanzoLogLevel::Info,
+                hanzo_messages::hanzo_utils::hanzo_logging::hanzo_log(
+                    hanzo_messages::hanzo_utils::hanzo_logging::HanzoLogOption::Node,
+                    hanzo_messages::hanzo_utils::hanzo_logging::HanzoLogLevel::Info,
                     &format!("Closing ngrok tunnel: {}", tunnel_to_close.id()),
                 );
                 if let Err(e) = tunnel_to_close.close().await {
-                    hanzo_message_primitives::hanzo_utils::hanzo_logging::hanzo_log(
-                        hanzo_message_primitives::hanzo_utils::hanzo_logging::HanzoLogOption::Node,
-                        hanzo_message_primitives::hanzo_utils::hanzo_logging::HanzoLogLevel::Error,
+                    hanzo_messages::hanzo_utils::hanzo_logging::hanzo_log(
+                        hanzo_messages::hanzo_utils::hanzo_logging::HanzoLogOption::Node,
+                        hanzo_messages::hanzo_utils::hanzo_logging::HanzoLogLevel::Error,
                         &format!("Failed to close ngrok tunnel: {}", e),
                     );
                     // Send error to client
@@ -376,9 +376,9 @@ impl Node {
                     // For now, matching original behavior of still sending status.
                 }
             } else {
-                hanzo_message_primitives::hanzo_utils::hanzo_logging::hanzo_log(
-                    hanzo_message_primitives::hanzo_utils::hanzo_logging::HanzoLogOption::Node,
-                    hanzo_message_primitives::hanzo_utils::hanzo_logging::HanzoLogLevel::Info,
+                hanzo_messages::hanzo_utils::hanzo_logging::hanzo_log(
+                    hanzo_messages::hanzo_utils::hanzo_logging::HanzoLogOption::Node,
+                    hanzo_messages::hanzo_utils::hanzo_logging::HanzoLogLevel::Info,
                     "No active ngrok tunnel found to disable.",
                 );
             }
@@ -386,9 +386,9 @@ impl Node {
             let authtoken_for_status = match db.read_ngrok_auth_token() {
                 Ok(token_opt) => token_opt,
                 Err(e) => {
-                    hanzo_message_primitives::hanzo_utils::hanzo_logging::hanzo_log(
-                        hanzo_message_primitives::hanzo_utils::hanzo_logging::HanzoLogOption::Node,
-                        hanzo_message_primitives::hanzo_utils::hanzo_logging::HanzoLogLevel::Error,
+                    hanzo_messages::hanzo_utils::hanzo_logging::hanzo_log(
+                        hanzo_messages::hanzo_utils::hanzo_logging::HanzoLogOption::Node,
+                        hanzo_messages::hanzo_utils::hanzo_logging::HanzoLogLevel::Error,
                         &format!(
                             "Failed to read ngrok auth token from DB for status when disabling: {}",
                             e

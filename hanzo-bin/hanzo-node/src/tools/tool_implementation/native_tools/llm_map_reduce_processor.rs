@@ -7,14 +7,14 @@ use crate::{llm_provider::job_manager::JobManager, network::Node};
 use async_trait::async_trait;
 use ed25519_dalek::SigningKey;
 use serde_json::{json, Map, Value};
-use hanzo_message_primitives::schemas::inbox_name::InboxName;
-use hanzo_message_primitives::schemas::hanzo_name::HanzoName;
-use hanzo_message_primitives::hanzo_message::hanzo_message_schemas::JobCreationInfo;
-use hanzo_message_primitives::hanzo_utils::job_scope::MinimalJobScope;
-use hanzo_message_primitives::hanzo_utils::utils::count_tokens_from_message_llama3;
-use hanzo_sqlite::SqliteManager;
-use hanzo_tools_primitives::tools::parameters::{Parameters, Property};
-use hanzo_tools_primitives::tools::{
+use hanzo_messages::schemas::inbox_name::InboxName;
+use hanzo_messages::schemas::hanzo_name::HanzoName;
+use hanzo_messages::hanzo_message::hanzo_message_schemas::JobCreationInfo;
+use hanzo_messages::hanzo_utils::job_scope::MinimalJobScope;
+use hanzo_messages::hanzo_utils::utils::count_tokens_from_message_llama3;
+use hanzo_db_sqlite::SqliteManager;
+use hanzo_tools::tools::parameters::{Parameters, Property};
+use hanzo_tools::tools::{
     error::ToolError, hanzo_tool::HanzoToolHeader, tool_output_arg::ToolOutputArg,
 };
 use std::fs::File;

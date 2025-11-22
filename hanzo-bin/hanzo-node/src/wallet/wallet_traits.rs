@@ -4,12 +4,12 @@ use std::pin::Pin;
 use super::{wallet_error::WalletError, wallet_manager::WalletEnum};
 
 use downcast_rs::{impl_downcast, Downcast};
-use hanzo_message_primitives::schemas::{
+use hanzo_messages::schemas::{
     hanzo_name::HanzoName,
     wallet_mixed::{Address, AddressBalanceList, Asset, Balance, PublicAddress, Transaction},
     x402_types::{Network, PaymentRequirements},
 };
-use hanzo_non_rust_code::functions::x402;
+use hanzo_runtime::functions::x402;
 
 pub trait IsWallet {}
 

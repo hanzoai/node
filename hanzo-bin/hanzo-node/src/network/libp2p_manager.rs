@@ -8,7 +8,7 @@ use libp2p::{
     swarm::{NetworkBehaviour, SwarmEvent},
     tcp, yamux, Multiaddr, PeerId, Swarm,
 };
-use hanzo_message_primitives::{
+use hanzo_messages::{
     hanzo_message::hanzo_message::HanzoMessage,
     hanzo_utils::hanzo_logging::{hanzo_log, HanzoLogLevel, HanzoLogOption},
 };

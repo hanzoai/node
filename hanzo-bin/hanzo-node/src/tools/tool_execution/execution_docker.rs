@@ -14,11 +14,11 @@ use std::sync::Arc;
 use std::time::Duration;
 use tokio::time::timeout;
 
-use hanzo_message_primitives::schemas::hanzo_name::HanzoName;
-use hanzo_sqlite::SqliteManager;
-use hanzo_tools_primitives::tools::error::ToolError;
-use hanzo_tools_primitives::tools::parameters::Parameters;
-use hanzo_tools_primitives::tools::tool_config::ToolConfig;
+use hanzo_messages::schemas::hanzo_name::HanzoName;
+use hanzo_db_sqlite::SqliteManager;
+use hanzo_tools::tools::error::ToolError;
+use hanzo_tools::tools::parameters::Parameters;
+use hanzo_tools::tools::tool_config::ToolConfig;
 
 /// Docker container configuration for tool execution
 #[derive(Debug, Clone)]
@@ -540,21 +540,21 @@ mod tests {
     #[test]
     fn test_parse_docker_config() {
         let configs = vec![
-            ToolConfig::BasicConfig(hanzo_tools_primitives::tools::tool_config::BasicConfig {
+            ToolConfig::BasicConfig(hanzo_tools::tools::tool_config::BasicConfig {
                 key_name: "docker_image".to_string(),
                 key_value: Some(Value::String("node:20-alpine".to_string())),
                 description: "Docker image".to_string(),
                 required: false,
                 type_name: None,
             }),
-            ToolConfig::BasicConfig(hanzo_tools_primitives::tools::tool_config::BasicConfig {
+            ToolConfig::BasicConfig(hanzo_tools::tools::tool_config::BasicConfig {
                 key_name: "docker_cpu_limit".to_string(),
                 key_value: Some(Value::Number(serde_json::Number::from_f64(1.5).unwrap())),
                 description: "CPU limit".to_string(),
                 required: false,
                 type_name: None,
             }),
-            ToolConfig::BasicConfig(hanzo_tools_primitives::tools::tool_config::BasicConfig {
+            ToolConfig::BasicConfig(hanzo_tools::tools::tool_config::BasicConfig {
                 key_name: "docker_memory_limit".to_string(),
                 key_value: Some(Value::String("1G".to_string())),
                 description: "Memory limit".to_string(),

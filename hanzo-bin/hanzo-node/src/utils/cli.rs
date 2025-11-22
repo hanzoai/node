@@ -1,6 +1,6 @@
 // src/utils/cli.rs
 use super::{args::Args, keys::NodeKeys};
-use hanzo_message_primitives::{
+use hanzo_messages::{
     hanzo_message::hanzo_message_schemas::MessageSchemaType,
     hanzo_utils::{
         encryption::{string_to_encryption_public_key, EncryptionMethod},

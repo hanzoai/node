@@ -10,7 +10,7 @@ use hanzo_node::tools::tool_execution::{
 };
 use hanzo_node::llm::{HLLMRouter, Regime, RegimeTransition};
 use hanzo_node::dex::{ComputeMarketplace, Order, OrderBook, Settlement};
-use hanzo_message_primitives::{
+use hanzo_messages::{
     HanzoMessage, JobForWorker, ToolCallConfig,
     MessageType, PrivacySettings, HardwareCapability,
 };

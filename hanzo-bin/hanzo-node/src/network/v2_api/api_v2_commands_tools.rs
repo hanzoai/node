@@ -22,9 +22,9 @@ use ed25519_dalek::{ed25519::signature::SignerMut, SigningKey};
 use reqwest::StatusCode;
 use rusqlite::Error as RusqliteError;
 use serde_json::{json, Map, Value};
-use hanzo_embedding::embedding_generator::EmbeddingGenerator;
+use hanzo_embed::embedding_generator::EmbeddingGenerator;
 use hanzo_http_api::node_api_router::{APIError, SendResponseBodyData};
-use hanzo_message_primitives::{
+use hanzo_messages::{
     schemas::{
         identity::Identity,
         inbox_name::InboxName,
@@ -42,8 +42,8 @@ use hanzo_message_primitives::{
         signatures::clone_signature_secret_key,
     },
 };
-use hanzo_sqlite::{errors::SqliteManagerError, SqliteManager};
-use hanzo_tools_primitives::tools::{
+use hanzo_db_sqlite::{errors::SqliteManagerError, SqliteManager};
+use hanzo_tools::tools::{
     agent_tool_wrapper::AgentToolWrapper,
     deno_tools::DenoTool,
     error::ToolError,
@@ -1737,7 +1737,7 @@ impl Node {
         };
 
         let is_memory_required = tools.iter().any(|tool| {
-            tool.to_string_without_version() == "local:::__official_hanzo:::hanzo_sqlite_query_executor"
+            tool.to_string_without_version() == "local:::__official_hanzo:::hanzo_db_sqlite_query_executor"
         });
         let code_prompt =
             match generate_code_prompt(language.clone(), is_memory_required, "".to_string(), tool_definitions).await {
@@ -1939,7 +1939,7 @@ impl Node {
 
         let prompt = job_message.content.clone();
         let is_memory_required = tools.clone().iter().any(|tool| {
-            tool.to_string_without_version() == "local:::__official_hanzo:::hanzo_sqlite_query_executor"
+            tool.to_string_without_version() == "local:::__official_hanzo:::hanzo_db_sqlite_query_executor"
         });
 
         // Determine the code generation prompt so we can update the message with the

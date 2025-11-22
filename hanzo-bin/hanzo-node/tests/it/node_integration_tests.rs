@@ -1,18 +1,18 @@
 use async_channel::{bounded, Receiver, Sender};
 use hanzo_http_api::node_api_router::{APIError, SendResponseBodyData};
 use hanzo_http_api::node_commands::NodeCommand;
-use hanzo_message_primitives::hanzo_message::hanzo_message::HanzoMessage;
-use hanzo_message_primitives::hanzo_message::hanzo_message_schemas::MessageSchemaType;
-use hanzo_message_primitives::hanzo_utils::encryption::{
+use hanzo_messages::hanzo_message::hanzo_message::HanzoMessage;
+use hanzo_messages::hanzo_message::hanzo_message_schemas::MessageSchemaType;
+use hanzo_messages::hanzo_utils::encryption::{
     encryption_public_key_to_string, encryption_secret_key_to_string, unsafe_deterministic_encryption_keypair,
     EncryptionMethod,
 };
-use hanzo_message_primitives::hanzo_utils::hanzo_message_builder::HanzoMessageBuilder;
-use hanzo_message_primitives::hanzo_utils::signatures::{
+use hanzo_messages::hanzo_utils::hanzo_message_builder::HanzoMessageBuilder;
+use hanzo_messages::hanzo_utils::signatures::{
     clone_signature_secret_key, signature_public_key_to_string, signature_secret_key_to_string,
     unsafe_deterministic_signature_keypair,
 };
-use hanzo_message_primitives::hanzo_utils::utils::hash_string;
+use hanzo_messages::hanzo_utils::utils::hash_string;
 use hanzo_node::network::Node;
 use std::fs;
 use std::net::{IpAddr, Ipv4Addr, TcpListener};
@@ -1472,13 +1472,13 @@ fn test_send_message_to_localhost_node() {
 
         // Get relay's encryption public key from blockchain identity
         let relay_encryption_pk = {
-            use hanzo_message_primitives::hanzo_utils::encryption::string_to_encryption_public_key;
+            use hanzo_messages::hanzo_utils::encryption::string_to_encryption_public_key;
             // Relay's encryption key from blockchain: e2705427237521cf0ca3703a95a20039bd17728a38c7693341dc3d1ae590080c
             string_to_encryption_public_key("e2705427237521cf0ca3703a95a20039bd17728a38c7693341dc3d1ae590080c")
                 .expect("Failed to parse relay encryption key")
         };
         let relay_signature_pk = {
-            use hanzo_message_primitives::hanzo_utils::signatures::string_to_signature_public_key;
+            use hanzo_messages::hanzo_utils::signatures::string_to_signature_public_key;
             // Relay's signature key from blockchain: f5f44767a4efcc1e608bc289454610a14ecb762f9340bcabf9f934af174cfe6f
             string_to_signature_public_key("f5f44767a4efcc1e608bc289454610a14ecb762f9340bcabf9f934af174cfe6f")
                 .expect("Failed to parse relay signature key")

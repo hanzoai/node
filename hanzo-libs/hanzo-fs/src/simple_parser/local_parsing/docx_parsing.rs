@@ -1,6 +1,6 @@
 use std::path::PathBuf;
 
-use hanzo_non_rust_code::functions::parse_docx::parse_docx;
+use hanzo_runtime::functions::parse_docx::parse_docx;
 
 use crate::{
     hanzo_fs_error::HanzoFsError,

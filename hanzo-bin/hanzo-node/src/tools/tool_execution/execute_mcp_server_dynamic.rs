@@ -1,8 +1,8 @@
 use serde_json::{Map, Value};
-use hanzo_sqlite::SqliteManager;
-use hanzo_tools_primitives::tools::error::ToolError;
-use hanzo_tools_primitives::tools::hanzo_tool::HanzoTool;
-use hanzo_tools_primitives::tools::tool_config::ToolConfig;
+use hanzo_db_sqlite::SqliteManager;
+use hanzo_tools::tools::error::ToolError;
+use hanzo_tools::tools::hanzo_tool::HanzoTool;
+use hanzo_tools::tools::tool_config::ToolConfig;
 use std::sync::Arc;
 
 pub async fn execute_mcp_server_dynamic(

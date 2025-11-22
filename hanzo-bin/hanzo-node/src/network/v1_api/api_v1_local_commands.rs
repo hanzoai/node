@@ -6,16 +6,16 @@ use ed25519_dalek::SigningKey;
 use log::error;
 
 use hanzo_http_api::node_api_router::APIError;
-use hanzo_message_primitives::schemas::identity::Identity;
-use hanzo_message_primitives::schemas::ws_types::WSUpdateHandler;
-use hanzo_message_primitives::{
+use hanzo_messages::schemas::identity::Identity;
+use hanzo_messages::schemas::ws_types::WSUpdateHandler;
+use hanzo_messages::{
     schemas::{llm_providers::serialized_llm_provider::SerializedLLMProvider, hanzo_name::HanzoName},
     hanzo_message::{
         hanzo_message::HanzoMessage,
         hanzo_message_schemas::{IdentityPermissions, RegistrationCodeType},
     },
 };
-use hanzo_sqlite::SqliteManager;
+use hanzo_db_sqlite::SqliteManager;
 use std::sync::Arc;
 use tokio::sync::Mutex;
 

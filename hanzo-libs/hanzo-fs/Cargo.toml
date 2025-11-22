@@ -1,13 +1,13 @@
 [package]
-name = "hanzo_fs"
+name = "hanzo-fs"
 version = { workspace = true }
 edition = { workspace = true }
 authors = { workspace = true }
 
 [dependencies]
-hanzo_message_primitives = { workspace = true }
-hanzo_embedding = { workspace = true }
-hanzo_sqlite = { workspace = true }
+hanzo-messages = { workspace = true }
+hanzo-embed = { workspace = true }
+hanzo-db-sqlite = { workspace = true }
 bincode = { workspace = true }
 serde_json = { workspace = true }
 rand = { workspace = true }
@@ -29,7 +29,7 @@ utoipa = { workspace = true }
 regex = { workspace = true }
 os_path = { workspace = true }
 tempfile = { workspace = true }
-hanzo_non_rust_code = { workspace = true }
+hanzo-runtime = { workspace = true }
 
 [dependencies.serde]
 workspace = true

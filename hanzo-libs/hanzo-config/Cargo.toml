@@ -1,5 +1,5 @@
 [package]
-name = "hanzo_config"
+name = "hanzo-config"
 version.workspace = true
 edition.workspace = true
 authors.workspace = true

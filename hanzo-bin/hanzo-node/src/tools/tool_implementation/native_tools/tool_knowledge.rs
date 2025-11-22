@@ -1,17 +1,17 @@
-use hanzo_message_primitives::schemas::job::JobLike;
-use hanzo_message_primitives::schemas::subprompts::SubPrompt;
-use hanzo_message_primitives::hanzo_utils::job_scope::MinimalJobScope;
-use hanzo_sqlite::SqliteManager;
-use hanzo_tools_primitives::tools::parameters::Parameters;
-use hanzo_tools_primitives::tools::{hanzo_tool::HanzoToolHeader, tool_output_arg::ToolOutputArg};
+use hanzo_messages::schemas::job::JobLike;
+use hanzo_messages::schemas::subprompts::SubPrompt;
+use hanzo_messages::hanzo_utils::job_scope::MinimalJobScope;
+use hanzo_db_sqlite::SqliteManager;
+use hanzo_tools::tools::parameters::Parameters;
+use hanzo_tools::tools::{hanzo_tool::HanzoToolHeader, tool_output_arg::ToolOutputArg};
 use std::sync::Arc;
 
 use serde_json::{json, Map, Value};
-use hanzo_tools_primitives::tools::error::ToolError;
+use hanzo_tools::tools::error::ToolError;
 
 use ed25519_dalek::SigningKey;
 
-use hanzo_message_primitives::schemas::hanzo_name::HanzoName;
+use hanzo_messages::schemas::hanzo_name::HanzoName;
 
 use x25519_dalek::PublicKey as EncryptionPublicKey;
 use x25519_dalek::StaticSecret as EncryptionStaticKey;

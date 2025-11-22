@@ -3,7 +3,7 @@ use crate::llm_provider::{
     providers::shared::{openai_api::openai_prepare_messages, shared_model_logic::llama_prepare_messages},
 };
 use ai_model_catalog::{get_openrouter_model, providers::openrouter};
-use hanzo_message_primitives::{
+use hanzo_messages::{
     schemas::{
         llm_message::LlmMessage,
         llm_providers::{
@@ -15,7 +15,7 @@ use hanzo_message_primitives::{
     },
     hanzo_utils::utils::count_tokens_from_message_llama3,
 };
-use hanzo_sqlite::SqliteManager;
+use hanzo_db_sqlite::SqliteManager;
 use std::{
     fmt,
     sync::{Arc, Weak},

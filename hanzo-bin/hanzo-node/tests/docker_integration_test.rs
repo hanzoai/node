@@ -1,10 +1,10 @@
 #[cfg(test)]
 mod docker_integration_tests {
-    use hanzo_tools_primitives::tools::docker_tools::DockerTool;
-    use hanzo_tools_primitives::tools::hanzo_tool::HanzoTool;
-    use hanzo_tools_primitives::tools::parameters::Parameters;
-    use hanzo_tools_primitives::tools::tool_output_arg::ToolOutputArg;
-    use hanzo_tools_primitives::tools::tool_types::{OperatingSystem, RunnerType, ToolResult};
+    use hanzo_tools::tools::docker_tools::DockerTool;
+    use hanzo_tools::tools::hanzo_tool::HanzoTool;
+    use hanzo_tools::tools::parameters::Parameters;
+    use hanzo_tools::tools::tool_output_arg::ToolOutputArg;
+    use hanzo_tools::tools::tool_types::{OperatingSystem, RunnerType, ToolResult};
     use serde_json::json;
 
     #[test]
@@ -91,7 +91,7 @@ console.log(JSON.stringify({result: `Processed: ${params.input}`}));
 
     #[test]
     fn test_docker_config_parsing() {
-        use hanzo_tools_primitives::tools::tool_config::{BasicConfig, ToolConfig};
+        use hanzo_tools::tools::tool_config::{BasicConfig, ToolConfig};
         use serde_json::Value;
 
         let configs = vec![

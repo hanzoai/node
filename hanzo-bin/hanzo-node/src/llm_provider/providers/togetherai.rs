@@ -3,10 +3,10 @@ use std::sync::Arc;
 use crate::llm_provider::execution::chains::inference_chain_trait::LLMInferenceResponse;
 use crate::llm_provider::llm_stopper::LLMStopper;
 use crate::managers::model_capabilities_manager::ModelCapabilitiesManager;
-use hanzo_message_primitives::schemas::job_config::JobConfig;
-use hanzo_message_primitives::schemas::prompts::Prompt;
-use hanzo_message_primitives::schemas::ws_types::WSUpdateHandler;
-use hanzo_sqlite::SqliteManager;
+use hanzo_messages::schemas::job_config::JobConfig;
+use hanzo_messages::schemas::prompts::Prompt;
+use hanzo_messages::schemas::ws_types::WSUpdateHandler;
+use hanzo_db_sqlite::SqliteManager;
 
 use super::super::error::LLMProviderError;
 use super::shared::togetherai::TogetherAPIResponse;
@@ -16,9 +16,9 @@ use reqwest::Client;
 
 use serde_json;
 use serde_json::json;
-use hanzo_message_primitives::schemas::inbox_name::InboxName;
-use hanzo_message_primitives::schemas::llm_providers::serialized_llm_provider::{LLMProviderInterface, TogetherAI};
-use hanzo_message_primitives::hanzo_utils::hanzo_logging::{hanzo_log, HanzoLogLevel, HanzoLogOption};
+use hanzo_messages::schemas::inbox_name::InboxName;
+use hanzo_messages::schemas::llm_providers::serialized_llm_provider::{LLMProviderInterface, TogetherAI};
+use hanzo_messages::hanzo_utils::hanzo_logging::{hanzo_log, HanzoLogLevel, HanzoLogOption};
 use tokio::sync::Mutex;
 
 #[async_trait]

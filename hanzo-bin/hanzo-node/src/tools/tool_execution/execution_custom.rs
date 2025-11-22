@@ -1,14 +1,14 @@
 use std::sync::Arc;
 
 use serde_json::{Map, Value};
-use hanzo_sqlite::SqliteManager;
-use hanzo_tools_primitives::tools::error::ToolError;
+use hanzo_db_sqlite::SqliteManager;
+use hanzo_tools::tools::error::ToolError;
 
 use ed25519_dalek::SigningKey;
 
-use hanzo_message_primitives::schemas::hanzo_name::HanzoName;
+use hanzo_messages::schemas::hanzo_name::HanzoName;
 
-use hanzo_tools_primitives::tools::tool_config::ToolConfig;
+use hanzo_tools::tools::tool_config::ToolConfig;
 use tokio::sync::Mutex;
 
 use x25519_dalek::PublicKey as EncryptionPublicKey;
@@ -38,7 +38,7 @@ pub async fn try_to_execute_rust_tool(
     println!("[executing_rust_tool] {}", tool_router_key);
 
     // Note(Important): if you update the # of tools, you need to update the # of tools in fn has_rust_tools(&self) ->
-    // Result<bool, SqliteManagerError> { ... } in hanzo_sqlite/src/hanzo_tool_manager.rs
+    // Result<bool, SqliteManagerError> { ... } in hanzo_db_sqlite/src/hanzo_tool_manager.rs
 
     let result = match tool_router_key {
         // TODO Keep in sync with definitions_custom.rs
@@ -110,7 +110,7 @@ pub async fn try_to_execute_rust_tool(
             )
             .await
         }
-        s if s == "local:::__official_hanzo:::hanzo_sqlite_query_executor" => {
+        s if s == "local:::__official_hanzo:::hanzo_db_sqlite_query_executor" => {
             tool_implementation::native_tools::sql_processor::SQLProcessorTool::execute(
                 bearer,
                 tool_id,

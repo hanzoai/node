@@ -1,7 +1,7 @@
 use hanzo_http_api::node_commands::NodeCommand;
-use hanzo_message_primitives::hanzo_utils::signatures::clone_signature_secret_key;
-use hanzo_tools_primitives::tools::deno_tools::DenoTool;
-use hanzo_tools_primitives::tools::hanzo_tool::{HanzoTool, HanzoToolWithAssets};
+use hanzo_messages::hanzo_utils::signatures::clone_signature_secret_key;
+use hanzo_tools::tools::deno_tools::DenoTool;
+use hanzo_tools::tools::hanzo_tool::{HanzoTool, HanzoToolWithAssets};
 
 use super::utils::node_test_api::{api_initial_registration_with_no_code_for_device, wait_for_default_tools};
 use crate::it::utils::test_boilerplate::run_test_one_node_network;

@@ -12,9 +12,9 @@ use tracing::{debug, error, info, warn};
 
 use crate::security::tee_attestation::{TeeAttestationManager, TeeProtectedExecution};
 use hanzo_kbs::types::PrivacyTier;
-use hanzo_message_primitives::schemas::hanzo_tools::HanzoToolMetadata;
-use hanzo_tools_primitives::tools::error::ToolError;
-use hanzo_tools_primitives::tools::hanzo_tool::HanzoTool;
+use hanzo_messages::schemas::hanzo_tools::HanzoToolMetadata;
+use hanzo_tools::tools::error::ToolError;
+use hanzo_tools::tools::hanzo_tool::HanzoTool;
 
 /// Configuration for secure tool execution
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -79,7 +79,7 @@ impl SecureExecutionManager {
         // Look for privacy tier in tool configurations
         if let Some(config) = &metadata.tool_config {
             for cfg in config {
-                if let hanzo_tools_primitives::tools::tool_config::ToolConfig::BasicConfig(basic) = cfg {
+                if let hanzo_tools::tools::tool_config::ToolConfig::BasicConfig(basic) = cfg {
                     if basic.key == "privacy_tier" {
                         if let Ok(tier_num) = basic.value.parse::<u8>() {
                             return match tier_num {

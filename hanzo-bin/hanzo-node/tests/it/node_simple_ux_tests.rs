@@ -1,5 +1,5 @@
 use super::utils::test_boilerplate::run_test_one_node_network;
-use hanzo_message_primitives::hanzo_utils::signatures::clone_signature_secret_key;
+use hanzo_messages::hanzo_utils::signatures::clone_signature_secret_key;
 
 use super::utils::node_test_api::api_initial_registration_with_no_code_for_device;
 

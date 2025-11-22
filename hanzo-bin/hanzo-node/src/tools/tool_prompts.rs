@@ -1,6 +1,6 @@
 use crate::managers::IdentityManager;
 use hanzo_http_api::node_api_router::APIError;
-use hanzo_message_primitives::schemas::{hanzo_tools::CodeLanguage, tool_router_key::ToolRouterKey};
+use hanzo_messages::schemas::{hanzo_tools::CodeLanguage, tool_router_key::ToolRouterKey};
 use std::{collections::HashMap, sync::Arc};
 use tokio::sync::Mutex;
 
@@ -12,9 +12,9 @@ pub async fn generate_code_prompt(
 ) -> Result<String, APIError> {
     match language {
         CodeLanguage::Typescript => {
-            let hanzo_sqlite_query_executor = "hanzoSqliteQueryExecutor";
+            let hanzo_db_sqlite_query_executor = "hanzoSqliteQueryExecutor";
             let is_memory_required_message = if is_memory_required {
-                format!("* If permanent memory is required, write to disk, store, sql always prioritize using {hanzo_sqlite_query_executor}.")
+                format!("* If permanent memory is required, write to disk, store, sql always prioritize using {hanzo_db_sqlite_query_executor}.")
             } else {
                 "".to_string()
             };
@@ -112,9 +112,9 @@ Explain your thinking process step by step and then implement the code.
             ));
         }
         CodeLanguage::Python => {
-            let hanzo_sqlite_query_executor = "hanzoSqliteQueryExecutor";
+            let hanzo_db_sqlite_query_executor = "hanzoSqliteQueryExecutor";
             let is_memory_required_message = if is_memory_required {
-                format!("* If permanent memory is required, write to disk, store, sql always prioritize using {hanzo_sqlite_query_executor}.")
+                format!("* If permanent memory is required, write to disk, store, sql always prioritize using {hanzo_db_sqlite_query_executor}.")
             } else {
                 "".to_string()
             };
@@ -696,7 +696,7 @@ pub async fn tool_metadata_implementation_prompt(
       }}
     ],
     "tools": [
-      "local:::__official_hanzo:::hanzo_sqlite_query_executor",
+      "local:::__official_hanzo:::hanzo_db_sqlite_query_executor",
       "local:::hanzo_tool_echo:::hanzo_echo"
     ],
     "oauth": {oauth_example},

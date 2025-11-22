@@ -5,10 +5,10 @@ use reqwest::StatusCode;
 use serde_json::Value;
 
 use hanzo_http_api::node_api_router::APIError;
-use hanzo_message_primitives::schemas::hanzo_name::HanzoName;
-use hanzo_message_primitives::schemas::hanzo_tool_offering::UsageTypeInquiry;
-use hanzo_sqlite::{errors::SqliteManagerError, SqliteManager};
-use hanzo_tools_primitives::tools::hanzo_tool::HanzoTool;
+use hanzo_messages::schemas::hanzo_name::HanzoName;
+use hanzo_messages::schemas::hanzo_tool_offering::UsageTypeInquiry;
+use hanzo_db_sqlite::{errors::SqliteManagerError, SqliteManager};
+use hanzo_tools::tools::hanzo_tool::HanzoTool;
 use tokio::sync::Mutex;
 
 use crate::network::{
