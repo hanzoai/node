@@ -1,5 +1,7 @@
 [package]
 name = "hanzo-baml"
+description = "Hanzo AI - Baml Library"
+license = "MIT"
 version = { workspace = true }
 edition = { workspace = true }
 authors = { workspace = true }

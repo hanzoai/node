@@ -1,5 +1,7 @@
 [package]
 name = "hanzo-fs"
+description = "Hanzo AI - Fs Library"
+license = "MIT"
 version = { workspace = true }
 edition = { workspace = true }
 authors = { workspace = true }

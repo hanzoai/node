@@ -1,5 +1,7 @@
 [package]
 name = "hanzo-sheet"
+description = "Hanzo AI - Sheet Library"
+license = "MIT"
 version = { workspace = true }
 edition = { workspace = true }
 authors = { workspace = true }

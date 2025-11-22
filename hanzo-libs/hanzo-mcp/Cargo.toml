@@ -3,6 +3,7 @@ name = "hanzo-mcp"
 version = { workspace = true }
 edition = { workspace = true }
 description = "Methods to interact with MCP servers"
+license = "MIT"
 authors = { workspace = true }
 
 [dependencies]
