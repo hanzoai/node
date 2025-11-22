@@ -59,7 +59,7 @@ impl SqliteManager {
 
     pub fn remove_tool_offering(&self, tool_key: &str) -> Result<(), SqliteManagerError> {
         let mut conn = self.get_connection()?;
-        let mut transaction = conn.transaction()?;
+        let transaction = conn.transaction()?;
 
         // First, nullify references in invoices to prevent constraint violations
         transaction.execute(

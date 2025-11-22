@@ -5,7 +5,7 @@
 use serde::{Serialize, Deserialize};
 use anyhow::{Result, anyhow};
 use nalgebra::{DVector, DMatrix};
-use std::f64::consts::E;
+
 
 /// Expected Free Energy for decision making
 #[derive(Debug, Clone)]

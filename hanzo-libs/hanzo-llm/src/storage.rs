@@ -2,11 +2,11 @@
 //! 
 //! Persistent storage for adapters and vector embeddings
 
-use std::path::Path;
+
 use anyhow::{Result, anyhow};
 use serde::{Serialize, Deserialize};
 use serde_json;
-use rusqlite::{Connection, params, OptionalExtension};
+use rusqlite::{Connection, params};
 use r2d2::{Pool, PooledConnection};
 use r2d2_sqlite::SqliteConnectionManager;
 
@@ -257,7 +257,7 @@ impl HLLMStorage {
         let mut similarities = Vec::new();
         
         for result in results {
-            let (id, user_id, bytes, dimension) = result?;
+            let (id, user_id, bytes, _dimension) = result?;
             
             // Convert bytes back to float vector
             let embedding: Vec<f32> = bytes.chunks(4)
@@ -416,8 +416,8 @@ impl VectorIndex {
     }
     
     /// Build from storage
-    pub async fn from_storage(storage: &HLLMStorage, dimension: usize) -> Result<Self> {
-        let mut index = Self::new(dimension);
+    pub async fn from_storage(_storage: &HLLMStorage, dimension: usize) -> Result<Self> {
+        let index = Self::new(dimension);
         
         // Load all embeddings (in production, paginate this)
         // For now, simplified implementation
