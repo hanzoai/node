@@ -1,5 +1,7 @@
 [package]
 name = "hanzo-did"
+description = "Hanzo AI - Did Library"
+license = "MIT"
 version = { workspace = true }
 edition = { workspace = true }
 authors = { workspace = true }

@@ -1,5 +1,7 @@
 [package]
 name = "hanzo-mining"
+description = "Hanzo AI - Mining Library"
+license = "MIT"
 version.workspace = true
 edition.workspace = true
 authors.workspace = true
