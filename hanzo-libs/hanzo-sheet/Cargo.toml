@@ -12,7 +12,7 @@ tokio = { workspace = true }
 chrono = { workspace = true, features = ["serde"] }
 uuid = { workspace = true, features = ["v4"] }
 regex = { workspace = true }
-hanzo-messages = { workspace = true, version = "1.1.11" }
+hanzo-messages = { version = "1.1.11", path = "../hanzo-messages" }
 async-channel = { workspace = true }
 
 [dependencies.serde]

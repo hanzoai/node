@@ -14,7 +14,7 @@ tokio = { version = "1.38", features = ["full"] }
 anyhow = "1.0"
 tracing = "0.1"
 base64 = "0.22"
-hanzo-tools = { workspace = true, version = "1.1.11" }
+hanzo-tools = { version = "1.1.11", path = "../hanzo-tools" }
 rand = "0.8"
 uuid = { version = "1.6", features = ["v4"] }
 md5 = "0.7"

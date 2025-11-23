@@ -10,9 +10,9 @@ description = "Job Queue Manager for Hanzo AI platform"
 
 [dependencies]
 serde = { version = "1.0", features = ["derive"] }
-hanzo-messages = { workspace = true, version = "1.1.11" }
-hanzo-db-sqlite = { workspace = true, version = "1.1.11" }
-hanzo-embed = { workspace = true, version = "1.1.11" }
+hanzo-messages = { version = "1.1.11", path = "../hanzo-messages" }
+hanzo-db-sqlite = { version = "1.1.11", path = "../hanzo-db-sqlite" }
+hanzo-embed = { version = "1.1.11", path = "../hanzo-embed" }
 tokio = { version = "1.36", features = ['rt', 'rt-multi-thread', 'macros', 'fs', 'io-util', 'net', 'sync', 'time'] }
 chrono = { version = "0.4", features = ['serde'] }
 serde_json = "1.0.117"
