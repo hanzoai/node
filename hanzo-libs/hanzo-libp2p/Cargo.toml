@@ -15,7 +15,7 @@ serde = { version = "1.0.219", features = ['derive'] }
 clap = { version = "4.5.4", features = ["env"] }
 hanzo-messages = { version = "1.1.11", path = "../hanzo-messages" }
 hanzo-identity = { version = "1.1.11", path = "../hanzo-identity" }
-hanzo-libp2p-relayer = { path = "../hanzo-libp2p-relayer" }
+hanzo-libp2p-relayer = { version = "1.1.11", path = "../hanzo-libp2p-relayer" }
 x25519-dalek = { version = "2.0.1", features = ['static_secrets'] }
 ed25519-dalek = { version = "2.1.1", features = ['rand_core'] }
 rand = "0.8.5"
