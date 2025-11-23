@@ -12,13 +12,13 @@ description = "Tools Primitives for Hanzo AI platform"
 serde_json = "1.0.117"
 tokio = { version = "1.36", features = ['rt', 'rt-multi-thread', 'macros', 'fs', 'io-util', 'net', 'sync', 'time'] }
 regex = "1"
-hanzo-messages = { workspace = true }
+hanzo-messages = { workspace = true, version = "1.1.11" }
 # hanzo-vector_resources = {  }
 reqwest = { version = "0.11.27", features = ['json'] }
-hanzo-tools-runner = { workspace = true }
+hanzo-tools-runner = { workspace = true, version = "1.0.0" }
 serde = { version = "1.0.219", features = ['derive'] }
 base64 = "0.22.0"
 rmcp = { workspace = true, features = ["client", "transport-child-process", "transport-sse-client", "transport-sse-client-reqwest", "transport-streamable-http-client-reqwest"] }
 log = "0.4.20"
 once_cell = "1.19"
-hanzo-mcp = { workspace = true }
+hanzo-mcp = { workspace = true, version = "1.1.10" }
