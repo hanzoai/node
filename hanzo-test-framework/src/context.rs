@@ -207,7 +207,7 @@ impl TestContext {
             self.identity_name.clone(),
             self.identity_name.clone(),
         )
-        .map_err(|e| anyhow::anyhow!(e))?;
+        .map_err(|e| anyhow::anyhow!(format!("{:?}", e)))?;
 
         let (res_use_sender, res_use_receiver) = async_channel::bounded(1);
         self.commands
@@ -233,7 +233,7 @@ impl TestContext {
             self.identity_name.clone(),
             self.identity_name.clone(),
         )
-        .map_err(|e| anyhow::anyhow!(e))?;
+        .map_err(|e| anyhow::anyhow!(format!("{:?}", e)))?;
         self.commands
             .send(NodeCommand::APIAddAgent { msg, res: res_sender })
             .await?;
@@ -260,7 +260,7 @@ impl TestContext {
             self.identity_name.clone(),
             agent_sub.to_string(),
         )
-        .map_err(|e| anyhow::anyhow!(e))?;
+        .map_err(|e| anyhow::anyhow!(format!("{:?}", e)))?;
 
         let (res_sender, res_receiver) = async_channel::bounded(1);
         self.commands
@@ -286,7 +286,7 @@ impl TestContext {
             self.identity_name.clone(),
             format!("{}/agent/{}", self.profile_name, self.device_name),
         )
-        .map_err(|e| anyhow::anyhow!(e))?;
+        .map_err(|e| anyhow::anyhow!(format!("{:?}", e)))?;
 
         let (res_sender, res_receiver) = async_channel::bounded(1);
         self.commands
