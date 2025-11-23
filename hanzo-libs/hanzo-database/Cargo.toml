@@ -55,8 +55,8 @@ sqlx = { version = "0.8", features = ["postgres", "runtime-tokio-rustls", "sqlit
 redis = { version = "0.25", features = ["aio", "tokio-comp"], optional = true }
 
 # Hanzo dependencies
-hanzo-messages = { workspace = true }
-hanzo-embed = { workspace = true }
+hanzo-messages = { workspace = true, version = "1.1.11" }
+hanzo-embed = { workspace = true, version = "1.1.11" }
 
 [dev-dependencies]
 tokio-test = "0.4"
