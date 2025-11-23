@@ -27,7 +27,7 @@ members = [
   "hanzo-libs/hanzo-runner",
   "hanzo-libs/hanzo-runtime",
   "hanzo-libs/hanzo-runtime-tests",
-  "hanzo-libs/hanzo-sheet",
+  # "hanzo-libs/hanzo-sheet", # Excluded: depends on non-existent sheet module
   # "hanzo-libs/hanzo-simulation",
   "hanzo-libs/hanzo-tests",
   "hanzo-libs/hanzo-tools",
