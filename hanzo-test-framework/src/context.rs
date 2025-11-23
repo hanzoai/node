@@ -1,14 +1,14 @@
 use async_channel::{bounded, Receiver, Sender};
 use ed25519_dalek::SigningKey;
-use hanzo_embedding::embedding_generator::RemoteEmbeddingGenerator;
-use hanzo_embedding::model_type::{EmbeddingModelType, OllamaTextEmbeddingsInference};
+use hanzo_embed::embedding_generator::RemoteEmbeddingGenerator;
+use hanzo_embed::model_type::{EmbeddingModelType, OllamaTextEmbeddingsInference};
 use hanzo_http_api::node_commands::NodeCommand;
-use hanzo_message_primitives::schemas::identity::IdentityType;
-use hanzo_message_primitives::schemas::job_config::JobConfig;
-use hanzo_message_primitives::schemas::llm_providers::serialized_llm_provider::SerializedLLMProvider;
-use hanzo_message_primitives::hanzo_utils::encryption::unsafe_deterministic_encryption_keypair;
-use hanzo_message_primitives::hanzo_utils::hanzo_path::HanzoPath;
-use hanzo_message_primitives::hanzo_utils::signatures::{
+use hanzo_messages::schemas::identity::IdentityType;
+use hanzo_messages::schemas::job_config::JobConfig;
+use hanzo_messages::schemas::llm_providers::serialized_llm_provider::SerializedLLMProvider;
+use hanzo_messages::hanzo_utils::encryption::unsafe_deterministic_encryption_keypair;
+use hanzo_messages::hanzo_utils::hanzo_path::HanzoPath;
+use hanzo_messages::hanzo_utils::signatures::{
     clone_signature_secret_key, hash_signature_public_key, unsafe_deterministic_signature_keypair,
 };
 use hanzo_node::network::Node;
@@ -178,10 +178,10 @@ where
 
 impl TestContext {
     pub async fn register_device(&self) -> anyhow::Result<()> {
-        use hanzo_message_primitives::hanzo_message::hanzo_message_schemas::{
+        use hanzo_messages::hanzo_message::hanzo_message_schemas::{
             IdentityPermissions, RegistrationCodeType,
         };
-        use hanzo_message_primitives::hanzo_utils::hanzo_message_builder::HanzoMessageBuilder;
+        use hanzo_messages::hanzo_utils::hanzo_message_builder::HanzoMessageBuilder;
 
         let (res_registration_sender, res_registration_receiver) = async_channel::bounded(1);
         self.commands
@@ -221,7 +221,7 @@ impl TestContext {
     }
 
     pub async fn register_llm_provider(&self, agent: SerializedLLMProvider) -> anyhow::Result<()> {
-        use hanzo_message_primitives::hanzo_utils::hanzo_message_builder::HanzoMessageBuilder;
+        use hanzo_messages::hanzo_utils::hanzo_message_builder::HanzoMessageBuilder;
 
         let (res_sender, res_receiver) = async_channel::bounded(1);
         let msg = HanzoMessageBuilder::request_add_llm_provider(
@@ -245,8 +245,8 @@ impl TestContext {
     }
 
     pub async fn create_job(&self, agent_sub: &str) -> anyhow::Result<String> {
-        use hanzo_message_primitives::hanzo_utils::job_scope::MinimalJobScope;
-        use hanzo_message_primitives::hanzo_utils::hanzo_message_builder::HanzoMessageBuilder;
+        use hanzo_messages::hanzo_utils::job_scope::MinimalJobScope;
+        use hanzo_messages::hanzo_utils::hanzo_message_builder::HanzoMessageBuilder;
 
         let scope = MinimalJobScope::default();
         let msg = HanzoMessageBuilder::job_creation(
@@ -271,7 +271,7 @@ impl TestContext {
     }
 
     pub async fn send_job_message(&self, job_id: &str, msg_content: &str) -> anyhow::Result<()> {
-        use hanzo_message_primitives::hanzo_utils::hanzo_message_builder::HanzoMessageBuilder;
+        use hanzo_messages::hanzo_utils::hanzo_message_builder::HanzoMessageBuilder;
 
         let msg = HanzoMessageBuilder::job_message(
             job_id.to_string(),
