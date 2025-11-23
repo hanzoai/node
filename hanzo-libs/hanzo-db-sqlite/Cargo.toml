@@ -18,9 +18,9 @@ tokio = { version = "1.36", features = ['rt', 'rt-multi-thread', 'macros', 'fs',
 r2d2 = "0.8"
 r2d2_sqlite = "0.25"
 keyphrases = "0.3.3"
-hanzo-tools = { workspace = true, version = "1.1.11" }
-hanzo-messages = { workspace = true, version = "1.1.11" }
-hanzo-embed = { workspace = true, version = "1.1.11" }
+hanzo-tools = { version = "1.1.11", path = "../hanzo-tools" }
+hanzo-messages = { version = "1.1.11", path = "../hanzo-messages" }
+hanzo-embed = { version = "1.1.11", path = "../hanzo-embed" }
 reqwest = { version = "0.11.27", features = ['json'] }
 bincode = "1.3.3"
 zerocopy = "0.8.9"

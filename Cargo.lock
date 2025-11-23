@@ -5641,7 +5641,7 @@ dependencies = [
 
 [[package]]
 name = "hanzo-baml"
-version = "1.1.11"
+version = "0.1.0"
 dependencies = [
  "anyhow",
  "baml-runtime",
@@ -5707,7 +5707,7 @@ dependencies = [
 
 [[package]]
 name = "hanzo-db"
-version = "1.1.11"
+version = "0.1.0"
 dependencies = [
  "anyhow",
  "arrow-array 55.2.0",
@@ -5777,7 +5777,7 @@ dependencies = [
 
 [[package]]
 name = "hanzo-did"
-version = "1.1.11"
+version = "1.1.10"
 dependencies = [
  "anyhow",
  "async-trait",
@@ -5825,7 +5825,7 @@ dependencies = [
 
 [[package]]
 name = "hanzo-fs"
-version = "1.1.11"
+version = "0.0.0"
 dependencies = [
  "async-trait",
  "bincode",
@@ -5858,7 +5858,7 @@ dependencies = [
 
 [[package]]
 name = "hanzo-hmm"
-version = "1.1.11"
+version = "0.1.0"
 dependencies = [
  "anyhow",
  "log",
@@ -5872,7 +5872,7 @@ dependencies = [
 
 [[package]]
 name = "hanzo-http-api"
-version = "1.1.11"
+version = "0.0.0"
 dependencies = [
  "anyhow",
  "async-channel 1.9.0",
@@ -5925,7 +5925,7 @@ dependencies = [
 
 [[package]]
 name = "hanzo-job-queue-manager"
-version = "1.1.11"
+version = "0.0.0"
 dependencies = [
  "chrono",
  "hanzo-db-sqlite",
@@ -5953,7 +5953,7 @@ dependencies = [
 
 [[package]]
 name = "hanzo-kbs"
-version = "1.1.11"
+version = "1.1.10"
 dependencies = [
  "anyhow",
  "async-trait",
@@ -6009,7 +6009,7 @@ dependencies = [
 
 [[package]]
 name = "hanzo-libp2p-relayer"
-version = "1.1.11"
+version = "0.0.0"
 dependencies = [
  "chrono",
  "clap 3.2.25",
@@ -6034,7 +6034,7 @@ dependencies = [
 
 [[package]]
 name = "hanzo-llm"
-version = "1.1.11"
+version = "1.1.10"
 dependencies = [
  "anyhow",
  "async-trait",
@@ -6069,7 +6069,7 @@ dependencies = [
 
 [[package]]
 name = "hanzo-mcp"
-version = "1.1.11"
+version = "1.1.10"
 dependencies = [
  "async-trait",
  "futures",
@@ -6251,7 +6251,7 @@ dependencies = [
 
 [[package]]
 name = "hanzo-pqc"
-version = "1.1.11"
+version = "1.1.10"
 dependencies = [
  "anyhow",
  "async-trait",
@@ -6346,20 +6346,6 @@ dependencies = [
  "tracing",
  "tracing-subscriber",
  "wat",
-]
-
-[[package]]
-name = "hanzo-sheet"
-version = "1.1.11"
-dependencies = [
- "async-channel 1.9.0",
- "chrono",
- "hanzo-messages",
- "regex",
- "serde",
- "serde_json",
- "tokio",
- "uuid",
 ]
 
 [[package]]
