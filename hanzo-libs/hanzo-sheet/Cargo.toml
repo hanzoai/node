@@ -2,7 +2,7 @@
 name = "hanzo-sheet"
 description = "Hanzo AI - Sheet Library"
 license = "MIT"
-version = { workspace = true }
+version = "0.1.0"
 edition = { workspace = true }
 authors = { workspace = true }
 
