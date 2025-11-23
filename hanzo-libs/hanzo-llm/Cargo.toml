@@ -33,9 +33,9 @@ chrono = { workspace = true }
 bincode = { workspace = true }
 
 # Internal dependencies
-hanzo-messages = { workspace = true, version = "1.1.11" }
-hanzo-db-sqlite = { workspace = true, version = "1.1.11" }
-hanzo-embed = { workspace = true, version = "1.1.11" }
+hanzo-messages = { version = "1.1.11", path = "../hanzo-messages" }
+hanzo-db-sqlite = { version = "1.1.11", path = "../hanzo-db-sqlite" }
+hanzo-embed = { version = "1.1.11", path = "../hanzo-embed" }
 
 # For BitDelta quantization
 bitvec = { version = "1.0", features = ["serde"] }
