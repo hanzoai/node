@@ -107,7 +107,7 @@ jobs:
         uses: docker/build-push-action@v5
         with:
           context: .
-          file: ./cloud-node/Dockerfile
+          file: ./docker/Dockerfile
           push: true
           build-args: |
             BUILD_TYPE=release
