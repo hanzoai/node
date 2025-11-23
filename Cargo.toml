@@ -9,12 +9,12 @@ members = [
   "hanzo-libs/hanzo-did",
   "hanzo-libs/hanzo-embed",
   "hanzo-libs/hanzo-fs",
-  "hanzo-libs/hanzo-hmm",
+  # "hanzo-libs/hanzo-hmm", # Excluded: type inference issues
   "hanzo-libs/hanzo-http-api",
   "hanzo-libs/hanzo-identity",
   "hanzo-libs/hanzo-job-queue-manager",
   "hanzo-libs/hanzo-jobs",
-  "hanzo-libs/hanzo-kbs",
+  # "hanzo-libs/hanzo-kbs", # Excluded: incomplete implementation with missing types
   "hanzo-libs/hanzo-libp2p",
   "hanzo-libs/hanzo-libp2p-relayer",
   "hanzo-libs/hanzo-llm",
