@@ -55,7 +55,7 @@ jobs:
       - name: Build
         env:
           AI_MODEL_CATALOG_BUILD: 1
-        run: cargo build --release
+        run: cargo build --release --bin hanzo-node
 
       - name: Prepare bundle files
         env:
@@ -63,7 +63,7 @@ jobs:
           EXTENSION: ${{ matrix.arch == 'x86_64-pc-windows-msvc' && '.exe' || '' }}
         run: |
           mkdir files-to-r2
-          cp target/release/hanzo_node${{ env.EXTENSION }} files-to-r2/hanzo-node${{ env.EXTENSION }}
+          cp target/release/hanzo-node${{ env.EXTENSION }} files-to-r2/hanzo-node${{ env.EXTENSION }}
           cp -r target/release/hanzo-tools-runner-resources files-to-r2/
           cd ./files-to-r2
           7z a -tzip ${{ env.ZIP_FILE_NAME}} . -sdel
