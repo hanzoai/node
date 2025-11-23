@@ -73,10 +73,10 @@ jobs:
         continue-on-error: true
         uses: shallwefootball/s3-upload-action@master
         with:
-          endpoint: https://54bf1bf573b3e6471e574cc4d318db64.r2.cloudflarestorage.com
+          endpoint: https://94a3e3f299092abb1feda2a7481ea845.r2.cloudflarestorage.com
           aws_key_id: ${{ secrets.R2_ACCESS_KEY_ID }}
           aws_secret_access_key: ${{ secrets.R2_SECRET_ACCESS_KEY }}
-          aws_bucket: hanzo-download
+          aws_bucket: hanzoai
           source_dir: files-to-r2
           destination_dir: ./hanzo-node/binaries/production/${{ matrix.arch }}/
 
