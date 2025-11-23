@@ -29,9 +29,13 @@ jobs:
           echo '[target.x86_64-pc-windows-msvc]' > .cargo/config.toml
           echo 'linker = "rust-lld"' >> .cargo/config.toml
 
-      - name: Install protobuf compiler
+      - name: Install protobuf compiler (Linux)
         if: matrix.os == 'ubuntu-22.04'
         run: sudo apt-get update && sudo apt-get install -y protobuf-compiler
+
+      - name: Install protobuf compiler (macOS)
+        if: matrix.os == 'macos-14'
+        run: brew install protobuf
 
       - name: Cache cargo assets
         id: cache
