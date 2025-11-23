@@ -5705,44 +5705,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "hanzo-db"
-version = "0.1.0"
-dependencies = [
- "anyhow",
- "arrow-array 55.2.0",
- "arrow-ipc 55.2.0",
- "arrow-schema 55.2.0",
- "async-trait",
- "base64 0.22.1",
- "bincode",
- "blake3",
- "chrono",
- "criterion",
- "deadpool",
- "deadpool-runtime",
- "duckdb",
- "env_logger",
- "futures",
- "hanzo-embed",
- "hanzo-messages",
- "image",
- "lancedb",
- "log",
- "parquet",
- "proptest",
- "redis",
- "rusqlite",
- "serde",
- "serde_json",
- "sqlx",
- "tempfile",
- "thiserror 2.0.12",
- "tokio",
- "tokio-test",
- "uuid",
-]
-
-[[package]]
 name = "hanzo-db-sqlite"
 version = "1.1.11"
 dependencies = [
@@ -5966,7 +5928,7 @@ dependencies = [
 
 [[package]]
 name = "hanzo-libp2p-relayer"
-version = "0.0.0"
+version = "1.1.11"
 dependencies = [
  "chrono",
  "clap 3.2.25",
@@ -6071,18 +6033,6 @@ dependencies = [
  "tracing-subscriber",
  "utoipa",
  "x25519-dalek",
-]
-
-[[package]]
-name = "hanzo-migrate"
-version = "1.1.11"
-dependencies = [
- "anyhow",
- "clap 4.5.39",
- "env_logger",
- "hanzo-db",
- "log",
- "tokio",
 ]
 
 [[package]]
@@ -6333,28 +6283,6 @@ dependencies = [
  "proc-macro2",
  "quote",
  "syn 2.0.108",
-]
-
-[[package]]
-name = "hanzo-tests"
-version = "0.1.0"
-dependencies = [
- "anyhow",
- "bollard",
- "criterion",
- "hanzo-db-sqlite",
- "hanzo-messages",
- "hanzo-tools",
- "hanzo-wasm",
- "include_dir",
- "proptest",
- "serde",
- "serde_json",
- "tempfile",
- "tokio",
- "tracing",
- "tracing-subscriber",
- "wat",
 ]
 
 [[package]]
