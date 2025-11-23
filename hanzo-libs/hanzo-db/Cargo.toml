@@ -1,6 +1,6 @@
 [package]
 name = "hanzo-db"
-version = { workspace = true }
+version = "0.1.0"
 edition = { workspace = true }
 authors = { workspace = true }
 description = "Multi-backend database abstraction for Hanzo Node - Supports LanceDB, DuckDB, PostgreSQL, and more"
