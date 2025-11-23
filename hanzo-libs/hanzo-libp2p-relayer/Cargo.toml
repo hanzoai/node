@@ -11,8 +11,8 @@ tokio = { workspace = true, features = ["full"] }
 serde_json = { workspace = true }
 serde = { workspace = true, features = ["derive"] }
 clap = { workspace = true, features = ["derive", "env"] }
-hanzo-messages = { workspace = true }
-hanzo-identity = { workspace = true }
+hanzo-messages = { workspace = true, version = "1.1.11" }
+hanzo-identity = { workspace = true, version = "1.1.11" }
 x25519-dalek = { workspace = true }
 ed25519-dalek = { workspace = true }
 rand = { workspace = true }
