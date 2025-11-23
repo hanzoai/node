@@ -2,7 +2,7 @@
 name = "hanzo-libp2p-relayer"
 description = "Hanzo AI - Libp2P Relayer Library"
 license = "MIT"
-version = { workspace = true }
+version = "0.0.0"
 edition = { workspace = true }
 authors = { workspace = true }
 

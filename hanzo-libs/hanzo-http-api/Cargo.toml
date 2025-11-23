@@ -2,7 +2,7 @@
 name = "hanzo-http-api"
 description = "Hanzo AI - Http Api Library"
 license = "MIT"
-version = { workspace = true }
+version = "0.0.0"
 edition = { workspace = true }
 authors = { workspace = true }
 
