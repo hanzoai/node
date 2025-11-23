@@ -186,7 +186,7 @@ main() {
     SERVICE_CRATES=(
         hanzo-mcp
         hanzo-fs
-        hanzo-kbs
+        # hanzo-kbs # Excluded: incomplete implementation
         hanzo-llm
         hanzo-jobs
         hanzo-database

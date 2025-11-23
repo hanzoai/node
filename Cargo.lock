@@ -4615,7 +4615,6 @@ dependencies = [
  "ff",
  "generic-array",
  "group",
- "hkdf",
  "pkcs8",
  "rand_core 0.6.4",
  "sec1",
@@ -5857,20 +5856,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "hanzo-hmm"
-version = "0.1.0"
-dependencies = [
- "anyhow",
- "log",
- "nalgebra 0.32.6",
- "pretty_assertions",
- "rand 0.8.5",
- "serde",
- "serde_json",
- "tokio",
-]
-
-[[package]]
 name = "hanzo-http-api"
 version = "0.0.0"
 dependencies = [
@@ -5952,35 +5937,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "hanzo-kbs"
-version = "1.1.10"
-dependencies = [
- "anyhow",
- "async-trait",
- "base64 0.22.1",
- "bincode",
- "blake3",
- "chacha20poly1305 0.10.1",
- "chrono",
- "dashmap 5.5.3",
- "ed25519-dalek",
- "hanzo-messages",
- "hanzo-pqc",
- "hex",
- "hpke",
- "log",
- "rand 0.8.5",
- "serde",
- "serde_json",
- "thiserror 2.0.12",
- "tokio",
- "tokio-test",
- "uuid",
- "warp",
- "x25519-dalek",
-]
-
-[[package]]
 name = "hanzo-libp2p"
 version = "1.1.11"
 dependencies = [
@@ -5991,6 +5947,7 @@ dependencies = [
  "dotenv",
  "ed25519-dalek",
  "hanzo-identity",
+ "hanzo-libp2p-relayer",
  "hanzo-messages",
  "hex",
  "libp2p",
@@ -6794,27 +6751,6 @@ dependencies = [
  "libc",
  "match_cfg",
  "winapi",
-]
-
-[[package]]
-name = "hpke"
-version = "0.12.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "4917627a14198c3603282c5158b815ad5534795451d3c074b53cf3cee0960b11"
-dependencies = [
- "aead 0.5.2",
- "aes-gcm",
- "chacha20poly1305 0.10.1",
- "digest",
- "generic-array",
- "hkdf",
- "hmac",
- "p256",
- "rand_core 0.6.4",
- "sha2",
- "subtle",
- "x25519-dalek",
- "zeroize",
 ]
 
 [[package]]
@@ -10736,16 +10672,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "p256"
-version = "0.13.2"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "c9863ad85fa8f4460f9c48cb909d38a0d689dba1f6f6988a5e3e0d31071bcd4b"
-dependencies = [
- "elliptic-curve",
- "primeorder",
-]
-
-[[package]]
 name = "parity-scale-codec"
 version = "3.7.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -11409,15 +11335,6 @@ checksum = "664ec5419c51e34154eec046ebcba56312d5a2fc3b09a06da188e1ad21afadf6"
 dependencies = [
  "proc-macro2",
  "syn 2.0.108",
-]
-
-[[package]]
-name = "primeorder"
-version = "0.13.6"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "353e1ca18966c16d9deb1c69278edbc5f194139612772bd9537af60ac231e1e6"
-dependencies = [
- "elliptic-curve",
 ]
 
 [[package]]
