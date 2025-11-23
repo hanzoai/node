@@ -7,9 +7,9 @@ edition = { workspace = true }
 authors = { workspace = true }
 
 [dependencies]
-hanzo-messages = { workspace = true }
-hanzo-embed = { workspace = true }
-hanzo-db-sqlite = { workspace = true }
+hanzo-messages = { workspace = true, version = "1.1.11" }
+hanzo-embed = { workspace = true, version = "1.1.11" }
+hanzo-db-sqlite = { workspace = true, version = "1.1.11" }
 bincode = { workspace = true }
 serde_json = { workspace = true }
 rand = { workspace = true }
@@ -31,7 +31,7 @@ utoipa = { workspace = true }
 regex = { workspace = true }
 os_path = { workspace = true }
 tempfile = { workspace = true }
-hanzo-runtime = { workspace = true }
+hanzo-runtime = { workspace = true, version = "1.1.11" }
 
 [dependencies.serde]
 workspace = true
