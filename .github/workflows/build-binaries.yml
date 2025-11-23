@@ -70,6 +70,7 @@ jobs:
           cp ${{ env.ZIP_FILE_NAME}} latest.zip
 
       - name: Upload bundle to R2 bucket
+        continue-on-error: true
         uses: shallwefootball/s3-upload-action@master
         with:
           endpoint: https://54bf1bf573b3e6471e574cc4d318db64.r2.cloudflarestorage.com
