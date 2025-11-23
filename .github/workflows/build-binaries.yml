@@ -47,7 +47,9 @@ jobs:
             ~/.cargo/registry/cache/
             ~/.cargo/git/db/
             target/
-          key: ${{ matrix.arch }}-build-cargo-${{ hashFiles('**/Cargo.lock') }}
+          key: ${{ matrix.arch }}-build-cargo-v2
+          restore-keys: |
+            ${{ matrix.arch }}-build-cargo-
 
 
       - name: Build
