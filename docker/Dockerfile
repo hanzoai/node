@@ -48,8 +48,8 @@ RUN rustup component add rustfmt
 # Then extract just the hanzo_node binary we need
 RUN --mount=type=cache,target=/usr/local/cargo/registry \
     --mount=type=cache,target=/build/target \
-    cargo build --locked --bin hanzo_node $([ "$BUILD_TYPE" = "release" ] && echo "--release") && \
-    cp target/${BUILD_TYPE}/hanzo_node /build/hanzo_node && \
+    cargo build --locked --bin hanzo-node $([ "$BUILD_TYPE" = "release" ] && echo "--release") && \
+    cp target/${BUILD_TYPE}/hanzo-node /build/hanzo-node && \
     cp -r target/${BUILD_TYPE}/hanzo-tools-runner-resources /build/hanzo-tools-runner-resources || true
 
 # ============================================================================
@@ -90,11 +90,11 @@ WORKDIR /app
 COPY docker/run_node.sh /app/
 
 # Copy built binaries and resources from builder
-COPY --from=builder /build/hanzo_node /app/
+COPY --from=builder /build/hanzo-node /app/
 COPY --from=builder /build/hanzo-tools-runner-resources /app/hanzo-tools-runner-resources
 
 # Make script executable
-RUN chmod +x /app/run_node.sh /app/hanzo_node
+RUN chmod +x /app/run_node.sh /app/hanzo-node
 
 # Set ownership
 RUN chown -R hanzo:hanzo /app
