@@ -6238,7 +6238,9 @@ name = "hanzo-runtime-tests"
 version = "0.1.0"
 dependencies = [
  "anyhow",
+ "async-trait",
  "bollard",
+ "chrono",
  "criterion",
  "hanzo-db-sqlite",
  "hanzo-messages",
