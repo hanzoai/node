@@ -4,7 +4,7 @@ members = [
   "hanzo-libs/hanzo-baml",
   "hanzo-libs/hanzo-config",
   "hanzo-libs/hanzo-database",
-  "hanzo-libs/hanzo-db",
+  # "hanzo-libs/hanzo-db", # Excluded: not in publish list, has feature-gated dependencies
   "hanzo-libs/hanzo-db-sqlite",
   "hanzo-libs/hanzo-did",
   "hanzo-libs/hanzo-embed",
@@ -36,7 +36,9 @@ members = [
   "hanzo-libs/hanzo-wasm-runtime",
   "hanzo-test-framework",
   "hanzo-test-macro",
-  "hanzo-bin/*",
+  "hanzo-bin/hanzo-node",
+  "hanzo-bin/hanzoai",
+  # "hanzo-bin/hanzo-migrate", # Excluded: depends on hanzo-db which has feature-gated deps
 ]
 resolver = "2"
 
