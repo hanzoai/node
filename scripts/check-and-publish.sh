@@ -69,16 +69,16 @@ version_gt() {
 }
 
 # Check if crate needs --no-verify flag
+# All hanzo-* crates use path dependencies locally, so they need --no-verify
+# to avoid dependency resolution errors during publishing
 needs_no_verify() {
     local crate_name="$1"
-    case "$crate_name" in
-        hanzo-runner)
-            return 0
-            ;;
-        *)
-            return 1
-            ;;
-    esac
+    # Return true for all hanzo-* crates
+    if [[ "$crate_name" == hanzo-* ]]; then
+        return 0
+    else
+        return 1
+    fi
 }
 
 # Publish a single crate
