@@ -1,10 +1,10 @@
 openapi: 3.0.3
 info:
-  title: hanzo_node
+  title: shinkai_node
   description: ''
   contact:
     name: Nico Arqueros
-    email: nico@hanzo.ai
+    email: nico@shinkai.com
   license:
     name: ''
   version: 0.8.4
@@ -703,9 +703,9 @@ components:
             type: string
       - type: object
         required:
-        - HanzoNode
+        - ShinkaiNode
         properties:
-          HanzoNode:
+          ShinkaiNode:
             type: array
             items:
               allOf:
@@ -1109,10 +1109,10 @@ components:
             $ref: '#/components/schemas/Ollama'
       - type: object
         required:
-        - HanzoBackend
+        - ShinkaiBackend
         properties:
-          HanzoBackend:
-            $ref: '#/components/schemas/HanzoBackend'
+          ShinkaiBackend:
+            $ref: '#/components/schemas/ShinkaiBackend'
       - type: object
         required:
         - LocalLLM
@@ -1145,7 +1145,7 @@ components:
       - model
       properties:
         full_identity_name:
-          $ref: '#/components/schemas/HanzoName'
+          $ref: '#/components/schemas/ShinkaiName'
         id:
           type: string
         model:
@@ -1261,7 +1261,7 @@ components:
       - path
       properties:
         external_identity:
-          $ref: '#/components/schemas/HanzoName'
+          $ref: '#/components/schemas/ShinkaiName'
         name:
           type: string
         path:
@@ -1415,7 +1415,7 @@ components:
           type: string
           nullable: true
         full_identity_name:
-          $ref: '#/components/schemas/HanzoName'
+          $ref: '#/components/schemas/ShinkaiName'
         id:
           type: string
         model:
@@ -1444,31 +1444,31 @@ components:
           nullable: true
         sheet_action:
           $ref: '#/components/schemas/SheetJobAction'
-    HanzoBackend:
+    ShinkaiBackend:
       type: object
       required:
       - model_type
       properties:
         model_type:
           type: string
-    HanzoFileType:
+    ShinkaiFileType:
       oneOf:
       - type: string
         enum:
-        - HanzoJobKai
+        - ShinkaiJobKai
       - type: string
         enum:
-        - HanzoVRKai
+        - ShinkaiVRKai
       - type: string
         enum:
-        - HanzoVRPack
+        - ShinkaiVRPack
       - type: object
         required:
         - Other
         properties:
           Other:
             type: string
-    HanzoName:
+    ShinkaiName:
       type: object
       required:
       - full_name
@@ -1486,9 +1486,9 @@ components:
           nullable: true
         subidentity_type:
           allOf:
-          - $ref: '#/components/schemas/HanzoSubidentityType'
+          - $ref: '#/components/schemas/ShinkaiSubidentityType'
           nullable: true
-    HanzoSubidentityType:
+    ShinkaiSubidentityType:
       type: string
       enum:
       - Agent
@@ -1578,10 +1578,10 @@ components:
             $ref: '#/components/schemas/AudioFileType'
       - type: object
         required:
-        - Hanzo
+        - Shinkai
         properties:
-          Hanzo:
-            $ref: '#/components/schemas/HanzoFileType'
+          Shinkai:
+            $ref: '#/components/schemas/ShinkaiFileType'
     SourceReference:
       oneOf:
       - type: object

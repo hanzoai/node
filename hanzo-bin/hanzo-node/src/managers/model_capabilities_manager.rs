@@ -224,6 +224,7 @@ impl ModelCapabilitiesManager {
     fn get_openai_capabilities(model_type: &str) -> Vec<ModelCapability> {
         match model_type {
             "gpt-5" => vec![ModelCapability::ImageAnalysis, ModelCapability::TextInference],
+            "gpt-5.1" => vec![ModelCapability::ImageAnalysis, ModelCapability::TextInference],
             "gpt-5-mini" => vec![ModelCapability::ImageAnalysis, ModelCapability::TextInference],
             "gpt-5-nano" => vec![ModelCapability::ImageAnalysis, ModelCapability::TextInference],
             "gpt-5-chat-latest" => vec![ModelCapability::ImageAnalysis, ModelCapability::TextInference],
@@ -254,6 +255,15 @@ impl ModelCapabilitiesManager {
 
     fn get_gemini_capabilities(model_type: &str) -> Vec<ModelCapability> {
         match model_type {
+            // Gemini 3 models
+            model_type if model_type.starts_with("gemini-3-pro") => {
+                vec![
+                    ModelCapability::TextInference,
+                    ModelCapability::ImageAnalysis,
+                    ModelCapability::VideoAnalysis,
+                    ModelCapability::AudioAnalysis,
+                ]
+            }
             // Gemini 2.5 models
             model_type if model_type.starts_with("gemini-2.5-flash-preview-tts") => {
                 vec![ModelCapability::TextInference]
@@ -363,6 +373,7 @@ impl ModelCapabilitiesManager {
     fn get_openai_cost(model_type: &str) -> ModelCost {
         match model_type {
             "gpt-5" => ModelCost::GoodValue,
+            "gpt-5.1" => ModelCost::GoodValue,
             "gpt-5-mini" => ModelCost::Cheap,
             "gpt-5-nano" => ModelCost::VeryCheap,
             "gpt-5-chat-latest" => ModelCost::GoodValue,
@@ -385,6 +396,8 @@ impl ModelCapabilitiesManager {
 
     fn get_gemini_cost(model_type: &str) -> ModelCost {
         match model_type {
+            // Gemini 3 models
+            model_type if model_type.starts_with("gemini-3-pro") => ModelCost::Expensive,
             // Gemini 2.5 models (preview/experimental - more expensive due to restricted limits)
             model_type if model_type.starts_with("gemini-2.5-flash-preview") => ModelCost::GoodValue,
             model_type if model_type.starts_with("gemini-2.5-pro-preview") => ModelCost::Expensive,
@@ -405,6 +418,8 @@ impl ModelCapabilitiesManager {
 
     fn get_gemini_max_tokens(model_type: &str) -> usize {
         match model_type {
+            // Gemini 3 models
+            model_type if model_type.starts_with("gemini-3-pro") => 2_097_152,
             // Gemini 2.5 models
             model_type if model_type.starts_with("gemini-2.5-flash-preview-05-20") => 1_048_576,
             model_type if model_type.starts_with("gemini-2.5-flash-preview-native-audio-dialog") => 128_000,
@@ -429,6 +444,8 @@ impl ModelCapabilitiesManager {
 
     fn get_gemini_max_output_tokens(model_type: &str) -> usize {
         match model_type {
+            // Gemini 3 models
+            model_type if model_type.starts_with("gemini-3-pro") => 65_536,
             // Gemini 2.5 models
             model_type if model_type.starts_with("gemini-2.5-flash-preview-05-20") => 65_536,
             model_type if model_type.starts_with("gemini-2.5-flash-preview-native-audio-dialog") => 8_000,
@@ -453,6 +470,8 @@ impl ModelCapabilitiesManager {
 
     fn gemini_has_tool_capabilities(model_type: &str) -> bool {
         match model_type {
+            // Gemini 3 models
+            model_type if model_type.starts_with("gemini-3-pro") => true,
             // Gemini 2.5 models - TTS models don't support function calling
             model_type if model_type.starts_with("gemini-2.5-flash-preview-tts") => false,
             model_type if model_type.starts_with("gemini-2.5-flash-image-preview") => false,
@@ -1206,7 +1225,8 @@ impl ModelCapabilitiesManager {
                     || claude.model_type.starts_with("claude-3-7-sonnet")
             }
             LLMProviderInterface::Gemini(gemini) => {
-                gemini.model_type == "gemini-2.5-flash-preview-05-20"
+                gemini.model_type.starts_with("gemini-3-pro")
+                    || gemini.model_type == "gemini-2.5-flash-preview-05-20"
                     || gemini.model_type == "gemini-2.5-flash-lite-preview-06-17"
                     || gemini.model_type == "gemini-2.5-flash-lite"
                     || gemini.model_type == "gemini-2.5-flash"
