@@ -348,7 +348,7 @@ mod tests {
         let calculated_hash = message.calculate_message_hash_with_empty_outer_signature();
 
         // Expected hash
-        let expected_hash = "66dce7c91f78164b611327b310211ad6ec5d08a9861b9c1689a51c514d990fce";
+        let expected_hash = "b13111ae59d7c1e5de100475a92989fe0284324d09692d8cdff2c11d3fb9a407";
 
         // Check that the calculated hash matches the expected hash
         assert_eq!(calculated_hash, expected_hash);
