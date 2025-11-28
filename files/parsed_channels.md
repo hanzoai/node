@@ -56,7 +56,7 @@ Thread Hash: {{{threadHash:0xbf6b8fd8dec25cf4e2cbdcd03d5bfc86bfa547ed}}}
 Date: {{{date:2024-04}}}
 
 
-# Hanzo Vector Resources
+# Shinkai Vector Resources
 
 A powerful native Rust fully in-memory/serializable Vector Search solution.
 
@@ -64,10 +64,10 @@ A Vector Resource is made up of a hierarchy of nodes, where each node can either
 
 ## Importing Into Your Project
 
-To disable [desktop-only](https://hanzo.ai/) & support ![wasm](https://upload.wikimedia.org/wikipedia/commons/thumb/1/1f/WebAssembly_Logo.svg/1200px-WebAssembly_Logo.svg.png), simply import <b>as such<b>:
+To disable [desktop-only](https://www.shinkai.com/) & support ![wasm](https://upload.wikimedia.org/wikipedia/commons/thumb/1/1f/WebAssembly_Logo.svg/1200px-WebAssembly_Logo.svg.png), simply import <b>as such<b>:
 
 ```
-hanzo_vector_resources = { path = "../hanzo-vector-resources", default-features = false }
+shinkai_vector_resources = { path = "../shinkai-vector-resources", default-features = false }
 ```
 
 ## How To Use Vector Resources

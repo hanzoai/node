@@ -1,7 +1,7 @@
-# Filesystem Changes in Hanzo Node
+# Filesystem Changes in Shinkai Node
 
 ## Overview
-This document describes the transition from virtual inboxes to a real filesystem implementation in Hanzo Node, including changes to the `JobMessage` structure and the introduction of the `HanzoPath` system.
+This document describes the transition from virtual inboxes to a real filesystem implementation in Shinkai Node, including changes to the `JobMessage` structure and the introduction of the `ShinkaiPath` system.
 
 ## Major Changes
 
@@ -27,7 +27,7 @@ pub struct JobMessage {
     pub tool_key: Option<String>,
     // Field that lists associated files of the message
     #[serde(default)]
-    pub fs_files_paths: Vec<HanzoPath>,
+    pub fs_files_paths: Vec<ShinkaiPath>,
     #[serde(default)]
     pub job_filenames: Vec<String>,
 }
@@ -36,7 +36,7 @@ pub struct JobMessage {
 ## File Path Handling
 
 ### fs_files_paths
-The `fs_files_paths` field uses `HanzoPath` to represent relative paths that appear as absolute paths from the node's perspective. 
+The `fs_files_paths` field uses `ShinkaiPath` to represent relative paths that appear as absolute paths from the node's perspective. 
 
 Example:
 ```
@@ -54,8 +54,8 @@ Example: Dec 26 - (89AF) Tell me what this...
 
 When uploading a file to a job (e.g., `my cat.jpg`), you only need to specify the filename in `job_filenames` rather than the full path.
 
-### HanzoPath
-The `HanzoPath` struct handles path conversions at the node level:
+### ShinkaiPath
+The `ShinkaiPath` struct handles path conversions at the node level:
 - Provides a consistent way to handle file paths across the system
 - Offers `.full_path()` method to get the absolute path when needed
 - Includes comprehensive test coverage for various scenarios
@@ -70,6 +70,6 @@ The `HanzoPath` struct handles path conversions at the node level:
 A file map implementation in the code runner side is being developed to address this limitation. From the code runner's perspective, only the real (absolute) path is required for operation.
 
 ## Implementation Notes
-- `HanzoFileManager` and `HanzoPath` include comprehensive tests for various scenarios
+- `ShinkaiFileManager` and `ShinkaiPath` include comprehensive tests for various scenarios
 - Path conversion happens automatically at the node level
 - The system maintains backward compatibility while providing a more robust file handling mechanism
