@@ -1,10 +1,10 @@
 openapi: 3.0.3
 info:
-  title: hanzo_node
+  title: shinkai_node
   description: ''
   contact:
     name: Nico Arqueros
-    email: nico@hanzo.ai
+    email: nico@shinkai.com
   license:
     name: ''
   version: 0.8.4

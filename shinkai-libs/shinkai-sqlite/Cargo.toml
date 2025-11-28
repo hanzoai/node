@@ -1,0 +1,38 @@
+[package]
+name = "shinkai_sqlite"
+version = { workspace = true }
+edition = { workspace = true }
+authors = { workspace = true }
+
+[dependencies]
+serde_json = { workspace = true }
+chrono = { workspace = true }
+rusqlite = { workspace = true }
+sqlite-vec = "0.1.6"
+tokio = { workspace = true }
+r2d2 = { workspace = true }
+r2d2_sqlite = { workspace = true }
+keyphrases = { workspace = true }
+shinkai_tools_primitives = { workspace = true }
+shinkai_message_primitives = { workspace = true }
+shinkai_embedding = { workspace = true }
+reqwest = { workspace = true }
+bincode = { workspace = true }
+zerocopy = "0.8.9"
+bytemuck = "1.7"
+thiserror = { workspace = true }
+blake3 = { workspace = true }
+hex = { workspace = true }
+rand = { workspace = true }
+x25519-dalek = { workspace = true }
+ed25519-dalek = { workspace = true }
+semver = "1.0"
+log = { workspace = true }
+
+[dependencies.serde]
+workspace = true
+features = ["derive"]
+
+[dev-dependencies]
+tempfile = { workspace = true }
+rust_decimal = "1.17.0"

@@ -1,10 +1,10 @@
 openapi: 3.0.3
 info:
-  title: hanzo_node
+  title: shinkai_node
   description: ''
   contact:
     name: Nico Arqueros
-    email: nico@hanzo.ai
+    email: nico@shinkai.com
   license:
     name: ''
   version: 0.8.4
@@ -176,7 +176,7 @@ paths:
                 additionalProperties:
                   type: array
                   items:
-                    $ref: '#/components/schemas/HanzoSubscription'
+                    $ref: '#/components/schemas/ShinkaiSubscription'
         '400':
           description: Bad request
           content:
@@ -583,7 +583,7 @@ components:
           nullable: true
         scheduled_time:
           type: string
-    HanzoName:
+    ShinkaiName:
       type: object
       required:
       - full_name
@@ -601,14 +601,14 @@ components:
           nullable: true
         subidentity_type:
           allOf:
-          - $ref: '#/components/schemas/HanzoSubidentityType'
+          - $ref: '#/components/schemas/ShinkaiSubidentityType'
           nullable: true
-    HanzoSubidentityType:
+    ShinkaiSubidentityType:
       type: string
       enum:
       - Agent
       - Device
-    HanzoSubscription:
+    ShinkaiSubscription:
       type: object
       required:
       - subscription_id
@@ -641,16 +641,16 @@ components:
         shared_folder:
           type: string
         state:
-          $ref: '#/components/schemas/HanzoSubscriptionStatus'
+          $ref: '#/components/schemas/ShinkaiSubscriptionStatus'
         streaming_node:
-          $ref: '#/components/schemas/HanzoName'
+          $ref: '#/components/schemas/ShinkaiName'
         streaming_profile:
           type: string
         subscriber_destination_path:
           type: string
           nullable: true
         subscriber_node:
-          $ref: '#/components/schemas/HanzoName'
+          $ref: '#/components/schemas/ShinkaiName'
         subscriber_profile:
           type: string
         subscription_description:
@@ -658,7 +658,7 @@ components:
           nullable: true
         subscription_id:
           $ref: '#/components/schemas/SubscriptionId'
-    HanzoSubscriptionStatus:
+    ShinkaiSubscriptionStatus:
       type: string
       enum:
       - SubscriptionRequested

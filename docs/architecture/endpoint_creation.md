@@ -1,6 +1,6 @@
 # Creating New API Endpoints
 
-This document outlines the process of creating new API endpoints in the Hanzo Node system. The process involves several files and follows a specific pattern to maintain consistency and type safety throughout the codebase.
+This document outlines the process of creating new API endpoints in the Shinkai Node system. The process involves several files and follows a specific pattern to maintain consistency and type safety throughout the codebase.
 
 ## Overview
 

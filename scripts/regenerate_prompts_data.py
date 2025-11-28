@@ -22,7 +22,7 @@ from typing import List, Dict, Any
 
 DEFAULT_MODEL = "embeddinggemma:300m"
 DEFAULT_OLLAMA_URL = "http://localhost:11434"
-PROMPTS_DATA_PATH = "hanzo-libs/hanzo-sqlite/src/files/prompts_data.rs"
+PROMPTS_DATA_PATH = "shinkai-libs/shinkai-sqlite/src/files/prompts_data.rs"
 
 class EmbeddingGenerator:
     def __init__(self, ollama_url: str, model: str):
