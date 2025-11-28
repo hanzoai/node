@@ -39,8 +39,8 @@ tempfile = "3.8"
 
 [[test]]
 name = "hanzo-message-tests"
-path = "tests/hanzo-message_tests.rs"
+path = "tests/hanzo_message_tests.rs"
 
 [[test]]
 name = "hanzo-name-tests"
-path = "tests/hanzo-name_tests.rs"
+path = "tests/hanzo_name_tests.rs"
