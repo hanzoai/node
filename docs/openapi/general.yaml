@@ -1,10 +1,10 @@
 openapi: 3.0.3
 info:
-  title: hanzo_node
+  title: shinkai_node
   description: ''
   contact:
     name: Nico Arqueros
-    email: nico@hanzo.ai
+    email: nico@shinkai.com
   license:
     name: ''
   version: 0.8.4
@@ -167,7 +167,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/HanzoMessage'
+              $ref: '#/components/schemas/ShinkaiMessage'
         required: true
       responses:
         '200':
@@ -466,14 +466,14 @@ components:
           type: string
         node_name:
           type: string
-    EncryptedHanzoBody:
+    EncryptedShinkaiBody:
       type: object
       required:
       - content
       properties:
         content:
           type: string
-    EncryptedHanzoData:
+    EncryptedShinkaiData:
       type: object
       required:
       - content
@@ -590,10 +590,10 @@ components:
             $ref: '#/components/schemas/Ollama'
       - type: object
         required:
-        - HanzoBackend
+        - ShinkaiBackend
         properties:
-          HanzoBackend:
-            $ref: '#/components/schemas/HanzoBackend'
+          ShinkaiBackend:
+            $ref: '#/components/schemas/ShinkaiBackend'
       - type: object
         required:
         - LocalLLM
@@ -627,13 +627,13 @@ components:
         - encrypted
         properties:
           encrypted:
-            $ref: '#/components/schemas/EncryptedHanzoBody'
+            $ref: '#/components/schemas/EncryptedShinkaiBody'
       - type: object
         required:
         - unencrypted
         properties:
           unencrypted:
-            $ref: '#/components/schemas/HanzoBody'
+            $ref: '#/components/schemas/ShinkaiBody'
     MessageData:
       oneOf:
       - type: object
@@ -641,13 +641,13 @@ components:
         - encrypted
         properties:
           encrypted:
-            $ref: '#/components/schemas/EncryptedHanzoData'
+            $ref: '#/components/schemas/EncryptedShinkaiData'
       - type: object
         required:
         - unencrypted
         properties:
           unencrypted:
-            $ref: '#/components/schemas/HanzoData'
+            $ref: '#/components/schemas/ShinkaiData'
     MessageSchemaType:
       type: string
       enum:
@@ -723,10 +723,10 @@ components:
       - GetSheet
       - RemoveRows
       - AddRows
-      - SetHanzoTool
-      - ListAllHanzoTools
-      - GetHanzoTool
-      - SearchHanzoTool
+      - SetShinkaiTool
+      - ListAllShinkaiTools
+      - GetShinkaiTool
+      - SearchShinkaiTool
       - InvoiceRequest
       - Invoice
       - PaidInvoice
@@ -772,19 +772,19 @@ components:
           type: string
           nullable: true
         full_identity_name:
-          $ref: '#/components/schemas/HanzoName'
+          $ref: '#/components/schemas/ShinkaiName'
         id:
           type: string
         model:
           $ref: '#/components/schemas/LLMProviderInterface'
-    HanzoBackend:
+    ShinkaiBackend:
       type: object
       required:
       - model_type
       properties:
         model_type:
           type: string
-    HanzoBody:
+    ShinkaiBody:
       type: object
       required:
       - message_data
@@ -794,7 +794,7 @@ components:
           $ref: '#/components/schemas/InternalMetadata'
         message_data:
           $ref: '#/components/schemas/MessageData'
-    HanzoData:
+    ShinkaiData:
       type: object
       required:
       - message_raw_content
@@ -804,7 +804,7 @@ components:
           $ref: '#/components/schemas/MessageSchemaType'
         message_raw_content:
           type: string
-    HanzoMessage:
+    ShinkaiMessage:
       type: object
       required:
       - body
@@ -819,8 +819,8 @@ components:
         external_metadata:
           $ref: '#/components/schemas/ExternalMetadata'
         version:
-          $ref: '#/components/schemas/HanzoVersion'
-    HanzoName:
+          $ref: '#/components/schemas/ShinkaiVersion'
+    ShinkaiName:
       type: object
       required:
       - full_name
@@ -838,14 +838,14 @@ components:
           nullable: true
         subidentity_type:
           allOf:
-          - $ref: '#/components/schemas/HanzoSubidentityType'
+          - $ref: '#/components/schemas/ShinkaiSubidentityType'
           nullable: true
-    HanzoSubidentityType:
+    ShinkaiSubidentityType:
       type: string
       enum:
       - Agent
       - Device
-    HanzoVersion:
+    ShinkaiVersion:
       type: string
       enum:
       - V1_0
