@@ -1,10 +1,12 @@
 [package]
 name = "hanzo-http-api"
-description = "Hanzo AI - Http Api Library"
+description = "Hanzo AI - HTTP API Library"
 license = "MIT"
-version = "0.0.0"
+version = { workspace = true }
 edition = { workspace = true }
 authors = { workspace = true }
+repository = "https://github.com/hanzoai/node"
+homepage = "https://hanzo.ai"
 
 [dependencies]
 utoipa = { workspace = true }

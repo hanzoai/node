@@ -1,10 +1,12 @@
 [package]
 name = "hanzo-baml"
-description = "Hanzo AI - Baml Library"
+description = "Hanzo AI - BAML Integration Library"
 license = "MIT"
-version = "0.1.0"
+version = { workspace = true }
 edition = { workspace = true }
 authors = { workspace = true }
+repository = "https://github.com/hanzoai/node"
+homepage = "https://hanzo.ai"
 
 [dependencies]
 baml-runtime = { git = "https://github.com/BoundaryML/baml.git", tag = "0.56.1", package = "baml-runtime", features = [
