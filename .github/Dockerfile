@@ -27,7 +27,7 @@ COPY . .
 
 # Build the dependencies (cached)
 RUN cargo clean
-RUN rustup default 1.87
+RUN rustup default 1.88
 RUN rustup component add rustfmt
 RUN CARGO_BUILD_RERUN_IF_CHANGED=1 cargo build $([ "$BUILD_TYPE" = "release" ] && echo "--release")
 
