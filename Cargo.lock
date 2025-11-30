@@ -5640,7 +5640,7 @@ dependencies = [
 
 [[package]]
 name = "hanzo-baml"
-version = "0.1.0"
+version = "1.1.16"
 dependencies = [
  "anyhow",
  "baml-runtime",
@@ -5786,7 +5786,7 @@ dependencies = [
 
 [[package]]
 name = "hanzo-fs"
-version = "0.0.0"
+version = "1.1.16"
 dependencies = [
  "async-trait",
  "bincode",
@@ -5819,7 +5819,7 @@ dependencies = [
 
 [[package]]
 name = "hanzo-http-api"
-version = "0.0.0"
+version = "1.1.16"
 dependencies = [
  "anyhow",
  "async-channel 1.9.0",
@@ -5872,7 +5872,7 @@ dependencies = [
 
 [[package]]
 name = "hanzo-job-queue-manager"
-version = "0.0.0"
+version = "1.1.16"
 dependencies = [
  "chrono",
  "hanzo-db-sqlite",
