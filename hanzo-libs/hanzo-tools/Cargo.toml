@@ -1,10 +1,10 @@
 [package]
 name = "hanzo-tools"
-version = "1.1.11"
-edition = "2021"
-authors = ["Hanzo AI Inc"]
+version = { workspace = true }
+edition = { workspace = true }
+authors = { workspace = true }
 license = "MIT"
-repository = "https://github.com/hanzoai/hanzo-node"
+repository = "https://github.com/hanzoai/node"
 homepage = "https://hanzo.ai"
 description = "Tools Primitives for Hanzo AI platform"
 
