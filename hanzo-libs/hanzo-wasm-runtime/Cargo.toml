@@ -2,8 +2,11 @@
 name = "hanzo-wasm-runtime"
 description = "Hanzo AI - Wasm Runtime Library"
 license = "MIT"
-version = "0.1.0"
-edition = "2021"
+version = { workspace = true }
+edition = { workspace = true }
+authors = { workspace = true }
+repository = "https://github.com/hanzoai/node"
+homepage = "https://hanzo.ai"
 
 [dependencies]
 wasmtime = "23.0"
@@ -14,7 +17,7 @@ tokio = { version = "1.38", features = ["full"] }
 anyhow = "1.0"
 tracing = "0.1"
 base64 = "0.22"
-hanzo-tools = { path = "../hanzo-tools" }
+hanzo-tools = { version = "1.1.16", path = "../hanzo-tools" }
 rand = "0.8"
 uuid = { version = "1.6", features = ["v4"] }
 md5 = "0.7"
