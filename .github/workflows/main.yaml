@@ -6,6 +6,7 @@ on:
       - "Cargo.*"
       - "hanzo-libs/**"
       - "hanzo-bin/**"
+      - "files/**"
 
   pull_request:
     branches: [main]
@@ -15,6 +16,7 @@ on:
       - "Cargo.*"
       - "hanzo-libs/**"
       - "hanzo-bin/**"
+      - "files/**"
 
 name: Hanzo Test Workflow
 
@@ -24,68 +26,102 @@ concurrency:
 
 jobs:
   build:
-    runs-on:
-      group: Hanzo Runners
-      labels: self-hosted
+    runs-on: ubuntu-latest
     if: ${{ github.event_name == 'push' || !github.event.pull_request.draft }}
+    permissions:
+      contents: read
+      packages: write
     steps:
       - name: Checkout
         uses: actions/checkout@v3
+
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Download tools from store to pre-install folder
         run: |
           ./scripts/update_tools.sh
 
-      - name: Build testing image
-        run: docker build -t testing_image:${{ github.sha }} --build-arg COMMIT_SHA=${{ github.sha }} --build-arg AI_MODEL_CATALOG_BUILD=1 -f .github/Dockerfile .
+      - name: Build and push testing image
+        run: |
+          docker build -t ghcr.io/${{ github.repository }}/hanzo-test:${{ github.sha }} --build-arg COMMIT_SHA=${{ github.sha }} --build-arg AI_MODEL_CATALOG_BUILD=1 -f .github/Dockerfile .
+          docker push ghcr.io/${{ github.repository }}/hanzo-test:${{ github.sha }}
 
   test-primitives:
-    runs-on:
-      group: Hanzo Runners
-      labels: self-hosted
+    runs-on: ubuntu-latest
     needs: build
     if: ${{ github.event_name == 'push' || !github.event.pull_request.draft }}
+    permissions:
+      packages: read
     steps:
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
       - name: Run tests primitives cargo tests
-        run: docker run --rm --name hanzo_node_tests_prim_${{ github.sha }}_${{ github.run_number }}_${{ github.run_attempt }} testing_image:${{ github.sha }} /bin/bash -c "cd /app/hanzo-libs/hanzo-message-primitives && cargo test -- --test-threads=1 --nocapture"
+        run: docker run --rm --name hanzo_node_tests_prim_${{ github.sha }}_${{ github.run_number }}_${{ github.run_attempt }} ghcr.io/${{ github.repository }}/hanzo-test:${{ github.sha }} /bin/bash -c "cd /app/hanzo-libs/hanzo-message-primitives && cargo test -- --test-threads=1 --nocapture"
 
   test-main:
-    runs-on:
-      group: Hanzo Runners
-      labels: self-hosted
+    runs-on: ubuntu-latest
     needs: build
     if: ${{ github.event_name == 'push' || !github.event.pull_request.draft }}
     environment: FROM_WALLET_PRIVATE_KEY
+    permissions:
+      packages: read
     steps:
+      - name: Free disk space
+        run: |
+          sudo rm -rf /usr/share/dotnet /usr/local/lib/android /opt/ghc /opt/hostedtoolcache/CodeQL
+          sudo docker system prune -af
+          df -h
+
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
       - name: Run tests main cargo tests
         env:
           X402_PAY_TO: ${{ secrets.X402_PAY_TO }}
           X402_PRIVATE_KEY: ${{ secrets.X402_PRIVATE_KEY }}
           RESTORE_WALLET_MNEMONICS_NODE2: ${{ secrets.RESTORE_WALLET_MNEMONICS_NODE2 }}
           FROM_WALLET_PRIVATE_KEY: ${{ secrets.FROM_WALLET_PRIVATE_KEY }}
-        run: docker run --rm --name hanzo_node_tests_main_${{ github.sha }}_${{ github.run_number }}_${{ github.run_attempt }} -e X402_PAY_TO="${{ secrets.X402_PAY_TO }}" -e X402_PRIVATE_KEY="${{ secrets.X402_PRIVATE_KEY }}" -e RESTORE_WALLET_MNEMONICS_NODE2="${{ secrets.RESTORE_WALLET_MNEMONICS_NODE2 }}" -e FROM_WALLET_PRIVATE_KEY="${{ secrets.FROM_WALLET_PRIVATE_KEY }}" testing_image:${{ github.sha }} /bin/bash -c "export IS_TESTING=1 && export SKIP_IMPORT_FROM_DIRECTORY=true && export WELCOME_MESSAGE=false && cd /app && cargo test -- --test-threads=1 --nocapture --skip node_integration_tests --skip a3_micropayment_flow_tests --skip a4_micropayment_localhost_tests"
+        run: docker run --rm --name hanzo_node_tests_main_${{ github.sha }}_${{ github.run_number }}_${{ github.run_attempt }} -e X402_PAY_TO="${{ secrets.X402_PAY_TO }}" -e X402_PRIVATE_KEY="${{ secrets.X402_PRIVATE_KEY }}" -e RESTORE_WALLET_MNEMONICS_NODE2="${{ secrets.RESTORE_WALLET_MNEMONICS_NODE2 }}" -e FROM_WALLET_PRIVATE_KEY="${{ secrets.FROM_WALLET_PRIVATE_KEY }}" ghcr.io/${{ github.repository }}/hanzo-test:${{ github.sha }} /bin/bash -c "export IS_TESTING=1 && export SKIP_IMPORT_FROM_DIRECTORY=true && export WELCOME_MESSAGE=false && cd /app && cargo test -- --test-threads=1 --nocapture --skip node_integration_tests --skip a3_micropayment_flow_tests --skip a4_micropayment_localhost_tests"
 
   test-integration:
-    runs-on:
-      group: Hanzo Runners
-      labels: self-hosted
+    runs-on: ubuntu-latest
     needs: build
     if: ${{ github.event_name == 'push' || !github.event.pull_request.draft }}
     environment: FROM_WALLET_PRIVATE_KEY
+    permissions:
+      packages: read
     steps:
+      - name: Free disk space
+        run: |
+          sudo rm -rf /usr/share/dotnet /usr/local/lib/android /opt/ghc /opt/hostedtoolcache/CodeQL
+          sudo docker system prune -af
+          df -h
+
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
       - name: Run integration tests
         env:
           X402_PAY_TO: ${{ secrets.X402_PAY_TO }}
           X402_PRIVATE_KEY: ${{ secrets.X402_PRIVATE_KEY }}
           RESTORE_WALLET_MNEMONICS_NODE2: ${{ secrets.RESTORE_WALLET_MNEMONICS_NODE2 }}
           FROM_WALLET_PRIVATE_KEY: ${{ secrets.FROM_WALLET_PRIVATE_KEY }}
-        run: docker run --rm --name hanzo_node_integration_tests_${{ github.sha }}_${{ github.run_number }}_${{ github.run_attempt }} -e X402_PAY_TO="${{ secrets.X402_PAY_TO }}" -e X402_PRIVATE_KEY="${{ secrets.X402_PRIVATE_KEY }}" -e RESTORE_WALLET_MNEMONICS_NODE2="${{ secrets.RESTORE_WALLET_MNEMONICS_NODE2 }}" -e FROM_WALLET_PRIVATE_KEY="${{ secrets.FROM_WALLET_PRIVATE_KEY }}" testing_image:${{ github.sha }} /bin/bash -c "export IS_TESTING=1 && export SKIP_IMPORT_FROM_DIRECTORY=true && export WELCOME_MESSAGE=false && cd /app && cargo test -- --test-threads=1 --nocapture node_integration_tests a3_micropayment_flow_tests a4_micropayment_localhost_tests"
-
-  cleanup:
-    runs-on:
-      group: Hanzo Runners
-      labels: self-hosted
-    needs: [test-primitives, test-main, test-integration]
-    steps:
-      - name: Remove image
-        run: docker rmi testing_image:${{ github.sha }} || true
+        run: docker run --rm --network host --name hanzo_node_integration_tests_${{ github.sha }}_${{ github.run_number }}_${{ github.run_attempt }} -e X402_PAY_TO="${{ secrets.X402_PAY_TO }}" -e X402_PRIVATE_KEY="${{ secrets.X402_PRIVATE_KEY }}" -e RESTORE_WALLET_MNEMONICS_NODE2="${{ secrets.RESTORE_WALLET_MNEMONICS_NODE2 }}" -e FROM_WALLET_PRIVATE_KEY="${{ secrets.FROM_WALLET_PRIVATE_KEY }}" ghcr.io/${{ github.repository }}/hanzo-test:${{ github.sha }} /bin/bash -c "export IS_TESTING=1 && export SKIP_IMPORT_FROM_DIRECTORY=true && export WELCOME_MESSAGE=false && cd /app && cargo test -- --test-threads=1 --nocapture node_integration_tests a3_micropayment_flow_tests a4_micropayment_localhost_tests"
