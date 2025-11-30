@@ -75,7 +75,7 @@ impl OllamaTextEmbeddingsInference {
             Self::SNOWFLAKE_ARCTIC_EMBED_M => Ok(Self::SnowflakeArcticEmbedM),
             Self::JINA_EMBEDDINGS_V2_BASE_ES => Ok(Self::JinaEmbeddingsV2BaseEs),
             Self::EMBEDDING_GEMMA_300_M => Ok(Self::EmbeddingGemma300M),
-            _ => Err(ShinkaiEmbeddingError::InvalidModelArchitecture),
+            _ => Ok(Self::Other(s.to_string())),
         }
     }
 
