@@ -1,3 +1,11 @@
+//! Docker Integration Test Suite
+//! Tests Docker tool execution and containerized workflows
+//!
+//! NOTE: This test requires the docker-tools feature.
+//! Enable with: cargo test --features docker-integration
+
+#![cfg(feature = "docker-integration")]
+
 #[cfg(test)]
 mod docker_integration_tests {
     use hanzo_tools::tools::docker_tools::DockerTool;

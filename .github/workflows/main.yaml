@@ -82,7 +82,7 @@ jobs:
           password: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Run tests primitives cargo tests
-        run: docker run --rm --name hanzo_node_tests_prim_${{ github.sha }}_${{ github.run_number }}_${{ github.run_attempt }} ghcr.io/${{ github.repository }}/hanzo-test:${{ github.sha }} /bin/bash -c "cd /app/hanzo-libs/hanzo-message-primitives && cargo test -- --test-threads=1 --nocapture"
+        run: docker run --rm --name hanzo_node_tests_prim_${{ github.sha }}_${{ github.run_number }}_${{ github.run_attempt }} ghcr.io/${{ github.repository }}/hanzo-test:${{ github.sha }} /bin/bash -c "cd /app/hanzo-libs/hanzo-messages && cargo test -- --test-threads=1 --nocapture"
 
   test-main:
     runs-on: ubuntu-latest
