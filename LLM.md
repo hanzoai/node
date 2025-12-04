@@ -33,6 +33,365 @@ Integrated comprehensive feature set from hanzo-node-next branch, adding 11 new 
 
 ## Recent Improvements (Nov 2025)
 
+### AI Coin Mining & Teleport Protocol (Nov 30, 2025)
+
+Added EVM integration to `hanzo-mining` crate for AI Coin mining rewards and cross-chain teleportation:
+
+**AI Coin Mining System**:
+- Native currency mined on open AI protocol (BitTorrent-style)
+- Mining reward types: `DataSharing`, `ComputeProvision`, `ModelHosting`, `ModelRegistration`, `InferenceServing`
+- Rewards earned by: sharing training data, providing GPU/CPU compute, keeping models loaded, hosting registered models/embeddings
+
+**Teleport Protocol**:
+- Bridges AI coins from protocol to EVM chains
+- Destination chains: Lux C-Chain (96369), Zoo EVM (200200), Hanzo EVM (36963)
+- `TeleportTransfer` struct tracks teleport state across chains
+- Status tracking: Initiated → PendingConfirmation → Processing → Minting → Completed
+
+**Chain Configurations**:
+| Chain | Chain ID | Token | Mining Contract |
+|-------|----------|-------|-----------------|
+| Hanzo Mainnet | 36963 | HAI | 0x369000...aAAI |
+| Hanzo Testnet | 36964 | HAI | 0x369100...aAAI |
+| Zoo Mainnet | 200200 | ZOO | 0x200200...aAAI |
+| Zoo Testnet | 200201 | ZOO | 0x200201...aAAI |
+| Lux C-Chain | 96369 | LUX | 0x4C5558...aAAI |
+| Lux Testnet | 96368 | LUX | 0x4C5559...aAAI |
+
+**Implementation Files**:
+- `hanzo-libs/hanzo-mining/src/evm.rs` - EVM client, rewards manager, teleport protocol
+- `hanzo-libs/hanzo-mining/src/lib.rs` - Module exports
+- 7 tests passing for EVM integration
+
+**Usage Example**:
+```rust
+use hanzo_mining::evm::{ChainConfig, RewardsManager, TeleportDestination};
+
+// Create rewards manager for Hanzo mainnet
+let manager = RewardsManager::new(NetworkType::HanzoMainnet);
+
+// Get pending rewards across all chains
+let rewards = manager.refresh_pending_rewards(&miner_address).await?;
+
+// Teleport AI coins to Zoo EVM
+let transfer = TeleportTransfer {
+    destination: TeleportDestination::ZooEvm,
+    amount: 1_000_000_000_000_000_000, // 1 AI coin
+    ..
+};
+```
+
+### ML-DSA Quantum-Safe Mining Wallets (Nov 30, 2025)
+
+Added quantum-safe ML-DSA (FIPS 204) mining wallets with full Teleport bridge integration:
+
+**Architecture**:
+```
+┌────────────────────────────────────────────────────────────────┐
+│                     Hanzo Networks L1 (Mining)                 │
+│  ┌──────────────┐    ┌──────────────┐    ┌──────────────┐     │
+│  │   ML-DSA     │───▶│     Lux      │───▶│   Global     │     │
+│  │   Wallet     │    │   Consensus  │    │   Ledger     │     │
+│  └──────────────┘    └──────────────┘    └──────────────┘     │
+│                              │                                 │
+│                       Teleport Bridge                          │
+└──────────────────────────────┼─────────────────────────────────┘
+        ┌──────────────────────┼──────────────────┐
+        ▼                      ▼                  ▼
+   Hanzo EVM (36963)     Zoo EVM (200200)   Lux C-Chain (96369)
+```
+
+**ML-DSA Security Levels**:
+| Level | Algorithm | Public Key | Signature | Quantum Security |
+|-------|-----------|------------|-----------|-----------------|
+| 2 | ML-DSA-44 | 1,312 bytes | 2,420 bytes | 128-bit |
+| 3 | ML-DSA-65 | 1,952 bytes | 3,309 bytes | 192-bit (default) |
+| 5 | ML-DSA-87 | 2,592 bytes | 4,627 bytes | 256-bit |
+
+**Key Components**:
+- `MiningWallet` - Quantum-safe wallet with ML-DSA keypair
+- `MiningLedger` - Global reward ledger with Lux consensus
+- `MiningBridge` - Connects wallet to Teleport for cross-chain transfers
+- `TeleportTransfer` - Tracks transfers from L1 to EVM L2s
+
+**Wallet Operations**:
+```rust
+use hanzo_mining::{MiningWallet, SecurityLevel, MiningBridge};
+
+// Generate quantum-safe mining wallet
+let wallet = MiningWallet::generate(SecurityLevel::Level3).await?;
+println!("Address: {}", wallet.address());  // 0x-prefixed
+
+// Sign mining transactions
+let signature = wallet.sign(&message).await?;
+let valid = wallet.verify(&message, &signature)?;
+
+// Export/import with ChaCha20Poly1305 encryption
+let encrypted = wallet.export_to_bytes("passphrase")?;
+let restored = MiningWallet::import_from_bytes(&encrypted, "passphrase")?;
+```
+
+**Bridge Integration**:
+```rust
+// Create bridge with new wallet
+let bridge = MiningBridge::generate_new(SecurityLevel::Level3).await?;
+
+// Teleport rewards to Zoo EVM
+let teleport_id = bridge.teleport_to_evm(
+    ChainId::ZooEVM,
+    "0x1234...recipient",
+    1_000_000_000_000_000_000, // 1 AI token
+).await?;
+
+// Check mining stats
+let stats = bridge.mining_stats().await;
+println!("Total mined: {}", stats.total_mined);
+println!("Teleported: {}", stats.total_teleported);
+```
+
+**Implementation Files**:
+- `hanzo-libs/hanzo-mining/src/wallet.rs` - ML-DSA wallet implementation
+- `hanzo-libs/hanzo-mining/src/ledger.rs` - Global reward ledger
+- `hanzo-libs/hanzo-mining/src/bridge.rs` - Teleport bridge integration
+- `hanzo-libs/hanzo-mining/src/evm.rs` - EVM chain configurations
+
+**Test Coverage**: 23 tests passing
+```bash
+cargo test -p hanzo-mining  # All 23 tests pass
+```
+
+**Cross-Chain Proposals** (Documentation):
+- LP-2000: AI Mining Standard (~/work/lux/lps/LPs/lp-2000-ai-mining-standard.md)
+- HIP-006: Hanzo AI Mining Protocol (~/work/hanzo/hips/HIP-006-ai-mining-protocol.md)
+- ZIP-005: Zoo AI Mining Integration (~/work/zoo/zips/ZIP-005-ai-mining-integration.md)
+
+**Solidity Precompiles** (~/work/lux/standard/src/precompiles/):
+- `AIMining.sol` - AI Mining precompile at 0x0300
+- `TeleportBridge.sol` - Teleport bridge precompile at 0x0301
+
+**EVM Precompile Interface**:
+```solidity
+interface IAIMining {
+    function miningBalance(address miner) external view returns (uint256);
+    function verifyMLDSA(bytes calldata pk, bytes calldata msg, bytes calldata sig) external view returns (bool);
+    function claimTeleport(bytes32 teleportId) external returns (uint256);
+    function pendingTeleports(address recipient) external view returns (bytes32[] memory);
+}
+```
+
+### Native AI-Chain L1 with Lux Consensus (Nov 30, 2025)
+
+Added native Lux consensus integration for operating as a sovereign L1 "AI-Chain":
+
+**AI-Chain Architecture**:
+```
+┌─────────────────────────────────────────────────────────────────┐
+│                      AI-Chain (Hanzo L1)                        │
+│                                                                 │
+│  ┌──────────────┐   ┌──────────────┐   ┌──────────────┐        │
+│  │  Consensus   │   │   Ledger     │   │   Teleport   │        │
+│  │  Engine      │──▶│   State      │──▶│   Bridge     │        │
+│  │ (Lux BFT)    │   │              │   │              │        │
+│  └──────────────┘   └──────────────┘   └──────────────┘        │
+│         │                                     │                 │
+│         │ ML-DSA Signatures                   │                 │
+│         ▼                                     ▼                 │
+│  ┌──────────────┐                   ┌──────────────────────┐   │
+│  │  Block       │                   │   Destination EVMs   │   │
+│  │  Proposer    │                   │   - Hanzo (36963)    │   │
+│  │              │                   │   - Zoo (200200)     │   │
+│  └──────────────┘                   │   - Lux (96369)      │   │
+│                                     └──────────────────────┘   │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+**Consensus Parameters**:
+| Parameter | Value | Description |
+|-----------|-------|-------------|
+| Network ID | 36963 (mainnet), 36964 (testnet) | AI-Chain network identifier |
+| Block Time | 500ms | Sub-second finality |
+| Quorum | 69% | BFT threshold |
+| Finality Rounds | 2 | 2-round finality |
+| Sample Size | 20 | Validator sample for voting |
+| Quantum-Safe | ✓ | ML-DSA-65 signatures (NIST Level 3) |
+
+**Operating Modes**:
+1. **Embedded Mode** (`--features consensus`): Native L1 with embedded lux-consensus
+2. **RPC Mode** (default): Client connecting to remote consensus nodes
+
+**Implementation Files**:
+- `hanzo-libs/hanzo-mining/src/consensus.rs` - Native consensus engine wrapper
+- `hanzo-libs/hanzo-mining/src/ledger.rs` - Global mining ledger (730 lines)
+- `hanzo-libs/hanzo-mining/Cargo.toml` - Optional lux-consensus dependency
+
+**Cargo Configuration**:
+```toml
+[dependencies.lux-consensus]
+path = "../../../../lux/consensus/pkg/rust"
+optional = true
+
+[features]
+default = []
+consensus = ["lux-consensus"]  # Enable native L1 mode
+```
+
+**Usage Example**:
+```rust
+use hanzo_mining::consensus::{ConsensusEngine, ConsensusConfig, AIChainBlock, AIChainVote};
+use hanzo_mining::ledger::VoteType;
+
+// Create AI-Chain consensus engine
+let config = ConsensusConfig::ai_chain_mainnet();
+let mut engine = ConsensusEngine::new(config)?;
+engine.start().await?;
+
+// Propose a new block with mining transactions
+let block = AIChainBlock::new(
+    parent_id,
+    height,
+    proposer_pubkey,
+    transactions,
+);
+engine.submit_block(block).await?;
+
+// Record votes from validators
+let vote = AIChainVote::new(block.id, VoteType::Preference, voter_pubkey);
+let accepted = engine.record_vote(vote).await?;
+if accepted {
+    println!("Block finalized!");
+}
+```
+
+**Key Types**:
+- `ConsensusEngine` - Main engine wrapping lux-consensus Chain
+- `ConsensusConfig` - AI-Chain consensus configuration
+- `AIChainBlock` - Block with mining transactions and ML-DSA signatures
+- `AIChainVote` - Validator vote with quantum-safe signature
+- `ConsensusMode` - Embedded (native L1) or RPC (client) mode
+
+**Test Coverage**: 31 tests passing
+```bash
+cargo test -p hanzo-mining  # Base tests (31 pass)
+cargo test -p hanzo-mining --features consensus  # With native consensus
+```
+
+**Dependencies**:
+- `lux-consensus` v1.22.0 from `~/work/lux/consensus/pkg/rust`
+- Default mode (no feature) uses RPC to connect to consensus nodes
+
+**Planned Architecture (Pure Rust/MLX)**:
+```
+┌─────────────────────────────────────────────────────────────────┐
+│                    TypeScript SDK                                │
+│                (@hanzo/consensus-sdk)                            │
+└───────────────────────────┬─────────────────────────────────────┘
+                            │ NAPI-RS / wasm-bindgen
+                            ▼
+┌─────────────────────────────────────────────────────────────────┐
+│                   Rust Core (lux-consensus)                      │
+│                                                                  │
+│    ┌────────────────────┬────────────────────┐                  │
+│    │   Pure Rust (CPU)  │   C++ MLX (GPU)    │                  │
+│    │   (default)        │   (Apple Silicon)  │                  │
+│    │                    │                    │                  │
+│    │  - BFT Engine      │  - Vote batch GPU  │                  │
+│    │  - BLS Signatures  │  - Sig aggregation │                  │
+│    │  - DAG Consensus   │  - DAG finality    │                  │
+│    │  - Storage         │  - Hash parallel   │                  │
+│    └────────────────────┴────────────────────┘                  │
+│                                                                  │
+│    Feature Flags:                                                │
+│    - default: Pure Rust CPU implementation                       │
+│    - mlx: C++ MLX GPU acceleration (Apple Silicon)               │
+│    - cuda: CUDA GPU acceleration (NVIDIA)                        │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+**SDK Binding Layers**:
+| Language | Package | Binding Method |
+|----------|---------|----------------|
+| Rust | `lux-consensus` | Native |
+| TypeScript | `@hanzo/consensus-sdk` | NAPI-RS + wasm-bindgen |
+| Python | `lux-consensus-py` | PyO3 |
+| Go | `lux-consensus` | CGO (existing) |
+
+**GPU Acceleration Targets**:
+- BLS signature aggregation (50-100x speedup with batch ops)
+- Vote counting & quorum detection (20-50x)
+- DAG finality computation (20-50x via parallel BFS)
+- SHA256 hash parallelization (30-100x)
+
+**Estimated Port Effort**: 12-16 weeks for comprehensive Rust rewrite with MLX
+
+### TypeScript SDK Implementation (Nov 30, 2025)
+
+Created `@luxfi/consensus` TypeScript SDK with NAPI-RS bindings wrapping the native Rust consensus:
+
+**Location**: `/Users/z/work/lux/consensus/pkg/typescript/`
+
+**Files Created**:
+- `Cargo.toml` - NAPI-RS binding configuration
+- `src/lib.rs` - Native Node.js bindings (~400 lines)
+- `package.json` - npm package configuration
+- `index.js` - Native module loader with platform detection
+- `index.d.ts` - Full TypeScript type definitions
+- `README.md` - Documentation with usage examples
+- `test/consensus.test.js` - Test suite
+
+**TypeScript Usage**:
+```typescript
+import { ConsensusEngine, testnetConfig, VoteType } from '@luxfi/consensus';
+
+const engine = new ConsensusEngine(testnetConfig());
+engine.start();
+
+// Add a block
+engine.addBlock({
+  id: '01'.repeat(32),
+  parentId: '00'.repeat(32),
+  height: 1,
+  payload: Buffer.from('Hello, Lux!').toString('hex'),
+  timestamp: Date.now(),
+});
+
+// Record votes
+for (let i = 0; i < 5; i++) {
+  engine.recordVote({
+    blockId: '01'.repeat(32),
+    voteType: VoteType.Preference,
+    voter: i.toString(16).padStart(64, '0'),
+  });
+}
+
+console.log(engine.isAccepted('01'.repeat(32))); // true
+engine.stop();
+```
+
+**Platform Support**:
+- macOS arm64 (Apple Silicon)
+- macOS x64
+- Linux arm64/x64 (glibc/musl)
+- Windows x64
+
+**GPU Feature Flags** (added to `lux-consensus` Cargo.toml):
+```toml
+[features]
+default = []
+simd = ["blake3", "rayon"]      # CPU-optimized with SIMD
+mlx = ["mlx-sys", "simd"]       # Apple Silicon GPU
+cuda = ["simd"]                  # NVIDIA GPU (future)
+gpu = ["mlx", "cuda"]           # Full GPU acceleration
+```
+
+**Build Commands**:
+```bash
+cd /Users/z/work/lux/consensus/pkg/typescript
+pnpm build        # Build native module
+pnpm test         # Run tests
+```
+
+**Status**: ✅ Both SDKs compile, all 5 Rust tests pass
+
 ### hanzo-db-sqlite Compilation Fixes
 - Fixed unused mutable variable warning in `tool_payment_req_manager.rs:62` - removed unnecessary `mut` from `transaction` variable
 - hanzo-db-sqlite now compiles cleanly with zero warnings
