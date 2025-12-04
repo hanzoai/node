@@ -8,6 +8,7 @@ on:
       - "hanzo-libs/**"
       - "hanzo-bin/**"
       - "files/**"
+      - "contracts/**"
 
   pull_request:
     branches: [main]
@@ -19,6 +20,7 @@ on:
       - "hanzo-libs/**"
       - "hanzo-bin/**"
       - "files/**"
+      - "contracts/**"
 
 name: Hanzo Test Workflow
 
@@ -133,3 +135,19 @@ jobs:
           RESTORE_WALLET_MNEMONICS_NODE2: ${{ secrets.RESTORE_WALLET_MNEMONICS_NODE2 }}
           FROM_WALLET_PRIVATE_KEY: ${{ secrets.FROM_WALLET_PRIVATE_KEY }}
         run: docker run --rm --network host --name hanzo_node_integration_tests_${{ github.sha }}_${{ github.run_number }}_${{ github.run_attempt }} -e X402_PAY_TO="${{ secrets.X402_PAY_TO }}" -e X402_PRIVATE_KEY="${{ secrets.X402_PRIVATE_KEY }}" -e RESTORE_WALLET_MNEMONICS_NODE2="${{ secrets.RESTORE_WALLET_MNEMONICS_NODE2 }}" -e FROM_WALLET_PRIVATE_KEY="${{ secrets.FROM_WALLET_PRIVATE_KEY }}" ghcr.io/${{ github.repository }}/hanzo-test:${{ github.sha }} /bin/bash -c "export IS_TESTING=1 && export SKIP_IMPORT_FROM_DIRECTORY=true && export WELCOME_MESSAGE=false && cd /app && cargo test -- --test-threads=1 --nocapture node_integration_tests a3_micropayment_flow_tests a4_micropayment_localhost_tests"
+
+  test-contracts:
+    runs-on: ubuntu-latest
+    if: ${{ github.event_name == 'push' || !github.event.pull_request.draft }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Install Foundry
+        uses: foundry-rs/foundry-toolchain@v1
+
+      - name: Run Foundry tests
+        working-directory: contracts
+        run: forge test -vvv

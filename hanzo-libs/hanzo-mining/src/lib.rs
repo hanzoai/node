@@ -2,6 +2,18 @@ use std::sync::Arc;
 use tokio::sync::RwLock;
 use serde::{Deserialize, Serialize};
 
+pub mod bridge;
+pub mod consensus;
+pub mod evm;
+pub mod ledger;
+pub mod wallet;
+
+pub use bridge::*;
+pub use consensus::*;
+pub use evm::*;
+pub use ledger::*;
+pub use wallet::*;
+
 /// AI Mining configuration for Hanzo Node
 /// Enables mining AI coins by offering GPU/CPU compute to the network
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -60,10 +72,10 @@ impl NetworkType {
 
     pub fn chain_id(&self) -> u64 {
         match self {
-            Self::HanzoMainnet => 36900,  // Hanzo mainnet chain ID
-            Self::HanzoTestnet => 36901,  // Hanzo testnet chain ID
-            Self::ZooMainnet => 36902,    // Zoo mainnet chain ID
-            Self::ZooTestnet => 36903,    // Zoo testnet chain ID
+            Self::HanzoMainnet => 36963,  // Hanzo mainnet chain ID
+            Self::HanzoTestnet => 36964,  // Hanzo testnet chain ID
+            Self::ZooMainnet => 200200,   // Zoo mainnet chain ID
+            Self::ZooTestnet => 200201,   // Zoo testnet chain ID
             Self::Custom(_) => 0,
         }
     }
@@ -486,6 +498,8 @@ mod tests {
         assert_eq!(NetworkType::ZooMainnet.rpc_endpoint(), "https://rpc.zoo.network");
         assert_eq!(NetworkType::HanzoMainnet.native_token(), "HAI");
         assert_eq!(NetworkType::ZooMainnet.native_token(), "ZOO");
+        assert_eq!(NetworkType::HanzoMainnet.chain_id(), 36963);
+        assert_eq!(NetworkType::ZooMainnet.chain_id(), 200200);
     }
 
     #[tokio::test]

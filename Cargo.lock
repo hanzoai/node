@@ -5603,6 +5603,32 @@ dependencies = [
 ]
 
 [[package]]
+name = "hanzo-ai-format"
+version = "1.1.16"
+dependencies = [
+ "async-trait",
+ "base64 0.22.1",
+ "blake3",
+ "chrono",
+ "dashmap 5.5.3",
+ "dirs 5.0.1",
+ "flate2",
+ "futures",
+ "reqwest 0.11.27",
+ "serde",
+ "serde_json",
+ "tar",
+ "tempfile",
+ "thiserror 2.0.12",
+ "tokio",
+ "tokio-test",
+ "tracing",
+ "url",
+ "uuid",
+ "zip 2.4.2",
+]
+
+[[package]]
 name = "hanzo-api"
 version = "1.1.11"
 dependencies = [
@@ -5650,6 +5676,25 @@ dependencies = [
  "log",
  "regex",
  "serde_json",
+]
+
+[[package]]
+name = "hanzo-compute"
+version = "1.1.16"
+dependencies = [
+ "async-trait",
+ "blake3",
+ "chrono",
+ "dashmap 5.5.3",
+ "libp2p",
+ "rand 0.8.5",
+ "serde",
+ "serde_json",
+ "tempfile",
+ "thiserror 2.0.12",
+ "tokio",
+ "tracing",
+ "uuid",
 ]
 
 [[package]]
@@ -6039,13 +6084,21 @@ dependencies = [
 name = "hanzo-mining"
 version = "1.1.16"
 dependencies = [
+ "blake3",
+ "chacha20poly1305 0.10.1",
  "dirs 5.0.1",
+ "hex",
+ "lux-consensus",
+ "rand 0.8.5",
+ "reqwest 0.11.27",
  "serde",
  "serde_json",
  "tempfile",
+ "thiserror 2.0.12",
  "tokio",
  "toml 0.8.22",
  "walkdir",
+ "zeroize",
 ]
 
 [[package]]
@@ -9243,6 +9296,15 @@ name = "lru-slab"
 version = "0.1.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "112b39cec0b298b6c1999fee3e31427f74f676e4cb9879ed1a121b43661a4154"
+
+[[package]]
+name = "lux-consensus"
+version = "1.22.0"
+dependencies = [
+ "cc",
+ "hex",
+ "libc",
+]
 
 [[package]]
 name = "lz4"
