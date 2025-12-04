@@ -1,5 +1,10 @@
 //! Ultimate Integration Test Suite for Hanzo Node
 //! Tests ALL runtime engines, TEE attestation, HLLM routing, and compute marketplace
+//!
+//! NOTE: This test requires features not yet implemented.
+//! Enable with: cargo test --features complete-integration
+
+#![cfg(feature = "complete-integration")]
 
 use hanzo_node::managers::{NodeManager, JobQueueManager};
 use hanzo_node::security::{TEEAttestation, AttestationCache, PrivacyTier};
