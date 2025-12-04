@@ -98,6 +98,7 @@ jobs:
     if: ${{ github.event_name == 'push' || !github.event.pull_request.draft }}
     environment: FROM_WALLET_PRIVATE_KEY
     permissions:
+      contents: read
       packages: read
     steps:
       - name: Free disk space
@@ -116,7 +117,7 @@ jobs:
         with:
           registry: ghcr.io
           username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
+          password: ${{ secrets.GHCR_PAT || secrets.GITHUB_TOKEN }}
 
       - name: Run tests main cargo tests
         env:
@@ -135,6 +136,7 @@ jobs:
     if: ${{ github.event_name == 'push' || !github.event.pull_request.draft }}
     environment: FROM_WALLET_PRIVATE_KEY
     permissions:
+      contents: read
       packages: read
     steps:
       - name: Free disk space
@@ -153,7 +155,7 @@ jobs:
         with:
           registry: ghcr.io
           username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
+          password: ${{ secrets.GHCR_PAT || secrets.GITHUB_TOKEN }}
 
       - name: Run integration tests
         env:
