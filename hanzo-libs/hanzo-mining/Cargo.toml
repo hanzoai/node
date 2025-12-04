@@ -23,14 +23,16 @@ chacha20poly1305 = "0.10"
 
 # Lux Consensus SDK for native L1 integration (optional)
 # Enable with: --features consensus
-[dependencies.lux-consensus]
-path = "../../../../lux/consensus/pkg/rust"
-optional = true
+# Note: lux-consensus is only available when building with the lux monorepo
+# For standalone builds, this feature is disabled
+# [dependencies.lux-consensus]
+# path = "../../../../lux/consensus/pkg/rust"
+# optional = true
 
 [features]
 default = []
-# Enable embedded Lux consensus for native L1 operation
-consensus = ["lux-consensus"]
+# Enable embedded Lux consensus for native L1 operation (requires lux monorepo)
+# consensus = ["lux-consensus"]
 
 [dev-dependencies]
 tokio = { workspace = true, features = ["full", "test-util"] }
