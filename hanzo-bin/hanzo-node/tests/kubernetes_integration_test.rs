@@ -1,3 +1,11 @@
+//! Kubernetes Integration Test Suite
+//! Tests Kubernetes tool execution and orchestrated workloads
+//!
+//! NOTE: This test requires the kubernetes-tools feature.
+//! Enable with: cargo test --features kubernetes-integration
+
+#![cfg(feature = "kubernetes-integration")]
+
 #[cfg(test)]
 mod kubernetes_integration_tests {
     use hanzo_tools::tools::kubernetes_tools::{KubernetesTool, K8sResourceRequirements};
