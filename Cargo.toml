@@ -21,6 +21,8 @@ members = [
   "hanzo-libs/hanzo-mcp",
   "hanzo-libs/hanzo-messages",
   "hanzo-libs/hanzo-mining",
+  "hanzo-libs/hanzo-compute",
+  "hanzo-libs/hanzo-ai-format",
   "hanzo-libs/hanzo-model-discovery",
   "hanzo-libs/hanzo-models",
   "hanzo-libs/hanzo-pqc",
@@ -69,6 +71,8 @@ hanzo-llm = { path = "./hanzo-libs/hanzo-llm" }
 hanzo-mcp = { path = "./hanzo-libs/hanzo-mcp" }
 hanzo-messages = { path = "./hanzo-libs/hanzo-messages" }
 hanzo-mining = { path = "./hanzo-libs/hanzo-mining" }
+hanzo-compute = { path = "./hanzo-libs/hanzo-compute" }
+hanzo-ai-format = { path = "./hanzo-libs/hanzo-ai-format" }
 hanzo-model-discovery = { path = "./hanzo-libs/hanzo-model-discovery" }
 hanzo-models = { path = "./hanzo-libs/hanzo-models" }
 hanzo-pqc = { path = "./hanzo-libs/hanzo-pqc" }

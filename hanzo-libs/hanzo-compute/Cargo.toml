@@ -1,0 +1,34 @@
+[package]
+name = "hanzo-compute"
+description = "Hanzo AI - BitTorrent-style Decentralized Compute Protocol"
+license = "MIT"
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+keywords = ["ai", "distributed-computing", "bittorrent", "swarm", "p2p"]
+categories = ["network-programming", "asynchronous"]
+
+[features]
+default = []
+full = ["libp2p-transport"]
+libp2p-transport = ["libp2p"]
+
+[dependencies]
+serde = { workspace = true, features = ["derive"] }
+serde_json = { workspace = true }
+tokio = { workspace = true }
+thiserror = { workspace = true }
+blake3 = { workspace = true }
+rand = { workspace = true }
+async-trait = { workspace = true }
+dashmap = { workspace = true }
+chrono = { workspace = true }
+uuid = { workspace = true, features = ["v4"] }
+tracing = { workspace = true }
+
+# Optional: libp2p for networking
+libp2p = { workspace = true, optional = true }
+
+[dev-dependencies]
+tokio = { workspace = true, features = ["full", "test-util"] }
+tempfile = { workspace = true }
