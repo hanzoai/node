@@ -38,7 +38,10 @@ jobs:
     steps:
       - name: Free disk space
         run: |
-          sudo rm -rf /usr/share/dotnet /usr/local/lib/android /opt/ghc /opt/hostedtoolcache/CodeQL
+          sudo rm -rf /usr/share/dotnet /usr/local/lib/android /opt/ghc /opt/hostedtoolcache
+          sudo rm -rf /usr/local/share/boost /usr/share/swift
+          sudo rm -rf /home/runner/actions-runner/cached/_diag/*.log || true
+          sudo apt-get clean || true
           sudo docker system prune -af
           df -h
 
@@ -70,7 +73,10 @@ jobs:
     steps:
       - name: Free disk space
         run: |
-          sudo rm -rf /usr/share/dotnet /usr/local/lib/android /opt/ghc /opt/hostedtoolcache/CodeQL
+          sudo rm -rf /usr/share/dotnet /usr/local/lib/android /opt/ghc /opt/hostedtoolcache
+          sudo rm -rf /usr/local/share/boost /usr/share/swift
+          sudo rm -rf /home/runner/actions-runner/cached/_diag/*.log || true
+          sudo apt-get clean || true
           sudo docker system prune -af
           df -h
 
@@ -94,7 +100,10 @@ jobs:
     steps:
       - name: Free disk space
         run: |
-          sudo rm -rf /usr/share/dotnet /usr/local/lib/android /opt/ghc /opt/hostedtoolcache/CodeQL
+          sudo rm -rf /usr/share/dotnet /usr/local/lib/android /opt/ghc /opt/hostedtoolcache
+          sudo rm -rf /usr/local/share/boost /usr/share/swift
+          sudo rm -rf /home/runner/actions-runner/cached/_diag/*.log || true
+          sudo apt-get clean || true
           sudo docker system prune -af
           df -h
 
@@ -123,7 +132,10 @@ jobs:
     steps:
       - name: Free disk space
         run: |
-          sudo rm -rf /usr/share/dotnet /usr/local/lib/android /opt/ghc /opt/hostedtoolcache/CodeQL
+          sudo rm -rf /usr/share/dotnet /usr/local/lib/android /opt/ghc /opt/hostedtoolcache
+          sudo rm -rf /usr/local/share/boost /usr/share/swift
+          sudo rm -rf /home/runner/actions-runner/cached/_diag/*.log || true
+          sudo apt-get clean || true
           sudo docker system prune -af
           df -h
 
