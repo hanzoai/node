@@ -6088,7 +6088,6 @@ dependencies = [
  "chacha20poly1305 0.10.1",
  "dirs 5.0.1",
  "hex",
- "lux-consensus",
  "rand 0.8.5",
  "reqwest 0.11.27",
  "serde",
@@ -6401,6 +6400,7 @@ dependencies = [
  "anyhow",
  "base64 0.22.1",
  "hanzo-tools",
+ "hanzo-wasm-runtime",
  "md5",
  "rand 0.8.5",
  "serde",
@@ -9296,15 +9296,6 @@ name = "lru-slab"
 version = "0.1.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "112b39cec0b298b6c1999fee3e31427f74f676e4cb9879ed1a121b43661a4154"
-
-[[package]]
-name = "lux-consensus"
-version = "1.22.0"
-dependencies = [
- "cc",
- "hex",
- "libc",
-]
 
 [[package]]
 name = "lz4"
