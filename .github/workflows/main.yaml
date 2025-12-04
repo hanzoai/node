@@ -109,14 +109,6 @@ jobs:
           sudo docker system prune -af
           df -h
 
-      - name: Background disk cleanup
-        run: |
-          # Periodically truncate runner logs in background to prevent disk full
-          (while true; do
-            sleep 60
-            sudo truncate -s 0 /home/runner/actions-runner/cached/_diag/*.log 2>/dev/null || true
-          done) &
-
       - name: Log in to GitHub Container Registry
         uses: docker/login-action@v3
         with:
@@ -130,7 +122,10 @@ jobs:
           X402_PRIVATE_KEY: ${{ secrets.X402_PRIVATE_KEY }}
           RESTORE_WALLET_MNEMONICS_NODE2: ${{ secrets.RESTORE_WALLET_MNEMONICS_NODE2 }}
           FROM_WALLET_PRIVATE_KEY: ${{ secrets.FROM_WALLET_PRIVATE_KEY }}
-        run: docker run --rm --name hanzo_node_tests_main_${{ github.sha }}_${{ github.run_number }}_${{ github.run_attempt }} -e X402_PAY_TO="${{ secrets.X402_PAY_TO }}" -e X402_PRIVATE_KEY="${{ secrets.X402_PRIVATE_KEY }}" -e RESTORE_WALLET_MNEMONICS_NODE2="${{ secrets.RESTORE_WALLET_MNEMONICS_NODE2 }}" -e FROM_WALLET_PRIVATE_KEY="${{ secrets.FROM_WALLET_PRIVATE_KEY }}" ghcr.io/${{ github.repository }}/hanzo-test:${{ github.sha }} /bin/bash -c "export IS_TESTING=1 && export SKIP_IMPORT_FROM_DIRECTORY=true && export WELCOME_MESSAGE=false && cd /app && cargo test -- --test-threads=1 --nocapture --skip node_integration_tests --skip a3_micropayment_flow_tests --skip a4_micropayment_localhost_tests"
+        run: |
+          # Start background cleanup to prevent runner log disk full during test
+          (while true; do sleep 60; sudo truncate -s 0 /home/runner/actions-runner/cached/_diag/*.log 2>/dev/null || true; done) &
+          docker run --rm --name hanzo_node_tests_main_${{ github.sha }}_${{ github.run_number }}_${{ github.run_attempt }} -e X402_PAY_TO="${{ secrets.X402_PAY_TO }}" -e X402_PRIVATE_KEY="${{ secrets.X402_PRIVATE_KEY }}" -e RESTORE_WALLET_MNEMONICS_NODE2="${{ secrets.RESTORE_WALLET_MNEMONICS_NODE2 }}" -e FROM_WALLET_PRIVATE_KEY="${{ secrets.FROM_WALLET_PRIVATE_KEY }}" ghcr.io/${{ github.repository }}/hanzo-test:${{ github.sha }} /bin/bash -c "export IS_TESTING=1 && export SKIP_IMPORT_FROM_DIRECTORY=true && export WELCOME_MESSAGE=false && cd /app && cargo test -- --test-threads=1 --nocapture --skip node_integration_tests --skip a3_micropayment_flow_tests --skip a4_micropayment_localhost_tests"
 
   test-integration:
     runs-on: ubuntu-latest
@@ -151,14 +146,6 @@ jobs:
           sudo docker system prune -af
           df -h
 
-      - name: Background disk cleanup
-        run: |
-          # Periodically truncate runner logs in background to prevent disk full
-          (while true; do
-            sleep 60
-            sudo truncate -s 0 /home/runner/actions-runner/cached/_diag/*.log 2>/dev/null || true
-          done) &
-
       - name: Log in to GitHub Container Registry
         uses: docker/login-action@v3
         with:
@@ -172,7 +159,10 @@ jobs:
           X402_PRIVATE_KEY: ${{ secrets.X402_PRIVATE_KEY }}
           RESTORE_WALLET_MNEMONICS_NODE2: ${{ secrets.RESTORE_WALLET_MNEMONICS_NODE2 }}
           FROM_WALLET_PRIVATE_KEY: ${{ secrets.FROM_WALLET_PRIVATE_KEY }}
-        run: docker run --rm --network host --name hanzo_node_integration_tests_${{ github.sha }}_${{ github.run_number }}_${{ github.run_attempt }} -e X402_PAY_TO="${{ secrets.X402_PAY_TO }}" -e X402_PRIVATE_KEY="${{ secrets.X402_PRIVATE_KEY }}" -e RESTORE_WALLET_MNEMONICS_NODE2="${{ secrets.RESTORE_WALLET_MNEMONICS_NODE2 }}" -e FROM_WALLET_PRIVATE_KEY="${{ secrets.FROM_WALLET_PRIVATE_KEY }}" ghcr.io/${{ github.repository }}/hanzo-test:${{ github.sha }} /bin/bash -c "export IS_TESTING=1 && export SKIP_IMPORT_FROM_DIRECTORY=true && export WELCOME_MESSAGE=false && cd /app && cargo test -- --test-threads=1 --nocapture node_integration_tests a3_micropayment_flow_tests a4_micropayment_localhost_tests"
+        run: |
+          # Start background cleanup to prevent runner log disk full during test
+          (while true; do sleep 60; sudo truncate -s 0 /home/runner/actions-runner/cached/_diag/*.log 2>/dev/null || true; done) &
+          docker run --rm --network host --name hanzo_node_integration_tests_${{ github.sha }}_${{ github.run_number }}_${{ github.run_attempt }} -e X402_PAY_TO="${{ secrets.X402_PAY_TO }}" -e X402_PRIVATE_KEY="${{ secrets.X402_PRIVATE_KEY }}" -e RESTORE_WALLET_MNEMONICS_NODE2="${{ secrets.RESTORE_WALLET_MNEMONICS_NODE2 }}" -e FROM_WALLET_PRIVATE_KEY="${{ secrets.FROM_WALLET_PRIVATE_KEY }}" ghcr.io/${{ github.repository }}/hanzo-test:${{ github.sha }} /bin/bash -c "export IS_TESTING=1 && export SKIP_IMPORT_FROM_DIRECTORY=true && export WELCOME_MESSAGE=false && cd /app && cargo test -- --test-threads=1 --nocapture node_integration_tests a3_micropayment_flow_tests a4_micropayment_localhost_tests"
 
   test-contracts:
     runs-on: ubuntu-latest
