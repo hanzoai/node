@@ -1,3 +1,11 @@
+//! Runtime Integration Test Suite for Hanzo Node
+//! Tests full runtime orchestration with multiple execution engines
+//!
+//! NOTE: This test requires features not yet implemented.
+//! Enable with: cargo test --features runtime-integration
+
+#![cfg(feature = "runtime-integration")]
+
 use hanzo_messages::{
     hanzo_utils::job_scope::MinimalJobScope,
     schemas::{
