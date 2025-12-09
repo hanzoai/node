@@ -131,6 +131,7 @@ jobs:
           sudo rm -rf /usr/share/dotnet /usr/local/lib/android /opt/ghc /opt/hostedtoolcache
           sudo rm -rf /usr/local/share/boost /usr/share/swift /usr/local/graalvm
           sudo rm -rf /opt/microsoft /opt/az /usr/local/julia*
+          sudo rm -rf /home/runner/actions-runner/cached/_diag/*.log || true
           sudo docker system prune -af
           df -h
 
@@ -143,10 +144,14 @@ jobs:
 
       - name: Run unit tests (${{ matrix.name }})
         run: |
+          # Start background cleanup to prevent runner log disk full during tests
+          (while true; do sleep 30; sudo truncate -s 0 /home/runner/actions-runner/cached/_diag/*.log 2>/dev/null || true; done) &
+          CLEANUP_PID=$!
           docker run --rm \
             --name hanzo_unit_${{ matrix.name }}_${{ github.sha }} \
             ghcr.io/${{ github.repository }}/hanzo-test:${{ github.sha }} \
             /bin/bash -c "cd /app && cargo test ${{ matrix.packages }} -- --test-threads=${{ matrix.threads }} --nocapture"
+          kill $CLEANUP_PID 2>/dev/null || true
 
   # =============================================================================
   # Database Tests - Medium Parallelization (isolated temp DBs)
@@ -173,6 +178,7 @@ jobs:
           sudo rm -rf /usr/share/dotnet /usr/local/lib/android /opt/ghc /opt/hostedtoolcache
           sudo rm -rf /usr/local/share/boost /usr/share/swift /usr/local/graalvm
           sudo rm -rf /opt/microsoft /opt/az /usr/local/julia*
+          sudo rm -rf /home/runner/actions-runner/cached/_diag/*.log || true
           sudo docker system prune -af
           df -h
 
@@ -185,11 +191,15 @@ jobs:
 
       - name: Run database tests (${{ matrix.name }})
         run: |
+          # Start background cleanup to prevent runner log disk full during tests
+          (while true; do sleep 30; sudo truncate -s 0 /home/runner/actions-runner/cached/_diag/*.log 2>/dev/null || true; done) &
+          CLEANUP_PID=$!
           docker run --rm \
             --name hanzo_db_${{ matrix.name }}_${{ github.sha }} \
             -e IS_TESTING=1 \
             ghcr.io/${{ github.repository }}/hanzo-test:${{ github.sha }} \
             /bin/bash -c "cd /app && cargo test ${{ matrix.packages }} -- --test-threads=${{ matrix.threads }} --nocapture"
+          kill $CLEANUP_PID 2>/dev/null || true
 
   # =============================================================================
   # API & Network Tests - Low Parallelization (port/network constraints)
@@ -219,6 +229,7 @@ jobs:
           sudo rm -rf /usr/share/dotnet /usr/local/lib/android /opt/ghc /opt/hostedtoolcache
           sudo rm -rf /usr/local/share/boost /usr/share/swift /usr/local/graalvm
           sudo rm -rf /opt/microsoft /opt/az /usr/local/julia*
+          sudo rm -rf /home/runner/actions-runner/cached/_diag/*.log || true
           sudo docker system prune -af
           df -h
 
@@ -234,6 +245,9 @@ jobs:
           X402_PAY_TO: ${{ secrets.X402_PAY_TO }}
           X402_PRIVATE_KEY: ${{ secrets.X402_PRIVATE_KEY }}
         run: |
+          # Start background cleanup to prevent runner log disk full during tests
+          (while true; do sleep 30; sudo truncate -s 0 /home/runner/actions-runner/cached/_diag/*.log 2>/dev/null || true; done) &
+          CLEANUP_PID=$!
           docker run --rm \
             --name hanzo_api_${{ matrix.name }}_${{ github.sha }} \
             -e IS_TESTING=1 \
@@ -243,6 +257,7 @@ jobs:
             -e X402_PRIVATE_KEY="${{ secrets.X402_PRIVATE_KEY }}" \
             ghcr.io/${{ github.repository }}/hanzo-test:${{ github.sha }} \
             /bin/bash -c "cd /app && cargo test ${{ matrix.packages }} -- --test-threads=${{ matrix.threads }} --nocapture"
+          kill $CLEANUP_PID 2>/dev/null || true
 
   # =============================================================================
   # Node Integration Tests - Serial (full node startup required)
@@ -260,6 +275,7 @@ jobs:
           sudo rm -rf /usr/share/dotnet /usr/local/lib/android /opt/ghc /opt/hostedtoolcache
           sudo rm -rf /usr/local/share/boost /usr/share/swift /usr/local/graalvm
           sudo rm -rf /opt/microsoft /opt/az /usr/local/julia*
+          sudo rm -rf /home/runner/actions-runner/cached/_diag/*.log || true
           sudo docker system prune -af
           df -h
 
@@ -278,7 +294,8 @@ jobs:
           FROM_WALLET_PRIVATE_KEY: ${{ secrets.FROM_WALLET_PRIVATE_KEY }}
         run: |
           # Start background cleanup to prevent runner log disk full during test
-          (while true; do sleep 60; sudo truncate -s 0 /home/runner/actions-runner/cached/_diag/*.log 2>/dev/null || true; done) &
+          (while true; do sleep 30; sudo truncate -s 0 /home/runner/actions-runner/cached/_diag/*.log 2>/dev/null || true; done) &
+          CLEANUP_PID=$!
           docker run --rm \
             --name hanzo_node_tests_${{ github.sha }} \
             -e IS_TESTING=1 \
@@ -290,6 +307,7 @@ jobs:
             -e FROM_WALLET_PRIVATE_KEY="${{ secrets.FROM_WALLET_PRIVATE_KEY }}" \
             ghcr.io/${{ github.repository }}/hanzo-test:${{ github.sha }} \
             /bin/bash -c "cd /app && cargo test -p hanzo-node -- --test-threads=1 --nocapture --skip node_integration_tests"
+          kill $CLEANUP_PID 2>/dev/null || true
 
   # =============================================================================
   # Network Integration Tests - Serial (requires network infrastructure)
@@ -309,6 +327,7 @@ jobs:
           sudo rm -rf /usr/share/dotnet /usr/local/lib/android /opt/ghc /opt/hostedtoolcache
           sudo rm -rf /usr/local/share/boost /usr/share/swift /usr/local/graalvm
           sudo rm -rf /opt/microsoft /opt/az /usr/local/julia*
+          sudo rm -rf /home/runner/actions-runner/cached/_diag/*.log || true
           sudo docker system prune -af
           df -h
 
@@ -327,7 +346,8 @@ jobs:
           FROM_WALLET_PRIVATE_KEY: ${{ secrets.FROM_WALLET_PRIVATE_KEY }}
         run: |
           # Start background cleanup to prevent runner log disk full during test
-          (while true; do sleep 60; sudo truncate -s 0 /home/runner/actions-runner/cached/_diag/*.log 2>/dev/null || true; done) &
+          (while true; do sleep 30; sudo truncate -s 0 /home/runner/actions-runner/cached/_diag/*.log 2>/dev/null || true; done) &
+          CLEANUP_PID=$!
           docker run --rm --network host \
             --name hanzo_integration_${{ github.sha }} \
             -e IS_TESTING=1 \
@@ -339,6 +359,7 @@ jobs:
             -e FROM_WALLET_PRIVATE_KEY="${{ secrets.FROM_WALLET_PRIVATE_KEY }}" \
             ghcr.io/${{ github.repository }}/hanzo-test:${{ github.sha }} \
             /bin/bash -c "cd /app && cargo test -- --test-threads=1 --nocapture node_integration_tests a3_micropayment_flow_tests a4_micropayment_localhost_tests"
+          kill $CLEANUP_PID 2>/dev/null || true
 
   # =============================================================================
   # Other Library Tests - Medium Parallelization
@@ -371,6 +392,7 @@ jobs:
           sudo rm -rf /usr/share/dotnet /usr/local/lib/android /opt/ghc /opt/hostedtoolcache
           sudo rm -rf /usr/local/share/boost /usr/share/swift /usr/local/graalvm
           sudo rm -rf /opt/microsoft /opt/az /usr/local/julia*
+          sudo rm -rf /home/runner/actions-runner/cached/_diag/*.log || true
           sudo docker system prune -af
           df -h
 
@@ -383,8 +405,12 @@ jobs:
 
       - name: Run lib tests (${{ matrix.name }})
         run: |
+          # Start background cleanup to prevent runner log disk full during tests
+          (while true; do sleep 30; sudo truncate -s 0 /home/runner/actions-runner/cached/_diag/*.log 2>/dev/null || true; done) &
+          CLEANUP_PID=$!
           docker run --rm \
             --name hanzo_libs_${{ matrix.name }}_${{ github.sha }} \
             -e IS_TESTING=1 \
             ghcr.io/${{ github.repository }}/hanzo-test:${{ github.sha }} \
             /bin/bash -c "cd /app && cargo test ${{ matrix.packages }} -- --test-threads=${{ matrix.threads }} --nocapture"
+          kill $CLEANUP_PID 2>/dev/null || true
