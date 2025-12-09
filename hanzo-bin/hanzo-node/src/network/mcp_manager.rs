@@ -368,6 +368,7 @@ pub mod tests_mcp_manager {
     }
 
     #[tokio::test]
+    #[ignore] // Requires external GitHub repo hanzoai/mcp-server-helius to exist
     async fn test_import_mcp_server_from_github_url_nodejs() {
         let github_url = "https://github.com/hanzoai/mcp-server-helius".to_string();
         let result = import_mcp_server_from_github_url(github_url).await;
