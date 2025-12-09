@@ -39,16 +39,20 @@ RUN cargo test --no-run 2>/dev/null || true
 
 # Aggressively clean up build artifacts to reduce image size
 # This must happen AFTER test pre-compilation to ensure all artifacts are cleaned
-RUN find /app/target -name "incremental" -type d -exec rm -rf {} + 2>/dev/null || true && \
-    find /app/target -name ".fingerprint" -type d -exec rm -rf {} + 2>/dev/null || true && \
-    find /app/target -name "*.d" -type f -delete 2>/dev/null || true && \
-    find /app/target -name "*.rlib" -type f -delete 2>/dev/null || true && \
-    rm -rf /app/target/debug/build 2>/dev/null || true && \
-    rm -rf /app/target/debug/examples 2>/dev/null || true && \
-    rm -rf /app/target/.rustc_info.json 2>/dev/null || true && \
-    rm -rf /root/.cargo/registry/cache 2>/dev/null || true && \
-    rm -rf /root/.cargo/git/checkouts 2>/dev/null || true && \
-    du -sh /app/target/ || true
+# Use direct rm -rf on known paths to avoid find issues with nested dirs
+RUN rm -rf /app/target/debug/incremental && \
+    rm -rf /app/target/debug/.fingerprint && \
+    rm -rf /app/target/debug/build && \
+    rm -rf /app/target/debug/examples && \
+    rm -rf /app/target/debug/deps/*.d && \
+    rm -rf /app/target/.rustc_info.json && \
+    rm -rf /root/.cargo/registry/cache && \
+    rm -rf /root/.cargo/git/checkouts && \
+    rm -rf /root/.cargo/registry/index && \
+    echo "=== Target size after cleanup ===" && \
+    du -sh /app/target/ && \
+    du -sh /app/target/debug/ && \
+    ls -la /app/target/debug/ | head -20
 
 COPY .github/run-main*.sh /entrypoints/
 RUN chmod 755 /entrypoints/*.sh
