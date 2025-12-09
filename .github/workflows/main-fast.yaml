@@ -40,6 +40,7 @@ jobs:
   # =============================================================================
   build:
     runs-on: ubuntu-latest
+    timeout-minutes: 60
     if: ${{ github.event_name == 'push' || !github.event.pull_request.draft }}
     permissions:
       contents: read
@@ -85,6 +86,7 @@ jobs:
   # =============================================================================
   test-contracts:
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     if: ${{ github.event_name == 'push' || !github.event.pull_request.draft }}
     steps:
       - name: Checkout
@@ -105,6 +107,7 @@ jobs:
   # =============================================================================
   test-unit-pure:
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     needs: build
     if: ${{ github.event_name == 'push' || !github.event.pull_request.draft }}
     permissions:
@@ -158,6 +161,7 @@ jobs:
   # =============================================================================
   test-database:
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     needs: build
     if: ${{ github.event_name == 'push' || !github.event.pull_request.draft }}
     permissions:
@@ -206,6 +210,7 @@ jobs:
   # =============================================================================
   test-api:
     runs-on: ubuntu-latest
+    timeout-minutes: 20
     needs: build
     if: ${{ github.event_name == 'push' || !github.event.pull_request.draft }}
     permissions:
@@ -264,6 +269,7 @@ jobs:
   # =============================================================================
   test-node:
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     needs: build
     if: ${{ github.event_name == 'push' || !github.event.pull_request.draft }}
     environment: FROM_WALLET_PRIVATE_KEY
@@ -314,6 +320,7 @@ jobs:
   # =============================================================================
   test-integration:
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     needs: build
     if: ${{ github.event_name == 'push' || !github.event.pull_request.draft }}
     environment: FROM_WALLET_PRIVATE_KEY
@@ -366,6 +373,7 @@ jobs:
   # =============================================================================
   test-libs-other:
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     needs: build
     if: ${{ github.event_name == 'push' || !github.event.pull_request.draft }}
     permissions:
