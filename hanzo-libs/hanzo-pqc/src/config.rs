@@ -74,7 +74,7 @@ impl Default for PqcConfig {
             kdf: KdfAlgorithm::HkdfSha384,
             rng: RngSource::Os,
             node_mode: NodeMode::SoftwareOnly,
-            min_privacy_tier: PrivacyTier::AccessAtRest,
+            min_privacy_tier: PrivacyTier::AccessOpen,
             fips_mode: false,
             verify_attestation: false,
             key_lifetime: 86400,      // 24 hours
