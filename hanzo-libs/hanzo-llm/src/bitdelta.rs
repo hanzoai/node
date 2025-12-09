@@ -330,11 +330,13 @@ impl AdapterCache {
     
     /// Evict least recently used adapter
     fn evict_lru(&self) {
-        if let Some(min_entry) = self.access_counts
+        // Collect key-value pairs first to avoid holding iterator while modifying
+        let min_key = self.access_counts
             .iter()
             .min_by_key(|entry| *entry.value())
-        {
-            let key = min_entry.key().clone();
+            .map(|entry| entry.key().clone());
+
+        if let Some(key) = min_key {
             self.cache.remove(&key);
             self.access_counts.remove(&key);
         }
