@@ -29,7 +29,17 @@ COPY . .
 RUN cargo clean
 RUN rustup default 1.88
 RUN rustup component add rustfmt
+
+# Build main code
 RUN CARGO_BUILD_RERUN_IF_CHANGED=1 cargo build $([ "$BUILD_TYPE" = "release" ] && echo "--release")
+
+# Pre-compile test binaries to avoid recompilation in CI test jobs
+# This prevents disk space exhaustion during cargo test
+RUN cargo test --no-run 2>/dev/null || true
+
+# Clean up incremental compilation artifacts to save space
+RUN find /app/target -name "incremental" -type d -exec rm -rf {} + 2>/dev/null || true
+RUN rm -rf /app/target/debug/deps/*.d /app/target/debug/.fingerprint 2>/dev/null || true
 
 COPY .github/run-main*.sh /entrypoints/
 RUN chmod 755 /entrypoints/*.sh
