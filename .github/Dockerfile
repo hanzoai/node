@@ -30,17 +30,12 @@ RUN cargo clean
 RUN rustup default 1.88
 RUN rustup component add rustfmt
 
-# Build main code
-RUN CARGO_BUILD_RERUN_IF_CHANGED=1 cargo build $([ "$BUILD_TYPE" = "release" ] && echo "--release")
-
-# Pre-compile test binaries to avoid recompilation in CI test jobs
-# This prevents disk space exhaustion during cargo test
-RUN cargo test --no-run 2>/dev/null || true
-
-# Aggressively clean up build artifacts to reduce image size
-# This must happen AFTER test pre-compilation to ensure all artifacts are cleaned
-# Use direct rm -rf on known paths to avoid find issues with nested dirs
-RUN rm -rf /app/target/debug/incremental && \
+# Build main code, pre-compile tests, and cleanup in SINGLE layer
+# This is critical - separate RUN commands create Docker layers that preserve old data
+# Even if we delete files in a later layer, the image size includes all layers
+RUN CARGO_BUILD_RERUN_IF_CHANGED=1 cargo build $([ "$BUILD_TYPE" = "release" ] && echo "--release") && \
+    cargo test --no-run 2>/dev/null || true && \
+    rm -rf /app/target/debug/incremental && \
     rm -rf /app/target/debug/.fingerprint && \
     rm -rf /app/target/debug/build && \
     rm -rf /app/target/debug/examples && \
