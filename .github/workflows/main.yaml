@@ -41,7 +41,8 @@ jobs:
       - name: Free disk space
         run: |
           sudo rm -rf /usr/share/dotnet /usr/local/lib/android /opt/ghc /opt/hostedtoolcache
-          sudo rm -rf /usr/local/share/boost /usr/share/swift
+          sudo rm -rf /usr/local/share/boost /usr/share/swift /usr/local/graalvm
+          sudo rm -rf /opt/microsoft /opt/az /usr/local/julia*
           sudo rm -rf /home/runner/actions-runner/cached/_diag/*.log || true
           sudo apt-get clean || true
           sudo docker system prune -af
@@ -63,8 +64,12 @@ jobs:
 
       - name: Build and push testing image
         run: |
+          # Start background cleanup to prevent runner log disk full during build
+          (while true; do sleep 30; sudo truncate -s 0 /home/runner/actions-runner/cached/_diag/*.log 2>/dev/null || true; done) &
+          CLEANUP_PID=$!
           docker build -t ghcr.io/${{ github.repository }}/hanzo-test:${{ github.sha }} --build-arg COMMIT_SHA=${{ github.sha }} --build-arg AI_MODEL_CATALOG_BUILD=1 -f .github/Dockerfile .
           docker push ghcr.io/${{ github.repository }}/hanzo-test:${{ github.sha }}
+          kill $CLEANUP_PID 2>/dev/null || true
 
   test-primitives:
     runs-on: ubuntu-latest
