@@ -37,9 +37,18 @@ RUN CARGO_BUILD_RERUN_IF_CHANGED=1 cargo build $([ "$BUILD_TYPE" = "release" ] &
 # This prevents disk space exhaustion during cargo test
 RUN cargo test --no-run 2>/dev/null || true
 
-# Clean up incremental compilation artifacts to save space
-RUN find /app/target -name "incremental" -type d -exec rm -rf {} + 2>/dev/null || true
-RUN rm -rf /app/target/debug/deps/*.d /app/target/debug/.fingerprint 2>/dev/null || true
+# Aggressively clean up build artifacts to reduce image size
+# This must happen AFTER test pre-compilation to ensure all artifacts are cleaned
+RUN find /app/target -name "incremental" -type d -exec rm -rf {} + 2>/dev/null || true && \
+    find /app/target -name ".fingerprint" -type d -exec rm -rf {} + 2>/dev/null || true && \
+    find /app/target -name "*.d" -type f -delete 2>/dev/null || true && \
+    find /app/target -name "*.rlib" -type f -delete 2>/dev/null || true && \
+    rm -rf /app/target/debug/build 2>/dev/null || true && \
+    rm -rf /app/target/debug/examples 2>/dev/null || true && \
+    rm -rf /app/target/.rustc_info.json 2>/dev/null || true && \
+    rm -rf /root/.cargo/registry/cache 2>/dev/null || true && \
+    rm -rf /root/.cargo/git/checkouts 2>/dev/null || true && \
+    du -sh /app/target/ || true
 
 COPY .github/run-main*.sh /entrypoints/
 RUN chmod 755 /entrypoints/*.sh
