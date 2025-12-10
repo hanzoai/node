@@ -1,6 +1,7 @@
 use std::collections::HashMap;
 
 use crate::tools::runner_type::RunnerType;
+use crate::tools::container_utils::skip_if_docker_unavailable;
 use rstest::rstest;
 use serde_json::{json, Value};
 
@@ -9,11 +10,22 @@ use crate::tools::python_runner_options::PythonRunnerOptions;
 use crate::tools::hanzo_node_location::HanzoNodeLocation;
 use crate::tools::{code_files::CodeFiles, python_runner::PythonRunner};
 
+/// Macro to skip Docker tests when Docker is not available
+macro_rules! skip_docker_if_unavailable {
+    ($runner_type:expr) => {
+        if matches!($runner_type, RunnerType::Docker) && !skip_if_docker_unavailable() {
+            eprintln!("Skipping Docker test: Docker is not available");
+            return;
+        }
+    };
+}
+
 #[rstest]
 #[case::host(RunnerType::Host)]
 #[case::docker(RunnerType::Docker)]
 #[tokio::test]
 async fn run_echo_tool(#[case] runner_type: RunnerType) {
+    skip_docker_if_unavailable!(runner_type);
     let _ = env_logger::builder()
         .filter_level(log::LevelFilter::Info)
         .is_test(true)
@@ -59,6 +71,7 @@ def run(configurations, parameters):
 #[case::docker(RunnerType::Docker)]
 #[tokio::test]
 async fn run_with_env(#[case] runner_type: RunnerType) {
+    skip_docker_if_unavailable!(runner_type);
     let _ = env_logger::builder()
         .filter_level(log::LevelFilter::Info)
         .is_test(true)
@@ -103,6 +116,7 @@ async fn run_with_hanzo_node_location_host(
     #[case] runner_type: RunnerType,
     #[case] expected_host: String,
 ) {
+    skip_docker_if_unavailable!(runner_type);
     let _ = env_logger::builder()
         .filter_level(log::LevelFilter::Info)
         .is_test(true)
@@ -148,6 +162,7 @@ def run(configurations, parameters):
 #[case::docker(RunnerType::Docker)]
 #[tokio::test]
 async fn run_with_file_sub_path(#[case] runner_type: RunnerType) {
+    skip_docker_if_unavailable!(runner_type);
     let _ = env_logger::builder()
         .filter_level(log::LevelFilter::Info)
         .is_test(true)
@@ -186,6 +201,7 @@ def run(configurations, parameters):
 #[case::docker(RunnerType::Docker)]
 #[tokio::test]
 async fn run_with_imports(#[case] runner_type: RunnerType) {
+    skip_docker_if_unavailable!(runner_type);
     let _ = env_logger::builder()
         .filter_level(log::LevelFilter::Info)
         .is_test(true)
@@ -384,6 +400,7 @@ print('hello', secondary.hello())
 #[case::docker(RunnerType::Docker)]
 #[tokio::test]
 async fn run_with_import_library(#[case] runner_type: RunnerType) {
+    skip_docker_if_unavailable!(runner_type);
     let _ = env_logger::builder()
         .filter_level(log::LevelFilter::Info)
         .is_test(true)
@@ -434,6 +451,7 @@ def run(configurations, parameters):
 #[case::docker(RunnerType::Docker)]
 #[tokio::test]
 async fn hanzo_tool_run_concurrency(#[case] runner_type: RunnerType) {
+    skip_docker_if_unavailable!(runner_type);
     let _ = env_logger::builder()
         .filter_level(log::LevelFilter::Info)
         .is_test(true)
@@ -549,6 +567,7 @@ def run(configurations, params):
 #[case::docker(RunnerType::Docker)]
 #[tokio::test]
 async fn file_persistence_in_home(#[case] runner_type: RunnerType) {
+    skip_docker_if_unavailable!(runner_type);
     let code_files = CodeFiles {
         files: HashMap::from([(
             "main.py".to_string(),
@@ -605,6 +624,7 @@ async def run(c, p):
 #[case::docker(RunnerType::Docker)]
 #[tokio::test]
 async fn mount_file_in_mount(#[case] runner_type: RunnerType) {
+    skip_docker_if_unavailable!(runner_type);
     let _ = env_logger::builder()
         .filter_level(log::LevelFilter::Info)
         .is_test(true)
@@ -667,6 +687,7 @@ def run(c, p):
 #[case::docker(RunnerType::Docker)]
 #[tokio::test]
 async fn mount_and_edit_file_in_mount(#[case] runner_type: RunnerType) {
+    skip_docker_if_unavailable!(runner_type);
     use std::path;
 
     let _ = env_logger::builder()
@@ -734,6 +755,7 @@ def run(c, p):
 #[case::docker(RunnerType::Docker)]
 #[tokio::test]
 async fn mount_file_in_assets(#[case] runner_type: RunnerType) {
+    skip_docker_if_unavailable!(runner_type);
     let _ = env_logger::builder()
         .filter_level(log::LevelFilter::Info)
         .is_test(true)
@@ -794,6 +816,7 @@ def run(c, p):
 #[case::docker(RunnerType::Docker)]
 #[tokio::test]
 async fn hanzo_tool_param_with_quotes(#[case] runner_type: RunnerType) {
+    skip_docker_if_unavailable!(runner_type);
     let _ = env_logger::builder()
         .filter_level(log::LevelFilter::Info)
         .is_test(true)
@@ -852,6 +875,7 @@ def run(configurations, params):
 #[case::docker(RunnerType::Docker)]
 #[tokio::test]
 async fn multiple_file_imports(#[case] runner_type: RunnerType) {
+    skip_docker_if_unavailable!(runner_type);
     let _ = env_logger::builder()
         .filter_level(log::LevelFilter::Info)
         .is_test(true)
@@ -908,6 +932,7 @@ data = "test data"
 #[case::docker(RunnerType::Docker)]
 #[tokio::test]
 async fn context_and_execution_id(#[case] runner_type: RunnerType) {
+    skip_docker_if_unavailable!(runner_type);
     let _ = env_logger::builder()
         .filter_level(log::LevelFilter::Info)
         .is_test(true)
@@ -957,6 +982,7 @@ def run(configurations, params):
 #[case::docker(RunnerType::Docker)]
 #[tokio::test]
 async fn run_output_class_object(#[case] runner_type: RunnerType) {
+    skip_docker_if_unavailable!(runner_type);
     let _ = env_logger::builder()
         .filter_level(log::LevelFilter::Info)
         .is_test(true)
@@ -1007,6 +1033,7 @@ def run(configurations, parameters):
 #[case::docker(RunnerType::Docker)]
 #[tokio::test]
 async fn run_pip_lib_name_neq_to_import_name(#[case] runner_type: RunnerType) {
+    skip_docker_if_unavailable!(runner_type);
     let _ = env_logger::builder()
         .filter_level(log::LevelFilter::Info)
         .is_test(true)
@@ -1109,6 +1136,7 @@ async def run(c: CONFIG, p: INPUTS) -> OUTPUT:
 #[case::docker(RunnerType::Docker)]
 #[tokio::test]
 async fn tricky_json_dump(#[case] runner_type: RunnerType) {
+    skip_docker_if_unavailable!(runner_type);
     let _ = env_logger::builder()
         .filter_level(log::LevelFilter::Info)
         .is_test(true)
@@ -1337,6 +1365,7 @@ async def run(c: CONFIG, p: INPUTS) -> OUTPUT:
 #[case::docker(RunnerType::Docker)]
 #[tokio::test]
 async fn rembg_with_python_3_10(#[case] runner_type: RunnerType) {
+    skip_docker_if_unavailable!(runner_type);
     use std::path::PathBuf;
 
     let _ = env_logger::builder()
@@ -1567,6 +1596,7 @@ async def run(config: CONFIG, inputs: INPUTS) -> OUTPUT:
 #[case::docker(RunnerType::Docker)]
 #[tokio::test]
 async fn print_with_python_3_8(#[case] runner_type: RunnerType) {
+    skip_docker_if_unavailable!(runner_type);
     use std::path::PathBuf;
 
     let _ = env_logger::builder()
@@ -1798,9 +1828,10 @@ async def run(c: CONFIG, p: INPUTS) -> OUTPUT:
 
 #[rstest]
 #[case::host(RunnerType::Host)]
-#[case::host(RunnerType::Docker)]
+#[case::docker(RunnerType::Docker)]
 #[tokio::test]
 async fn run_reading_external_file(#[case] runner_type: RunnerType) {
+    skip_docker_if_unavailable!(runner_type);
     use std::io::Write;
 
     let _ = env_logger::builder()

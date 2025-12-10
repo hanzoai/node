@@ -2,17 +2,29 @@ use std::collections::HashMap;
 use std::time::Duration;
 
 use crate::tools::code_files::CodeFiles;
+use crate::tools::container_utils::skip_if_docker_unavailable;
 use crate::tools::deno_runner::DenoRunner;
 use crate::tools::deno_runner_options::DenoRunnerOptions;
 use crate::tools::runner_type::RunnerType;
 
 use rstest::rstest;
 
+/// Macro to skip Docker tests when Docker is not available
+macro_rules! skip_docker_if_unavailable {
+    ($runner_type:expr) => {
+        if matches!($runner_type, RunnerType::Docker) && !skip_if_docker_unavailable() {
+            eprintln!("Skipping Docker test: Docker is not available");
+            return;
+        }
+    };
+}
+
 #[rstest]
 #[case::host(RunnerType::Host)]
 #[case::docker(RunnerType::Docker)]
 #[tokio::test]
 async fn hanzo_tool_inline(#[case] runner_type: RunnerType) {
+    skip_docker_if_unavailable!(runner_type);
     let _ = env_logger::builder()
         .filter_level(log::LevelFilter::Info)
         .is_test(true)
@@ -46,6 +58,7 @@ async fn hanzo_tool_inline(#[case] runner_type: RunnerType) {
 #[case::docker(RunnerType::Docker)]
 #[tokio::test]
 async fn hanzo_tool_inline_non_json_return(#[case] runner_type: RunnerType) {
+    skip_docker_if_unavailable!(runner_type);
     let _ = env_logger::builder()
         .filter_level(log::LevelFilter::Info)
         .is_test(true)
@@ -76,6 +89,7 @@ async fn hanzo_tool_inline_non_json_return(#[case] runner_type: RunnerType) {
 #[case::docker(RunnerType::Docker)]
 #[tokio::test]
 async fn max_execution_time(#[case] runner_type: RunnerType) {
+    skip_docker_if_unavailable!(runner_type);
     let _ = env_logger::builder()
         .filter_level(log::LevelFilter::Info)
         .is_test(true)
