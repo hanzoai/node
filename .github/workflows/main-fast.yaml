@@ -226,8 +226,13 @@ jobs:
             packages: "-p hanzo-llm -p hanzo-mcp"
             threads: 2
           - name: runtime
-            packages: "-p hanzo-runtime -p hanzo-runtime-tests -p hanzo-runner"
+            packages: "-p hanzo-runtime -p hanzo-runtime-tests"
             threads: 2
+          # hanzo-runner requires serial execution to avoid deno binary race conditions
+          # Docker tests are skipped at runtime when Docker daemon is unavailable
+          - name: runner
+            packages: "-p hanzo-runner"
+            threads: 1
     steps:
       - name: Free disk space
         run: |
