@@ -53,6 +53,7 @@ mod tests {
     use std::path::Path;
 
     #[tokio::test]
+    #[ignore = "Requires npm packages and stable CWD environment"]
     async fn test_parse_xlsx() {
         let _dir = testing_create_tempdir_and_set_env_var();
 
