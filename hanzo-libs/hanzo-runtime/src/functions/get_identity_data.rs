@@ -78,6 +78,7 @@ mod tests {
     use crate::test_utils::testing_create_tempdir_and_set_env_var;
 
     #[tokio::test]
+    #[ignore = "Requires external RPC endpoints which may be unreliable"]
     async fn test_get_identity_data() {
         let _dir = testing_create_tempdir_and_set_env_var();
         let output = get_identity_data(
