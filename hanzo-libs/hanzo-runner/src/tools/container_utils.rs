@@ -7,6 +7,14 @@ pub enum DockerStatus {
     Running,
 }
 
+/// Helper function for tests to skip Docker tests when Docker is not available.
+/// Returns true if Docker is running and tests should proceed.
+/// Returns false if Docker is not available and tests should be skipped.
+#[cfg(test)]
+pub fn skip_if_docker_unavailable() -> bool {
+    is_docker_available() == DockerStatus::Running
+}
+
 /// Checks if Docker is available on the system by attempting to run 'docker info' command.
 /// This function verifies both that Docker is installed and that the Docker daemon is running.
 ///
