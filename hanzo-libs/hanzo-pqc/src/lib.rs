@@ -8,6 +8,8 @@ pub mod signature;
 pub mod kdf;
 pub mod hybrid;
 pub mod privacy_tiers;
+pub mod cc_tier;
+pub mod ai_rewards;
 pub mod wire_protocol;
 pub mod attestation;
 pub mod config;
@@ -18,6 +20,8 @@ pub use signature::{Signature, SignatureAlgorithm, SigningKey, VerifyingKey};
 pub use kdf::{Kdf, KdfAlgorithm};
 pub use hybrid::{HybridKem, HybridMode};
 pub use privacy_tiers::{PrivacyTier, CapabilityMatrix, RuntimeRequirements};
+pub use cc_tier::{CCTier, TierAttestation, TierRequirement, TrustScoreInput, TrustScoreResult};
+pub use ai_rewards::{AIProvider, AIRewardPool, ModelingLevel, ParticipationRewardResult, TaskRewardResult};
 pub use config::PqcConfig;
 pub use errors::{PqcError, Result};
 

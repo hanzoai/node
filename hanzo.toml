@@ -9,7 +9,7 @@ api_ip = "0.0.0.0"
 api_port = 3690
 
 # Identity configuration
-global_identity_name = "@@localhost.sep-hanzo"
+global_identity_name = "did:hanzo:mainnet"
 starting_num_qr_profiles = 1
 starting_num_qr_devices = 1
 first_device_needs_registration_code = false
