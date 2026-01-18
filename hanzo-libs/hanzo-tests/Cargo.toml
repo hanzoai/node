@@ -2,7 +2,7 @@
 name = "hanzo-tests"
 description = "Hanzo AI - Tests Library"
 license = "MIT"
-version = "0.1.0"
+version = "0.1.1"
 edition = "2021"
 
 [dependencies]
@@ -16,10 +16,10 @@ tracing = "0.1"
 tracing-subscriber = "0.3"
 
 # Runtime dependencies
-hanzo-wasm = { path = "../hanzo-wasm" }
+hanzo-wasm = {path = "../hanzo-wasm", version = "0.1.1"}
 hanzo-tools = { path = "../hanzo-tools" }
-hanzo-messages = { path = "../hanzo-messages" }
-hanzo-db-sqlite = { path = "../hanzo-db-sqlite" }
+hanzo-messages = {path = "../hanzo-messages", version = "1.1.12"}
+hanzo-db-sqlite = {path = "../hanzo-db-sqlite", version = "1.1.12"}
 
 # For Docker tests
 bollard = "0.17"

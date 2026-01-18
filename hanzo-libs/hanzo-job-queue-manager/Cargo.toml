@@ -9,9 +9,9 @@ repository = "https://github.com/hanzoai/node"
 homepage = "https://hanzo.ai"
 
 [dependencies]
-hanzo-messages = { version = "1.1.11", path = "../hanzo-messages" }
-hanzo-db-sqlite = { version = "1.1.11", path = "../hanzo-db-sqlite" }
-hanzo-embed = { version = "1.1.11", path = "../hanzo-embed" }
+hanzo-messages = { version = "1.1.12", path = "../hanzo-messages" }
+hanzo-db-sqlite = { version = "1.1.12", path = "../hanzo-db-sqlite" }
+hanzo-embed = { version = "1.1.12", path = "../hanzo-embed" }
 tokio = { workspace = true }
 chrono = { workspace = true, features = ["serde"] }
 serde_json = { workspace = true }

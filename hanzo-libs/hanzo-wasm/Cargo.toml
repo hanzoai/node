@@ -1,6 +1,6 @@
 [package]
 name = "hanzo-wasm"
-version = "0.1.0"
+version = "0.1.1"
 description = "WASM runtime for Hanzo AI platform"
 license = "MIT"
 edition = "2021"
@@ -23,4 +23,4 @@ md5 = "0.7"
 wat = "1.217"
 tempfile = "3.10"
 tracing-subscriber = "0.3"
-hanzo-wasm-runtime = { path = "../hanzo-wasm-runtime" }
+hanzo-wasm-runtime = {path = "../hanzo-wasm-runtime", version = "1.1.19"}
