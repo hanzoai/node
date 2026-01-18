@@ -2,7 +2,7 @@
 name = "hanzo-libp2p-relayer"
 description = "Hanzo AI - Libp2P Relayer Library"
 license = "MIT"
-version = "1.1.11"
+version = "1.1.12"
 edition = { workspace = true }
 authors = { workspace = true }
 
@@ -11,8 +11,8 @@ tokio = { workspace = true, features = ["full"] }
 serde_json = { workspace = true }
 serde = { workspace = true, features = ["derive"] }
 clap = { workspace = true, features = ["derive", "env"] }
-hanzo-messages = { version = "1.1.11", path = "../hanzo-messages" }
-hanzo-identity = { version = "1.1.11", path = "../hanzo-identity" }
+hanzo-messages = { version = "1.1.12", path = "../hanzo-messages" }
+hanzo-identity = { version = "1.1.12", path = "../hanzo-identity" }
 x25519-dalek = { workspace = true }
 ed25519-dalek = { workspace = true }
 rand = { workspace = true }
