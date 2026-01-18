@@ -2,7 +2,7 @@
 name = "hanzo-sheet"
 description = "Hanzo AI - Sheet Library"
 license = "MIT"
-version = "0.1.0"
+version = "0.1.1"
 edition = { workspace = true }
 authors = { workspace = true }
 
@@ -12,7 +12,7 @@ tokio = { workspace = true }
 chrono = { workspace = true, features = ["serde"] }
 uuid = { workspace = true, features = ["v4"] }
 regex = { workspace = true }
-hanzo-messages = { version = "1.1.11", path = "../hanzo-messages" }
+hanzo-messages = { version = "1.1.12", path = "../hanzo-messages" }
 async-channel = { workspace = true }
 
 [dependencies.serde]

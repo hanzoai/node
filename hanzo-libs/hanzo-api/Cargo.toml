@@ -1,6 +1,6 @@
 [package]
 name = "hanzo-api"
-version = "1.1.11"
+version = "1.1.12"
 edition = "2021"
 authors = ["Hanzo AI Inc"]
 license = "MIT"
@@ -22,7 +22,7 @@ futures = "0.3.30"
 async-channel = "2.3.1"
 x25519-dalek = { version = "2.0.1", features = ['static_secrets'] }
 ed25519-dalek = { version = "2.1.1", features = ['rand_core'] }
-hanzo-messages = { version = "1.1.11", path = "../hanzo-messages" }
+hanzo-messages = { version = "1.1.12", path = "../hanzo-messages" }
 hanzo-tools = { version = "1.1.11", path = "../hanzo-tools" }
 reqwest = { version = "0.11.27", features = ['json'] }
 tokio-stream = "0.1.10"
