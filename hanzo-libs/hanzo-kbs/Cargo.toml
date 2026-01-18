@@ -2,7 +2,7 @@
 name = "hanzo-kbs"
 description = "Hanzo AI - Kbs Library"
 license = "MIT"
-version = "1.1.10"
+version = "1.1.11"
 edition.workspace = true
 authors.workspace = true
 
@@ -37,7 +37,7 @@ bincode = { workspace = true }
 uuid = { workspace = true, features = ["v4", "serde"] }
 
 # Hanzo dependencies
-hanzo-messages = { version = "1.1.11", path = "../hanzo-messages" }
+hanzo-messages = { version = "1.1.12", path = "../hanzo-messages" }
 hanzo-pqc = { workspace = true, optional = true }
 
 # API dependencies

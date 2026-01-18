@@ -1,6 +1,6 @@
 [package]
 name = "hanzo-tools-runner"
-version = "1.0.0"
+version = "1.0.1"
 edition = "2021"
 build = "build.rs"
 description = "Rust library to execute hanzo-tools in a safe and performant environment"

@@ -1,7 +1,6 @@
 [workspace]
 members = [
   "hanzo-libs/hanzo-api",
-  "hanzo-libs/hanzo-baml",
   "hanzo-libs/hanzo-config",
   "hanzo-libs/hanzo-database",
   # "hanzo-libs/hanzo-db", # Excluded: not in publish list, has feature-gated dependencies
@@ -45,47 +44,46 @@ members = [
 resolver = "2"
 
 [workspace.package]
-version = "1.1.18"
+version = "1.1.19"
 edition = "2021"
 authors = ["Nico Arqueros <nico@hanzo.ai>"]
 
 [workspace.dependencies]
-hanzo-api = { path = "./hanzo-libs/hanzo-api" }
-hanzo-baml = { path = "./hanzo-libs/hanzo-baml" }
-hanzo-config = { path = "./hanzo-libs/hanzo-config" }
-hanzo-database = { path = "./hanzo-libs/hanzo-database" }
-hanzo-db = { path = "./hanzo-libs/hanzo-db" }
-hanzo-db-sqlite = { path = "./hanzo-libs/hanzo-db-sqlite" }
-hanzo-did = { path = "./hanzo-libs/hanzo-did" }
-hanzo-embed = { path = "./hanzo-libs/hanzo-embed" }
+hanzo-api = { path = "./hanzo-libs/hanzo-api", version = "1.1.12" }
+hanzo-config = { path = "./hanzo-libs/hanzo-config", version = "1.1.19" }
+hanzo-database = { path = "./hanzo-libs/hanzo-database", version = "1.1.12" }
+hanzo-db = { path = "./hanzo-libs/hanzo-db", version = "0.1.1" }
+hanzo-db-sqlite = { path = "./hanzo-libs/hanzo-db-sqlite", version = "1.1.12" }
+hanzo-did = { path = "./hanzo-libs/hanzo-did", version = "1.1.11" }
+hanzo-embed = { path = "./hanzo-libs/hanzo-embed", version = "1.1.12" }
 hanzo-fs = { path = "./hanzo-libs/hanzo-fs" }
-hanzo-hmm = { path = "./hanzo-libs/hanzo-hmm" }
+hanzo-hmm = { path = "./hanzo-libs/hanzo-hmm", version = "0.1.1" }
 hanzo-http-api = { path = "./hanzo-libs/hanzo-http-api" }
-hanzo-identity = { path = "./hanzo-libs/hanzo-identity" }
+hanzo-identity = { path = "./hanzo-libs/hanzo-identity", version = "1.1.12" }
 hanzo-job-queue-manager = { path = "./hanzo-libs/hanzo-job-queue-manager" }
-hanzo-jobs = { path = "./hanzo-libs/hanzo-jobs" }
-hanzo-kbs = { path = "./hanzo-libs/hanzo-kbs" }
-hanzo-libp2p = { path = "./hanzo-libs/hanzo-libp2p" }
-hanzo-libp2p-relayer = { path = "./hanzo-libs/hanzo-libp2p-relayer" }
-hanzo-llm = { path = "./hanzo-libs/hanzo-llm" }
-hanzo-mcp = { path = "./hanzo-libs/hanzo-mcp" }
-hanzo-messages = { path = "./hanzo-libs/hanzo-messages" }
-hanzo-mining = { path = "./hanzo-libs/hanzo-mining" }
-hanzo-compute = { path = "./hanzo-libs/hanzo-compute" }
-hanzo-ai-format = { path = "./hanzo-libs/hanzo-ai-format" }
-hanzo-model-discovery = { path = "./hanzo-libs/hanzo-model-discovery" }
-hanzo-models = { path = "./hanzo-libs/hanzo-models" }
-hanzo-pqc = { path = "./hanzo-libs/hanzo-pqc" }
-hanzo-runner = { path = "./hanzo-libs/hanzo-runner" }
-hanzo-runtime = { path = "./hanzo-libs/hanzo-runtime" }
-hanzo-runtime-tests = { path = "./hanzo-libs/hanzo-runtime-tests" }
-hanzo-sheet = { path = "./hanzo-libs/hanzo-sheet" }
+hanzo-jobs = { path = "./hanzo-libs/hanzo-jobs", version = "1.1.12" }
+hanzo-kbs = { path = "./hanzo-libs/hanzo-kbs", version = "1.1.11" }
+hanzo-libp2p = { path = "./hanzo-libs/hanzo-libp2p", version = "1.1.12" }
+hanzo-libp2p-relayer = { path = "./hanzo-libs/hanzo-libp2p-relayer", version = "1.1.12" }
+hanzo-llm = { path = "./hanzo-libs/hanzo-llm", version = "1.1.11" }
+hanzo-mcp = { path = "./hanzo-libs/hanzo-mcp", version = "1.1.11" }
+hanzo-messages = { path = "./hanzo-libs/hanzo-messages", version = "1.1.12" }
+hanzo-mining = { path = "./hanzo-libs/hanzo-mining", version = "1.1.19" }
+hanzo-compute = { path = "./hanzo-libs/hanzo-compute", version = "1.1.19" }
+hanzo-ai-format = { path = "./hanzo-libs/hanzo-ai-format", version = "1.1.19" }
+hanzo-model-discovery = { path = "./hanzo-libs/hanzo-model-discovery", version = "1.1.12" }
+hanzo-models = { path = "./hanzo-libs/hanzo-models", version = "1.1.12" }
+hanzo-pqc = { path = "./hanzo-libs/hanzo-pqc", version = "1.1.12" }
+hanzo-runner = { path = "./hanzo-libs/hanzo-runner", version = "1.1.12" }
+hanzo-runtime = { path = "./hanzo-libs/hanzo-runtime", version = "1.1.12" }
+hanzo-runtime-tests = { path = "./hanzo-libs/hanzo-runtime-tests", version = "0.1.1" }
+hanzo-sheet = { path = "./hanzo-libs/hanzo-sheet", version = "0.1.1" }
 # hanzo-simulation = { path = "./hanzo-libs/hanzo-simulation" }
-hanzo-tests = { path = "./hanzo-libs/hanzo-tests" }
+hanzo-tests = { path = "./hanzo-libs/hanzo-tests", version = "0.1.1" }
 hanzo-tools = { path = "./hanzo-libs/hanzo-tools" }
-hanzo-tools-runner = { path = "./hanzo-libs/hanzo-tools-runner" }
-hanzo-wasm = { path = "./hanzo-libs/hanzo-wasm" }
-hanzo-wasm-runtime = { path = "./hanzo-libs/hanzo-wasm-runtime" }
+hanzo-tools-runner = { path = "./hanzo-libs/hanzo-tools-runner", version = "1.0.1" }
+hanzo-wasm = { path = "./hanzo-libs/hanzo-wasm", version = "0.1.1" }
+hanzo-wasm-runtime = { path = "./hanzo-libs/hanzo-wasm-runtime", version = "1.1.19" }
 
 
 

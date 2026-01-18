@@ -9,9 +9,9 @@ repository = "https://github.com/hanzoai/node"
 homepage = "https://hanzo.ai"
 
 [dependencies]
-hanzo-messages = { version = "1.1.11", path = "../hanzo-messages" }
-hanzo-embed = { version = "1.1.11", path = "../hanzo-embed" }
-hanzo-db-sqlite = { version = "1.1.11", path = "../hanzo-db-sqlite" }
+hanzo-messages = { version = "1.1.12", path = "../hanzo-messages" }
+hanzo-embed = { version = "1.1.12", path = "../hanzo-embed" }
+hanzo-db-sqlite = { version = "1.1.12", path = "../hanzo-db-sqlite" }
 bincode = { workspace = true }
 serde_json = { workspace = true }
 rand = { workspace = true }
@@ -33,7 +33,7 @@ utoipa = { workspace = true }
 regex = { workspace = true }
 os_path = { workspace = true }
 tempfile = { workspace = true }
-hanzo-runtime = { version = "1.1.11", path = "../hanzo-runtime" }
+hanzo-runtime = { version = "1.1.12", path = "../hanzo-runtime" }
 
 [dependencies.serde]
 workspace = true

@@ -108,5 +108,5 @@ tokio-tungstenite = { workspace = true }
 tempfile = { workspace = true }
 fs_extra = "1.2.0"
 utoipa = { workspace = true, features = ["yaml"] }
-hanzo-test-framework = { path = "../../hanzo-test-framework" }
-hanzo-test-macro = { path = "../../hanzo-test-macro" }
+hanzo-test-framework = {path = "../../hanzo-test-framework", version = "0.1.1"}
+hanzo-test-macro = {path = "../../hanzo-test-macro", version = "0.1.1"}
