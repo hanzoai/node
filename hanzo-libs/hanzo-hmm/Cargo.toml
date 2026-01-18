@@ -1,6 +1,6 @@
 [package]
 name = "hanzo-hmm"
-version = "0.1.0"
+version = "0.1.1"
 edition = { workspace = true }
 authors = { workspace = true }
 description = "Hidden Markov Model implementation for state detection and prediction in Hanzo Node"

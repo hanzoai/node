@@ -5,7 +5,7 @@ license = "MIT"
 version.workspace = true
 edition.workspace = true
 authors.workspace = true
-keywords = ["ai", "distributed-computing", "bittorrent", "swarm", "p2p"]
+keywords = ["ai", "distributed", "bittorrent", "swarm", "p2p"]
 categories = ["network-programming", "asynchronous"]
 
 [features]
