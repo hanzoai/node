@@ -2,6 +2,10 @@
 name = "hanzo-test-macro"
 version = "0.1.1"
 edition = "2021"
+publish = false  # Not ready for crates.io
+
+# Standalone crate - not part of parent workspace
+[workspace]
 
 [lib]
 proc-macro = true
