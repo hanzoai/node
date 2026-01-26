@@ -4,6 +4,10 @@ description = "Hanzo AI - Sheet Library"
 license = "MIT"
 version = "0.1.1"
 edition = { workspace = true }
+publish = false  # Not ready for crates.io
+
+# Standalone crate - not part of parent workspace
+[workspace]
 authors = { workspace = true }
 
 [dependencies]
