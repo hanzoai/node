@@ -2,6 +2,10 @@
 name = "hanzo-hmm"
 version = "0.1.1"
 edition = { workspace = true }
+publish = false  # Not ready for crates.io
+
+# Standalone crate - not part of parent workspace
+[workspace]
 authors = { workspace = true }
 description = "Hidden Markov Model implementation for state detection and prediction in Hanzo Node"
 license = "Apache-2.0"
