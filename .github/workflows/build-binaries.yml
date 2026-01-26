@@ -24,8 +24,9 @@ jobs:
             os: macos-14
             target: aarch64-apple-darwin
           - arch: x86_64-apple-darwin
-            os: macos-15-large
+            os: macos-14
             target: x86_64-apple-darwin
+            cross_mac: true
           # Windows
           - arch: x86_64-pc-windows-msvc
             os: windows-2022
@@ -56,6 +57,10 @@ jobs:
       - name: Install protobuf compiler (macOS)
         if: runner.os == 'macOS'
         run: brew install protobuf
+
+      - name: Install cross-compilation target (macOS x64)
+        if: matrix.cross_mac == true
+        run: rustup target add x86_64-apple-darwin
 
       - name: Cache cargo assets
         id: cache
