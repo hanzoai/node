@@ -35,8 +35,8 @@ members = [
   "hanzo-libs/hanzo-tools-runner",
   "hanzo-libs/hanzo-wasm",
   "hanzo-libs/hanzo-wasm-runtime",
-  # "hanzo-test-framework", # Excluded: type annotation errors
-  # "hanzo-test-macro", # Excluded: test-only utility
+  "hanzo-test-framework",  # Required by hanzo-node
+  "hanzo-test-macro",      # Required by hanzo-node
   "hanzo-bin/hanzo-node",
   "hanzo-bin/hanzoai",
   # "hanzo-bin/hanzo-migrate", # Excluded: depends on hanzo-db which has feature-gated deps
