@@ -4,6 +4,10 @@ description = "Hanzo AI - Simulation Library"
 license = "MIT"
 version = "0.1.1"
 edition = "2021"
+publish = false  # Not ready for crates.io
+
+# Standalone crate - not part of parent workspace
+[workspace]
 
 [dependencies]
 # Core
