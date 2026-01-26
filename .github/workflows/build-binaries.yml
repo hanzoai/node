@@ -11,12 +11,25 @@ jobs:
     strategy:
       matrix:
         include:
+          # Linux
           - arch: x86_64-unknown-linux-gnu
             os: ubuntu-22.04
+            target: x86_64-unknown-linux-gnu
+          - arch: aarch64-unknown-linux-gnu
+            os: ubuntu-22.04
+            target: aarch64-unknown-linux-gnu
+            cross: true
+          # macOS
           - arch: aarch64-apple-darwin
             os: macos-14
+            target: aarch64-apple-darwin
+          - arch: x86_64-apple-darwin
+            os: macos-13
+            target: x86_64-apple-darwin
+          # Windows
           - arch: x86_64-pc-windows-msvc
             os: windows-2022
+            target: x86_64-pc-windows-msvc
     runs-on: ${{ matrix.os }}
     steps:
       - name: Checkout sources
@@ -30,11 +43,18 @@ jobs:
           echo 'linker = "rust-lld"' >> .cargo/config.toml
 
       - name: Install protobuf compiler (Linux)
-        if: matrix.os == 'ubuntu-22.04'
+        if: runner.os == 'Linux'
         run: sudo apt-get update && sudo apt-get install -y protobuf-compiler
 
+      - name: Install cross-compilation tools (Linux ARM64)
+        if: matrix.cross == true
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y gcc-aarch64-linux-gnu g++-aarch64-linux-gnu
+          rustup target add aarch64-unknown-linux-gnu
+
       - name: Install protobuf compiler (macOS)
-        if: matrix.os == 'macos-14'
+        if: runner.os == 'macOS'
         run: brew install protobuf
 
       - name: Cache cargo assets
@@ -52,10 +72,25 @@ jobs:
             ${{ matrix.arch }}-build-cargo-
 
 
+      - name: Configure cross-compilation (Linux ARM64)
+        if: matrix.cross == true
+        run: |
+          mkdir -p .cargo
+          echo '[target.aarch64-unknown-linux-gnu]' >> .cargo/config.toml
+          echo 'linker = "aarch64-linux-gnu-gcc"' >> .cargo/config.toml
+
       - name: Build
         env:
           AI_MODEL_CATALOG_BUILD: 1
-        run: cargo build --release --bin hanzo-node
+        run: cargo build --release --bin hanzo-node --target ${{ matrix.target }}
+
+      - name: Move binary to expected location
+        shell: bash
+        run: |
+          mkdir -p target/release
+          if [ -f "target/${{ matrix.target }}/release/hanzo-node${{ matrix.arch == 'x86_64-pc-windows-msvc' && '.exe' || '' }}" ]; then
+            cp "target/${{ matrix.target }}/release/hanzo-node${{ matrix.arch == 'x86_64-pc-windows-msvc' && '.exe' || '' }}" target/release/
+          fi
 
       - name: Prepare bundle files
         env:

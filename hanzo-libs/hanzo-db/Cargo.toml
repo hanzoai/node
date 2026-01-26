@@ -2,6 +2,10 @@
 name = "hanzo-db"
 version = "0.1.1"
 edition = { workspace = true }
+publish = false  # Not ready for crates.io
+
+# Standalone crate - not part of parent workspace
+[workspace]
 authors = { workspace = true }
 description = "Multi-backend database abstraction for Hanzo Node - Supports LanceDB, DuckDB, PostgreSQL, and more"
 license = "Apache-2.0"
