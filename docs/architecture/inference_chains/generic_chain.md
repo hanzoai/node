@@ -1,6 +1,6 @@
 # Generic Inference Chain
 
-The `GenericInferenceChain` is a core component responsible for handling inference tasks in the Shinkai system. It implements the `InferenceChain` trait and provides a flexible mechanism for processing user messages, performing vector searches, and executing tool calls.
+The `GenericInferenceChain` is a core component responsible for handling inference tasks in the Hanzo system. It implements the `InferenceChain` trait and provides a flexible mechanism for processing user messages, performing vector searches, and executing tool calls.
 
 ## Overview
 
@@ -77,10 +77,10 @@ pub fn generic_inference_prompt(
     custom_user_prompt: Option<String>,
     user_message: String,
     image_files: HashMap<String, String>,
-    ret_nodes: ShinkaiFileChunkCollection,
+    ret_nodes: HanzoFileChunkCollection,
     summary_text: Option<String>,
-    job_step_history: Option<Vec<ShinkaiMessage>>,
-    tools: Vec<ShinkaiTool>,
+    job_step_history: Option<Vec<HanzoMessage>>,
+    tools: Vec<HanzoTool>,
     function_call: Option<ToolCallFunctionResponse>,
     job_id: String,
     node_env: NodeEnvironment,
@@ -98,8 +98,8 @@ Performs vector search across resources with the following capabilities:
 
 ```rust
 pub async fn search_for_chunks_in_resources(
-    fs_files_paths: Vec<ShinkaiPath>,
-    fs_folder_paths: Vec<ShinkaiPath>,
+    fs_files_paths: Vec<HanzoPath>,
+    fs_folder_paths: Vec<HanzoPath>,
     job_filenames: Vec<String>,
     job_id: String,
     scope: &MinimalJobScope,
@@ -108,7 +108,7 @@ pub async fn search_for_chunks_in_resources(
     num_of_top_results: usize,
     max_tokens_in_prompt: usize,
     embedding_generator: RemoteEmbeddingGenerator,
-) -> Result<ShinkaiFileChunkCollection, SqliteManagerError>
+) -> Result<HanzoFileChunkCollection, SqliteManagerError>
 ```
 
 #### `JobManager::inference_with_llm_provider`
