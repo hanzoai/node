@@ -14,12 +14,15 @@ members = [
   "hanzo-libs/hanzo-job-queue-manager",
   "hanzo-libs/hanzo-jobs",
   # "hanzo-libs/hanzo-kbs", # Excluded: incomplete implementation with missing types
+  "hanzo-libs/hanzo-l2",
   "hanzo-libs/hanzo-libp2p",
   "hanzo-libs/hanzo-libp2p-relayer",
   "hanzo-libs/hanzo-llm",
   "hanzo-libs/hanzo-mcp",
   "hanzo-libs/hanzo-messages",
   "hanzo-libs/hanzo-mining",
+  "hanzo-libs/hanzo-vm",
+  "hanzo-libs/hanzo-consensus",
   "hanzo-libs/hanzo-compute",
   "hanzo-libs/hanzo-ai-format",
   "hanzo-libs/hanzo-model-discovery",
@@ -63,12 +66,14 @@ hanzo-identity = { path = "./hanzo-libs/hanzo-identity", version = "1.1.12" }
 hanzo-job-queue-manager = { path = "./hanzo-libs/hanzo-job-queue-manager" }
 hanzo-jobs = { path = "./hanzo-libs/hanzo-jobs", version = "1.1.12" }
 hanzo-kbs = { path = "./hanzo-libs/hanzo-kbs", version = "1.1.11" }
+hanzo-l2 = { path = "./hanzo-libs/hanzo-l2", version = "1.1.19" }
 hanzo-libp2p = { path = "./hanzo-libs/hanzo-libp2p", version = "1.1.12" }
 hanzo-libp2p-relayer = { path = "./hanzo-libs/hanzo-libp2p-relayer", version = "1.1.12" }
 hanzo-llm = { path = "./hanzo-libs/hanzo-llm", version = "1.1.11" }
 hanzo-mcp = { path = "./hanzo-libs/hanzo-mcp", version = "1.1.11" }
 hanzo-messages = { path = "./hanzo-libs/hanzo-messages", version = "1.1.12" }
 hanzo-mining = { path = "./hanzo-libs/hanzo-mining", version = "1.1.19" }
+hanzo-consensus = { path = "./hanzo-libs/hanzo-consensus", version = "1.1.19" }
 hanzo-compute = { path = "./hanzo-libs/hanzo-compute", version = "1.1.19" }
 hanzo-ai-format = { path = "./hanzo-libs/hanzo-ai-format", version = "1.1.19" }
 hanzo-model-discovery = { path = "./hanzo-libs/hanzo-model-discovery", version = "1.1.12" }
@@ -83,6 +88,7 @@ hanzo-tests = { path = "./hanzo-libs/hanzo-tests", version = "0.1.1" }
 hanzo-tools = { path = "./hanzo-libs/hanzo-tools" }
 hanzo-tools-runner = { path = "./hanzo-libs/hanzo-tools-runner", version = "1.0.1" }
 hanzo-wasm = { path = "./hanzo-libs/hanzo-wasm", version = "0.1.1" }
+hanzo-vm = { path = "./hanzo-libs/hanzo-vm", version = "1.1.19" }
 hanzo-wasm-runtime = { path = "./hanzo-libs/hanzo-wasm-runtime", version = "1.1.19" }
 
 
