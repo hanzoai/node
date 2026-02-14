@@ -6,7 +6,7 @@
 # Description:
 # ------------
 # This script creates test jobs with simulated chat conversations for performance testing purposes.
-# It creates a specified number of jobs through the Shinkai API, each containing a simulated
+# It creates a specified number of jobs through the Hanzo API, each containing a simulated
 # conversation about React and WebSocket implementation.
 #
 # Use Cases:
@@ -19,14 +19,14 @@
 # -------------
 # - Bash shell
 # - curl command-line tool
-# - Access to a running Shinkai API instance
+# - Access to a running Hanzo API instance
 #
 # Environment Variables:
 # --------------------
 # JOBS_COUNT    - Number of jobs to create (default: 1)
 # AUTH_TOKEN    - Bearer token for API authentication
 #                 (default: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6Ikpva")
-# API_BASE_URL  - Base URL of the Shinkai API (default: "http://127.0.0.1:9950")
+# API_BASE_URL  - Base URL of the Hanzo API (default: "http://127.0.0.1:9950")
 # DELAY_MS      - Delay between requests in milliseconds (default: 100ms)
 #
 # Usage Examples:
