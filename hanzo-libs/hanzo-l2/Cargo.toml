@@ -1,0 +1,28 @@
+[package]
+name = "hanzo-l2"
+version = "1.1.19"
+edition = "2021"
+description = "Hanzo L2 bridge and sequencing on Lux Network"
+
+[dependencies]
+tokio = { workspace = true }
+serde = { workspace = true, features = ["derive"] }
+serde_json = { workspace = true }
+anyhow = { workspace = true }
+thiserror = { workspace = true }
+log = { workspace = true }
+sha2 = { workspace = true }
+blake3 = { workspace = true }
+async-trait = { workspace = true }
+chrono = { workspace = true }
+hex = { workspace = true }
+
+# Consensus
+lux-consensus = { path = "../../../../lux/consensus/pkg/rust" }
+
+# PQC for cross-chain signatures
+hanzo-pqc = { workspace = true }
+
+[dev-dependencies]
+tokio-test = { workspace = true }
+tempfile = { workspace = true }
