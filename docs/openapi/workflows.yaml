@@ -1,28 +1,28 @@
 openapi: 3.0.3
 info:
-  title: shinkai_node
+  title: hanzo_node
   description: ''
   contact:
     name: Nico Arqueros
-    email: nico@shinkai.com
+    email: nico@hanzo.com
   license:
     name: ''
   version: 0.8.4
 paths:
-  /v2/add_shinkai_tool:
+  /v2/add_hanzo_tool:
     post:
       tags:
       - crate
-      operationId: add_shinkai_tool_handler
+      operationId: add_hanzo_tool_handler
       requestBody:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/ShinkaiTool'
+              $ref: '#/components/schemas/HanzoTool'
         required: true
       responses:
         '200':
-          description: Successfully added Shinkai tool
+          description: Successfully added Hanzo tool
           content:
             application/json:
               schema: {}
@@ -38,21 +38,21 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/APIError'
-  /v2/get_shinkai_tool:
+  /v2/get_hanzo_tool:
     get:
       tags:
       - crate
-      operationId: get_shinkai_tool_handler
+      operationId: get_hanzo_tool_handler
       parameters:
       - name: tool_name
         in: query
-        description: Name of the Shinkai tool
+        description: Name of the Hanzo tool
         required: true
         schema:
           type: string
       responses:
         '200':
-          description: Successfully retrieved Shinkai tool
+          description: Successfully retrieved Hanzo tool
           content:
             application/json:
               schema: {}
@@ -68,14 +68,14 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/APIError'
-  /v2/list_all_shinkai_tools:
+  /v2/list_all_hanzo_tools:
     get:
       tags:
       - crate
-      operationId: list_all_shinkai_tools_handler
+      operationId: list_all_hanzo_tools_handler
       responses:
         '200':
-          description: Successfully listed all Shinkai tools
+          description: Successfully listed all Hanzo tools
           content:
             application/json:
               schema: {}
@@ -91,21 +91,21 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/APIError'
-  /v2/search_shinkai_tool:
+  /v2/search_hanzo_tool:
     get:
       tags:
       - crate
-      operationId: search_shinkai_tool_handler
+      operationId: search_hanzo_tool_handler
       parameters:
       - name: query
         in: query
-        description: Search query for Shinkai tools
+        description: Search query for Hanzo tools
         required: true
         schema:
           type: string
       responses:
         '200':
-          description: Successfully searched Shinkai tools
+          description: Successfully searched Hanzo tools
           content:
             application/json:
               schema: {}
@@ -122,15 +122,15 @@ paths:
               schema:
                 $ref: '#/components/schemas/APIError'
 
-  /v2/set_shinkai_tool:
+  /v2/set_hanzo_tool:
     post:
       tags:
       - crate
-      operationId: set_shinkai_tool_handler
+      operationId: set_hanzo_tool_handler
       parameters:
       - name: tool_name
         in: query
-        description: Key name of the Shinkai tool
+        description: Key name of the Hanzo tool
         required: true
         schema:
           type: string
@@ -141,7 +141,7 @@ paths:
         required: true
       responses:
         '200':
-          description: Successfully set Shinkai tool
+          description: Successfully set Hanzo tool
           content:
             text/plain:
               schema:

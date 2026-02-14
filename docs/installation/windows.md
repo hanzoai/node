@@ -74,7 +74,7 @@ Or run the following command to change the distribution installed:
 wsl --install -d <Distribution Name>
 ```
 
-### 2. Install Shinkai Node
+### 2. Install Hanzo Node
 
 Enter the following command to step inside the installed Linux distribution:
 
@@ -82,4 +82,4 @@ Enter the following command to step inside the installed Linux distribution:
 wsl
 ```
 
-Follow the instructions in the **Quick Start Guide for Linux** documentation to install Shinkai Node in a Linux environment.
+Follow the instructions in the **Quick Start Guide for Linux** documentation to install Hanzo Node in a Linux environment.

@@ -1,6 +1,6 @@
 # Welcome to Hanzo!
 
-Hey there, welcome aboard! We're excited to have you join the Hanzo community. Here’s a quick intro to get you started:
+Hey there, welcome aboard! We're excited to have you join the Hanzo community. Here's a quick intro to get you started:
 
 ## What is Hanzo?
 
@@ -35,12 +35,12 @@ You can find pre-built tools in the Hanzo Store (https://store.hanzo.ai) or even
 **Key Features:**
 * **Tool Playground:** Build, test, and refine your own tools using a local AI, a remote AI or our specialized AI.
 * **Configuration:** Many tools require specific setup or API keys, which you can manage within the tool's configuration.
-* **Execution:** They can run directly on your computer or through docker (automatic is docker is turned on).
+* **Execution:** They can run directly on your computer or through docker (automatic if docker is turned on).
 
 ## Getting Started
 
-* **Explore Agents:** Try creating your first agent [cite: 9555] or tweak an existing one.
-* **Browse Tools:** Check out the available tools [cite: 7508] or try building one yourself.
+* **Explore Agents:** Try creating your first agent or tweak an existing one.
+* **Browse Tools:** Check out the available tools or try building one yourself.
 * **Documentation:** For more detailed guides, visit the [Hanzo Docs](https://docs.hanzo.ai).
 
 We believe in being transparent. Hanzo is a powerful platform, and like any tool, mastering it might take a bit of exploration. We're constantly working to improve it and welcome your feedback.
