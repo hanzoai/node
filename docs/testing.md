@@ -1,10 +1,10 @@
-# Testing Guide for Shinkai Node
+# Testing Guide for Hanzo Node
 
-This guide explains how to write tests for the Shinkai Node project, focusing on the core test structure and helper functions.
+This guide explains how to write tests for the Hanzo Node project, focusing on the core test structure and helper functions.
 
 ## Core Test Structure
 
-Most tests in Shinkai Node follow this fundamental structure:
+Most tests in Hanzo Node follow this fundamental structure:
 
 ```rust
 #[test]

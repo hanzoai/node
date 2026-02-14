@@ -9,7 +9,7 @@ services:
     volumes:
       - embeddings-models:/data
     networks:
-      - shinkai
+      - hanzo
     ports:
       - 9081:9081/tcp
     logging:
@@ -18,12 +18,12 @@ services:
         max-size: "1m"
         max-file: "10"
 
-  shinkai-node:
-    image: dcspark/shinkai-node:latest
-    container_name: shinkai-node
+  hanzo-node:
+    image: hanzoai/hanzo-node:latest
+    container_name: hanzo-node
     restart: "always"
     environment:
-      - GLOBAL_IDENTITY_NAME=@@localhost.shinkai
+      - GLOBAL_IDENTITY_NAME=@@localhost.hanzo
       - FIRST_DEVICE_NEEDS_REGISTRATION_CODE=false
       - STARTING_NUM_QR_PROFILES=0
       - STARTING_NUM_QR_DEVICES=0
@@ -43,9 +43,9 @@ services:
       - LOG_ALL=true
       - RUST_LOG=info
     volumes:
-      - shinode-storage:/app/storage
+      - hanzo-node-storage:/app/storage
     networks:
-      - shinkai
+      - hanzo
     ports:
       - 9550:9550/tcp
       - 9551:9551/tcp
@@ -57,11 +57,11 @@ services:
         max-file: "10"
 
 volumes:
-  shinode-storage:
-    name: shinode-storage
+  hanzo-node-storage:
+    name: hanzo-node-storage
   embeddings-models:
     name: embeddings-models
 
 networks:
-  shinkai:
-    name: shinkai
+  hanzo:
+    name: hanzo
