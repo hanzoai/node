@@ -11,8 +11,8 @@ export STARTING_NUM_QR_PROFILES="1"
 export STARTING_NUM_QR_DEVICES="1"
 export FIRST_DEVICE_NEEDS_REGISTRATION_CODE="false"
 export LOG_SIMPLE="true"
-export EMBEDDINGS_SERVER_URL="http://localhost:11434" # assumes that you installed the embeddings server locally using ollama (shinkai-apps helps you handling all of this)
-# export EMBEDDINGS_SERVER_URL="https://public.shinkai.com/x-em" # if you prefer to use the public embeddings server
+export EMBEDDINGS_SERVER_URL="http://localhost:11434" # assumes that you installed the embeddings server locally using ollama (hanzo-desktop helps you handling all of this)
+# export EMBEDDINGS_SERVER_URL="https://llm.hanzo.ai/x-em" # if you prefer to use the public embeddings server
 
 # Add these lines to enable all log options
 export LOG_ALL=1
