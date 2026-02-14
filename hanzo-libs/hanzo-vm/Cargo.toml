@@ -1,0 +1,42 @@
+[package]
+name = "hanzo-vm"
+description = "Lux VM interface for Hanzo L2 - wraps EVM execution"
+license = "MIT"
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+
+[features]
+default = []
+# Enable embedded Lux consensus for native L1 operation (requires lux monorepo)
+# consensus = ["lux-consensus"]
+
+[dependencies]
+# Workspace deps
+tokio = { workspace = true }
+serde = { workspace = true, features = ["derive"] }
+serde_json = { workspace = true }
+anyhow = { workspace = true }
+thiserror = { workspace = true }
+log = { workspace = true }
+sha2 = { workspace = true }
+blake3 = { workspace = true }
+async-trait = { workspace = true }
+hex = { workspace = true }
+
+# PQC
+hanzo-pqc = { workspace = true }
+
+# State storage (bundled SQLite for dev; MPT later)
+rusqlite = { workspace = true }
+
+# Lux Consensus SDK for native L1 integration (optional)
+# Enable with: --features consensus
+# Note: lux-consensus is only available when building with the lux monorepo
+# [dependencies.lux-consensus]
+# path = "../../../../lux/consensus/pkg/rust"
+# optional = true
+
+[dev-dependencies]
+tokio-test = { workspace = true }
+tempfile = { workspace = true }

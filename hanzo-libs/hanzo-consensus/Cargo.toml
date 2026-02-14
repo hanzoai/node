@@ -1,0 +1,27 @@
+[package]
+name = "hanzo-consensus"
+version = "1.1.19"
+edition = "2021"
+description = "Native Quasar consensus engine for Hanzo Network L2"
+
+[dependencies]
+# Lux consensus SDK (Quasar protocol)
+lux-consensus = { path = "../../../../lux/consensus/pkg/rust" }
+
+# PQC for dual certificates
+hanzo-pqc = { workspace = true }
+
+# Core deps
+tokio = { workspace = true }
+serde = { workspace = true, features = ["derive"] }
+serde_json = { workspace = true }
+anyhow = { workspace = true }
+thiserror = { workspace = true }
+log = { workspace = true }
+blake3 = { workspace = true }
+async-trait = { workspace = true }
+chrono = { workspace = true }
+
+[dev-dependencies]
+tokio-test = { workspace = true }
+tempfile = { workspace = true }
