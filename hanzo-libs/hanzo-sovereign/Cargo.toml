@@ -1,0 +1,16 @@
+[package]
+name = "hanzo-sovereign"
+version = "1.1.19"
+edition = "2021"
+description = "Hanzo L1 sovereign blockchain with ML-KEM/ML-DSA"
+
+[dependencies]
+tokio = { version = "1.0", features = ["full"] }
+serde = { version = "1.0", features = ["derive"] }
+bincode = "1.3"
+sha2 = "0.10"
+log = "0.4"
+ml-kem = "0.2"
+ml-dsa = "0.6"
+chacha20poly1305 = "0.10"
+rand = "0.8"
