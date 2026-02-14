@@ -1670,9 +1670,9 @@ impl Node {
 
         // Remove the chat files folder (filesystem/Chat Files/{formatted_name})
         if let Some(chat_folder) = job_chat_folder {
-            use shinkai_fs::shinkai_file_manager::ShinkaiFileManager;
+            use hanzo_fs::hanzo_file_manager::HanzoFileManager;
             if chat_folder.exists() {
-                if let Err(err) = ShinkaiFileManager::remove_folder(chat_folder, &db) {
+                if let Err(err) = HanzoFileManager::remove_folder(chat_folder, &db) {
                     // Log the error but don't fail the request since DB removal succeeded
                     eprintln!("Warning: Failed to remove job chat folder: {}", err);
                 }
@@ -1732,9 +1732,9 @@ impl Node {
                 Ok(_) => {
                     // Remove the chat files folder (filesystem/Chat Files/{formatted_name})
                     if let Some(chat_folder) = job_chat_folder {
-                        use shinkai_fs::shinkai_file_manager::ShinkaiFileManager;
+                        use hanzo_fs::hanzo_file_manager::HanzoFileManager;
                         if chat_folder.exists() {
-                            if let Err(err) = ShinkaiFileManager::remove_folder(chat_folder, &db) {
+                            if let Err(err) = HanzoFileManager::remove_folder(chat_folder, &db) {
                                 // Log the error but don't fail since DB removal succeeded
                                 eprintln!("Warning: Failed to remove job chat folder for {}: {}", job_id, err);
                             }
