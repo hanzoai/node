@@ -18,7 +18,7 @@ impl Default for PythonRunnerOptions {
     fn default() -> Self {
         Self {
             context: ExecutionContext::default(),
-            code_runner_docker_image_name: String::from("dcspark/hanzo-code-runner:0.9.4"),
+            code_runner_docker_image_name: String::from("ghcr.io/hanzoai/code-runner:0.9.4"),
             uv_binary_path: PathBuf::from(if cfg!(windows) {
                 "./hanzo-tools-runner-resources/uv.exe"
             } else {
