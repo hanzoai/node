@@ -224,7 +224,7 @@ sudo journalctl -u hanzo-node -f
 
 Update the container:
 ```bash
-sudo docker pull dcspark/hanzo-node:latest
+sudo docker pull ghcr.io/hanzoai/node:latest
 sudo systemctl restart hanzo-node
 ```
 
