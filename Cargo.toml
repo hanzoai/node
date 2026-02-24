@@ -22,7 +22,7 @@ members = [
   "hanzo-libs/hanzo-messages",
   "hanzo-libs/hanzo-mining",
   "hanzo-libs/hanzo-vm",
-  "hanzo-libs/hanzo-consensus",
+  # "hanzo-libs/hanzo-consensus", # Excluded: depends on lux-consensus at external path
   "hanzo-libs/hanzo-compute",
   "hanzo-libs/hanzo-ai-format",
   "hanzo-libs/hanzo-model-discovery",
