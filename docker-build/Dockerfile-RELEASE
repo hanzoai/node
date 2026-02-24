@@ -1,16 +1,16 @@
-FROM rust:1.75.0-slim-bookworm AS base-builder
+FROM rust:1.88-slim-bookworm AS base-builder
 RUN apt-get update && apt-get install pkg-config clang cmake libssl-dev --no-install-recommends -y
-#
-FROM base-builder AS hanzo_node-builder
-WORKDIR hanzo
+
+FROM base-builder AS hanzo-node-builder
+WORKDIR /hanzo
 COPY . .
-RUN cargo build --release --bin hanzo_node
-#
+RUN cargo build --release --bin hanzo-node
+
 FROM debian:bookworm-slim AS base-release
 RUN apt-get update && apt-get -y upgrade && apt-get -y --no-install-recommends install ca-certificates libssl3 && apt-get -y clean
-#
-FROM base-release AS hanzo_node
+
+FROM base-release AS hanzo-node
 ARG APP=/app
 WORKDIR ${APP}
-COPY --from=hanzo_node-builder /hanzo/target/release/hanzo_node ${APP}
-CMD ["./hanzo_node"]
+COPY --from=hanzo-node-builder /hanzo/target/release/hanzo-node ${APP}
+CMD ["./hanzo-node"]

@@ -1,23 +1,20 @@
 # Use a Rust base image
-FROM rust:bookworm as builder
+FROM rust:bookworm AS builder
 ARG BUILD_TYPE
 RUN apt-get update && apt-get install -y libclang-dev cmake libssl-dev libc++-dev libc++abi-dev lld
 
 # Create a new directory for your app
 WORKDIR /app
 
-# Copy the Cargo.toml and Cargo.lock files to the container
-
+# Copy the source code
 COPY . .
 
-# Build the dependencies (cached)
-
-RUN cargo clean
+# Build
 RUN rustup component add rustfmt
-RUN CARGO_BUILD_RERUN_IF_CHANGED=1 cargo build $([ "$BUILD_TYPE" = "release" ] && echo "--release")
+RUN CARGO_BUILD_RERUN_IF_CHANGED=1 cargo build --bin hanzo-node $([ "$BUILD_TYPE" = "release" ] && echo "--release")
 
 # Runtime stage
-FROM debian:bookworm-slim as runner
+FROM debian:bookworm-slim AS runner
 ARG BUILD_TYPE
 
 # Install runtime dependencies only
@@ -26,7 +23,7 @@ RUN apt-get update && apt-get install -y libssl3 ca-certificates
 # Copy only necessary files from builder
 WORKDIR /app
 COPY --from=builder /app/cloud-node/run_node.sh /app/
-COPY --from=builder /app/target/${BUILD_TYPE:-debug}/hanzod /app/
+COPY --from=builder /app/target/${BUILD_TYPE:-debug}/hanzo-node /app/
 COPY --from=builder /app/target/${BUILD_TYPE:-debug}/hanzo-tools-runner-resources /app/hanzo-tools-runner-resources
 COPY --from=builder /app/pre-install /app/pre-install
 
