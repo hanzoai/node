@@ -14,7 +14,7 @@ members = [
   "hanzo-libs/hanzo-job-queue-manager",
   "hanzo-libs/hanzo-jobs",
   # "hanzo-libs/hanzo-kbs", # Excluded: incomplete implementation with missing types
-  "hanzo-libs/hanzo-l2",
+  # "hanzo-libs/hanzo-l2", # Excluded: depends on lux-consensus at external path
   "hanzo-libs/hanzo-libp2p",
   "hanzo-libs/hanzo-libp2p-relayer",
   "hanzo-libs/hanzo-llm",
