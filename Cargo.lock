@@ -1910,18 +1910,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "blst"
-version = "0.3.16"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "dcdb4c7013139a150f9fc55d123186dbfaba0d912817466282c73ac49e71fb45"
-dependencies = [
- "cc",
- "glob",
- "threadpool",
- "zeroize",
-]
-
-[[package]]
 name = "bollard"
 version = "0.17.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -5378,25 +5366,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "hanzo-consensus"
-version = "1.1.19"
-dependencies = [
- "anyhow",
- "async-trait",
- "blake3",
- "chrono",
- "hanzo-pqc",
- "log",
- "lux-consensus",
- "serde",
- "serde_json",
- "tempfile",
- "thiserror 2.0.12",
- "tokio",
- "tokio-test",
-]
-
-[[package]]
 name = "hanzo-database"
 version = "1.1.12"
 dependencies = [
@@ -8776,16 +8745,6 @@ name = "lru-slab"
 version = "0.1.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "112b39cec0b298b6c1999fee3e31427f74f676e4cb9879ed1a121b43661a4154"
-
-[[package]]
-name = "lux-consensus"
-version = "1.22.0"
-dependencies = [
- "blst",
- "cc",
- "hex",
- "libc",
-]
 
 [[package]]
 name = "lz4"
@@ -13791,15 +13750,6 @@ checksum = "8b9ef9bad013ada3808854ceac7b46812a6465ba368859a37e2100283d2d719c"
 dependencies = [
  "cfg-if",
  "once_cell",
-]
-
-[[package]]
-name = "threadpool"
-version = "1.8.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "d050e60b33d41c19108b32cea32164033a9013fe3b46cbd4457559bfbf77afaa"
-dependencies = [
- "num_cpus",
 ]
 
 [[package]]
