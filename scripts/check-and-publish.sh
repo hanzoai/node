@@ -184,6 +184,11 @@ main() {
 
     # Service crates (depend on core)
     SERVICE_CRATES=(
+        hanzo-config
+        hanzo-vm
+        hanzo-ai-format
+        hanzo-compute
+        hanzo-mining
         hanzo-mcp
         hanzo-fs
         # hanzo-kbs # Excluded: incomplete implementation
