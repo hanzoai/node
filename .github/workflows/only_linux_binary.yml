@@ -32,7 +32,7 @@ jobs:
           uses: svenstaro/upload-release-action@v2
           with:
             repo_token: ${{ secrets.GITHUB_TOKEN }}
-            file: target/release/hanzo_node
+            file: target/release/hanzo-node
             asset_name: hanzo-node-x86_64-unknown-linux-gnu
             tag: ${{ github.ref }}
             overwrite: true
@@ -40,8 +40,8 @@ jobs:
         - name: Prepare binary files
           run: |
             mkdir files-to-r2
-            cp target/release/hanzo_node files-to-r2/hanzo-node-${{ github.ref_name }}
-            cp target/release/hanzo_node files-to-r2/hanzo-node-latest
+            cp target/release/hanzo-node files-to-r2/hanzo-node-${{ github.ref_name }}
+            cp target/release/hanzo-node files-to-r2/hanzo-node-latest
 
         - name: Upload binaries to R2 bucket
           uses: shallwefootball/s3-upload-action@master

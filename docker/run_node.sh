@@ -80,4 +80,4 @@ echo "========================================="
 echo ""
 
 # Start the node
-exec /app/hanzo_node
+exec /app/hanzo-node

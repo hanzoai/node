@@ -29,4 +29,4 @@ echo "NODE_WS_PORT: $NODE_WS_PORT"
 echo "NODE_PORT: $NODE_PORT"
 echo "NODE_HTTPS_PORT: $NODE_HTTPS_PORT"
 
-/app/hanzod
+/app/hanzo-node
