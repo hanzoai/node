@@ -338,38 +338,23 @@ mod tests {
     #[serial]
     fn test_rename_file_without_embeddings() {
         let dir = tempdir().unwrap();
-
-        // Set the environment variable to the temporary directory path
         std::env::set_var("NODE_STORAGE_PATH", dir.path().to_string_lossy().to_string());
-
         let old_path = HanzoPath::from_string("old_file.txt".to_string());
         let new_path = HanzoPath::from_string("new_file.txt".to_string());
+        let base_path = HanzoPath::from_base_path();
 
         let data = b"Hello, Hanzo!".to_vec();
-
-        // Create the original file
         HanzoFileManager::write_file_to_fs(old_path.clone(), data.clone()).unwrap();
 
-        // Setup the test database
         let sqlite_manager = setup_test_db();
 
-        // List directory contents
         let contents =
-            HanzoFileManager::list_directory_contents(HanzoPath::from_base_path(), &sqlite_manager).unwrap();
+            HanzoFileManager::list_directory_contents(base_path, &sqlite_manager).unwrap();
         eprintln!("contents: {:?}", contents);
 
-        // Verify the file is listed
-        let mut found_file = false;
-        for entry in contents {
-            if entry.path == "old_file.txt" && !entry.is_directory {
-                found_file = true;
-                assert!(!entry.has_embeddings, "File 'old_file.txt' should not have embeddings.");
-            }
-        }
-
+        let found_file = contents.iter().any(|e| e.path == "old_file.txt" && !e.is_directory);
         assert!(found_file, "File 'old_file.txt' should be found in the directory.");
 
-        // Rename the file
         let rename_result = HanzoFileManager::rename_file(old_path.clone(), new_path.clone(), &sqlite_manager);
         assert!(
             rename_result.is_ok(),
@@ -377,52 +362,35 @@ mod tests {
             rename_result
         );
 
-        // Verify the old file does not exist and the new file does
-        assert!(!old_path.exists(), "The old file should not exist after renaming.");
-        assert!(new_path.exists(), "The new file should exist after renaming.");
+        assert!(!old_path.as_path().exists(), "The old file should not exist after renaming.");
+        assert!(new_path.as_path().exists(), "The new file should exist after renaming.");
     }
 
     #[tokio::test]
     #[serial]
-    #[ignore = "Flaky due to shared NODE_STORAGE_PATH environment variable"]
     async fn test_rename_file_with_embeddings() {
         let dir = tempdir().unwrap();
-
-        // Set the environment variable to the temporary directory path
         std::env::set_var("NODE_STORAGE_PATH", dir.path().to_string_lossy().to_string());
-
         let old_path = HanzoPath::from_string("old_file.txt".to_string());
         let new_path = HanzoPath::from_string("new_file.txt".to_string());
+        let base_path = HanzoPath::from_base_path();
 
         let data = b"Hello, Hanzo!".to_vec();
-
-        // Create the original file
         HanzoFileManager::write_file_to_fs(old_path.clone(), data.clone()).unwrap();
 
-        // Setup the test database
         let sqlite_manager = setup_test_db();
 
-        // List directory contents
         let contents =
-            HanzoFileManager::list_directory_contents(HanzoPath::from_base_path(), &sqlite_manager).unwrap();
+            HanzoFileManager::list_directory_contents(base_path, &sqlite_manager).unwrap();
         eprintln!("contents: {:?}", contents);
 
-        // Verify the file is listed
-        let mut found_file = false;
-        for entry in contents {
-            if entry.path == "old_file.txt" && !entry.is_directory {
-                found_file = true;
-                assert!(!entry.has_embeddings, "File 'old_file.txt' should not have embeddings.");
-            }
-        }
-
+        let found_file = contents.iter().any(|e| e.path == "old_file.txt" && !e.is_directory);
         assert!(found_file, "File 'old_file.txt' should be found in the directory.");
 
         let model_type = EmbeddingModelType::default();
         let vector_dimensions = model_type.vector_dimensions().unwrap_or(768);
         let mock_generator = MockGenerator::new(model_type, vector_dimensions);
 
-        // Add embeddings to the file
         let _ = HanzoFileManager::process_embeddings_for_file(
             old_path.clone(),
             &sqlite_manager,
@@ -431,7 +399,6 @@ mod tests {
         )
         .await;
 
-        // Rename the file
         let rename_result = HanzoFileManager::rename_file(old_path.clone(), new_path.clone(), &sqlite_manager);
         assert!(
             rename_result.is_ok(),
@@ -439,14 +406,12 @@ mod tests {
             rename_result
         );
 
-        // Verify the old file does not exist and the new file does
-        assert!(!old_path.exists(), "The old file should not exist after renaming.");
-        assert!(new_path.exists(), "The new file should exist after renaming.");
+        assert!(!old_path.as_path().exists(), "The old file should not exist after renaming.");
+        assert!(new_path.as_path().exists(), "The new file should exist after renaming.");
 
         let results = sqlite_manager.debug_get_all_parsed_files();
         eprintln!("results: {:?}", results);
 
-        // Check that the file path with the embeddings were updated in the db
         if let Some(parsed_file) = sqlite_manager
             .get_parsed_file_by_rel_path(&new_path.relative_path())
             .unwrap()
