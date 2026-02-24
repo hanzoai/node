@@ -15,7 +15,7 @@
 # ============================================================================
 # Stage 1: Builder
 # ============================================================================
-FROM rust:bookworm as builder
+FROM rust:bookworm AS builder
 
 # Build configuration
 ARG BUILD_TYPE=debug
@@ -55,7 +55,7 @@ RUN --mount=type=cache,target=/usr/local/cargo/registry \
 # ============================================================================
 # Stage 2: Runtime
 # ============================================================================
-FROM debian:bookworm-slim as runner
+FROM debian:bookworm-slim AS runner
 
 # Metadata
 ARG BUILD_TYPE=debug

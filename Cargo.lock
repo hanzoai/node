@@ -5629,27 +5629,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "hanzo-l2"
-version = "1.1.19"
-dependencies = [
- "anyhow",
- "async-trait",
- "blake3",
- "chrono",
- "hanzo-pqc",
- "hex",
- "log",
- "lux-consensus",
- "serde",
- "serde_json",
- "sha2",
- "tempfile",
- "thiserror 2.0.12",
- "tokio",
- "tokio-test",
-]
-
-[[package]]
 name = "hanzo-libp2p"
 version = "1.1.12"
 dependencies = [
