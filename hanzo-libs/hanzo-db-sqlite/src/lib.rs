@@ -8,8 +8,12 @@ use hanzo_embed::model_type::EmbeddingModelType;
 use hanzo_messages::schemas::hanzo_name::HanzoName;
 use sqlite_vec::sqlite3_vec_init;
 use std::path::Path;
+use std::sync::atomic::{AtomicU64, Ordering};
 use std::sync::Arc;
 use std::time::Duration;
+
+/// Counter to generate unique shared in-memory FTS database URIs per SqliteManager instance.
+static FTS_INSTANCE_COUNTER: AtomicU64 = AtomicU64::new(0);
 
 pub mod agent_manager;
 pub mod cron_task_manager;
@@ -105,10 +109,19 @@ impl SqliteManager {
         Self::initialize_tables(&conn)?;
         Self::migrate_tables(&conn)?;
 
-        // Create a connection pool for the in-memory database
-        let fts_manager = SqliteConnectionManager::memory();
+        // Create a connection pool for the in-memory FTS database.
+        // Use a shared-cache in-memory database so all connections in the pool
+        // see the same tables and data (unlike SqliteConnectionManager::memory()
+        // which gives each connection its own isolated in-memory database).
+        let fts_id = FTS_INSTANCE_COUNTER.fetch_add(1, Ordering::Relaxed);
+        let fts_uri = format!("file:fts_{}?mode=memory&cache=shared", fts_id);
+        let fts_manager = SqliteConnectionManager::file(&fts_uri).with_flags(
+            rusqlite::OpenFlags::SQLITE_OPEN_URI
+                | rusqlite::OpenFlags::SQLITE_OPEN_READ_WRITE
+                | rusqlite::OpenFlags::SQLITE_OPEN_CREATE,
+        );
         let fts_pool = Pool::builder()
-            .max_size(10) // Increased from 5 to match main pool
+            .max_size(10)
             .connection_timeout(Duration::from_secs(60))
             .build(fts_manager)
             .map_err(|e| rusqlite::Error::SqliteFailure(rusqlite::ffi::Error::new(1), Some(e.to_string())))?;

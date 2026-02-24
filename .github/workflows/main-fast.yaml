@@ -389,7 +389,7 @@ jobs:
         include:
           - name: fs-embed
             packages: "-p hanzo-fs -p hanzo-embed"
-            threads: 4
+            threads: 1
           - name: jobs
             packages: "-p hanzo-jobs -p hanzo-job-queue-manager"
             threads: 4
