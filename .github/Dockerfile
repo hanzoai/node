@@ -22,6 +22,10 @@ RUN node -v
 # Pre-install MCP test server dependencies so npx doesn't fail with missing modules
 RUN npx -y @modelcontextprotocol/server-everything@2025.9.12 --help 2>/dev/null || true
 
+# Install uv (Python package manager) and Python for runner tests
+RUN curl -LsSf https://astral.sh/uv/install.sh | sh
+RUN uv python install 3.12
+
 # Create a new directory for your app
 WORKDIR /app
 
