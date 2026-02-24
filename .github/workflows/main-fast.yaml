@@ -174,7 +174,7 @@ jobs:
             packages: "-p hanzo-db-sqlite"
             threads: 4
           - name: db-core
-            packages: "-p hanzo-database -p hanzo-db"
+            packages: "-p hanzo-database"
             threads: 4
     steps:
       - name: Free disk space
@@ -397,7 +397,7 @@ jobs:
             packages: "-p hanzo-libp2p -p hanzo-libp2p-relayer"
             threads: 2
           - name: misc
-            packages: "-p hanzo-compute -p hanzo-mining -p hanzo-model-discovery -p hanzo-baml"
+            packages: "-p hanzo-compute -p hanzo-mining -p hanzo-model-discovery"
             threads: 4
     steps:
       - name: Free disk space
