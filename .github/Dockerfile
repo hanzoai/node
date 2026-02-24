@@ -16,8 +16,11 @@ RUN source $NVM_DIR/nvm.sh \
     && nvm use default
 
 ENV NODE_PATH=$NVM_DIR/v$NODE_VERSION/lib/node_modules
-ENV PATH=$NVM_DIR/versions/node/$NODE_VERSION/bin:$PATH
+ENV PATH=$NVM_DIR/versions/node/$NODE_VERSION/bin:/root/.local/bin:$PATH
 RUN node -v
+
+# Pre-install MCP test server dependencies so npx doesn't fail with missing modules
+RUN npx -y @modelcontextprotocol/server-everything@2025.9.12 --help 2>/dev/null || true
 
 # Create a new directory for your app
 WORKDIR /app
