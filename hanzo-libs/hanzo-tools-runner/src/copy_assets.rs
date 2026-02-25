@@ -161,25 +161,40 @@ pub fn copy_deno(
 
     // Unzip the downloaded file
     println!("opening zip file for extraction");
-    let zip_file = std::fs::File::open(&zipped_file).expect("failed to read zipped binary");
-    let mut archive = zip::ZipArchive::new(zip_file).expect("failed to open zip archive");
-    println!("extracting zip archive to: {}", source_path.display());
-    archive
-        .extract(&source_path)
-        .expect("failed to extract zip archive");
-    println!("successfully extracted zip archive");
+    {
+        let zip_file = std::fs::File::open(&zipped_file).expect("failed to read zipped binary");
+        let mut archive = zip::ZipArchive::new(zip_file).expect("failed to open zip archive");
+        println!("extracting zip archive to: {}", source_path.display());
+        archive
+            .extract(&source_path)
+            .expect("failed to extract zip archive");
+        println!("successfully extracted zip archive");
+    } // Drop archive + file handle before copying (avoids Windows file lock)
 
     println!(
         "copying deno binary from {} to {}",
         deno_binary_source_path.display(),
         deno_binary_target_path.display()
     );
-    fs::copy(&deno_binary_source_path, &deno_binary_target_path).unwrap_or_else(|err| {
-        panic!(
-            "failed to copy downloaded deno binary to target path: {}",
-            err
-        );
-    });
+    // Retry copy on Windows — antivirus or indexing services can briefly lock newly extracted files
+    let mut last_err = None;
+    for attempt in 0..5 {
+        match fs::copy(&deno_binary_source_path, &deno_binary_target_path) {
+            Ok(bytes) => {
+                last_err = None;
+                let _ = bytes;
+                break;
+            }
+            Err(e) => {
+                println!("copy attempt {} failed: {} — retrying in 2s", attempt + 1, e);
+                last_err = Some(e);
+                std::thread::sleep(std::time::Duration::from_secs(2));
+            }
+        }
+    }
+    if let Some(err) = last_err {
+        panic!("failed to copy downloaded deno binary to target path after 5 attempts: {}", err);
+    }
     println!(
         "successfully copied deno binary to target path: {}",
         deno_binary_target_path.display()
@@ -285,45 +300,50 @@ pub fn copy_uv(
 
         // Unzip the downloaded file
         println!("opening zip file for extraction");
-        let zip_file = std::fs::File::open(&zipped_file).expect("failed to read zipped binary");
-        if cfg!(windows) {
-            let mut archive = zip::ZipArchive::new(zip_file).expect("failed to open zip archive");
-            println!("extracting zip archive to: {}", source_path.display());
-            archive
-                .extract(&source_path)
-                .expect("failed to extract zip archive");
-        } else {
-            let mut archive = tar::Archive::new(flate2::read::GzDecoder::new(zip_file));
-            println!("extracting tar.gz archive to: {}", source_path.display());
-            archive
-                .unpack(&source_path)
-                .expect("failed to extract tar.gz archive");
-            // Move binary from extracted folder to source path
-            if !cfg!(windows) {
-                let extracted_folder = if cfg!(target_os = "macos") {
-                    if cfg!(target_arch = "x86_64") {
-                        source_path.join("uv-x86_64-apple-darwin")
-                    } else {
-                        source_path.join("uv-aarch64-apple-darwin")
-                    }
-                } else if cfg!(target_arch = "x86_64") {
-                    source_path.join("uv-x86_64-unknown-linux-gnu")
-                } else {
-                    source_path.join("uv-aarch64-unknown-linux-gnu")
-                };
-
-                let extracted_binary = extracted_folder.join("uv");
-                println!(
-                    "moving UV binary from {} to {}",
-                    extracted_binary.display(),
-                    uv_binary_source_path.display()
-                );
-                fs::rename(extracted_binary, &uv_binary_source_path)
-                    .expect("failed to move UV binary from extracted folder");
-
-                // Clean up extracted folder
-                fs::remove_dir_all(extracted_folder).expect("failed to remove extracted folder");
+        {
+            let zip_file =
+                std::fs::File::open(&zipped_file).expect("failed to read zipped binary");
+            if cfg!(windows) {
+                let mut archive =
+                    zip::ZipArchive::new(zip_file).expect("failed to open zip archive");
+                println!("extracting zip archive to: {}", source_path.display());
+                archive
+                    .extract(&source_path)
+                    .expect("failed to extract zip archive");
+            } else {
+                let mut archive = tar::Archive::new(flate2::read::GzDecoder::new(zip_file));
+                println!("extracting tar.gz archive to: {}", source_path.display());
+                archive
+                    .unpack(&source_path)
+                    .expect("failed to extract tar.gz archive");
             }
+        } // Drop archive + file handle before copying (avoids Windows file lock)
+
+        // Move binary from extracted folder to source path
+        if !cfg!(windows) {
+            let extracted_folder = if cfg!(target_os = "macos") {
+                if cfg!(target_arch = "x86_64") {
+                    source_path.join("uv-x86_64-apple-darwin")
+                } else {
+                    source_path.join("uv-aarch64-apple-darwin")
+                }
+            } else if cfg!(target_arch = "x86_64") {
+                source_path.join("uv-x86_64-unknown-linux-gnu")
+            } else {
+                source_path.join("uv-aarch64-unknown-linux-gnu")
+            };
+
+            let extracted_binary = extracted_folder.join("uv");
+            println!(
+                "moving UV binary from {} to {}",
+                extracted_binary.display(),
+                uv_binary_source_path.display()
+            );
+            fs::rename(extracted_binary, &uv_binary_source_path)
+                .expect("failed to move UV binary from extracted folder");
+
+            // Clean up extracted folder
+            fs::remove_dir_all(extracted_folder).expect("failed to remove extracted folder");
         }
         println!("successfully extracted zip archive");
     } else {
@@ -335,12 +355,31 @@ pub fn copy_uv(
         uv_binary_source_path.display(),
         uv_binary_target_path.display()
     );
-    fs::copy(&uv_binary_source_path, &uv_binary_target_path).unwrap_or_else(|err| {
+    // Retry copy on Windows — antivirus or indexing services can briefly lock newly extracted files
+    let mut last_err = None;
+    for attempt in 0..5 {
+        match fs::copy(&uv_binary_source_path, &uv_binary_target_path) {
+            Ok(_) => {
+                last_err = None;
+                break;
+            }
+            Err(e) => {
+                println!(
+                    "UV copy attempt {} failed: {} — retrying in 2s",
+                    attempt + 1,
+                    e
+                );
+                last_err = Some(e);
+                std::thread::sleep(std::time::Duration::from_secs(2));
+            }
+        }
+    }
+    if let Some(err) = last_err {
         panic!(
-            "failed to copy downloaded UV binary to target path: {}",
+            "failed to copy downloaded UV binary to target path after 5 attempts: {}",
             err
         );
-    });
+    }
     println!(
         "successfully copied UV binary to target path: {}",
         uv_binary_target_path.display()
