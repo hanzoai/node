@@ -1,7 +1,7 @@
 # Use a Rust base image
 FROM rust:bookworm AS builder
 ARG BUILD_TYPE
-RUN apt-get update && apt-get install -y libclang-dev cmake libssl-dev libc++-dev libc++abi-dev lld
+RUN apt-get update && apt-get install -y clang libclang-dev cmake libssl-dev libc++-dev libc++abi-dev lld
 
 # Install nvm, npm and node
 RUN rm /bin/sh && ln -s /bin/bash /bin/sh
@@ -35,6 +35,10 @@ COPY . .
 # Set up Rust toolchain
 RUN rustup default 1.88
 RUN rustup component add rustfmt
+
+# Limit parallel jobs to prevent OOM on arm64 (16GB Graviton).
+# lld linker configured in .cargo/config.toml (uses ~3x less RAM than ld).
+ENV CARGO_BUILD_JOBS=4
 
 # Build main code, pre-compile tests, and cleanup in SINGLE layer
 # This is critical - separate RUN commands create Docker layers that preserve old data
