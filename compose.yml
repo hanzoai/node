@@ -1,0 +1,51 @@
+services:
+  node:
+    image: ghcr.io/hanzoai/node:latest
+    ports:
+      - "9550:9550"
+      - "9551:9551"
+      - "9552:9552"
+    environment:
+      - EMBEDDINGS_SERVER_URL=http://engine:36900/v1
+      - RUST_LOG=info
+      - NODE_API_IP=0.0.0.0
+      - NODE_API_PORT=9550
+      - NODE_WS_PORT=9551
+      - NODE_PORT=9552
+      - GLOBAL_IDENTITY_NAME=@@my_local_ai.sep-hanzo
+      - NO_SECRET_FILE=true
+      - LOG_SIMPLE=true
+      - NODE_STORAGE_PATH=/data
+      - INITIAL_AGENT_NAMES=do_qwen32b
+      - INITIAL_AGENT_URLS=https://inference.do-ai.run
+      - INITIAL_AGENT_MODELS=openai:alibaba-qwen3-32b
+    volumes:
+      - node-data:/data
+    depends_on:
+      engine:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9550/v2/health_check"]
+      interval: 30s
+      timeout: 10s
+      start_period: 40s
+      retries: 3
+
+  engine:
+    image: ghcr.io/hanzoai/engine:latest
+    ports:
+      - "36900:36900"
+    volumes:
+      - ~/.cache/huggingface:/data
+    environment:
+      - RUST_LOG=info
+      - PORT=36900
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:36900/health"]
+      interval: 30s
+      timeout: 10s
+      start_period: 60s
+      retries: 3
+
+volumes:
+  node-data:
