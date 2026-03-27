@@ -117,6 +117,7 @@ hanzo-libs/hanzo-tcp-relayer/internal_tools_storage
 pre-install/
 hanzo-libs/hanzo-non-rust-code/internal_tools_storage
 hanzo-bin/hanzo-node/storage_test_node
+hanzo-bin/hanzo-node/shinkai-tools-runner-resources/deno
 storage_debug_node2_test
 storage_debug_node1_test
 storage_debug_nico_testnet1
