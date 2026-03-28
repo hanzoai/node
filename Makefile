@@ -7,11 +7,11 @@ all: build
 
 # Build in debug mode
 build:
-	cargo build --bin hanzod
+	cargo build --bin hanzoai
 
-# Build in release mode  
+# Build in release mode
 build-release:
-	cargo build --release --bin hanzod
+	cargo build --release --bin hanzoai
 
 # Run the node locally
 run:
