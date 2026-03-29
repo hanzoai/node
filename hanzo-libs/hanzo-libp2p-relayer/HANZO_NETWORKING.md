@@ -87,7 +87,7 @@ Identities are registered on the Hanzo Registry smart contract:
 Identity: @@my_node.sep-hanzo
 Signature Key: <ed25519_public_key>
 Encryption Key: <x25519_public_key>
-Network Address: /ip4/203.0.113.42/tcp/9552
+Network Address: /ip4/203.0.113.42/tcp/3692
 Use Proxy: false
 ```
 
@@ -165,11 +165,11 @@ GLOBAL_IDENTITY_NAME="@@node_name.sep-hanzo"
 
 # Network Binding
 NODE_IP="0.0.0.0"              # LibP2P listen IP
-NODE_PORT="9552"               # LibP2P port
+NODE_PORT="3692"               # LibP2P port
 NODE_API_IP="0.0.0.0"          # API server IP
-NODE_API_PORT="9550"           # HTTP API port
-NODE_WS_PORT="9551"            # WebSocket port
-NODE_HTTPS_PORT="9553"         # HTTPS port
+NODE_API_PORT="3690"           # HTTP API port
+NODE_WS_PORT="3691"            # WebSocket port
+NODE_HTTPS_PORT="3693"         # HTTPS port
 
 # Cryptographic Keys
 IDENTITY_SECRET_KEY="32_byte_ed25519_key_in_hex"
@@ -202,10 +202,10 @@ export PROXY_IDENTITY="@@relay_server.sep-hanzo"
 #!/bin/bash
 export NODE_API_IP="0.0.0.0"
 export NODE_IP="0.0.0.0"
-export NODE_API_PORT="9550"
-export NODE_WS_PORT="9551"
-export NODE_PORT="9552"
-export NODE_HTTPS_PORT="9553"
+export NODE_API_PORT="3690"
+export NODE_WS_PORT="3691"
+export NODE_PORT="3692"
+export NODE_HTTPS_PORT="3693"
 export IDENTITY_SECRET_KEY="df3f619804a92fdb4057192dc43dd748ea778adc52bc498ce80524c014b81119"
 export ENCRYPTION_SECRET_KEY="d83f619804a92fdb4057192dc43dd748ea778adc52bc498ce80524c014b81159"
 export GLOBAL_IDENTITY_NAME="@@localhost.sep-hanzo"
@@ -221,10 +221,10 @@ cargo run --bin hanzo_node
 #!/bin/bash
 export NODE_API_IP="0.0.0.0"
 export NODE_IP="0.0.0.0"
-export NODE_API_PORT="9550"
-export NODE_WS_PORT="9551"
-export NODE_PORT="9552"
-export NODE_HTTPS_PORT="9553"
+export NODE_API_PORT="3690"
+export NODE_WS_PORT="3691"
+export NODE_PORT="3692"
+export NODE_HTTPS_PORT="3693"
 export IDENTITY_SECRET_KEY="9d662cf50299042d44a4ec7cbe040f96291bbac2d2375515db75bda4046716a9"
 export ENCRYPTION_SECRET_KEY="d01d4173c445b6c47000fd4131acbae35a71027d3303c223af013701333bcb54"
 export GLOBAL_IDENTITY_NAME="@@production_node.sep-hanzo"
@@ -241,16 +241,16 @@ cargo run --bin hanzo_node
 ```dockerfile
 ENV NODE_API_IP=0.0.0.0
 ENV NODE_IP=0.0.0.0
-ENV NODE_API_PORT=9550
-ENV NODE_WS_PORT=9551
-ENV NODE_PORT=9552
-ENV NODE_HTTPS_PORT=9553
+ENV NODE_API_PORT=3690
+ENV NODE_WS_PORT=3691
+ENV NODE_PORT=3692
+ENV NODE_HTTPS_PORT=3693
 ENV IDENTITY_SECRET_KEY=""
 ENV ENCRYPTION_SECRET_KEY=""
 ENV GLOBAL_IDENTITY_NAME="@@docker_node.sep-hanzo"
 ENV PROXY_IDENTITY="@@docker_relay.sep-hanzo"
 
-EXPOSE 9550 9551 9552 9553
+EXPOSE 3690 3691 3692 3693
 
 CMD ["hanzo_node"]
 ```
@@ -375,7 +375,7 @@ let encryption_key = StaticSecret::random_from_rng(&mut rand::rngs::OsRng);
 
 #### Port Conflicts
 ```bash
-# Error: "API port 9550 is already in use"
+# Error: "API port 3690 is already in use"
 # Solution: Change port configuration
 export NODE_API_PORT="9560"
 export NODE_PORT="9562"
@@ -401,7 +401,7 @@ curl http://relay_server:9901/health
 #### Network Connectivity
 ```bash
 # Test port availability
-nc -zv 0.0.0.0 9552
+nc -zv 0.0.0.0 3692
 
 # Test relay connectivity
 cargo run --example test_connection -- "relay_ip:9901"
@@ -434,14 +434,14 @@ cargo run --example test_connection -- "relay_ip:9901"
 
 #### Direct Mode Logs
 ```
-🌐 Listening on /ip4/0.0.0.0/tcp/9552 (direct mode)
+🌐 Listening on /ip4/0.0.0.0/tcp/3692 (direct mode)
 🔗 LIBP2P Local peer id: 12D3KooW...
 📡 Direct connection established with peer: 12D3KooW...
 ```
 
 #### Relay Mode Logs
 ```
-🌐 Listening on /ip4/0.0.0.0/tcp/9552 (relay mode)
+🌐 Listening on /ip4/0.0.0.0/tcp/3692 (relay mode)
 🔗 Setting up LibP2P with relay: @@relay.sep-hanzo
 📡 Connecting to relay at: /ip4/x.x.x.x/tcp/9901
 🎉 Proxy configured: @@relay.sep-hanzo - using LibP2P relay
@@ -517,10 +517,10 @@ let metrics = NetworkMetrics {
 #### Health Checks
 ```bash
 # Node health endpoint
-curl http://localhost:9550/health
+curl http://localhost:3690/health
 
 # Detailed status
-curl http://localhost:9550/v2/status
+curl http://localhost:3690/v2/status
 ```
 
 ### Development and Testing
@@ -533,13 +533,13 @@ curl http://localhost:9550/v2/status
 # Terminal 2: Start first node (relay mode)
 export PROXY_IDENTITY="@@local_relay.sep-hanzo"
 export GLOBAL_IDENTITY_NAME="@@node1.sep-hanzo"
-export NODE_PORT="9552"
+export NODE_PORT="3692"
 ./scripts/run_node.sh
 
 # Terminal 3: Start second node (relay mode)
 export PROXY_IDENTITY="@@local_relay.sep-hanzo"
 export GLOBAL_IDENTITY_NAME="@@node2.sep-hanzo"
-export NODE_PORT="9553"
+export NODE_PORT="3693"
 ./scripts/run_node.sh
 ```
 

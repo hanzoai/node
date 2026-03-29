@@ -5824,6 +5824,7 @@ dependencies = [
  "hanzo-test-macro",
  "hanzo-tools",
  "hanzo-tools-runner",
+ "hanzo-zap",
  "hex",
  "keyphrases",
  "lazy_static",
@@ -6108,6 +6109,19 @@ dependencies = [
  "wasmtime",
  "wasmtime-wasi",
  "wat",
+]
+
+[[package]]
+name = "hanzo-zap"
+version = "0.1.0"
+dependencies = [
+ "rustls 0.23.27",
+ "serde",
+ "serde_json",
+ "tokio",
+ "tokio-rustls 0.26.2",
+ "tracing",
+ "webpki-roots 0.26.11",
 ]
 
 [[package]]

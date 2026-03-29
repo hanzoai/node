@@ -9,10 +9,10 @@ set -e
 # Network Configuration
 export NODE_API_IP=${NODE_API_IP:-0.0.0.0}
 export NODE_IP=${NODE_IP:-0.0.0.0}
-export NODE_API_PORT=${NODE_API_PORT:-9550}
-export NODE_WS_PORT=${NODE_WS_PORT:-9551}
-export NODE_PORT=${NODE_PORT:-9552}
-export NODE_HTTPS_PORT=${NODE_HTTPS_PORT:-9553}
+export NODE_API_PORT=${NODE_API_PORT:-3690}
+export NODE_WS_PORT=${NODE_WS_PORT:-3691}
+export NODE_PORT=${NODE_PORT:-3692}
+export NODE_HTTPS_PORT=${NODE_HTTPS_PORT:-3693}
 
 # Path Configuration
 export INSTALL_FOLDER_PATH=${INSTALL_FOLDER_PATH:-/app/pre-install}

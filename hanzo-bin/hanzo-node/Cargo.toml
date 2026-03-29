@@ -70,6 +70,7 @@ hanzo-embed = { workspace = true }
 hanzo-fs = { workspace = true }
 hanzo-runtime = { workspace = true }
 hanzo-mcp = { workspace = true }
+hanzo-zap = { workspace = true }
 # hanzo-baml = { workspace = true }
 bincode = { workspace = true }
 urlencoding = "2.1.0"

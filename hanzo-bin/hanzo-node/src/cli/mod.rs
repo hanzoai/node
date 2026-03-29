@@ -40,7 +40,7 @@ pub enum Commands {
         api_ip: String,
 
         /// API port
-        #[clap(long, env = "NODE_API_PORT", default_value = "9450")]
+        #[clap(long, env = "NODE_API_PORT", default_value = "3690")]
         api_port: u16,
     },
 

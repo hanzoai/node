@@ -38,6 +38,7 @@ members = [
   "hanzo-libs/hanzo-tools-runner",
   "hanzo-libs/hanzo-wasm",
   "hanzo-libs/hanzo-wasm-runtime",
+  "hanzo-libs/hanzo-zap",
   "hanzo-test-framework",  # Required by hanzo-node
   "hanzo-test-macro",      # Required by hanzo-node
   "hanzo-bin/hanzo-node",
@@ -90,6 +91,7 @@ hanzo-tools-runner = { path = "./hanzo-libs/hanzo-tools-runner", version = "1.0.
 hanzo-wasm = { path = "./hanzo-libs/hanzo-wasm", version = "0.1.1" }
 hanzo-vm = { path = "./hanzo-libs/hanzo-vm", version = "1.1.19" }
 hanzo-wasm-runtime = { path = "./hanzo-libs/hanzo-wasm-runtime", version = "1.1.19" }
+hanzo-zap = { path = "./hanzo-libs/hanzo-zap", version = "0.1.0" }
 
 
 

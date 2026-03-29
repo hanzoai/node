@@ -276,7 +276,7 @@ impl ToolExecutor for TypescriptUnsafeProcessorTool {
         // TODO get this from node_env
         let protocol = "http".to_string();
         let api_ip = env::var("NODE_API_IP").unwrap_or_else(|_| "0.0.0.0".to_string());
-        let api_port = env::var("NODE_API_PORT").unwrap_or_else(|_| "9550".to_string());
+        let api_port = env::var("NODE_API_PORT").unwrap_or_else(|_| "3690".to_string());
         envs.insert(
             "HANZO_NODE_LOCATION".to_string(),
             format!("{}://{}:{}", protocol, api_ip, api_port),

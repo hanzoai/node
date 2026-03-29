@@ -15,6 +15,7 @@ pub struct NodeEnvironment {
     pub api_listen_address: SocketAddr,
     pub api_https_listen_address: SocketAddr,
     pub ws_address: Option<SocketAddr>,
+    pub zap_address: SocketAddr,
     pub ping_interval: u64,
     pub first_device_needs_registration_code: bool,
     pub no_secrets_file: bool,
@@ -129,7 +130,7 @@ pub fn fetch_node_environment() -> NodeEnvironment {
         .parse()
         .expect("Failed to parse IP address");
     let api_port: u16 = env::var("NODE_API_PORT")
-        .unwrap_or_else(|_| "9550".to_string())
+        .unwrap_or_else(|_| "3690".to_string())
         .parse()
         .expect("Failed to parse port number");
 
@@ -199,6 +200,13 @@ pub fn fetch_node_environment() -> NodeEnvironment {
 
     let api_https_listen_address = SocketAddr::new(api_ip, api_https_port);
 
+    // ZAP binary protocol port (default 3692)
+    let zap_port: u16 = env::var("NODE_ZAP_PORT")
+        .unwrap_or_else(|_| "3692".to_string())
+        .parse()
+        .expect("Failed to parse ZAP port number");
+    let zap_address = SocketAddr::new(ip, zap_port);
+
     NodeEnvironment {
         global_identity_name,
         listen_address,
@@ -216,5 +224,6 @@ pub fn fetch_node_environment() -> NodeEnvironment {
         supported_embedding_models,
         api_v2_key,
         api_https_listen_address,
+        zap_address,
     }
 }
