@@ -102,7 +102,7 @@ server {
     add_header Strict-Transport-Security max-age=15768000;
 
     location / {
-        proxy_pass http://localhost:9550;
+        proxy_pass http://localhost:3690;
         proxy_http_version 1.1;
         proxy_set_header Upgrade $http_upgrade;
         proxy_set_header Connection 'upgrade';
@@ -125,7 +125,7 @@ server {
 2. Configure Security Group:
    - Allow TCP 80 (HTTP)
    - Allow TCP 443 (HTTPS)
-   - Ensure 9550 is NOT exposed to the internet
+   - Ensure 3690 is NOT exposed to the internet
 
 3. Configure Route 53 (if using AWS domains) or point your domain's A record to the EC2 instance.
 
@@ -185,7 +185,7 @@ az network nsg rule create \
    - Create new firewall
    - Allow TCP 80 (HTTP)
    - Allow TCP 443 (HTTPS)
-   - Do NOT expose port 9550 to the internet
+   - Do NOT expose port 3690 to the internet
    - Apply to Hanzo Node droplet
 
 3. Follow the same Nginx and SSL setup as above.
@@ -236,7 +236,7 @@ sudo systemctl restart hanzo-node
 4. Use strong SSL/TLS configuration
 5. Consider implementing rate limiting
 6. Backup your storage directory regularly
-7. Ensure port 9550 is only accessible locally
+7. Ensure port 3690 is only accessible locally
 8. Keep Nginx and SSL certificates up to date
 9. Enable and configure firewall (ufw) on the host:
 ```bash

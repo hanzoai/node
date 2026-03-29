@@ -1,4 +1,5 @@
 use crate::api_sse;
+use crate::api_v1;
 use crate::api_v2;
 use crate::api_ws;
 
@@ -144,6 +145,14 @@ pub async fn run_api(
             "ngrok-skip-browser-warning",
         ]);
 
+    let v1_routes = warp::path("v1").and(
+        api_v1::v1_routes(node_commands_sender.clone())
+            .recover(handle_rejection)
+            .with(log)
+            .with(cors.clone())
+            .with(compression::gzip()),
+    );
+
     let v2_routes = warp::path("v2").and(
         api_v2::api_v2_router::v2_routes(node_commands_sender.clone(), node_name.clone())
             .recover(handle_rejection)
@@ -167,7 +176,7 @@ pub async fn run_api(
     );
 
     // Combine all routes (avoid applying gzip compression globally so SSE is not compressed)
-    let routes = v2_routes.or(mcp_routes).or(ws_routes).with(log).with(cors);
+    let routes = v1_routes.or(v2_routes).or(mcp_routes).or(ws_routes).with(log).with(cors);
 
     // Wrap the HTTP server in an async block that returns a Result
     let http_server = async {

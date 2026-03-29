@@ -8,6 +8,7 @@ mod runner;
 mod tools;
 mod utils;
 mod wallet;
+mod zap_server;
 
 use runner::{initialize_node, run_node_tasks};
 use hanzo_messages::hanzo_utils::hanzo_logging::init_default_tracing;
@@ -42,5 +43,5 @@ pub async fn main() {
     println!("Starting Hanzo Node...");
 
     let result = initialize_node().await.unwrap();
-    let _ = run_node_tasks(result.1, result.2, result.3).await;
+    let _ = run_node_tasks(result.1, result.2, result.3, result.4).await;
 }
