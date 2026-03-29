@@ -28,10 +28,10 @@ COPY --from=builder /app/target/${BUILD_TYPE:-debug}/hanzo-tools-runner-resource
 COPY --from=builder /app/pre-install /app/pre-install
 
 # Use environment variables if they exist, otherwise use default values
-ENV NODE_API_PORT=${NODE_API_PORT:-9550}
-ENV NODE_WS_PORT=${NODE_WS_PORT:-9551}
-ENV NODE_PORT=${NODE_PORT:-9552}
-ENV NODE_HTTPS_PORT=${NODE_HTTPS_PORT:-9553}
+ENV NODE_API_PORT=${NODE_API_PORT:-3690}
+ENV NODE_WS_PORT=${NODE_WS_PORT:-3691}
+ENV NODE_PORT=${NODE_PORT:-3692}
+ENV NODE_HTTPS_PORT=${NODE_HTTPS_PORT:-3693}
 
 EXPOSE ${NODE_API_PORT} ${NODE_WS_PORT} ${NODE_PORT} ${NODE_HTTPS_PORT}
 

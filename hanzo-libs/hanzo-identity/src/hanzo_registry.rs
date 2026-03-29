@@ -102,7 +102,7 @@ impl OnchainIdentity {
             .as_str(),
         );
 
-        let default_value = "localhost:9550";
+        let default_value = "localhost:3690";
         let first_address = self
             .address_or_proxy_nodes
             .iter()

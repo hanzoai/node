@@ -19,5 +19,5 @@ FROM ubuntu:24.10 AS downloader
  ENV HANZO_TOOLS_RUNNER_UV_BINARY_PATH="/app/hanzo-tools-runner-resources/uv"
  ENV PATH="/app/hanzo-tools-runner-resources:/root/.local/bin:$PATH"
 
- EXPOSE 9550
+ EXPOSE 3690
  ENTRYPOINT ["/bin/sh", "-c", "/app/hanzo-node"]
