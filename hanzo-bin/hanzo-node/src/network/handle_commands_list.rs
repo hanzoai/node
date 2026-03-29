@@ -2878,6 +2878,25 @@ impl Node {
                     let _ = Node::v2_api_get_hanzo_tool(db_clone, bearer, payload, serialize_config, res).await;
                 });
             }
+            // V1 API (OpenAI / Anthropic compatible)
+            NodeCommand::V1ChatCompletion { bearer, body, res } => {
+                let db_clone = Arc::clone(&self.db);
+                tokio::spawn(async move {
+                    let _ = Node::v1_handle_chat_completion(db_clone, bearer, body, res).await;
+                });
+            }
+            NodeCommand::V1AnthropicMessages { bearer, body, res } => {
+                let db_clone = Arc::clone(&self.db);
+                tokio::spawn(async move {
+                    let _ = Node::v1_handle_anthropic_messages(db_clone, bearer, body, res).await;
+                });
+            }
+            NodeCommand::V1ListModels { bearer, res } => {
+                let db_clone = Arc::clone(&self.db);
+                tokio::spawn(async move {
+                    let _ = Node::v1_handle_list_models(db_clone, bearer, res).await;
+                });
+            }
             _ => (),
         }
     }

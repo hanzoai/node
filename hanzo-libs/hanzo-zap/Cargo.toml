@@ -1,0 +1,15 @@
+[package]
+name = "hanzo-zap"
+version = "0.1.0"
+edition = "2021"
+description = "ZAP (Zero-copy Agent Protocol) wire protocol for Hanzo products"
+license = "MIT"
+
+[dependencies]
+tokio = { version = "1", features = ["io-util", "net", "rt", "sync", "macros"] }
+tokio-rustls = "0.26"
+rustls = { version = "0.23", default-features = false, features = ["std", "tls12", "ring"] }
+webpki-roots = "0.26"
+tracing = "0.1"
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
