@@ -112,10 +112,10 @@ ENV BUILD_TYPE=${BUILD_TYPE} \
     HANZO_VERSION=${HANZO_VERSION} \
     NODE_API_IP=0.0.0.0 \
     NODE_IP=0.0.0.0 \
-    NODE_API_PORT=9550 \
-    NODE_WS_PORT=9551 \
-    NODE_PORT=9552 \
-    NODE_HTTPS_PORT=9553 \
+    NODE_API_PORT=3690 \
+    NODE_WS_PORT=3691 \
+    NODE_PORT=3692 \
+    NODE_HTTPS_PORT=3693 \
     GLOBAL_IDENTITY_NAME=@@my_local_ai.sep-hanzo \
     RUST_LOG=debug,error,info \
     LOG_SIMPLE=true \
@@ -129,7 +129,7 @@ ENV BUILD_TYPE=${BUILD_TYPE} \
     INITIAL_AGENT_MODELS=openai:alibaba-qwen3-32b
 
 # Expose ports
-EXPOSE 9550 9551 9552 9553
+EXPOSE 3690 3691 3692 3693
 
 # Health check
 HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \

@@ -2,16 +2,16 @@ services:
   node:
     image: ghcr.io/hanzoai/node:latest
     ports:
-      - "9550:9550"
-      - "9551:9551"
-      - "9552:9552"
+      - "3690:3690"
+      - "3691:3691"
+      - "3692:3692"
     environment:
       - EMBEDDINGS_SERVER_URL=http://engine:36900/v1
       - RUST_LOG=info
       - NODE_API_IP=0.0.0.0
-      - NODE_API_PORT=9550
-      - NODE_WS_PORT=9551
-      - NODE_PORT=9552
+      - NODE_API_PORT=3690
+      - NODE_WS_PORT=3691
+      - NODE_PORT=3692
       - GLOBAL_IDENTITY_NAME=@@my_local_ai.sep-hanzo
       - NO_SECRET_FILE=true
       - LOG_SIMPLE=true
@@ -25,7 +25,7 @@ services:
       engine:
         condition: service_healthy
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:9550/v2/health_check"]
+      test: ["CMD", "curl", "-f", "http://localhost:3690/v2/health_check"]
       interval: 30s
       timeout: 10s
       start_period: 40s
