@@ -28,7 +28,7 @@ impl Default for DenoRunnerOptions {
             hanzo_node_location: HanzoNodeLocation {
                 protocol: String::from("http"),
                 host: String::from("127.0.0.1"),
-                port: 9550,
+                port: 3690,
             },
         }
     }
