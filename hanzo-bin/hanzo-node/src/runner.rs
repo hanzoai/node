@@ -4,6 +4,7 @@ use crate::utils::args::parse_args;
 use crate::utils::cli::cli_handle_create_message;
 use crate::utils::environment::{fetch_llm_provider_env, fetch_node_environment};
 use crate::utils::keys::generate_or_load_keys;
+use crate::zap_server::start_zap_server;
 use async_channel::{bounded, Receiver, Sender};
 use ed25519_dalek::VerifyingKey;
 use hanzo_embed::embedding_generator::RemoteEmbeddingGenerator;
@@ -60,7 +61,7 @@ fn port_is_available(port: u16) -> bool {
 }
 
 pub async fn initialize_node() -> Result<
-    (Sender<NodeCommand>, JoinHandle<()>, JoinHandle<()>, Weak<Mutex<Node>>),
+    (Sender<NodeCommand>, JoinHandle<()>, JoinHandle<()>, JoinHandle<()>, Weak<Mutex<Node>>),
     Box<dyn std::error::Error + Send + Sync>,
 > {
     let main_db: &str = "main_db";
@@ -104,6 +105,14 @@ pub async fn initialize_node() -> Result<
         return Err(Box::new(std::io::Error::new(
             std::io::ErrorKind::AddrInUse,
             format!("HTTPS port {} is already in use", https_port),
+        )));
+    }
+
+    let zap_port = node_env.zap_address.port();
+    if !port_is_available(zap_port) {
+        return Err(Box::new(std::io::Error::new(
+            std::io::ErrorKind::AddrInUse,
+            format!("ZAP port {} is already in use", zap_port),
         )));
     }
 
@@ -282,6 +291,14 @@ pub async fn initialize_node() -> Result<
 
     // Node task
     let node_task = tokio::spawn(async move { start_node.lock().await.start().await.unwrap() });
+
+    // ZAP binary protocol server task
+    let zap_listen_address = node_env.zap_address;
+    let zap_commands_sender = node_commands_sender_copy.clone();
+    let zap_task = tokio::spawn(async move {
+        start_zap_server(zap_listen_address, zap_commands_sender).await;
+    });
+
     print_node_info(
         &node_env,
         &encryption_public_key_string,
@@ -290,18 +307,20 @@ pub async fn initialize_node() -> Result<
     );
 
     // Return the node_commands_sender_copy and the tasks
-    Ok((node_commands_sender_copy, api_server, node_task, node_copy))
+    Ok((node_commands_sender_copy, api_server, node_task, zap_task, node_copy))
 }
 
 pub async fn run_node_tasks(
     api_server: JoinHandle<()>,
     node_task: JoinHandle<()>,
+    zap_task: JoinHandle<()>,
     _: Weak<Mutex<Node>>,
 ) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
     let api_server_abort = api_server.abort_handle();
     let node_task_abort = node_task.abort_handle();
+    let zap_task_abort = zap_task.abort_handle();
 
-    match tokio::try_join!(api_server, node_task) {
+    match tokio::try_join!(api_server, node_task, zap_task) {
         Ok(_) => {
             hanzo_log(HanzoLogOption::Node, HanzoLogLevel::Info, "All tasks completed");
             Ok(())
@@ -309,6 +328,7 @@ pub async fn run_node_tasks(
         Err(e) => {
             api_server_abort.abort();
             node_task_abort.abort();
+            zap_task_abort.abort();
 
             Err(Box::new(std::io::Error::new(std::io::ErrorKind::Other, e.to_string())))
         }
@@ -387,6 +407,7 @@ pub fn print_node_info(node_env: &NodeEnvironment, encryption_pk: &str, signatur
     println!("---------------------------------------------------------------");
     println!("Node API address: {}", node_env.api_listen_address);
     println!("Node API HTTPS address: {}", node_env.api_https_listen_address);
+    println!("Node ZAP address: {}", node_env.zap_address);
     println!("Node TCP address: {}", node_env.listen_address);
     println!("Node WS address: {:?}", node_env.ws_address);
     println!(

@@ -1156,4 +1156,19 @@ pub enum NodeCommand {
         bearer: String,
         res: Sender<Result<Value, APIError>>,
     },
+    // V1 API (OpenAI / Anthropic compatible)
+    V1ChatCompletion {
+        bearer: String,
+        body: Value,
+        res: Sender<Result<Value, APIError>>,
+    },
+    V1AnthropicMessages {
+        bearer: String,
+        body: Value,
+        res: Sender<Result<Value, APIError>>,
+    },
+    V1ListModels {
+        bearer: String,
+        res: Sender<Result<Value, APIError>>,
+    },
 }

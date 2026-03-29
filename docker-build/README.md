@@ -18,7 +18,7 @@ The following configuration items can be set from environment:
 - __INITIAL_AGENT_URLS__=${INITIAL_AGENT_URLS:-https://api.openai.com,https://api.openai.com}
 - __INITIAL_AGENT_API_KEYS__=${INITIAL_AGENT_API_KEYS}
 
-Point Hanzo Desktop to `http://127.0.0.1:9550`
+Point Hanzo Desktop to `http://127.0.0.1:3690`
 
 ## Prepare for partner
 

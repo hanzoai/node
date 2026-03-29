@@ -34,11 +34,11 @@ services:
       - EMBEDDINGS_SERVER_URL=http://text-embeddings-router:9081/
       - NODE_STORAGE_PATH=storage
       - NODE_IP=0.0.0.0
-      - NODE_PORT=9552
+      - NODE_PORT=3692
       - PING_INTERVAL_SECS=10
       - NODE_API_IP=0.0.0.0
-      - NODE_API_PORT=9550
-      - NODE_WS_PORT=9551
+      - NODE_API_PORT=3690
+      - NODE_WS_PORT=3691
       - LOG_SIMPLE=true
       - LOG_ALL=true
       - RUST_LOG=info
@@ -47,9 +47,9 @@ services:
     networks:
       - hanzo
     ports:
-      - 9550:9550/tcp
-      - 9551:9551/tcp
-      - 9552:9552/tcp
+      - 3690:3690/tcp
+      - 3691:3691/tcp
+      - 3692:3692/tcp
     logging:
       driver: "json-file"
       options:

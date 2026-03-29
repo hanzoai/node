@@ -13,10 +13,10 @@ EnvironmentFile=/opt/hanzo-node/env.conf
 ExecStartPre=/bin/mkdir -p /opt/hanzo-node/hanzo-storage
 ExecStart=/usr/bin/docker run --rm \
     --name=hanzo-node \
-    -p 9550:9550 \
-    -p 9551:9551 \
-    -p 9552:9552 \
-    -p 9553:9553 \
+    -p 3690:3690 \
+    -p 3691:3691 \
+    -p 3692:3692 \
+    -p 3693:3693 \
     -v /opt/hanzo-node/hanzo-storage:/app/hanzo-storage \
     --env-file /opt/hanzo-node/env.conf \
     hanzoai/hanzo-node:latest
