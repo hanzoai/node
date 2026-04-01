@@ -205,7 +205,11 @@ pub fn fetch_node_environment() -> NodeEnvironment {
         .unwrap_or_else(|_| "3692".to_string())
         .parse()
         .expect("Failed to parse ZAP port number");
-    let zap_address = SocketAddr::new(ip, zap_port);
+    let zap_ip: IpAddr = env::var("NODE_ZAP_IP")
+        .unwrap_or_else(|_| "127.0.0.1".to_string())
+        .parse()
+        .expect("Failed to parse ZAP IP address");
+    let zap_address = SocketAddr::new(zap_ip, zap_port);
 
     NodeEnvironment {
         global_identity_name,

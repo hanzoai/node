@@ -8,7 +8,7 @@
 //! Wire format:
 //!   Frame: [4-byte LE length][message bytes]
 //!   Message header (16 bytes): magic(4) + version(2) + flags(2) + root_offset(4) + size(4)
-//!   Object fields: inline primitives, (relOffset:u32 + length:u32) for text/bytes
+//!   Object fields: inline primitives, (relOffset:i32 + length:u32) for text/bytes
 
 mod wire;
 mod server;

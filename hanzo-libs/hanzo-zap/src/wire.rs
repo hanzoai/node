@@ -126,9 +126,13 @@ impl<'a> Object<'a> {
             self.data[len_pos], self.data[len_pos + 1],
             self.data[len_pos + 2], self.data[len_pos + 3],
         ]) as usize;
-        let abs_pos = (pos as i64 + rel_offset as i64) as usize;
-        if abs_pos + length > self.data.len() { return &[]; }
-        &self.data[abs_pos..abs_pos + length]
+        let abs_i64 = pos as i64 + rel_offset as i64;
+        if abs_i64 < 0 || abs_i64 as usize > self.data.len() { return &[]; }
+        let abs_pos = abs_i64 as usize;
+        match abs_pos.checked_add(length) {
+            Some(end) if end <= self.data.len() => &self.data[abs_pos..end],
+            _ => &[],
+        }
     }
 
     pub fn text(&self, field_offset: usize) -> &'a str {
