@@ -31,7 +31,7 @@ impl HanzoConsensusConfig {
     /// Devnet preset: small committee, fast finality, no PQ overhead.
     pub fn devnet() -> Self {
         HanzoConsensusConfig {
-            committee_size: 5,
+            committee_size: 3,
             threshold: 0.60,
             finality_rounds: 3,
             round_timeout_ms: 30,
@@ -110,7 +110,7 @@ mod tests {
     fn devnet_maps_correctly() {
         let hc = HanzoConsensusConfig::devnet();
         let qc: QuasarConfig = (&hc).into();
-        assert_eq!(qc.k, 5);
+        assert_eq!(qc.k, 3);
         assert!((qc.alpha - 0.60).abs() < f64::EPSILON);
         assert_eq!(qc.beta, 3);
         assert!(!qc.quantum_resistant);
