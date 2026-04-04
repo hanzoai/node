@@ -3,9 +3,8 @@ name = "hanzo-node"
 version = { workspace = true }
 edition = { workspace = true }
 authors = { workspace = true }
-
-# this makes `cargo run` in the workspace root to run this package
-default-run = "hanzo-node"
+description = "hanzod — Hanzo AI Network node (L2 on Lux, reth EVM, AI mining)"
+default-run = "hanzod"
 
 [build-dependencies]
 hanzo-tools-runner = { workspace = true, features = ["built-in-tools"] }
@@ -21,6 +20,10 @@ ngrok = ["dep:ngrok"]
 # Enable swagger-ui when this feature is selected
 swagger-ui = ["hanzo-http-api/swagger-ui"]
 # static-pdf-parser = ["hanzo-vector_resources/static-pdf-parser"]
+
+[[bin]]
+name = "hanzod"
+path = "src/main.rs"
 
 [lib]
 doctest = false
