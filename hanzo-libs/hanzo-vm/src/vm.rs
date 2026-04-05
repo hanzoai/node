@@ -13,6 +13,7 @@ use anyhow::Result;
 use serde::{Deserialize, Serialize};
 
 use crate::block::Block;
+use crate::evm_backend::{self, EvmExecutor};
 use crate::precompiles::PrecompileRegistry;
 use crate::state::StateDb;
 
@@ -77,6 +78,11 @@ pub struct VmConfig {
 
     /// Target block interval in milliseconds.
     pub target_block_time_ms: u64,
+
+    /// Which EVM backend to use. When set to `None`, auto-detection picks
+    /// the fastest available backend (cevm > revm).
+    #[serde(default)]
+    pub evm_backend: Option<evm_backend::EvmBackend>,
 }
 
 impl Default for VmConfig {
@@ -87,6 +93,7 @@ impl Default for VmConfig {
             rpc_port: 9650,
             block_gas_limit: 30_000_000,
             target_block_time_ms: 2_000,
+            evm_backend: None,
         }
     }
 }
@@ -120,6 +127,8 @@ pub struct HanzoVm {
     pub state: StateDb,
     /// Custom precompile registry.
     pub precompiles: PrecompileRegistry,
+    /// Pluggable EVM execution backend.
+    pub executor: Box<dyn EvmExecutor>,
     /// VM configuration.
     pub config: VmConfig,
     /// ID of the currently preferred block.
@@ -134,12 +143,53 @@ pub struct HanzoVm {
 
 impl HanzoVm {
     /// Create a new `HanzoVm` with the given configuration.
+    ///
+    /// The EVM backend is selected based on `config.evm_backend`:
+    /// - `None` -- auto-detect (cevm if available, else revm).
+    /// - `Some(Revm)` -- built-in Rust revm.
+    /// - `Some(Cevm)` -- C++ EVM via FFI.
+    /// - `Some(GoEvm)` -- Go EVM via subprocess.
     pub fn new(config: VmConfig) -> Self {
+        let state = StateDb::new(&config.data_dir);
+        let precompiles = PrecompileRegistry::default();
+
+        let executor: Box<dyn EvmExecutor> = match config.evm_backend {
+            None => evm_backend::auto_detect(),
+            Some(evm_backend::EvmBackend::Revm) => Box::new(evm_backend::RevmExecutor),
+            Some(evm_backend::EvmBackend::Cevm) => Box::new(evm_backend::CevmExecutor::auto()),
+            Some(evm_backend::EvmBackend::GoEvm) => {
+                let home = std::env::var("HOME").unwrap_or_default();
+                let binary = format!("{home}/work/luxcpp/evm/build/bin/cevm");
+                Box::new(evm_backend::GoEvmExecutor::new(binary))
+            }
+        };
+
+        log::info!(
+            "HanzoVm: using EVM backend '{}' (gpu={})",
+            executor.name(),
+            executor.gpu_capable(),
+        );
+
+        Self {
+            state,
+            precompiles,
+            executor,
+            config,
+            preferred: [0u8; 32],
+            last_accepted_id: [0u8; 32],
+            last_accepted_height: 0,
+            initialized: false,
+        }
+    }
+
+    /// Create a `HanzoVm` with a specific executor (for testing or embedding).
+    pub fn with_executor(config: VmConfig, executor: Box<dyn EvmExecutor>) -> Self {
         let state = StateDb::new(&config.data_dir);
         let precompiles = PrecompileRegistry::default();
         Self {
             state,
             precompiles,
+            executor,
             config,
             preferred: [0u8; 32],
             last_accepted_id: [0u8; 32],
@@ -195,7 +245,7 @@ impl VmEngine for HanzoVm {
             anyhow::bail!("VM not initialized");
         }
 
-        let transactions: Vec<crate::block::Transaction> = txs
+        let mut transactions: Vec<crate::block::Transaction> = txs
             .into_iter()
             .enumerate()
             .map(|(i, raw)| crate::block::Transaction {
@@ -204,6 +254,14 @@ impl VmEngine for HanzoVm {
                 gas_used: 0,
             })
             .collect();
+
+        // Execute transactions through the pluggable EVM backend.
+        let result = self.executor.execute_block(&transactions, &mut self.state)?;
+
+        // Fill in per-transaction gas usage from execution results.
+        for (tx, &gas) in transactions.iter_mut().zip(result.gas_used.iter()) {
+            tx.gas_used = gas;
+        }
 
         let height = self.last_accepted_height + 1;
         let timestamp = std::time::SystemTime::now()
@@ -220,8 +278,11 @@ impl VmEngine for HanzoVm {
         );
 
         log::debug!(
-            "built block height={height} id={}",
-            hex::encode(block.id())
+            "built block height={height} id={} backend={} gas={} time={:.2}ms",
+            hex::encode(block.id()),
+            self.executor.name(),
+            result.total_gas,
+            result.exec_time_ms,
         );
         Ok(block)
     }
