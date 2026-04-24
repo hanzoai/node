@@ -1,5 +1,4 @@
-name: Deploy LibP2P Relayer
-
+name: Docker (libp2p-relayer)
 on:
   workflow_dispatch:
     inputs:
@@ -11,44 +10,15 @@ on:
         options:
           - debug
           - release
-      tag:
-        description: 'Docker image tag (e.g. v0.9.10)'
-        required: true
-        type: string
-        default: 'latest'
-
+permissions:
+  contents: read
+  packages: write
 jobs:
-  build-and-deploy:
-    runs-on: ubuntu-latest
-    name: Build and Deploy LibP2P Relayer
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-
-      - name: Log in to Docker Hub
-        uses: docker/login-action@v3
-        with:
-          username: ${{ secrets.DOCKERHUB_USERNAME }}
-          password: ${{ secrets.DOCKERHUB_TOKEN }}
-
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
-
-      - name: Build and push Docker image
-        uses: docker/build-push-action@v5
-        with:
-          context: .
-          file: ./hanzo-libs/hanzo-libp2p-relayer/Dockerfile
-          push: true
-          build-args: |
-            BUILD_TYPE=${{ inputs.build_type }}
-          tags: |
-            hanzoai/hanzo-libp2p-relayer:${{ inputs.tag }}
-            hanzoai/hanzo-libp2p-relayer:${{ inputs.build_type }}-latest
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
-
-      - name: Summary
-        run: |
-          echo "🚀 Deployment completed successfully!"
-          echo "📦 Image: hanzoai/hanzo-libp2p-relayer:${{ inputs.tag }}"
+  docker:
+    uses: hanzoai/.github/.github/workflows/docker-build.yml@main
+    with:
+      image: ghcr.io/hanzoai/libp2p-relayer
+      dockerfile: docker/Dockerfile.libp2p-relayer
+      build-args: |
+        BUILD_TYPE=${{ github.event.inputs.build_type || 'release' }}
+    secrets: inherit
