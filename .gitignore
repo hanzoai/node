@@ -1,4 +1,5 @@
 target/
+bin/
 .env
 /db
 ./db_tests/
