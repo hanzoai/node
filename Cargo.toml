@@ -80,10 +80,11 @@ hanzo-ai-format = { path = "./hanzo-libs/hanzo-ai-format", version = "1.1.19" }
 hanzo-model-discovery = { path = "./hanzo-libs/hanzo-model-discovery", version = "1.1.12" }
 hanzo-models = { path = "./hanzo-libs/hanzo-models", version = "1.1.12" }
 hanzo-pqc = { path = "./hanzo-libs/hanzo-pqc", version = "1.1.12" }
-# Canonical luxcpp/crypto FFI bindings. Path dep alongside existing
-# `oqs` / `k256` / `ed25519-dalek` so a future PR can migrate call
-# sites one by one without touching this manifest. See lux/crypto/rust/sys.
-lux-crypto-sys = { path = "../../lux/crypto/rust/sys", version = "0.1.0" }
+# Canonical lux-crypto Rust crate (calls into luxcpp/crypto C-ABI).
+# Path dep alongside existing `oqs` / `k256` / `ed25519-dalek` so a future PR
+# can migrate call sites one by one. NO -sys suffix: we author the C/C++
+# ourselves at luxcpp/crypto. See /Users/z/work/lux/crypto/rust/lux-crypto.
+lux-crypto = { path = "../../lux/crypto/rust/lux-crypto", version = "0.1.0" }
 hanzo-runner = { path = "./hanzo-libs/hanzo-runner", version = "1.1.12" }
 hanzo-runtime = { path = "./hanzo-libs/hanzo-runtime", version = "1.1.12" }
 hanzo-runtime-tests = { path = "./hanzo-libs/hanzo-runtime-tests", version = "0.1.1" }
