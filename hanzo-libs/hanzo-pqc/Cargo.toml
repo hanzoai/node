@@ -23,8 +23,8 @@ oqs = { version = "0.11", default-features = false, features = ["std", "ml_kem",
 # Canonical luxcpp/crypto FFI bindings (path dep). Future PR migrates the
 # ML-KEM / ML-DSA / SLH-DSA call sites in this crate to the canonical
 # C-ABI so hanzo, lux, zoo nodes share the same primitives. See
-# lux/crypto/rust/sys for the surface.
-lux-crypto-sys = { workspace = true }
+# lux/crypto/rust/lux-crypto for the surface.
+lux-crypto = { workspace = true }
 
 # Classical crypto for hybrid mode
 x25519-dalek = { workspace = true, optional = true }
