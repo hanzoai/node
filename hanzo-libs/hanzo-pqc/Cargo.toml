@@ -7,7 +7,10 @@ edition = { workspace = true }
 authors = { workspace = true }
 
 [features]
-default = ["ml-kem", "ml-dsa", "hybrid"]
+# Default keeps the working oqs path until luxcpp/crypto's ML-DSA/ML-KEM/SLH-DSA
+# implementations land (currently stubs that return CRYPTO_ERR_NOTIMPL). When
+# the canonical impls are in place, flip default to ["lux-crypto-impl", ...].
+default = ["ml-kem", "ml-dsa", "hybrid", "legacy-oqs", "legacy-ed25519-dalek"]
 ml-kem = []
 ml-dsa = []
 slh-dsa = []
@@ -15,16 +18,23 @@ hybrid = ["x25519-dalek"]
 fips-mode = []
 gpu-cc = []
 tee-io = []
+# Canonical luxcpp/crypto FFI path. Mutually exclusive with legacy-oqs at
+# runtime (the code picks whichever is enabled at compile time).
+lux-crypto-impl = []
+# Legacy crypto stacks. Bundled into `default` so existing consumers keep
+# their behaviour. Disable both `legacy-*` flags and enable `lux-crypto-impl`
+# to migrate to the canonical FFI path.
+legacy-oqs = ["dep:oqs"]
+legacy-ed25519-dalek = []
 
 [dependencies]
-# Core PQC implementation - using latest version
-oqs = { version = "0.11", default-features = false, features = ["std", "ml_kem", "ml_dsa"] }
-
-# Canonical luxcpp/crypto FFI bindings (path dep). Future PR migrates the
-# ML-KEM / ML-DSA / SLH-DSA call sites in this crate to the canonical
-# C-ABI so hanzo, lux, zoo nodes share the same primitives. See
-# lux/crypto/rust/lux-crypto for the surface.
+# Canonical luxcpp/crypto FFI bindings -- ML-KEM, ML-DSA, SLH-DSA, Ed25519.
+# Brought in unconditionally so the symbols are always callable; the call
+# sites switch via `cfg(feature = "lux-crypto-impl")`.
 lux-crypto = { workspace = true }
+
+# Legacy stack -- only compiled in when `legacy-oqs` is enabled.
+oqs = { version = "0.11", default-features = false, features = ["std", "ml_kem", "ml_dsa"], optional = true }
 
 # Classical crypto for hybrid mode
 x25519-dalek = { workspace = true, optional = true }
