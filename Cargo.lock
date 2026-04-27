@@ -5929,7 +5929,7 @@ dependencies = [
  "getrandom 0.2.16",
  "hex",
  "hkdf",
- "lux-crypto-sys",
+ "lux-crypto",
  "oqs",
  "proptest",
  "rand 0.8.5",
@@ -8824,7 +8824,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "lux-crypto-sys"
+name = "lux-crypto"
 version = "0.1.0"
 
 [[package]]
