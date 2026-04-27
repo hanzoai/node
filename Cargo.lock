@@ -5929,6 +5929,7 @@ dependencies = [
  "getrandom 0.2.16",
  "hex",
  "hkdf",
+ "lux-crypto-sys",
  "oqs",
  "proptest",
  "rand 0.8.5",
@@ -8821,6 +8822,10 @@ dependencies = [
  "hex",
  "libc",
 ]
+
+[[package]]
+name = "lux-crypto-sys"
+version = "0.1.0"
 
 [[package]]
 name = "lz4"
