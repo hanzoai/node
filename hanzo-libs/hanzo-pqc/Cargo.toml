@@ -20,6 +20,12 @@ tee-io = []
 # Core PQC implementation - using latest version
 oqs = { version = "0.11", default-features = false, features = ["std", "ml_kem", "ml_dsa"] }
 
+# Canonical luxcpp/crypto FFI bindings (path dep). Future PR migrates the
+# ML-KEM / ML-DSA / SLH-DSA call sites in this crate to the canonical
+# C-ABI so hanzo, lux, zoo nodes share the same primitives. See
+# lux/crypto/rust/sys for the surface.
+lux-crypto-sys = { workspace = true }
+
 # Classical crypto for hybrid mode
 x25519-dalek = { workspace = true, optional = true }
 ed25519-dalek = { workspace = true }
