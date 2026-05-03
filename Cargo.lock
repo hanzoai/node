@@ -8826,6 +8826,28 @@ dependencies = [
 [[package]]
 name = "lux-crypto"
 version = "0.1.0"
+dependencies = [
+ "lux-crypto-keccak",
+ "lux-crypto-ripemd160",
+ "lux-crypto-secp256k1",
+ "lux-crypto-sha256",
+]
+
+[[package]]
+name = "lux-crypto-keccak"
+version = "0.1.0"
+
+[[package]]
+name = "lux-crypto-ripemd160"
+version = "0.1.0"
+
+[[package]]
+name = "lux-crypto-secp256k1"
+version = "0.1.0"
+
+[[package]]
+name = "lux-crypto-sha256"
+version = "0.1.0"
 
 [[package]]
 name = "lz4"
