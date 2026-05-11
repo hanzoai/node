@@ -673,7 +673,7 @@ fn fmt_time(secs: f64, ms_sep: char) -> String {
 pub fn estimate_tokens(text: &str) -> usize {
     let mut total = 0usize;
     let mut ascii_run = String::new();
-    let mut flush = |buf: &mut String, total: &mut usize| {
+    let flush = |buf: &mut String, total: &mut usize| {
         if buf.is_empty() { return; }
         for w in buf.split_whitespace() {
             *total += std::cmp::max(1, (w.chars().count() + 3) / 4);
