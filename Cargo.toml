@@ -1,6 +1,7 @@
 [workspace]
 members = [
   "hanzo-libs/hanzo-api",
+  "hanzo-libs/hanzo-brain",
   "hanzo-libs/hanzo-config",
   "hanzo-libs/hanzo-database",
   # "hanzo-libs/hanzo-db", # Excluded: not in publish list, has feature-gated dependencies
