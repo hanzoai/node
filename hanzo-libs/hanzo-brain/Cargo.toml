@@ -6,5 +6,5 @@ description = "Hanzo Brain — pure-CPU algorithm primitives consumed by the Han
 license = "MIT"
 
 [dependencies]
-sha2 = "0.10"
+blake3 = { workspace = true }
 once_cell = "1.19"
