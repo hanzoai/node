@@ -5348,8 +5348,8 @@ dependencies = [
 name = "hanzo-brain"
 version = "0.1.0"
 dependencies = [
+ "blake3",
  "once_cell",
- "sha2",
 ]
 
 [[package]]
