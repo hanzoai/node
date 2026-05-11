@@ -75,25 +75,27 @@ impl SignatureAlgorithm {
         }
     }
 
-    /// Map an ML-DSA variant to the lux_crypto NistMode (returns None for non-ML-DSA).
+    /// Map an ML-DSA variant to the canonical FIPS 204 parameter set
+    /// (`lux_crypto::mldsa::Mode`). Returns `None` for non-ML-DSA algorithms.
     #[cfg(any(feature = "lux-crypto-impl", test))]
-    fn mldsa_mode(&self) -> Option<lux_crypto::NistMode> {
+    fn mldsa_mode(&self) -> Option<lux_crypto::mldsa::Mode> {
         match self {
-            Self::MlDsa44 => Some(lux_crypto::NistMode::Mode2),
-            Self::MlDsa65 => Some(lux_crypto::NistMode::Mode3),
-            Self::MlDsa87 => Some(lux_crypto::NistMode::Mode5),
+            Self::MlDsa44 => Some(lux_crypto::mldsa::Mode::Mode2),
+            Self::MlDsa65 => Some(lux_crypto::mldsa::Mode::Mode3),
+            Self::MlDsa87 => Some(lux_crypto::mldsa::Mode::Mode5),
             _ => None,
         }
     }
 
-    /// Map an SLH-DSA variant to the lux_crypto NistMode (returns None for non-SLH).
+    /// Map an SLH-DSA variant to the canonical FIPS 205 parameter set
+    /// (`lux_crypto::slhdsa::Mode`). Returns `None` for non-SLH algorithms.
     #[cfg(any(feature = "lux-crypto-impl", test))]
     #[allow(dead_code)]
-    fn slhdsa_mode(&self) -> Option<lux_crypto::NistMode> {
+    fn slhdsa_mode(&self) -> Option<lux_crypto::slhdsa::Mode> {
         match self {
-            Self::SlhDsa128s => Some(lux_crypto::NistMode::Mode2),
-            Self::SlhDsa192s => Some(lux_crypto::NistMode::Mode3),
-            Self::SlhDsa256s => Some(lux_crypto::NistMode::Mode5),
+            Self::SlhDsa128s => Some(lux_crypto::slhdsa::Mode::Sha2_128f),
+            Self::SlhDsa192s => Some(lux_crypto::slhdsa::Mode::Sha2_192f),
+            Self::SlhDsa256s => Some(lux_crypto::slhdsa::Mode::Sha2_256f),
             _ => None,
         }
     }

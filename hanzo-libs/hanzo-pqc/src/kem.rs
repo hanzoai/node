@@ -52,13 +52,14 @@ impl KemAlgorithm {
         32 // All ML-KEM variants produce 32-byte shared secrets
     }
 
-    /// Map ML-KEM variant to the lux_crypto NistMode.
+    /// Map ML-KEM variant to the canonical FIPS 203 parameter set
+    /// (`lux_crypto::mlkem::Mode`).
     #[cfg(any(feature = "lux-crypto-impl", test))]
-    fn mlkem_mode(&self) -> Option<lux_crypto::NistMode> {
+    fn mlkem_mode(&self) -> Option<lux_crypto::mlkem::Mode> {
         match self {
-            Self::MlKem512 => Some(lux_crypto::NistMode::Mode2),
-            Self::MlKem768 => Some(lux_crypto::NistMode::Mode3),
-            Self::MlKem1024 => Some(lux_crypto::NistMode::Mode5),
+            Self::MlKem512 => Some(lux_crypto::mlkem::Mode::Mode2),
+            Self::MlKem768 => Some(lux_crypto::mlkem::Mode::Mode3),
+            Self::MlKem1024 => Some(lux_crypto::mlkem::Mode::Mode5),
             Self::X25519 => None,
         }
     }

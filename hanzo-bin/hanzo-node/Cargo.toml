@@ -11,7 +11,7 @@ hanzo-tools-runner = { workspace = true, features = ["built-in-tools"] }
 
 # Features
 [features]
-default = []
+default = ["machine"]
 console = ["console-subscriber"]
 # Enable additional debug output when this feature is selected
 debug = []
@@ -19,6 +19,8 @@ debug = []
 ngrok = ["dep:ngrok"]
 # Enable swagger-ui when this feature is selected
 swagger-ui = ["hanzo-http-api/swagger-ui"]
+# In-process VM/host machine subsystem (links libluxmachine via hanzo-machine).
+machine = ["dep:hanzo-machine", "dep:dirs"]
 # static-pdf-parser = ["hanzo-vector_resources/static-pdf-parser"]
 
 [[bin]]
@@ -105,6 +107,9 @@ url = "2.5.0"
 serde_yaml = { workspace = true }
 thiserror = { workspace = true }
 ai-model-catalog = "0.1.0"
+# Optional: in-process host VM lifecycle (FFI to canonical libluxmachine).
+hanzo-machine = { workspace = true, optional = true }
+dirs = { workspace = true, optional = true }
 
 [dev-dependencies]
 mockito = "1.0.2"

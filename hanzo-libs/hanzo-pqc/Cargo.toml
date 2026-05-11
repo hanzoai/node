@@ -30,8 +30,10 @@ legacy-ed25519-dalek = []
 [dependencies]
 # Canonical luxcpp/crypto FFI bindings -- ML-KEM, ML-DSA, SLH-DSA, Ed25519.
 # Brought in unconditionally so the symbols are always callable; the call
-# sites switch via `cfg(feature = "lux-crypto-impl")`.
-lux-crypto = { workspace = true }
+# sites switch via `cfg(feature = "lux-crypto-impl")`. The per-algo crates
+# under lux_crypto::{mlkem, mldsa, slhdsa} are gated on lux-crypto's own
+# feature flags, which we enable here so the module re-exports exist.
+lux-crypto = { workspace = true, features = ["mlkem", "mldsa", "slhdsa", "ed25519"] }
 
 # Legacy stack -- only compiled in when `legacy-oqs` is enabled.
 oqs = { version = "0.11", default-features = false, features = ["std", "ml_kem", "ml_dsa"], optional = true }

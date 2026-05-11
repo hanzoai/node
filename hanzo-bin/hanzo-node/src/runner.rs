@@ -306,6 +306,19 @@ pub async fn initialize_node() -> Result<
         &main_db_path,
     );
 
+    // WHY: bring up the host VM subsystem in-process so users get one binary.
+    // Stash on a global so SIGTERM handlers / tests can drop it; falls through
+    // to a no-op shim when libluxmachine is missing.
+    #[cfg(feature = "machine")]
+    {
+        let state_dir = std::path::PathBuf::from(node_storage_path
+            .clone()
+            .unwrap_or_else(|| ".".to_string()))
+            .join("machine");
+        let subsystem = crate::machine::Subsystem::init(&state_dir);
+        crate::machine::register_global(subsystem);
+    }
+
     // Return the node_commands_sender_copy and the tasks
     Ok((node_commands_sender_copy, api_server, node_task, zap_task, node_copy))
 }
@@ -320,7 +333,14 @@ pub async fn run_node_tasks(
     let node_task_abort = node_task.abort_handle();
     let zap_task_abort = zap_task.abort_handle();
 
-    match tokio::try_join!(api_server, node_task, zap_task) {
+    let result = tokio::try_join!(api_server, node_task, zap_task);
+
+    // WHY: drain the machine handle on the way out (success or failure) so the
+    // C++ libluxmachine state-dir lock is released cleanly.
+    #[cfg(feature = "machine")]
+    crate::machine::shutdown_global().await;
+
+    match result {
         Ok(_) => {
             hanzo_log(HanzoLogOption::Node, HanzoLogLevel::Info, "All tasks completed");
             Ok(())

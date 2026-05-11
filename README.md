@@ -8,6 +8,8 @@
 
 General Documentation: [https://docs.hanzo.ai](https://docs.hanzo.ai)
 
+- Machines (native Docker Desktop alternative — VM/docker/k3s daemon): see [LLM.md](LLM.md#machines) and `machine/`.
+
 ## Installation (Local Compilation)
 
 ### Prerequisites

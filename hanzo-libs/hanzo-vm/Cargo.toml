@@ -27,6 +27,10 @@ hex = { workspace = true }
 # PQC
 hanzo-pqc = { workspace = true }
 
+# AI mining precompile (0x0300) — FFI to canonical Go impl in
+# ~/work/lux/precompile, exposed via libluxprecompile.dylib.
+luxprecompile-sys = { path = "../../../../lux/precompile/bindings/rust" }
+
 # State storage (bundled SQLite for dev; MPT later)
 rusqlite = { workspace = true }
 

@@ -2,6 +2,8 @@
 #![recursion_limit = "512"]
 mod cron_tasks;
 mod llm_provider;
+#[cfg(feature = "machine")]
+mod machine;
 mod managers;
 mod network;
 mod runner;
@@ -18,6 +20,15 @@ use console_subscriber;
 
 #[tokio::main]
 pub async fn main() {
+    // WHY: short-circuit `hanzod machine ...` before the heavy node init so
+    // CLI calls don't bind ports or load the DB. Pure FFI into libluxmachine.
+    #[cfg(feature = "machine")]
+    {
+        let argv: Vec<String> = std::env::args().skip(1).collect();
+        if let Some(code) = machine::try_handle_cli(&argv) {
+            std::process::exit(code);
+        }
+    }
     // Initialize crypto provider for rustls (required by ngrok)
     #[cfg(feature = "ngrok")]
     {

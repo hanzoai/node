@@ -1,4 +1,8 @@
-# Hanzo Node Makefile
+# Hanzo Node Makefile — Rust workspace only.
+#
+# The Go machine daemon and L1 wiring previously hosted here moved to
+# ~/work/zoo/node (machine/, cmd/machine/, bin/zoo-machine). hanzod itself
+# is now 100% Rust (revm + Rust consensus).
 
 .PHONY: build build-release run clean test check dev
 
@@ -54,7 +58,7 @@ deps:
 	cargo fetch
 
 help:
-	@echo "Available targets:"
+	@echo "Available targets (Rust only — machine daemon lives in zoo/node):"
 	@echo "  make build         - Build in debug mode"
 	@echo "  make build-release - Build in release mode"
 	@echo "  make run          - Run the node locally"

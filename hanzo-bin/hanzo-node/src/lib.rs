@@ -1,6 +1,8 @@
 #![recursion_limit = "512"]
 pub mod cron_tasks;
 pub mod llm_provider;
+#[cfg(feature = "machine")]
+pub mod machine;
 pub mod managers;
 pub mod network;
 pub mod runner;
