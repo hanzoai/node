@@ -1,0 +1,29 @@
+[package]
+name = "hanzo-machine"
+description = "Hanzo AI - Rust bindings for the canonical luxmachine C ABI (host VM lifecycle)"
+license = "MIT"
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+
+[lib]
+crate-type = ["rlib"]
+
+[features]
+# Default links the system shared library. Enable `static` to link
+# `libluxmachine.a` (still pulls in libc++/libstdc++).
+default = []
+static = []
+
+[dependencies]
+thiserror = { workspace = true }
+libc = "0.2"
+serde = { workspace = true, features = ["derive"] }
+serde_json = { workspace = true }
+
+[build-dependencies]
+bindgen = "0.69"
+pkg-config = "0.3"
+
+[dev-dependencies]
+tempfile = { workspace = true }

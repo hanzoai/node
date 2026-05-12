@@ -1,6 +1,8 @@
-//! Regime detection using Hidden Markov Models
-//! 
-//! Identifies market/system regimes to optimize routing decisions
+//! Compute-market regime detection via Hidden Markov Models.
+//!
+//! Discrete latent states (peak / off-peak / spike / idle) modulate the
+//! marketmaker's quote width and inventory bias. Hidden; posterior driven by
+//! request rate, queue depth, GPU utilisation. Transitions: learned Markov chain.
 
 use std::collections::VecDeque;
 use std::hash::Hash;
