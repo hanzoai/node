@@ -1,6 +1,6 @@
-//! HLLM routing logic for regime-based model selection
-//! 
-//! Routes requests to optimal models based on regime state and dynamics
+//! Quote dispatch: routes a compute request to the cheapest-acceptable
+//! resource given the current regime, posted bid/ask, and tenant adapter.
+//! Output is a quote (price + venue), not a model identity.
 
 use std::sync::Arc;
 use std::collections::HashMap;

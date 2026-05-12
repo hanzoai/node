@@ -1,6 +1,8 @@
-//! BitDelta 1-bit quantization for efficient adapter storage
-//! 
-//! Implements extreme quantization for personalized model adaptation
+//! BitDelta 1-bit quantization for price-adapter storage.
+//!
+//! Each tenant's adapter is a sign-bit delta over the base quote table:
+//! 1 bit per (regime, resource) cell. 32× smaller than f32 adapters; the
+//! marketmaker can hold millions of tenant tables in RAM simultaneously.
 
 use std::sync::Arc;
 use serde::{Serialize, Deserialize};
