@@ -153,23 +153,38 @@ impl MlDsa {
             _phantom: std::marker::PhantomData,
         }
     }
-}
 
-#[cfg(feature = "ml-dsa")]
-#[async_trait]
-impl Signature for MlDsa {
-    async fn generate_keypair(&self, alg: SignatureAlgorithm) -> Result<(VerifyingKey, SigningKey)> {
+    /// Detect ML-DSA mode from public key byte length.
+    ///
+    /// Returns `None` if the length does not match any FIPS 204 parameter set.
+    pub fn mode_from_public_key_len(len: usize) -> Option<SignatureAlgorithm> {
+        match len {
+            1312 => Some(SignatureAlgorithm::MlDsa44),
+            1952 => Some(SignatureAlgorithm::MlDsa65),
+            2592 => Some(SignatureAlgorithm::MlDsa87),
+            _ => None,
+        }
+    }
+
+    /// Synchronous keypair generation for ML-DSA.
+    ///
+    /// Used by callers that cannot await (precompile dispatch, sync FFI).
+    /// The underlying liboqs API is itself synchronous; the async trait
+    /// methods on [`MlDsa`] simply wrap this routine.
+    #[cfg(feature = "ml-dsa")]
+    pub fn generate_keypair_sync(alg: SignatureAlgorithm) -> Result<(VerifyingKey, SigningKey)> {
         use oqs::sig::Sig;
-        
-        let oqs_alg = alg.to_oqs_alg()
+
+        let oqs_alg = alg
+            .to_oqs_alg()
             .ok_or_else(|| PqcError::UnsupportedAlgorithm(format!("{alg:?} not supported")))?;
-        
+
         let sig = Sig::new(oqs_alg)
             .map_err(|_| PqcError::SignatureError("Failed to create signature".into()))?;
-        
-        let (pk, sk) = sig.keypair()
+        let (pk, sk) = sig
+            .keypair()
             .map_err(|_| PqcError::SignatureError("Keypair generation failed".into()))?;
-        
+
         Ok((
             VerifyingKey {
                 algorithm: alg,
@@ -181,53 +196,110 @@ impl Signature for MlDsa {
             },
         ))
     }
-    
-    async fn sign(&self, key: &SigningKey, message: &[u8]) -> Result<DigitalSignature> {
+
+    /// Synchronous ML-DSA signing (FIPS 204).
+    #[cfg(feature = "ml-dsa")]
+    pub fn sign_sync(key: &SigningKey, message: &[u8]) -> Result<DigitalSignature> {
         use oqs::sig::Sig;
-        
-        let oqs_alg = key.algorithm.to_oqs_alg()
-            .ok_or_else(|| PqcError::UnsupportedAlgorithm(format!("{:?} not supported", key.algorithm)))?;
-        
+
+        let oqs_alg = key.algorithm.to_oqs_alg().ok_or_else(|| {
+            PqcError::UnsupportedAlgorithm(format!("{:?} not supported", key.algorithm))
+        })?;
+
         let sig = Sig::new(oqs_alg)
             .map_err(|_| PqcError::SignatureError("Failed to create signature".into()))?;
-        
-        let sk = sig.secret_key_from_bytes(&key.key_bytes)
+        let sk = sig
+            .secret_key_from_bytes(&key.key_bytes)
             .ok_or_else(|| PqcError::SignatureError("Invalid signing key".into()))?;
-        
-        let signature = sig.sign(message, sk)
+        let signature = sig
+            .sign(message, sk)
             .map_err(|_| PqcError::SignatureError("Signing failed".into()))?;
-        
+
         Ok(DigitalSignature {
             algorithm: key.algorithm,
             signature_bytes: signature.into_vec(),
         })
     }
-    
+
+    /// Synchronous ML-DSA verification (FIPS 204).
+    ///
+    /// Returns `Ok(true)` when the signature is valid for `message` under
+    /// `key`, `Ok(false)` when verification fails, and `Err` only for
+    /// structural errors (mismatched algorithm or unparseable bytes).
+    #[cfg(feature = "ml-dsa")]
+    pub fn verify_sync(
+        key: &VerifyingKey,
+        message: &[u8],
+        signature: &DigitalSignature,
+    ) -> Result<bool> {
+        use oqs::sig::Sig;
+
+        if key.algorithm != signature.algorithm {
+            return Ok(false);
+        }
+
+        let oqs_alg = key.algorithm.to_oqs_alg().ok_or_else(|| {
+            PqcError::UnsupportedAlgorithm(format!("{:?} not supported", key.algorithm))
+        })?;
+
+        let sig = Sig::new(oqs_alg)
+            .map_err(|_| PqcError::SignatureError("Failed to create signature".into()))?;
+        let pk = sig
+            .public_key_from_bytes(&key.key_bytes)
+            .ok_or_else(|| PqcError::SignatureError("Invalid verifying key".into()))?;
+        let sig_bytes = sig
+            .signature_from_bytes(&signature.signature_bytes)
+            .ok_or_else(|| PqcError::SignatureError("Invalid signature".into()))?;
+
+        Ok(sig.verify(message, sig_bytes, pk).is_ok())
+    }
+
+    /// Convenience wrapper for raw-bytes verification.
+    ///
+    /// Detects the ML-DSA parameter set from `pubkey_bytes.len()` and runs
+    /// [`verify_sync`](Self::verify_sync). Returns `Ok(false)` for any
+    /// length that does not match a supported parameter set.
+    #[cfg(feature = "ml-dsa")]
+    pub fn verify_raw(pubkey_bytes: &[u8], message: &[u8], signature_bytes: &[u8]) -> Result<bool> {
+        let alg = match Self::mode_from_public_key_len(pubkey_bytes.len()) {
+            Some(a) => a,
+            None => return Ok(false),
+        };
+        // Length-check the signature against the parameter set to avoid
+        // feeding undersized buffers into liboqs.
+        if signature_bytes.len() != alg.signature_size() {
+            return Ok(false);
+        }
+        let vk = VerifyingKey {
+            algorithm: alg,
+            key_bytes: pubkey_bytes.to_vec(),
+        };
+        let sig = DigitalSignature {
+            algorithm: alg,
+            signature_bytes: signature_bytes.to_vec(),
+        };
+        Self::verify_sync(&vk, message, &sig)
+    }
+}
+
+#[cfg(feature = "ml-dsa")]
+#[async_trait]
+impl Signature for MlDsa {
+    async fn generate_keypair(&self, alg: SignatureAlgorithm) -> Result<(VerifyingKey, SigningKey)> {
+        Self::generate_keypair_sync(alg)
+    }
+
+    async fn sign(&self, key: &SigningKey, message: &[u8]) -> Result<DigitalSignature> {
+        Self::sign_sync(key, message)
+    }
+
     async fn verify(
         &self,
         key: &VerifyingKey,
         message: &[u8],
         signature: &DigitalSignature,
     ) -> Result<bool> {
-        use oqs::sig::Sig;
-        
-        if key.algorithm != signature.algorithm {
-            return Ok(false);
-        }
-        
-        let oqs_alg = key.algorithm.to_oqs_alg()
-            .ok_or_else(|| PqcError::UnsupportedAlgorithm(format!("{:?} not supported", key.algorithm)))?;
-        
-        let sig = Sig::new(oqs_alg)
-            .map_err(|_| PqcError::SignatureError("Failed to create signature".into()))?;
-        
-        let pk = sig.public_key_from_bytes(&key.key_bytes)
-            .ok_or_else(|| PqcError::SignatureError("Invalid verifying key".into()))?;
-        
-        let sig_bytes = sig.signature_from_bytes(&signature.signature_bytes)
-            .ok_or_else(|| PqcError::SignatureError("Invalid signature".into()))?;
-        
-        Ok(sig.verify(message, sig_bytes, pk).is_ok())
+        Self::verify_sync(key, message, signature)
     }
 }
 

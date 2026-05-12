@@ -1,6 +1,6 @@
-//! User adapter management system
-//! 
-//! Manages personalized BitDelta adapters for each user
+//! Per-tenant price adapters. Each tenant has a 1-bit delta against the
+//! base quote table that shifts their effective bid/ask under each regime.
+//! Adapter management = create / update / persist / look up by tenant id.
 
 use std::sync::Arc;
 use std::collections::HashMap;

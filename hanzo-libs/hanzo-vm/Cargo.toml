@@ -10,6 +10,10 @@ authors.workspace = true
 default = []
 # Enable embedded Lux consensus for native L1 operation (requires lux monorepo)
 # consensus = ["lux-consensus"]
+# Tests under this feature assume a real LLM engine has been registered by
+# upstream startup code (production runtime). Default builds run without it
+# and verify the dispatch / error-on-missing-engine contract instead.
+real-llm = []
 
 [dependencies]
 # Workspace deps
@@ -26,6 +30,12 @@ hex = { workspace = true }
 
 # PQC
 hanzo-pqc = { workspace = true }
+
+# LLM engine registry (synchronous inference/embedding surface)
+hanzo-llm = { workspace = true }
+
+# Canonical Go-backed precompile dispatch (Quasar, ML-DSA, etc.)
+luxprecompile-sys = { path = "../../../../lux/precompile/bindings/rust" }
 
 # State storage (bundled SQLite for dev; MPT later)
 rusqlite = { workspace = true }
