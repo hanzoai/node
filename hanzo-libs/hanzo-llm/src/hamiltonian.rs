@@ -1,6 +1,7 @@
-//! Hamiltonian mechanics for price dynamics
-//! 
-//! Models price evolution using classical mechanics principles
+//! Hamiltonian price dynamics. Compute prices evolve as a conservative
+//! mechanical system: price = position, momentum = trend. Energy-conserving
+//! integrator (symplectic) prevents the marketmaker from drifting on noise.
+//! Coupled to regime state via a regime-dependent potential.
 
 use serde::{Serialize, Deserialize};
 use anyhow::Result;

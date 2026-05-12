@@ -1,8 +1,14 @@
-//! Hamiltonian Hidden-Markov LLM (HLLM) Routing System
-//! 
-//! A physics-inspired regime-based routing system for optimal model selection.
-//! Combines Hidden Markov Models for regime detection with Hamiltonian mechanics
-//! for price dynamics and BitDelta quantization for efficient adaptation.
+//! Hamiltonian Hidden-Markov MarketMaker (HMM) for heterogeneous compute.
+//!
+//! AMM-analogue with HMM dynamics. Quotes prices for compute resources
+//! (different GPU classes, model sizes, latencies) using Hidden-Markov state
+//! transitions for market regimes plus Hamiltonian mechanics for energy-
+//! conserving price evolution. BitDelta 1-bit quantization compresses
+//! per-tenant price-adapter tables. Active-inference (expected free energy)
+//! drives quote width / inventory decisions.
+//!
+//! Distinct from the inference engine: this crate sets *prices*; the engine
+//! at `~/work/hanzo/engine` actually *runs* models.
 
 pub mod regime;
 pub mod hamiltonian;
