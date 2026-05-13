@@ -60,6 +60,94 @@ fn port_is_available(port: u16) -> bool {
     }
 }
 
+/// Load + register the canonical [`hanzo_engine::MistralEngine`] used by
+/// EVM precompiles `0x0201` (AI inference) and `0x0202` (AI embedding).
+///
+/// Configuration:
+/// * `HANZO_MODEL_PATH` — path to a local GGUF or safetensors directory.
+///   Preferred when set: avoids touching the network.
+/// * `HANZO_MODEL_REPO` — Hugging Face repo (e.g. `Qwen/Qwen3-4B`). Used
+///   when `HANZO_MODEL_PATH` is unset. The model is downloaded by
+///   `mistralrs` the first time and cached.
+///
+/// If neither variable is set, or the load fails, the function logs and
+/// returns. The precompiles then revert with
+/// `EngineError::NoInferenceEngine` / `NoEmbeddingEngine` at call time.
+/// This is the documented "fail open" contract: a node without a model
+/// is still a valid node — it just can't serve those two precompiles.
+async fn install_engine() {
+    use std::sync::Arc;
+
+    let load_result = match (env::var("HANZO_MODEL_PATH"), env::var("HANZO_MODEL_REPO")) {
+        (Ok(path), _) if !path.is_empty() => {
+            hanzo_log(
+                HanzoLogOption::Node,
+                HanzoLogLevel::Info,
+                &format!("hanzo_engine: loading MistralEngine from path: {path}"),
+            );
+            hanzo_engine::MistralEngine::from_model_path(&path)
+                .await
+                .map(|engine| (engine, format!("path={path}")))
+        }
+        (_, Ok(repo)) if !repo.is_empty() => {
+            hanzo_log(
+                HanzoLogOption::Node,
+                HanzoLogLevel::Info,
+                &format!("hanzo_engine: loading MistralEngine from HF repo: {repo}"),
+            );
+            hanzo_engine::MistralEngine::from_hf_repo(&repo)
+                .await
+                .map(|engine| (engine, format!("repo={repo}")))
+        }
+        _ => {
+            hanzo_log(
+                HanzoLogOption::Node,
+                HanzoLogLevel::Info,
+                "hanzo_engine: HANZO_MODEL_PATH and HANZO_MODEL_REPO unset; \
+                 AI precompiles (0x0201, 0x0202) will revert until an engine is registered",
+            );
+            return;
+        }
+    };
+
+    let (engine, source) = match load_result {
+        Ok(pair) => pair,
+        Err(e) => {
+            hanzo_log(
+                HanzoLogOption::Node,
+                HanzoLogLevel::Error,
+                &format!("hanzo_engine: model load failed ({e}); AI precompiles will revert"),
+            );
+            return;
+        }
+    };
+
+    let arc: Arc<hanzo_engine::MistralEngine> = Arc::new(engine);
+
+    // `MistralEngine` implements both `InferenceEngine` and `EmbeddingEngine`,
+    // so the same `Arc` registers under both surfaces.
+    if let Err(e) = hanzo_engine::register_inference_engine(arc.clone()) {
+        hanzo_log(
+            HanzoLogOption::Node,
+            HanzoLogLevel::Error,
+            &format!("hanzo_engine: inference registration failed ({e})"),
+        );
+    }
+    if let Err(e) = hanzo_engine::register_embedding_engine(arc) {
+        hanzo_log(
+            HanzoLogOption::Node,
+            HanzoLogLevel::Error,
+            &format!("hanzo_engine: embedding registration failed ({e})"),
+        );
+    }
+
+    hanzo_log(
+        HanzoLogOption::Node,
+        HanzoLogLevel::Info,
+        &format!("hanzo_engine: MistralEngine registered ({source})"),
+    );
+}
+
 pub async fn initialize_node() -> Result<
     (Sender<NodeCommand>, JoinHandle<()>, JoinHandle<()>, JoinHandle<()>, Weak<Mutex<Node>>),
     Box<dyn std::error::Error + Send + Sync>,
@@ -247,6 +335,13 @@ pub async fn initialize_node() -> Result<
         node_env.api_v2_key.clone(),
     )
     .await;
+
+    // Install the canonical inference + embedding engine before any
+    // request can fan out through the EVM precompiles (`0x0201` /
+    // `0x0202`). Best-effort: if the model can't be loaded the
+    // precompiles will revert with `EngineError::NoInferenceEngine` /
+    // `NoEmbeddingEngine` at call time, which is the documented contract.
+    install_engine().await;
 
     // Put the Node in an Arc<Mutex<Node>> for use in a task
     let start_node = Arc::clone(&node);
