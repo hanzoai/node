@@ -48,10 +48,10 @@ mod tests {
         println!("\n✅ All 5 TEE privacy tiers architecture validated!");
     }
 
-    /// Demonstrates HLLM regime routing
+    /// Demonstrates MarketMaker regime routing
     #[test]
     fn test_matrix_llm_regimes() {
-        println!("\n🔴💊 MATRIX: Demonstrating HLLM Regime Routing\n");
+        println!("\n🔴💊 MATRIX: Demonstrating MarketMaker Regime Routing\n");
 
         let regimes = vec![
             ("Natural", "General conversation and queries", 0.2),
@@ -70,7 +70,7 @@ mod tests {
         println!("    Coding → Math: Complex algorithmic analysis needed");
         println!("    Math → Vision: Visualization of results required");
 
-        println!("\n✅ HLLM regime routing architecture validated!");
+        println!("\n✅ MarketMaker regime routing architecture validated!");
     }
 
     /// Demonstrates compute marketplace DEX
@@ -114,8 +114,8 @@ mod tests {
         println!("    Tools: 3 (data_loader, processor, visualizer)");
         println!("    Privacy: TEE Tier 2 (Enhanced)");
 
-        // Step 2: HLLM Routing
-        println!("\n  🧭 Step 2: HLLM Routing");
+        // Step 2: MarketMaker Routing
+        println!("\n  🧭 Step 2: MarketMaker Routing");
         println!("    Regime selected: Coding + Math");
         println!("    Execution plan: 3 stages");
 
@@ -173,7 +173,7 @@ mod tests {
         println!("  • 8 Runtime Engines (Native, Deno, Python, WASM,");
         println!("    Docker, K8s, MCP, Agent)");
         println!("  • 5 TEE Privacy Tiers (Open → TEE-I/O)");
-        println!("  • HLLM Regime Routing (Natural, Coding, Math, Vision)");
+        println!("  • MarketMaker Regime Routing (Natural, Coding, Math, Vision)");
         println!("  • Compute Marketplace DEX (Order matching & settlement)");
         println!("  • End-to-End Workflow (Submission → Execution → Payment)");
         println!("\n════════════════════════════════════════════════════");
