@@ -3338,14 +3338,16 @@ dependencies = [
 [[package]]
 name = "hanzo-db-sqlite"
 version = "1.1.13"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "25ac7f92b27296b71e329b0808fd0b8f38a78e0440d7846ac59fff9b3002d304"
 dependencies = [
  "bincode",
  "blake3",
  "bytemuck",
  "chrono",
  "ed25519-dalek",
- "hanzo-embed",
- "hanzo-messages",
+ "hanzo-embed 1.1.13 (registry+https://github.com/rust-lang/crates.io-index)",
+ "hanzo-messages 1.1.13 (registry+https://github.com/rust-lang/crates.io-index)",
  "hanzo-tools",
  "hex",
  "keyphrases",
@@ -3387,6 +3389,29 @@ dependencies = [
 ]
 
 [[package]]
+name = "hanzo-embed"
+version = "1.1.13"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "3a492f3bfbe3515bb6b44e3fa83410bacd6e055db9a8f066204e8a47d6c2c134"
+dependencies = [
+ "async-trait",
+ "bincode",
+ "blake3",
+ "chrono",
+ "csv",
+ "futures",
+ "keyphrases",
+ "lazy_static",
+ "rand 0.8.5",
+ "regex",
+ "reqwest 0.11.27",
+ "serde",
+ "serde_json",
+ "thiserror 2.0.18",
+ "utoipa 4.2.3",
+]
+
+[[package]]
 name = "hanzo-engine"
 version = "0.6.0"
 dependencies = [
@@ -3401,6 +3426,8 @@ dependencies = [
 [[package]]
 name = "hanzo-fs"
 version = "1.1.21"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "54b4709c6b5d8f348d01036b49dc6a9e44926fbfb79ae46ddfca386e4a99a1d3"
 dependencies = [
  "async-trait",
  "bincode",
@@ -3410,8 +3437,8 @@ dependencies = [
  "csv",
  "futures",
  "hanzo-db-sqlite",
- "hanzo-embed",
- "hanzo-messages",
+ "hanzo-embed 1.1.13 (registry+https://github.com/rust-lang/crates.io-index)",
+ "hanzo-messages 1.1.13 (registry+https://github.com/rust-lang/crates.io-index)",
  "hanzo-runtime",
  "keyphrases",
  "lazy_static",
@@ -3433,6 +3460,8 @@ dependencies = [
 [[package]]
 name = "hanzo-http-api"
 version = "1.1.21"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "5659daeead80b578db0c68e5b5404818af1892a7d5c6773b632633cc7a0ee95d"
 dependencies = [
  "anyhow",
  "async-channel",
@@ -3441,7 +3470,7 @@ dependencies = [
  "chrono",
  "ed25519-dalek",
  "futures",
- "hanzo-messages",
+ "hanzo-messages 1.1.13 (registry+https://github.com/rust-lang/crates.io-index)",
  "hanzo-tools",
  "hyper 0.14.32",
  "once_cell",
@@ -3469,11 +3498,13 @@ dependencies = [
 [[package]]
 name = "hanzo-identity"
 version = "1.1.13"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "31cdad8d77e7ecc8da0040ef0cda3a3d57601d5f13aadd651600085e2d339122"
 dependencies = [
  "chrono",
  "dashmap 6.1.0",
  "ed25519-dalek",
- "hanzo-messages",
+ "hanzo-messages 1.1.13 (registry+https://github.com/rust-lang/crates.io-index)",
  "hanzo-runtime",
  "lazy_static",
  "serde_json",
@@ -3486,11 +3517,13 @@ dependencies = [
 [[package]]
 name = "hanzo-job-queue-manager"
 version = "1.1.21"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "d56cc9c0023402e6caaea482c2aa31f2594cebe17cf3019d550d45fb2539fe40"
 dependencies = [
  "chrono",
  "hanzo-db-sqlite",
- "hanzo-embed",
- "hanzo-messages",
+ "hanzo-embed 1.1.13 (registry+https://github.com/rust-lang/crates.io-index)",
+ "hanzo-messages 1.1.13 (registry+https://github.com/rust-lang/crates.io-index)",
  "serde",
  "serde_json",
  "tokio",
@@ -3499,6 +3532,8 @@ dependencies = [
 [[package]]
 name = "hanzo-libp2p-relayer"
 version = "1.1.13"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "6fc5e773c83f42383e4fe9a6d76a5f6e05b9769107d27abd4edfb1825c57f65e"
 dependencies = [
  "chrono",
  "clap 3.2.25",
@@ -3507,7 +3542,7 @@ dependencies = [
  "dotenv",
  "ed25519-dalek",
  "hanzo-identity",
- "hanzo-messages",
+ "hanzo-messages 1.1.13 (registry+https://github.com/rust-lang/crates.io-index)",
  "hex",
  "libp2p",
  "rand 0.8.5",
@@ -3523,6 +3558,34 @@ dependencies = [
 [[package]]
 name = "hanzo-messages"
 version = "1.1.13"
+dependencies = [
+ "aes-gcm",
+ "async-trait",
+ "base64 0.22.1",
+ "blake3",
+ "chacha20poly1305 0.7.1",
+ "chrono",
+ "ed25519-dalek",
+ "hex",
+ "os_path",
+ "rand 0.8.5",
+ "regex",
+ "rust_decimal",
+ "serde",
+ "serde_json",
+ "thiserror 2.0.18",
+ "tokio",
+ "tracing",
+ "tracing-subscriber",
+ "utoipa 4.2.3",
+ "x25519-dalek",
+]
+
+[[package]]
+name = "hanzo-messages"
+version = "1.1.13"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "1f83432d14f458e6c42d4fe687c4393043a1482c0636fc2f68bea33c083b5cff"
 dependencies = [
  "aes-gcm",
  "async-trait",
@@ -3641,14 +3704,14 @@ dependencies = [
  "futures",
  "governor",
  "hanzo-db-sqlite",
- "hanzo-embed",
+ "hanzo-embed 1.1.13 (registry+https://github.com/rust-lang/crates.io-index)",
  "hanzo-engine",
  "hanzo-fs",
  "hanzo-http-api",
  "hanzo-identity",
  "hanzo-job-queue-manager",
  "hanzo-libp2p-relayer",
- "hanzo-messages",
+ "hanzo-messages 1.1.13 (registry+https://github.com/rust-lang/crates.io-index)",
  "hanzo-runtime",
  "hanzo-test-framework",
  "hanzo-test-macro",
@@ -3697,6 +3760,8 @@ dependencies = [
 [[package]]
 name = "hanzo-runner"
 version = "1.1.13"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "c89daf5a0d982d18d4b9b525984177d4156a05d7a11097c624c46905ef950c74"
 dependencies = [
  "anyhow",
  "base64-simd",
@@ -3731,8 +3796,10 @@ dependencies = [
 [[package]]
 name = "hanzo-runtime"
 version = "1.1.13"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "96928255c7459663dc6157c0b45be929163ed1b3e0aec933846e25dadaec3477"
 dependencies = [
- "hanzo-messages",
+ "hanzo-messages 1.1.13 (registry+https://github.com/rust-lang/crates.io-index)",
  "hanzo-runner",
  "log",
  "serde",
@@ -3749,9 +3816,9 @@ dependencies = [
  "async-channel",
  "ed25519-dalek",
  "hanzo-db-sqlite",
- "hanzo-embed",
+ "hanzo-embed 1.1.13 (registry+https://github.com/rust-lang/crates.io-index)",
  "hanzo-http-api",
- "hanzo-messages",
+ "hanzo-messages 1.1.13 (registry+https://github.com/rust-lang/crates.io-index)",
  "hanzo-node",
  "proc-macro2",
  "quote",
@@ -3774,9 +3841,11 @@ dependencies = [
 [[package]]
 name = "hanzo-tools"
 version = "1.1.21"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "1fb31311a2fe8dc9578e8cb14bff76b47c068fb0702468b40be69bd5dd0ad96b"
 dependencies = [
  "base64 0.22.1",
- "hanzo-messages",
+ "hanzo-messages 1.1.13 (registry+https://github.com/rust-lang/crates.io-index)",
  "hanzo-tools-runner",
  "hanzonet-mcp",
  "log",
@@ -3792,6 +3861,8 @@ dependencies = [
 [[package]]
 name = "hanzo-tools-runner"
 version = "1.0.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "231c813cc664e276c4493484143aa2c9f3ae53f0396c5679fe9a2df602d30e95"
 dependencies = [
  "anyhow",
  "base64-simd",
@@ -3834,6 +3905,8 @@ dependencies = [
 [[package]]
 name = "hanzo-zap"
 version = "0.6.75"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "a3f1125a1c99633d3e5f35bdfd22fdd0740e1b2c3d6a1422b6c7debc66e7e34c"
 dependencies = [
  "rustls 0.23.27",
  "serde",
@@ -3857,8 +3930,8 @@ dependencies = [
  "directories",
  "futures",
  "git2",
- "hanzo-embed",
- "hanzo-messages",
+ "hanzo-embed 1.1.13",
+ "hanzo-messages 1.1.13",
  "hanzo-model-discovery",
  "humansize",
  "indicatif 0.17.11",
@@ -3879,6 +3952,8 @@ dependencies = [
 [[package]]
 name = "hanzonet-mcp"
 version = "1.1.21"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "97a82657b8eaf0b9732cb97220bba2e3d439c401ad79c6c0936d7c8e9e3b91a5"
 dependencies = [
  "async-trait",
  "futures",
@@ -5035,7 +5110,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "07033963ba89ebaf1584d767badaa2e8fcec21aedea6b8c0346d487d49c28667"
 dependencies = [
  "cfg-if",
- "windows-targets 0.52.6",
+ "windows-targets 0.53.5",
 ]
 
 [[package]]
