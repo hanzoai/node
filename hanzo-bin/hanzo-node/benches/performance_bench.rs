@@ -365,11 +365,10 @@ fn bench_json_operations(c: &mut Criterion) {
     group.finish();
 }
 
-/// Benchmark HLLM regime switching
-fn bench_hllm_regime_switching(c: &mut Criterion) {
-    let mut group = c.benchmark_group("hllm");
+/// Benchmark MarketMaker regime switching
+fn bench_regime_switching(c: &mut Criterion) {
+    let mut group = c.benchmark_group("marketmaker");
 
-    // Simulate regime configurations
     let regimes = vec!["fast", "balanced", "quality", "creative"];
 
     group.bench_function("regime_switch", |b| {
@@ -379,7 +378,6 @@ fn bench_hllm_regime_switching(c: &mut Criterion) {
             let to = &regimes[(current + 1) % regimes.len()];
             current += 1;
 
-            // Simulate regime switch operations
             black_box((from, to))
         });
     });
@@ -427,7 +425,7 @@ criterion_group!(
     bench_wasm_runtime,
     bench_container_ops,
     bench_json_operations,
-    bench_hllm_regime_switching,
+    bench_regime_switching,
     bench_tee_attestation
 );
 

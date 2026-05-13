@@ -21,7 +21,7 @@ pub use metrics::{
     record_wasm_execution,
     record_tee_attestation,
     update_tee_cache_hit_rate,
-    record_hllm_regime_switch,
+    record_regime_switch,
     record_container_start,
     update_container_pool,
 };
