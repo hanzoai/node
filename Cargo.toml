@@ -17,11 +17,11 @@ authors = ["Nico Arqueros <nico@hanzo.ai>"]
 
 [workspace.dependencies]
 hanzo-api = { path = "../net/hanzo-api", version = "1.1.12" }
-hanzo-config = { path = "../net/hanzo-config", version = "1.1.19" }
+hanzo-config = { path = "../net/hanzo-config", version = "1.1.21", package = "hanzonet-config" }
 hanzo-database = { path = "../net/hanzo-database", version = "1.1.12" }
 hanzo-db = { path = "../net/hanzo-db", version = "0.1.1" }
 hanzo-db-sqlite = { path = "../net/hanzo-db-sqlite", version = "1.1.12" }
-hanzo-did = { path = "../net/hanzo-did", version = "1.1.11" }
+hanzo-did = { path = "../net/hanzo-did", version = "1.1.21", package = "hanzonet-did" }
 hanzo-embed = { path = "../net/hanzo-embed", version = "1.1.12" }
 hanzo-fs = { path = "../net/hanzo-fs" }
 hanzo-hmm = { path = "../net/hanzo-hmm", version = "0.1.1" }
@@ -33,7 +33,7 @@ hanzo-kbs = { path = "../net/hanzo-kbs", version = "1.1.11" }
 hanzo-l2 = { path = "../net/hanzo-l2", version = "1.1.19" }
 hanzo-libp2p = { path = "../net/hanzo-libp2p", version = "1.1.12" }
 hanzo-libp2p-relayer = { path = "../net/hanzo-libp2p-relayer", version = "1.1.12" }
-hanzo-mcp = { path = "../net/hanzo-mcp", version = "1.1.11" }
+hanzo-mcp = { path = "../net/hanzo-mcp", version = "1.1.21", package = "hanzonet-mcp" }
 hanzo-messages = { path = "../net/hanzo-messages", version = "1.1.12" }
 hanzo-mining = { path = "../net/hanzo-mining", version = "1.1.19" }
 hanzo-consensus = { path = "../net/hanzo-consensus", version = "1.1.19" }
@@ -41,7 +41,7 @@ hanzo-compute = { path = "../net/hanzo-compute", version = "1.1.19" }
 hanzo-ai-format = { path = "../net/hanzo-ai-format", version = "1.1.19" }
 hanzo-model-discovery = { path = "../net/hanzo-model-discovery", version = "1.1.12" }
 hanzo-models = { path = "../net/hanzo-models", version = "1.1.12" }
-hanzo-pqc = { path = "../net/hanzo-pqc", version = "1.1.12" }
+hanzo-pqc = { path = "../net/hanzo-pqc", version = "1.1.21", package = "hanzonet-pqc" }
 hanzo-runner = { path = "../net/hanzo-runner", version = "1.1.12" }
 hanzo-runtime = { path = "../net/hanzo-runtime", version = "1.1.12" }
 hanzo-runtime-tests = { path = "../net/hanzo-runtime-tests", version = "0.1.1" }
@@ -54,7 +54,7 @@ hanzo-wasm = { path = "../net/hanzo-wasm", version = "0.1.1" }
 hanzo-vm = { path = "../net/hanzo-vm", version = "1.1.19" }
 hanzo-machine = { path = "../net/hanzo-machine", version = "1.1.19" }
 hanzo-wasm-runtime = { path = "../net/hanzo-wasm-runtime", version = "1.1.19" }
-hanzo-zap = { path = "../net/hanzo-zap", version = "0.1.0" }
+hanzo-zap = { path = "../net/hanzo-zap", version = "0.6.75" }
 
 
 
