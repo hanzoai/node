@@ -16,45 +16,47 @@ edition = "2021"
 authors = ["Nico Arqueros <nico@hanzo.ai>"]
 
 [workspace.dependencies]
-hanzo-api = { path = "../net/hanzo-api", version = "1.1.12" }
-hanzo-config = { path = "../net/hanzo-config", version = "1.1.21", package = "hanzonet-config" }
-hanzo-database = { path = "../net/hanzo-database", version = "1.1.12" }
-hanzo-db = { path = "../net/hanzo-db", version = "0.1.1" }
-hanzo-db-sqlite = { path = "../net/hanzo-db-sqlite", version = "1.1.12" }
-hanzo-did = { path = "../net/hanzo-did", version = "1.1.21", package = "hanzonet-did" }
-hanzo-embed = { path = "../net/hanzo-embed", version = "1.1.12" }
-hanzo-fs = { path = "../net/hanzo-fs" }
-hanzo-hmm = { path = "../net/hanzo-hmm", version = "0.1.1" }
-hanzo-http-api = { path = "../net/hanzo-http-api" }
-hanzo-identity = { path = "../net/hanzo-identity", version = "1.1.12" }
-hanzo-job-queue-manager = { path = "../net/hanzo-job-queue-manager" }
-hanzo-jobs = { path = "../net/hanzo-jobs", version = "1.1.12" }
-hanzo-kbs = { path = "../net/hanzo-kbs", version = "1.1.11" }
-hanzo-l2 = { path = "../net/hanzo-l2", version = "1.1.19" }
-hanzo-libp2p = { path = "../net/hanzo-libp2p", version = "1.1.12" }
-hanzo-libp2p-relayer = { path = "../net/hanzo-libp2p-relayer", version = "1.1.12" }
-hanzo-mcp = { path = "../net/hanzo-mcp", version = "1.1.21", package = "hanzonet-mcp" }
-hanzo-messages = { path = "../net/hanzo-messages", version = "1.1.12" }
-hanzo-mining = { path = "../net/hanzo-mining", version = "1.1.19" }
-hanzo-consensus = { path = "../net/hanzo-consensus", version = "1.1.19" }
-hanzo-compute = { path = "../net/hanzo-compute", version = "1.1.19" }
-hanzo-ai-format = { path = "../net/hanzo-ai-format", version = "1.1.19" }
-hanzo-model-discovery = { path = "../net/hanzo-model-discovery", version = "1.1.12" }
-hanzo-models = { path = "../net/hanzo-models", version = "1.1.12" }
-hanzo-pqc = { path = "../net/hanzo-pqc", version = "1.1.21", package = "hanzonet-pqc" }
-hanzo-runner = { path = "../net/hanzo-runner", version = "1.1.12" }
-hanzo-runtime = { path = "../net/hanzo-runtime", version = "1.1.12" }
-hanzo-runtime-tests = { path = "../net/hanzo-runtime-tests", version = "0.1.1" }
-hanzo-sheet = { path = "../net/hanzo-sheet", version = "0.1.1" }
-# hanzo-simulation = { path = "../net/hanzo-simulation" }
-hanzo-tests = { path = "../net/hanzo-tests", version = "0.1.1" }
-hanzo-tools = { path = "../net/hanzo-tools" }
-hanzo-tools-runner = { path = "../net/hanzo-tools-runner", version = "1.0.1" }
-hanzo-wasm = { path = "../net/hanzo-wasm", version = "0.1.1" }
-hanzo-vm = { path = "../net/hanzo-vm", version = "1.1.19" }
-hanzo-machine = { path = "../net/hanzo-machine", version = "1.1.19" }
-hanzo-wasm-runtime = { path = "../net/hanzo-wasm-runtime", version = "1.1.19" }
-hanzo-zap = { path = "../net/hanzo-zap", version = "0.6.75" }
+# All hanzonet/* crates resolve from crates.io now that the monorepo has been
+# split into 36 focused repos under github.com/hanzonet/*. See
+# https://github.com/hanzonet/network/blob/main/README.md for the map.
+# The four `package = "hanzonet-*"` rename trick preserves consumer imports
+# (`use hanzo_pqc::...` etc.) while the published crate has the hanzonet- prefix.
+hanzo-agentic = "1.1.21"
+hanzo-ai-format = "1.1.21"
+hanzo-api = "1.1.13"
+hanzo-brain = "0.1.0"
+hanzo-compute = "1.1.21"
+hanzo-config = { version = "1.1.21", package = "hanzonet-config" }
+hanzo-consensus = "1.1.21"
+hanzo-database = "1.1.13"
+hanzo-db-sqlite = "1.1.13"
+hanzo-did = { version = "1.1.21", package = "hanzonet-did" }
+hanzo-embed = "1.1.13"
+hanzo-fs = "1.1.21"
+hanzo-hmm = "0.1.2"
+hanzo-http-api = "1.1.21"
+hanzo-identity = "1.1.13"
+hanzo-job-queue-manager = "1.1.21"
+hanzo-jobs = "1.1.13"
+hanzo-l2 = "1.1.21"
+hanzo-libp2p = "1.1.13"
+hanzo-libp2p-relayer = "1.1.13"
+hanzo-machine = "1.1.21"
+hanzo-mcp = { version = "1.1.21", package = "hanzonet-mcp" }
+hanzo-messages = "1.1.13"
+hanzo-mining = "1.1.21"
+hanzo-model-discovery = "1.1.13"
+hanzo-models = "1.1.13"
+hanzo-pqc = { version = "1.1.21", package = "hanzonet-pqc" }
+hanzo-runner = "1.1.13"
+hanzo-runtime = "1.1.13"
+hanzo-runtime-tests = "0.1.2"
+hanzo-tools = "1.1.21"
+hanzo-tools-runner = "1.0.2"
+hanzo-vm = "1.1.22"
+hanzo-wasm = "0.1.2"
+hanzo-wasm-runtime = "1.1.21"
+hanzo-zap = "0.6.75"
 
 
 
