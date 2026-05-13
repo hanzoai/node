@@ -220,6 +220,8 @@ github.com/luxfi/container v0.0.4 h1:BXhF82WyfqVP5mjlNcr7tP0Fcnvl0Ap1rkiu+rq5XuM
 github.com/luxfi/container v0.0.4/go.mod h1:Z3SpmMF5d4t77MM0nHYXURpn+EMVaeu1fhbd/3BGaek=
 github.com/luxfi/crypto v1.17.55 h1:D3FqoN4a5vAxag8gexR4uEp6NLQk2FyX+XT1FEtBSd4=
 github.com/luxfi/crypto v1.17.55/go.mod h1:GnAkhQ7HNs3X0Tzx5nOONS3kl0yRmWHbDcRO5ffILsg=
+github.com/luxfi/crypto v1.19.0 h1:VtH6kvZrCEjCnkHPkhExDU+GJ0ZulYX4rnA+lXJdJHw=
+github.com/luxfi/crypto v1.19.0/go.mod h1:ee525i8Recbpb0jVTDZYZBr1MmvJ27OITJHZ/nlNMBw=
 github.com/luxfi/database v1.18.1 h1:Bvovo6MW3XSdUd1DkGNluB2tyvyiT/+N5d3QVwtoNo8=
 github.com/luxfi/database v1.18.1/go.mod h1:PW0oGujt165mYg7j/lctVbnfsUW6QLfIAgjyQdS66SM=
 github.com/luxfi/filesystem v0.0.1 h1:VZ6xMFKaAPBW/ddlMsDnI2G0VU1lV5rYaVcW5d+KwEY=
