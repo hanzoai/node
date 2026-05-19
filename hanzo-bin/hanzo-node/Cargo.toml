@@ -118,3 +118,11 @@ fs_extra = "1.2.0"
 utoipa = { workspace = true, features = ["yaml"] }
 hanzo-test-framework = {path = "../../hanzo-test-framework", version = "0.1.1"}
 hanzo-test-macro = {path = "../../hanzo-test-macro", version = "0.1.1"}
+criterion = { workspace = true }
+libc = "0.2"
+
+# Per-connection memory profile per SCALE_STANDARD.md §7. Run:
+#   cargo bench --bench conn_memory -- --conn-count 10000
+[[bench]]
+name = "conn_memory"
+harness = false
