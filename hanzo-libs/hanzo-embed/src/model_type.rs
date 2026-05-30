@@ -103,10 +103,8 @@ impl OllamaTextEmbeddingsInference {
             Self::AllMiniLML6v2 => Ok(384),
             Self::JinaEmbeddingsV2BaseEs => Ok(768),
             Self::EmbeddingGemma300M => Ok(768),
-            _ => Err(HanzoEmbeddingError::UnimplementedModelDimensions(format!(
-                "{:?}",
-                self
-            ))),
+            // zen/qwen3 + native hanzo-engine /api/embeddings are 1024-dim; default unknown models so the chunk_vec DB opens instead of panicking
+            _ => Ok(1024),
         }
     }
 }
