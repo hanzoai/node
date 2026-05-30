@@ -142,19 +142,19 @@ lazy_static! {
         &["tee_type"]
     ).expect("Failed to create TEE cache hit rate gauge");
 
-    /// HLLM regime metrics
-    static ref HLLM_REGIME_SWITCHES: CounterVec = register_counter_vec!(
+    /// MarketMaker regime metrics (Prometheus names retained for dashboard compatibility)
+    static ref REGIME_SWITCHES: CounterVec = register_counter_vec!(
         "hanzo_llm_regime_switches_total",
-        "Total number of HLLM regime switches",
+        "Total number of MarketMaker regime switches",
         &["from_regime", "to_regime"]
-    ).expect("Failed to create HLLM regime switch counter");
+    ).expect("Failed to create regime switch counter");
 
-    static ref HLLM_REGIME_SWITCH_TIME: HistogramVec = register_histogram_vec!(
+    static ref REGIME_SWITCH_TIME: HistogramVec = register_histogram_vec!(
         "hanzo_llm_regime_switch_seconds",
-        "HLLM regime switch time in seconds",
+        "MarketMaker regime switch time in seconds",
         &["from_regime", "to_regime"],
         vec![0.001, 0.005, 0.01, 0.025, 0.05, 0.1, 0.25, 0.5]
-    ).expect("Failed to create HLLM switch time histogram");
+    ).expect("Failed to create regime switch time histogram");
 
     /// Docker/Kubernetes metrics
     static ref CONTAINER_START_TIME: HistogramVec = register_histogram_vec!(
@@ -431,13 +431,13 @@ pub fn update_tee_cache_hit_rate(tee_type: &str, hit_rate: f64) {
         .set(hit_rate);
 }
 
-/// Record HLLM regime switch
-pub fn record_hllm_regime_switch(from: &str, to: &str, duration: Duration) {
-    HLLM_REGIME_SWITCHES
+/// Record MarketMaker regime switch
+pub fn record_regime_switch(from: &str, to: &str, duration: Duration) {
+    REGIME_SWITCHES
         .with_label_values(&[from, to])
         .inc();
 
-    HLLM_REGIME_SWITCH_TIME
+    REGIME_SWITCH_TIME
         .with_label_values(&[from, to])
         .observe(duration.as_secs_f64());
 }
@@ -479,8 +479,8 @@ pub fn init_metrics() -> Result<(), Box<dyn std::error::Error>> {
     REGISTRY.register(Box::new(WASM_FUEL_CONSUMED.clone()))?;
     REGISTRY.register(Box::new(TEE_ATTESTATION_TIME.clone()))?;
     REGISTRY.register(Box::new(TEE_CACHE_HIT_RATE.clone()))?;
-    REGISTRY.register(Box::new(HLLM_REGIME_SWITCHES.clone()))?;
-    REGISTRY.register(Box::new(HLLM_REGIME_SWITCH_TIME.clone()))?;
+    REGISTRY.register(Box::new(REGIME_SWITCHES.clone()))?;
+    REGISTRY.register(Box::new(REGIME_SWITCH_TIME.clone()))?;
     REGISTRY.register(Box::new(CONTAINER_START_TIME.clone()))?;
     REGISTRY.register(Box::new(CONTAINER_POOL_SIZE.clone()))?;
 
