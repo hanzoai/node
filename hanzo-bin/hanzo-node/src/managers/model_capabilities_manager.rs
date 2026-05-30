@@ -2,6 +2,7 @@ use crate::llm_provider::{
     error::LLMProviderError,
     providers::shared::{openai_api::openai_prepare_messages, shared_model_logic::llama_prepare_messages},
 };
+use super::zen_models::{is_zen_model, lookup_zen_model};
 use ai_model_catalog::{get_openrouter_model, providers::openrouter};
 use hanzo_messages::{
     schemas::{
@@ -175,6 +176,13 @@ impl ModelCapabilitiesManager {
     }
 
     fn get_shared_capabilities(model_type: &str) -> Vec<ModelCapability> {
+        // Zen SKUs are catalog-driven — check first so that operators serving
+        // Zen weights (via Ollama, OpenRouter, etc.) get the right modalities.
+        if is_zen_model(model_type) {
+            if let Some(zen) = lookup_zen_model(model_type) {
+                return zen.capabilities();
+            }
+        }
         match model_type {
             model_type if model_type.starts_with("llama3") => vec![ModelCapability::TextInference],
             model_type if model_type.starts_with("mistral-small3.2") || model_type.starts_with("mistral-small3.1") => {
@@ -535,7 +543,13 @@ impl ModelCapabilitiesManager {
             LLMProviderInterface::Groq(_) => ModelCost::VeryCheap,
             LLMProviderInterface::Gemini(gemini) => Self::get_gemini_cost(gemini.model_type.as_str()),
             LLMProviderInterface::Exo(_) => ModelCost::Cheap,
-            LLMProviderInterface::OpenRouter(_) => ModelCost::Free,
+            LLMProviderInterface::OpenRouter(router) => {
+                if let Some(zen) = lookup_zen_model(&router.model_type) {
+                    zen.cost()
+                } else {
+                    ModelCost::Free
+                }
+            }
             LLMProviderInterface::Grok(grok) => {
                 if grok.model_type.starts_with("grok-4") {
                     ModelCost::GoodValue
@@ -798,6 +812,12 @@ impl ModelCapabilitiesManager {
     }
 
     fn get_max_tokens_for_model_type(model_type: &str) -> usize {
+        // Zen SKUs come from the native catalog.
+        if is_zen_model(model_type) {
+            if let Some(zen) = lookup_zen_model(model_type) {
+                return zen.context_window;
+            }
+        }
         match model_type {
             model_type if model_type.starts_with("gpt-oss") => 128_000,
             model_type if model_type.starts_with("mistral:7b-instruct-v0.2") => 32_000,
@@ -1148,6 +1168,10 @@ impl ModelCapabilitiesManager {
             LLMProviderInterface::OpenAI(openai) => Self::openai_has_tool_capabilities(&openai.model_type),
             LLMProviderInterface::OpenAILegacy(openai) => Self::openai_has_tool_capabilities(&openai.model_type),
             LLMProviderInterface::Ollama(model) => {
+                // Zen catalog wins for any zen* SKU served via Ollama.
+                if let Some(zen) = lookup_zen_model(&model.model_type) {
+                    return zen.tools;
+                }
                 // For Ollama, check model type and respect the passed stream parameter
                 model.model_type.starts_with("llama3.1")
                     || model.model_type.starts_with("llama3.2")
@@ -1210,6 +1234,9 @@ impl ModelCapabilitiesManager {
                     || model.model_type.starts_with("llama-3.1-8b-instant")
             }
             LLMProviderInterface::OpenRouter(model) => {
+                if let Some(zen) = lookup_zen_model(&model.model_type) {
+                    return zen.tools;
+                }
                 model.model_type.starts_with("llama-3.2")
                     || model.model_type.starts_with("llama3.2")
                     || model.model_type.starts_with("llama-3.1")
@@ -1251,6 +1278,9 @@ impl ModelCapabilitiesManager {
             LLMProviderInterface::OpenAI(openai) => Self::openai_has_reasoning_capabilities(&openai.model_type),
             LLMProviderInterface::OpenAILegacy(openai) => Self::openai_has_reasoning_capabilities(&openai.model_type),
             LLMProviderInterface::Ollama(ollama) => {
+                if let Some(zen) = lookup_zen_model(&ollama.model_type) {
+                    return zen.reasoning;
+                }
                 ollama.model_type.starts_with("deepseek-r1")
                     || ollama.model_type.starts_with("magistral")
                     || ollama.model_type.starts_with("gpt-oss")
