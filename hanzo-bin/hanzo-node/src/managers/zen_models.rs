@@ -241,18 +241,6 @@ pub const ZEN_MODELS: &[ZenModelInfo] = &[
         tools: true,
         reasoning: true,
     },
-    // Deprecated alias kept for compatibility (routes to max tier).
-    ZenModelInfo {
-        sku: "zen5-ultra",
-        hf_repo: Some("zenlm/zen-5-max-gguf"),
-        context_window: 256_000,
-        max_output_tokens: 32_768,
-        modalities: &[ZenModality::Text],
-        input_price_per_mtok: 9.00,
-        output_price_per_mtok: 27.00,
-        tools: true,
-        reasoning: true,
-    },
     // =====================================================================
     // Zen5 embeddings
     // =====================================================================
@@ -290,118 +278,12 @@ pub const ZEN_MODELS: &[ZenModelInfo] = &[
         reasoning: false,
     },
     // =====================================================================
-    // Zen4 generation (9 SKUs — flagship, coder, reasoning)
-    // =====================================================================
-    ZenModelInfo {
-        sku: "zen4",
-        hf_repo: Some("zenlm/zen-4"),
-        context_window: 202_000,
-        max_output_tokens: 32_768,
-        modalities: &[ZenModality::Text],
-        input_price_per_mtok: 3.00,
-        output_price_per_mtok: 9.60,
-        tools: true,
-        reasoning: true,
-    },
-    ZenModelInfo {
-        sku: "zen4.1",
-        hf_repo: Some("zenlm/zen-4.1"),
-        context_window: 200_000,
-        max_output_tokens: 32_768,
-        modalities: &[ZenModality::Text, ZenModality::Vision],
-        input_price_per_mtok: 5.00,
-        output_price_per_mtok: 25.00,
-        tools: true,
-        reasoning: true,
-    },
-    ZenModelInfo {
-        sku: "zen4-pro",
-        hf_repo: Some("zenlm/zen-4-pro"),
-        context_window: 262_000,
-        max_output_tokens: 32_768,
-        modalities: &[ZenModality::Text],
-        input_price_per_mtok: 3.60,
-        output_price_per_mtok: 3.60,
-        tools: true,
-        reasoning: true,
-    },
-    ZenModelInfo {
-        sku: "zen4-max",
-        hf_repo: Some("zenlm/zen-4-max"),
-        context_window: 163_000,
-        max_output_tokens: 32_768,
-        modalities: &[ZenModality::Text, ZenModality::Vision],
-        input_price_per_mtok: 15.00,
-        output_price_per_mtok: 75.00,
-        tools: true,
-        reasoning: true,
-    },
-    ZenModelInfo {
-        sku: "zen4-mini",
-        hf_repo: Some("zenlm/zen-4-mini"),
-        context_window: 40_000,
-        max_output_tokens: 16_384,
-        modalities: &[ZenModality::Text],
-        input_price_per_mtok: 0.15,
-        output_price_per_mtok: 1.20,
-        tools: true,
-        reasoning: false,
-    },
-    ZenModelInfo {
-        sku: "zen4-ultra",
-        hf_repo: Some("zenlm/zen-4-ultra"),
-        context_window: 262_000,
-        max_output_tokens: 32_768,
-        modalities: &[ZenModality::Text],
-        input_price_per_mtok: 2.70,
-        output_price_per_mtok: 2.70,
-        tools: true,
-        reasoning: true,
-    },
-    ZenModelInfo {
-        sku: "zen4-coder",
-        hf_repo: Some("zenlm/zen-4-coder"),
-        context_window: 163_000,
-        max_output_tokens: 32_768,
-        modalities: &[ZenModality::Text],
-        input_price_per_mtok: 2.70,
-        output_price_per_mtok: 2.70,
-        tools: true,
-        reasoning: false,
-    },
-    ZenModelInfo {
-        sku: "zen4-coder-flash",
-        hf_repo: Some("zenlm/zen-4-coder-flash"),
-        context_window: 131_000,
-        max_output_tokens: 16_384,
-        modalities: &[ZenModality::Text],
-        input_price_per_mtok: 2.70,
-        output_price_per_mtok: 2.70,
-        tools: true,
-        reasoning: false,
-    },
-    ZenModelInfo {
-        sku: "zen4-coder-pro",
-        hf_repo: Some("zenlm/zen-4-coder-pro"),
-        context_window: 163_000,
-        max_output_tokens: 32_768,
-        modalities: &[ZenModality::Text],
-        input_price_per_mtok: 2.70,
-        output_price_per_mtok: 2.70,
-        tools: true,
-        reasoning: false,
-    },
-    ZenModelInfo {
-        sku: "zen4-thinking",
-        hf_repo: Some("zenlm/zen-4-thinking"),
-        context_window: 262_000,
-        max_output_tokens: 32_768,
-        modalities: &[ZenModality::Text],
-        input_price_per_mtok: 2.70,
-        output_price_per_mtok: 2.70,
-        tools: true,
-        reasoning: true,
-    },
+    // Zen4 generation sunset 2026-05-30 — zenlm/zen-4* HF mirrors deleted.
+    // Routing for legacy callers still resolves via the gateway's Fireworks
+    // aliases (zen-gateway/gateway/config.yaml model_access_groups), but
+    // node operators can no longer self-host these SKUs. Migrate to the
+    // zen5 ladder (zen5-flash / zen5-mini / zen5 / zen5-coder / zen5-pro /
+    // zen5-max) for new integrations.
     // =====================================================================
     // Zen3 multimodal & specialty
     // =====================================================================
@@ -477,83 +359,9 @@ pub const ZEN_MODELS: &[ZenModelInfo] = &[
         tools: true,
         reasoning: true,
     },
-    ZenModelInfo {
-        sku: "zen3-vl-reranker-2B",
-        hf_repo: Some("zenlm/zen-3-vl-reranker-2b"),
-        context_window: 32_000,
-        max_output_tokens: 0,
-        modalities: &[ZenModality::Vision, ZenModality::Rerank],
-        input_price_per_mtok: 0.05,
-        output_price_per_mtok: 0.05,
-        tools: false,
-        reasoning: false,
-    },
-    ZenModelInfo {
-        sku: "zen3-vl-reranker-8B",
-        hf_repo: Some("zenlm/zen-3-vl-reranker-8b"),
-        context_window: 32_000,
-        max_output_tokens: 0,
-        modalities: &[ZenModality::Vision, ZenModality::Rerank],
-        input_price_per_mtok: 0.20,
-        output_price_per_mtok: 0.20,
-        tools: false,
-        reasoning: false,
-    },
-    ZenModelInfo {
-        sku: "zen3-vl-embedding-2B",
-        hf_repo: Some("zenlm/zen-3-vl-embedding-2b"),
-        context_window: 32_000,
-        max_output_tokens: 0,
-        modalities: &[ZenModality::Vision, ZenModality::Embedding],
-        input_price_per_mtok: 0.05,
-        output_price_per_mtok: 0.05,
-        tools: false,
-        reasoning: false,
-    },
-    ZenModelInfo {
-        sku: "zen3-vl-embedding-8B",
-        hf_repo: Some("zenlm/zen-3-vl-embedding-8b"),
-        context_window: 32_000,
-        max_output_tokens: 0,
-        modalities: &[ZenModality::Vision, ZenModality::Embedding],
-        input_price_per_mtok: 0.20,
-        output_price_per_mtok: 0.20,
-        tools: false,
-        reasoning: false,
-    },
-    ZenModelInfo {
-        sku: "zen3-web-8B",
-        hf_repo: Some("zenlm/zen-3-web-8b"),
-        context_window: 128_000,
-        max_output_tokens: 8_192,
-        modalities: &[ZenModality::Text, ZenModality::Vision],
-        input_price_per_mtok: 0.15,
-        output_price_per_mtok: 0.45,
-        tools: true,
-        reasoning: false,
-    },
-    ZenModelInfo {
-        sku: "zen3-web-14B",
-        hf_repo: Some("zenlm/zen-3-web-14b"),
-        context_window: 128_000,
-        max_output_tokens: 8_192,
-        modalities: &[ZenModality::Text, ZenModality::Vision],
-        input_price_per_mtok: 0.30,
-        output_price_per_mtok: 0.90,
-        tools: true,
-        reasoning: false,
-    },
-    ZenModelInfo {
-        sku: "zen3-web-32B",
-        hf_repo: Some("zenlm/zen-3-web-32b"),
-        context_window: 128_000,
-        max_output_tokens: 16_384,
-        modalities: &[ZenModality::Text, ZenModality::Vision],
-        input_price_per_mtok: 0.60,
-        output_price_per_mtok: 1.80,
-        tools: true,
-        reasoning: false,
-    },
+    // zen3-vl-reranker-{2B,8B}, zen3-vl-embedding-{2B,8B} and
+    // zen3-web-{8B,14B,32B} were virtual SKUs with no HF weights — sunset
+    // 2026-05-30. The canonical zen3-vl size variants above remain.
     ZenModelInfo {
         sku: "zen3-asr",
         hf_repo: Some("zenlm/zen-3-asr-1.7b"),
@@ -721,10 +529,25 @@ mod tests {
         assert_eq!(lookup_zen_model("zen5:latest").map(|m| m.sku), Some("zen5"));
         assert_eq!(lookup_zen_model("zen5-coder").map(|m| m.sku), Some("zen5-coder"));
         assert_eq!(
-            lookup_zen_model("zen3-vl-embedding-8B").map(|m| m.sku),
-            Some("zen3-vl-embedding-8B"),
+            lookup_zen_model("zen3-vl-235B-A22B").map(|m| m.sku),
+            Some("zen3-vl-235B-A22B"),
         );
         assert!(lookup_zen_model("llama3").is_none());
+    }
+
+    #[test]
+    fn sunset_skus_are_absent() {
+        // Zen4 generation + virtual zen3 aliases sunset 2026-05-30.
+        for sku in [
+            "zen4", "zen4-pro", "zen4-max", "zen4.1", "zen4-mini", "zen4-ultra",
+            "zen4-thinking", "zen4-coder", "zen4-coder-flash", "zen4-coder-pro",
+            "zen5-ultra",
+            "zen3-vl-reranker-2B", "zen3-vl-reranker-8B",
+            "zen3-vl-embedding-2B", "zen3-vl-embedding-8B",
+            "zen3-web-8B", "zen3-web-14B", "zen3-web-32B",
+        ] {
+            assert!(lookup_zen_model(sku).is_none(), "sunset SKU `{sku}` still in catalog");
+        }
     }
 
     #[test]
@@ -738,15 +561,15 @@ mod tests {
 
     #[test]
     fn full_catalog_size_matches_gateway() {
-        // Cross-checked against zen-gateway/gateway/config.yaml::model_list as of 2026-05:
-        //   Zen5 ladder: nano-{0.8B,2B,4B,9B} + flash + mini + zen5 + coder + pro + max
-        //                + ultra alias = 11
+        // Cross-checked against zen-gateway/gateway/config.yaml::model_list
+        // after the 2026-05-30 SKU cleanup:
+        //   Zen5 ladder: nano-{0.8B,2B,4B,9B} + flash + mini + zen5 + coder
+        //                + pro + max = 10
         //   Zen5 embeddings: 0.6B/4B/8B = 3
-        //   Zen4 generation: zen4, zen4.1, zen4-pro, zen4-max, zen4-mini, zen4-ultra,
-        //                    zen4-coder, zen4-coder-flash, zen4-coder-pro, zen4-thinking = 10
-        //   Zen3 specialty: omni, vl + 4 sizes, vl-reranker x2, vl-embedding x2,
-        //                   web x3, asr x3, tts x4, nano, guard, embedding = 23
-        // Total = 47. If this assertion fires, sync the catalog with the gateway.
-        assert_eq!(ZEN_MODELS.len(), 47, "Zen SKU catalog drift vs gateway");
+        //   Zen4 generation: removed (sunset 2026-05-30)
+        //   Zen3 specialty: omni, vl + 4 sizes, asr x3, tts x4, nano, guard,
+        //                   embedding = 16
+        // Total = 29. If this assertion fires, sync the catalog with the gateway.
+        assert_eq!(ZEN_MODELS.len(), 29, "Zen SKU catalog drift vs gateway");
     }
 }
