@@ -1,50 +1,9 @@
 [workspace]
 members = [
-  "hanzo-libs/hanzo-api",
-  "hanzo-libs/hanzo-brain",
-  "hanzo-libs/hanzo-config",
-  "hanzo-libs/hanzo-database",
-  # "hanzo-libs/hanzo-db", # Excluded: not in publish list, has feature-gated dependencies
-  "hanzo-libs/hanzo-db-sqlite",
-  "hanzo-libs/hanzo-did",
-  "hanzo-libs/hanzo-embed",
-  "hanzo-libs/hanzo-fs",
-  # "hanzo-libs/hanzo-hmm", # Excluded: type inference issues
-  "hanzo-libs/hanzo-http-api",
-  "hanzo-libs/hanzo-identity",
-  "hanzo-libs/hanzo-job-queue-manager",
-  "hanzo-libs/hanzo-jobs",
-  # "hanzo-libs/hanzo-kbs", # Excluded: incomplete implementation with missing types
-  "hanzo-libs/hanzo-l2",
-  "hanzo-libs/hanzo-libp2p",
-  "hanzo-libs/hanzo-libp2p-relayer",
-  "hanzo-libs/hanzo-llm",
-  "hanzo-libs/hanzo-mcp",
-  "hanzo-libs/hanzo-messages",
-  "hanzo-libs/hanzo-mining",
-  "hanzo-libs/hanzo-vm",
-  "hanzo-libs/hanzo-consensus",
-  "hanzo-libs/hanzo-compute",
-  "hanzo-libs/hanzo-ai-format",
-  "hanzo-libs/hanzo-model-discovery",
-  "hanzo-libs/hanzo-models",
-  "hanzo-libs/hanzo-pqc",
-  "hanzo-libs/hanzo-runner",
-  "hanzo-libs/hanzo-runtime",
-  "hanzo-libs/hanzo-runtime-tests",
-  # "hanzo-libs/hanzo-sheet", # Excluded: depends on non-existent sheet module
-  # "hanzo-libs/hanzo-simulation",
-  # "hanzo-libs/hanzo-tests", # Excluded: test-only crate with compilation errors
-  "hanzo-libs/hanzo-tools",
-  "hanzo-libs/hanzo-tools-runner",
-  "hanzo-libs/hanzo-wasm",
-  "hanzo-libs/hanzo-wasm-runtime",
-  "hanzo-libs/hanzo-zap",
-  "hanzo-test-framework",  # Required by hanzo-node
-  "hanzo-test-macro",      # Required by hanzo-node
+  "hanzo-test-framework",
+  "hanzo-test-macro",
   "hanzo-bin/hanzo-node",
   "hanzo-bin/hanzoai",
-  # "hanzo-bin/hanzo-migrate", # Excluded: depends on hanzo-db which has feature-gated deps
 ]
 resolver = "2"
 
@@ -54,88 +13,65 @@ edition = "2021"
 authors = ["Nico Arqueros <nico@hanzo.ai>"]
 
 [workspace.dependencies]
-hanzo-api = { path = "./hanzo-libs/hanzo-api", version = "1.1.12" }
-hanzo-config = { path = "./hanzo-libs/hanzo-config", version = "1.1.19" }
-hanzo-database = { path = "./hanzo-libs/hanzo-database", version = "1.1.12" }
-hanzo-db = { path = "./hanzo-libs/hanzo-db", version = "0.1.1" }
-hanzo-db-sqlite = { path = "./hanzo-libs/hanzo-db-sqlite", version = "1.1.12" }
-hanzo-did = { path = "./hanzo-libs/hanzo-did", version = "1.1.11" }
-hanzo-embed = { path = "./hanzo-libs/hanzo-embed", version = "1.1.12" }
-hanzo-fs = { path = "./hanzo-libs/hanzo-fs" }
-hanzo-hmm = { path = "./hanzo-libs/hanzo-hmm", version = "0.1.1" }
-hanzo-http-api = { path = "./hanzo-libs/hanzo-http-api" }
-hanzo-identity = { path = "./hanzo-libs/hanzo-identity", version = "1.1.12" }
-hanzo-job-queue-manager = { path = "./hanzo-libs/hanzo-job-queue-manager" }
-hanzo-jobs = { path = "./hanzo-libs/hanzo-jobs", version = "1.1.12" }
-hanzo-kbs = { path = "./hanzo-libs/hanzo-kbs", version = "1.1.11" }
-hanzo-l2 = { path = "./hanzo-libs/hanzo-l2", version = "1.1.19" }
-hanzo-libp2p = { path = "./hanzo-libs/hanzo-libp2p", version = "1.1.12" }
-hanzo-libp2p-relayer = { path = "./hanzo-libs/hanzo-libp2p-relayer", version = "1.1.12" }
-hanzo-llm = { path = "./hanzo-libs/hanzo-llm", version = "1.1.11" }
-hanzo-mcp = { path = "./hanzo-libs/hanzo-mcp", version = "1.1.11" }
-hanzo-messages = { path = "./hanzo-libs/hanzo-messages", version = "1.1.12" }
-hanzo-mining = { path = "./hanzo-libs/hanzo-mining", version = "1.1.19" }
-hanzo-consensus = { path = "./hanzo-libs/hanzo-consensus", version = "1.1.19" }
-hanzo-compute = { path = "./hanzo-libs/hanzo-compute", version = "1.1.19" }
-hanzo-ai-format = { path = "./hanzo-libs/hanzo-ai-format", version = "1.1.19" }
-hanzo-model-discovery = { path = "./hanzo-libs/hanzo-model-discovery", version = "1.1.12" }
-hanzo-models = { path = "./hanzo-libs/hanzo-models", version = "1.1.12" }
-hanzo-pqc = { path = "./hanzo-libs/hanzo-pqc", version = "1.1.12" }
-hanzo-runner = { path = "./hanzo-libs/hanzo-runner", version = "1.1.12" }
-hanzo-runtime = { path = "./hanzo-libs/hanzo-runtime", version = "1.1.12" }
-hanzo-runtime-tests = { path = "./hanzo-libs/hanzo-runtime-tests", version = "0.1.1" }
-hanzo-sheet = { path = "./hanzo-libs/hanzo-sheet", version = "0.1.1" }
-# hanzo-simulation = { path = "./hanzo-libs/hanzo-simulation" }
-hanzo-tests = { path = "./hanzo-libs/hanzo-tests", version = "0.1.1" }
-hanzo-tools = { path = "./hanzo-libs/hanzo-tools" }
-hanzo-tools-runner = { path = "./hanzo-libs/hanzo-tools-runner", version = "1.0.1" }
-hanzo-wasm = { path = "./hanzo-libs/hanzo-wasm", version = "0.1.1" }
-hanzo-vm = { path = "./hanzo-libs/hanzo-vm", version = "1.1.19" }
-hanzo-wasm-runtime = { path = "./hanzo-libs/hanzo-wasm-runtime", version = "1.1.19" }
-hanzo-zap = { path = "./hanzo-libs/hanzo-zap", version = "0.1.0" }
+# hanzonet/* crates (resolved from crates.io). The four `package = "hanzonet-*"`
+# rename trick keeps `use hanzo_pqc::...` imports unchanged at the call site.
+hanzo-db-sqlite = "1.1.13"
+hanzo-embed = "1.1.13"
+hanzo-fs = "1.1.21"
+hanzo-http-api = "1.1.21"
+hanzo-identity = "1.1.13"
+hanzo-job-queue-manager = "1.1.21"
+hanzo-libp2p-relayer = "1.1.13"
+hanzo-mcp = { version = "1.1.21", package = "hanzonet-mcp" }
+hanzo-messages = "1.1.13"
+hanzo-model-discovery = "1.1.13"
+hanzo-runtime = "1.1.13"
+hanzo-tools = "1.1.21"
+hanzo-tools-runner = "1.0.2"
+hanzo-zap = "0.6.75"
 
+# hanzoai/engine (local path during dev; pin to 0.6.0 for crates.io publish)
+hanzo-engine = { version = "0.6.0", path = "../engine/hanzo-engine" }
 
+# Locals
+hanzo-test-framework = { path = "./hanzo-test-framework" }
+hanzo-test-macro = { path = "./hanzo-test-macro" }
 
-rmcp = { version = "0.8" }
+# Third-party shared
+rmcp = "0.8"
 futures = "0.3.30"
 keyphrases = "0.3.3"
-tokio = { version = "1.36", features = [
-  "rt",
-  "rt-multi-thread",
-  "macros",
-  "fs",
-  "io-util",
-  "net",
-  "sync",
-  "time",
-] }
+tokio = { version = "1.36", features = ["rt", "rt-multi-thread", "macros", "fs", "io-util", "net", "sync", "time"] }
 tokio-util = "0.7.13"
+tokio-tungstenite = "0.26.2"
+async-trait = "0.1.74"
+async-channel = "1.6.1"
 bincode = "1.3.3"
 log = "0.4.20"
 chrono = "0.4"
 serde_json = "1.0.117"
 anyhow = "1.0.94"
-blake3 = "1.2.0"
-sha2 = "0.10"
+thiserror = "2.0.3"
 serde = "1.0.219"
+serde_yaml = "0.9.34-deprecated"
 base64 = "0.22.0"
+hex = "=0.4.3"
 reqwest = "0.11.27"
 regex = "1"
-uuid = { version = "1.6.1" }
+uuid = "1.6.1"
 rand = "=0.8.5"
-hex = "=0.4.3"
 env_logger = "0.11.5"
-async-trait = "0.1.74"
 ed25519-dalek = { version = "2.1.1", features = ["rand_core"] }
 x25519-dalek = { version = "2.0.1", features = ["static_secrets"] }
+chacha20poly1305 = "0.10"
+hpke = "0.12"
+sha2 = "0.10"
+blake3 = "1.2.0"
 tempfile = "3.19"
 lazy_static = "1.5.0"
-async-channel = "1.6.1"
+once_cell = "1.21"
 csv = "1.1.6"
-thiserror = "2.0.3"
 dashmap = "5.5.3"
-hpke = "0.12"
-chacha20poly1305 = "0.10"
 clap = "3.0.0-beta.5"
 r2d2 = "0.8.10"
 r2d2_sqlite = "0.25"
@@ -143,37 +79,14 @@ rusqlite = { version = "0.32.1", features = ["bundled"] }
 os_path = "0.8.0"
 utoipa = "4.2.3"
 warp = "0.3.7"
-once_cell = "1.21"
 home = "0.5"
 strip-ansi-escapes = "0.2"
 tracing = "0.1.40"
-serde_yaml = "0.9.34-deprecated"
-tokio-tungstenite = "0.26.2"
 rustls = "0.23.27"
-# Native embedding support via hanzoai/engine (our mistral.rs fork)
-# hanzo_engine = { git = "https://github.com/hanzoai/engine.git", default-features = false }
-# candle-core = "0.8"
-# candle-nn = "0.8"
-# candle-transformers = "0.8"
-# hf-hub = "0.3"
-# tokenizers = "0.20"
 dirs = "5.0"
-libp2p = { version = "0.55.0", features = [
-  "noise",
-  "yamux",
-  "tcp",
-  "quic",
-  "dcutr",
-  "identify",
-  "ping",
-  "relay",
-  "request-response",
-  "json",
-  "tokio",
-  "macros",
-] }
+libp2p = { version = "0.55.0", features = ["noise", "yamux", "tcp", "quic", "dcutr", "identify", "ping", "relay", "request-response", "json", "tokio", "macros"] }
 
-# Dev dependencies
+# Dev
 criterion = "0.5"
 proptest = "1.0"
 tokio-test = "0.4"

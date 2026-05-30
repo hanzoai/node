@@ -1,6 +1,6 @@
 module github.com/hanzoai/node
 
-go 1.26.1
+go 1.26.3
 
 require (
 	github.com/luxfi/node v1.24.29
@@ -75,7 +75,7 @@ require (
 	github.com/luxfi/consensus v1.22.84 // indirect
 	github.com/luxfi/constants v1.4.7 // indirect
 	github.com/luxfi/container v0.0.4 // indirect
-	github.com/luxfi/crypto v1.17.55 // indirect
+	github.com/luxfi/crypto v1.19.0 // indirect
 	github.com/luxfi/database v1.18.1 // indirect
 	github.com/luxfi/filesystem v0.0.1 // indirect
 	github.com/luxfi/formatting v1.0.1 // indirect
