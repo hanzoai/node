@@ -201,9 +201,14 @@ async fn handle_non_streaming_response_responses(
                 return Err(LLMProviderError::APIError(format!("AI Provider API Error: {}", msg)));
             }
         }
-        return Err(LLMProviderError::APIError(
-            "AI Provider API Error: Unknown error occurred".to_string(),
-        ));
+        // mistral.rs / hanzo-engine returns errors as a top-level {"message": "..."}.
+        if let Some(msg) = error_json.get("message").and_then(|m| m.as_str()) {
+            return Err(LLMProviderError::APIError(format!("AI Provider API Error: {}", msg)));
+        }
+        return Err(LLMProviderError::APIError(format!(
+            "AI Provider API Error: {}",
+            error_json
+        )));
     }
 
     let response_json: serde_json::Value = res.json().await?;
@@ -1174,6 +1179,17 @@ fn transform_input_messages_for_responses(messages_json: serde_json::Value) -> s
 
             if content_blocks.is_empty() {
                 continue;
+            }
+
+            // The engine's /v1/responses only accepts input-side content types
+            // (input_text/input_image/...). Assistant turns get "output_text", which
+            // the engine rejects ("data did not match any variant of OpenResponsesInput"),
+            // making every 2nd+ message in a conversation 4xx. Normalize output_text →
+            // input_text so multi-turn history deserializes cleanly.
+            for block in content_blocks.iter_mut() {
+                if block.get("type").and_then(|t| t.as_str()) == Some("output_text") {
+                    block["type"] = json!("input_text");
+                }
             }
 
             let mut new_msg = serde_json::Map::new();
