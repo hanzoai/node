@@ -72,17 +72,33 @@ impl JobManager {
         let mut profile_name = String::new();
         let mut user_profile: Option<HanzoName> = None;
         let agents_and_llm_providers = JobManager::get_all_agents_and_llm_providers(db).await.unwrap_or(vec![]);
-        for agent_or_llm_provider in agents_and_llm_providers {
+        for agent_or_llm_provider in &agents_and_llm_providers {
             if agent_or_llm_provider.get_id().to_lowercase() == agent_or_llm_provider_id.to_lowercase() {
                 agent_or_llm_provider_found = Some(agent_or_llm_provider.clone());
                 profile_name.clone_from(&agent_or_llm_provider.get_full_identity_name().full_name);
-                user_profile = Some(
-                    agent_or_llm_provider
-                        .get_full_identity_name()
-                        .extract_profile()
-                        .unwrap(),
-                );
+                user_profile = agent_or_llm_provider.get_full_identity_name().extract_profile().ok();
                 break;
+            }
+        }
+
+        // Fallback: if the job references a provider/agent that no longer exists
+        // (e.g. an imported or demo chat created against a different provider),
+        // degrade gracefully to the first available provider instead of failing
+        // the whole job with "User Profile returned None".
+        if agent_or_llm_provider_found.is_none() {
+            if let Some(fallback) = agents_and_llm_providers.first() {
+                hanzo_log(
+                    HanzoLogOption::JobExecution,
+                    HanzoLogLevel::Info,
+                    &format!(
+                        "Job references unknown provider '{}'; falling back to '{}'",
+                        agent_or_llm_provider_id,
+                        fallback.get_id()
+                    ),
+                );
+                agent_or_llm_provider_found = Some(fallback.clone());
+                profile_name.clone_from(&fallback.get_full_identity_name().full_name);
+                user_profile = fallback.get_full_identity_name().extract_profile().ok();
             }
         }
 
