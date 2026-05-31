@@ -1,9 +1,34 @@
 use std::fmt;
 use std::hash::Hash;
+use std::sync::atomic::{AtomicUsize, Ordering};
 
 use crate::hanzo_embedding_errors::HanzoEmbeddingError;
 
 pub type EmbeddingModelTypeString = String;
+
+/// Process-wide override for the active embedding vector dimension.
+/// `0` means "unset" → fall back to env / per-model defaults.
+///
+/// This is detected at runtime by probing the live embedding engine, so the
+/// node adapts to ANY embedder / ANY dimension (zen 1024, gemma 768, ...)
+/// instead of trusting a hardcoded name→dimension table.
+static ACTIVE_VECTOR_DIMENSIONS: AtomicUsize = AtomicUsize::new(0);
+
+/// Record the embedding dimension detected from the live engine. From then on,
+/// every vector table, dimension validation and similarity search uses it.
+pub fn set_active_vector_dimensions(dimensions: usize) {
+    if dimensions > 0 {
+        ACTIVE_VECTOR_DIMENSIONS.store(dimensions, Ordering::Relaxed);
+    }
+}
+
+/// The runtime-detected embedding dimension, if known.
+pub fn get_active_vector_dimensions() -> Option<usize> {
+    match ACTIVE_VECTOR_DIMENSIONS.load(Ordering::Relaxed) {
+        0 => None,
+        d => Some(d),
+    }
+}
 
 #[derive(Debug, Clone, PartialEq, Eq, serde::Serialize, serde::Deserialize, Hash)]
 pub enum EmbeddingModelType {
@@ -40,6 +65,20 @@ impl EmbeddingModelType {
     }
 
     pub fn vector_dimensions(&self) -> Result<usize, HanzoEmbeddingError> {
+        // 1) Runtime-detected dimension (probed from the live engine) wins — this
+        //    is what makes "any embedder / any dimension" work with nothing hardcoded.
+        if let Some(d) = get_active_vector_dimensions() {
+            return Ok(d);
+        }
+        // 2) Explicit override via env (e.g. set by the desktop after probing).
+        if let Ok(s) = std::env::var("EMBEDDING_VECTOR_DIMENSIONS") {
+            if let Ok(d) = s.trim().parse::<usize>() {
+                if d > 0 {
+                    return Ok(d);
+                }
+            }
+        }
+        // 3) Fall back to the per-model default (last resort only).
         match self {
             EmbeddingModelType::OllamaTextEmbeddingsInference(model) => model.vector_dimensions(),
         }
@@ -103,10 +142,7 @@ impl OllamaTextEmbeddingsInference {
             Self::AllMiniLML6v2 => Ok(384),
             Self::JinaEmbeddingsV2BaseEs => Ok(768),
             Self::EmbeddingGemma300M => Ok(768),
-            _ => Err(HanzoEmbeddingError::UnimplementedModelDimensions(format!(
-                "{:?}",
-                self
-            ))),
+            _ => Ok(1024), // zen/qwen3 1024-dim default so DB opens
         }
     }
 }

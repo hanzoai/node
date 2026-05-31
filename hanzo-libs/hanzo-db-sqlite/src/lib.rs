@@ -4,6 +4,7 @@ use log::info;
 use r2d2::Pool;
 use r2d2_sqlite::SqliteConnectionManager;
 use rusqlite::{ffi::sqlite3_auto_extension, Result, Row, ToSql};
+use hanzo_embed::embedding_generator::EmbeddingGenerator;
 use hanzo_embed::model_type::EmbeddingModelType;
 use hanzo_messages::schemas::hanzo_name::HanzoName;
 use sqlite_vec::sqlite3_vec_init;
@@ -104,6 +105,14 @@ impl SqliteManager {
                  PRAGMA mmap_size=262144000; -- 250 MB in bytes (250 * 1024 * 1024)
                  PRAGMA foreign_keys = ON;", // Enable foreign key support
         )?;
+
+        // If this DB already has vector tables, adopt their dimension as the
+        // process-wide active dimension BEFORE (re)creating tables. This keeps
+        // reboots consistent without needing the embedding engine, and ensures
+        // dimension validation/search match whatever the stored vectors use.
+        if let Some(d) = Self::read_vec_table_dimension(&conn) {
+            hanzo_embed::model_type::set_active_vector_dimensions(d);
+        }
 
         // Initialize tables in the persistent database
         Self::initialize_tables(&conn)?;
@@ -1321,10 +1330,19 @@ impl SqliteManager {
             );
         }
 
-        // Step 1: Drop and recreate vector tables with new dimensions
-        let vector_dimensions = new_model_type.vector_dimensions().map_err(|e| {
-            SqliteManagerError::SerializationError(format!("Cannot get vector dimensions for new model: {}", e))
-        })?;
+        // Step 1: Detect the REAL embedding dimension from the live engine (no
+        // hardcoded name→dim guess), record it as the active dimension, and size
+        // the vector tables to match. Falls back to the model default only if the
+        // engine can't be reached.
+        let vector_dimensions = match Self::probe_embedding_dimension(embedding_generator).await {
+            Some(d) => {
+                hanzo_embed::model_type::set_active_vector_dimensions(d);
+                d
+            }
+            None => new_model_type.vector_dimensions().map_err(|e| {
+                SqliteManagerError::SerializationError(format!("Cannot get vector dimensions for new model: {}", e))
+            })?,
+        };
 
         hanzo_log(
             HanzoLogOption::Database,
@@ -1572,6 +1590,88 @@ impl SqliteManager {
     {
         let conn = self.get_connection()?;
         conn.query_row(sql, params, f)
+    }
+
+    /// Parse the declared dimension (`float[N]`) of an existing vec0 table, if any.
+    fn read_vec_table_dimension(conn: &rusqlite::Connection) -> Option<usize> {
+        for table in ["hanzo_tools_vec_items", "prompt_vec_items", "chunk_vec"] {
+            let sql: rusqlite::Result<String> = conn.query_row(
+                &format!(
+                    "SELECT sql FROM sqlite_master WHERE type='table' AND name='{}'",
+                    table
+                ),
+                [],
+                |row| row.get(0),
+            );
+            if let Ok(sql) = sql {
+                if let Some(start) = sql.find("float[") {
+                    let rest = &sql[start + 6..];
+                    if let Some(end) = rest.find(']') {
+                        if let Ok(d) = rest[..end].trim().parse::<usize>() {
+                            if d > 0 {
+                                return Some(d);
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        None
+    }
+
+    /// The dimension the vector tables were created with, if they exist yet.
+    pub fn existing_vector_dimension(&self) -> Option<usize> {
+        let conn = self.get_connection().ok()?;
+        Self::read_vec_table_dimension(&conn)
+    }
+
+    /// Probe the live embedding engine for its real output dimension, retrying
+    /// while it warms up. Returns `None` if it never responds.
+    pub async fn probe_embedding_dimension(generator: &dyn EmbeddingGenerator) -> Option<usize> {
+        for _ in 0..20 {
+            match generator.generate_embedding("hanzo dimension probe").await {
+                Ok(v) if !v.is_empty() => return Some(v.len()),
+                _ => tokio::time::sleep(std::time::Duration::from_millis(1500)).await,
+            }
+        }
+        None
+    }
+
+    /// Detect the live embedding dimension and make the whole vector DB match it.
+    /// Recreates the vector tables (and re-embeds existing prompts/tools/chunks)
+    /// only when the detected dimension differs from what's stored. This is the
+    /// "detect & configure" path: any embedder, any dimension, nothing hardcoded.
+    pub async fn reconcile_embedding_dimension(&self, generator: &dyn EmbeddingGenerator) {
+        let detected = match Self::probe_embedding_dimension(generator).await {
+            Some(d) => d,
+            None => {
+                eprintln!(
+                    "[embeddings] could not reach the embedding engine to detect its dimension; keeping current config"
+                );
+                return;
+            }
+        };
+        hanzo_embed::model_type::set_active_vector_dimensions(detected);
+
+        let current = self.existing_vector_dimension();
+        if current == Some(detected) {
+            println!(
+                "[embeddings] active vector dimension {} matches the database; no migration needed",
+                detected
+            );
+            return;
+        }
+
+        println!(
+            "[embeddings] detected embedding dimension {} (stored: {:?}); rebuilding vector tables to match",
+            detected, current
+        );
+        let model = self
+            .get_default_embedding_model()
+            .unwrap_or_else(|_| EmbeddingModelType::default());
+        if let Err(e) = self.migrate_embeddings_to_new_model(generator, &model, true).await {
+            eprintln!("[embeddings] dimension reconcile failed: {}", e);
+        }
     }
 
     // New method to generate embeddings
