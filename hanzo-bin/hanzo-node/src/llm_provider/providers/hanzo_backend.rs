@@ -226,6 +226,10 @@ impl LLMService for HanzoBackend {
     }
 }
 
+// NOTE: The cloud free-tier quota check is retired for local-only operation.
+// The node no longer calls this; the v2 quota endpoint returns a permissive
+// local default. Kept (allow dead_code) only to avoid breaking external callers.
+#[allow(dead_code)]
 pub async fn check_quota(db: Arc<SqliteManager>, model_type: String) -> Result<QuotaResponse, LLMProviderError> {
     // Get base URL from environment variable or use default
     let session_id = Uuid::new_v4().to_string();

@@ -114,7 +114,7 @@ pub struct UpdateCronTaskRequest {
 
 #[utoipa::path(
     post,
-    path = "/v2/add_cron_task",
+    path = "/v1/node/add_cron_task",
     request_body = AddCronTaskRequest,
     responses(
         (status = 200, description = "Successfully added cron task", body = Value),
@@ -156,7 +156,7 @@ pub async fn add_cron_task_handler(
 
 #[utoipa::path(
     get,
-    path = "/v2/list_all_cron_tasks",
+    path = "/v1/node/list_all_cron_tasks",
     responses(
         (status = 200, description = "Successfully listed all cron tasks", body = Vec<CronTask>),
         (status = 400, description = "Bad request", body = APIError),
@@ -192,7 +192,7 @@ pub async fn list_all_cron_tasks_handler(
 
 #[utoipa::path(
     get,
-    path = "/v2/get_specific_cron_task",
+    path = "/v1/node/get_specific_cron_task",
     params(
         ("cron_task_id" = String, Query, description = "Cron task ID to retrieve")
     ),
@@ -252,7 +252,7 @@ pub async fn get_specific_cron_task_handler(
 
 #[utoipa::path(
     post,
-    path = "/v2/remove_cron_task",
+    path = "/v1/node/remove_cron_task",
     params(
         ("cron_task_id" = String, Query, description = "Cron task ID to remove")
     ),
@@ -312,7 +312,7 @@ pub async fn remove_cron_task_handler(
 
 #[utoipa::path(
     get,
-    path = "/v2/get_cron_task_logs",
+    path = "/v1/node/get_cron_task_logs",
     params(
         ("cron_task_id" = String, Query, description = "Cron task ID to retrieve logs for")
     ),
@@ -372,7 +372,7 @@ pub async fn get_cron_task_logs_handler(
 
 #[utoipa::path(
     put,
-    path = "/v2/update_cron_task",
+    path = "/v1/node/update_cron_task",
     params(
         ("cron_task_id" = String, Query, description = "Cron task ID to update")
     ),
@@ -420,7 +420,7 @@ pub async fn update_cron_task_handler(
 
 #[utoipa::path(
     post,
-    path = "/v2/force_execute_cron_task",
+    path = "/v1/node/force_execute_cron_task",
     params(
         ("cron_task_id" = String, Query, description = "Cron task ID to force execute")
     ),
@@ -480,7 +480,7 @@ pub async fn force_execute_cron_task_handler(
 
 #[utoipa::path(
     get,
-    path = "/v2/get_cron_schedule",
+    path = "/v1/node/get_cron_schedule",
     responses(
         (status = 200, description = "Successfully retrieved cron schedule", body = Vec<CronTask>),
         (status = 400, description = "Bad request", body = APIError),
@@ -516,7 +516,7 @@ pub async fn get_cron_schedule_handler(
 
 #[utoipa::path(
     post,
-    path = "/v2/import_cron_task",
+    path = "/v1/node/import_cron_task",
     request_body = ImportCronTaskRequest,
     responses(
         (status = 200, description = "Successfully imported cron task", body = Value),
@@ -558,7 +558,7 @@ pub async fn import_cron_task_handler(
 
 #[utoipa::path(
     get,
-    path = "/v2/export_cron_task",
+    path = "/v1/node/export_cron_task",
     params(
         ("cron_task_id" = String, Query, description = "Cron task ID to export")
     ),

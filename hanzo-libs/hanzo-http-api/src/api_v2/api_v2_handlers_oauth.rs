@@ -36,7 +36,7 @@ pub fn oauth_routes(
 
 #[utoipa::path(
     get,
-    path = "/v2/get_oauth_token",
+    path = "/v1/node/get_oauth_token",
     params(
         ("connection_name" = String, Query, description = "Name of the OAuth connection"),
         ("tool_key" = String, Query, description = "Key of the tool")
@@ -101,7 +101,7 @@ pub async fn get_oauth_token_handler(
 
 #[utoipa::path(
     post,
-    path = "/v2/set_oauth_token",
+    path = "/v1/node/set_oauth_token",
     request_body = OAuthTokenRequest,
     responses(
         (status = 200, description = "Successfully set OAuth token", body = Value),

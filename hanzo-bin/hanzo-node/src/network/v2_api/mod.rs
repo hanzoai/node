@@ -8,6 +8,7 @@ pub mod api_v2_commands_prompts;
 pub mod api_v2_commands_tools;
 pub mod api_v2_commands_vecfs;
 pub mod api_v2_commands_wallets;
+pub mod local_model_scanner;
 
 #[cfg(feature = "ngrok")]
 pub mod api_v2_commands_ngrok;

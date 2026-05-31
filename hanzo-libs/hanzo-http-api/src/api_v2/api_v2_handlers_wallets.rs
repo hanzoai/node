@@ -82,7 +82,7 @@ pub struct RestoreLocalWalletRequest {
 
 #[utoipa::path(
     post,
-    path = "/v2/restore_local_wallet",
+    path = "/v1/node/restore_local_wallet",
     request_body = RestoreLocalWalletRequest,
     responses(
         (status = 200, description = "Successfully restored wallet", body = Value),
@@ -123,7 +123,7 @@ pub struct CreateLocalWalletRequest {
 
 #[utoipa::path(
     post,
-    path = "/v2/create_local_wallet",
+    path = "/v1/node/create_local_wallet",
     request_body = CreateLocalWalletRequest,
     responses(
         (status = 200, description = "Successfully created wallet", body = LocalEthersWallet),
@@ -169,7 +169,7 @@ pub struct RejectInvoiceRequest {
 
 #[utoipa::path(
     post,
-    path = "/v2/pay_invoice",
+    path = "/v1/node/pay_invoice",
     request_body = PayInvoiceRequest,
     responses(
         (status = 200, description = "Successfully paid invoice", body = Value),
@@ -203,7 +203,7 @@ pub async fn pay_invoice_handler(
 
 #[utoipa::path(
     post,
-    path = "/v2/reject_invoice",
+    path = "/v1/node/reject_invoice",
     request_body = RejectInvoiceRequest,
     responses(
         (status = 200, description = "Successfully rejected invoice", body = Value),
@@ -245,7 +245,7 @@ pub struct RestoreCoinbaseMPCWalletRequest {
 
 #[utoipa::path(
     post,
-    path = "/v2/restore_coinbase_mpc_wallet",
+    path = "/v1/node/restore_coinbase_mpc_wallet",
     request_body = RestoreCoinbaseMPCWalletRequest,
     responses(
         (status = 200, description = "Successfully restored Coinbase MPC wallet", body = Value),
@@ -281,7 +281,7 @@ pub async fn restore_coinbase_mpc_wallet_handler(
 
 #[utoipa::path(
     get,
-    path = "/v2/list_wallets",
+    path = "/v1/node/list_wallets",
     responses(
         (status = 200, description = "Successfully listed wallets", body = Vec<Value>),
         (status = 500, description = "Internal server error", body = APIError)
@@ -311,7 +311,7 @@ pub async fn list_wallets_handler(
 
 #[utoipa::path(
     get,
-    path = "/v2/get_wallet_balance",
+    path = "/v1/node/get_wallet_balance",
     responses(
         (status = 200, description = "Successfully retrieved wallet balance", body = Value),
         (status = 500, description = "Internal server error", body = APIError)

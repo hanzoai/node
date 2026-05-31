@@ -24,7 +24,7 @@ use hanzo_messages::hanzo_utils::hanzo_path::HanzoPath;
 use hanzo_messages::{
     schemas::{
         inbox_name::InboxName,
-        llm_providers::serialized_llm_provider::{LLMProviderInterface, Ollama, SerializedLLMProvider},
+        llm_providers::serialized_llm_provider::SerializedLLMProvider,
         hanzo_name::HanzoName,
     },
     hanzo_message::hanzo_message::HanzoMessage,
@@ -33,7 +33,6 @@ use hanzo_messages::{
         signatures::clone_signature_secret_key,
     },
 };
-use hanzo_db_sqlite::errors::SqliteManagerError;
 use hanzo_db_sqlite::SqliteManager;
 use std::{io::Error, net::SocketAddr};
 use std::{str::FromStr, sync::Arc};
@@ -640,162 +639,29 @@ impl Node {
         Ok(())
     }
 
+    /// Native local-model scan (legacy name kept for caller compatibility).
+    /// Delegates to the shared filesystem scanner, which walks the Ollama,
+    /// HuggingFace, LM Studio, and Hanzo model directories. Never errors:
+    /// missing directories contribute nothing.
     pub async fn internal_scan_ollama_models() -> Result<Vec<serde_json::Value>, NodeError> {
-        let urls = vec!["http://localhost:11434/api/tags", "http://localhost:11435/api/tags"];
-        let client = reqwest::Client::new();
-        let mut all_models = Vec::new();
-        let mut seen_models = std::collections::HashSet::new();
-
-        for url in urls {
-            let res = client.get(url).send().await;
-
-            match res {
-                Ok(response) => match response.json::<serde_json::Value>().await {
-                    Ok(json) => {
-                        let models = json["models"].as_array().ok_or_else(|| NodeError {
-                            message: format!("Unexpected response format from {}", url),
-                        })?;
-
-                        let models_with_port: Vec<serde_json::Value> = models
-                            .iter()
-                            .filter_map(|model| {
-                                let model_name = model["name"].as_str()?;
-                                if seen_models.insert(model_name.to_string()) {
-                                    let mut model_clone = model.clone();
-                                    if let Some(obj) = model_clone.as_object_mut() {
-                                        let port =
-                                            url.splitn(3, ':').nth(2).unwrap_or("").split('/').next().unwrap_or("");
-                                        obj.insert(
-                                            "port_used".to_string(),
-                                            serde_json::Value::String(port.to_string()),
-                                        );
-                                    }
-                                    Some(model_clone)
-                                } else {
-                                    None
-                                }
-                            })
-                            .collect();
-
-                        all_models.extend(models_with_port);
-                    }
-                    Err(e) => {
-                        log::error!("Failed to parse response from {}: {}", url, e);
-                    }
-                },
-                Err(e) => {
-                    log::error!("Failed to send request to {}: {}", url, e);
-                }
-            }
-        }
-
-        if all_models.is_empty() {
-            Err(NodeError {
-                message: "No models could be retrieved from any source.".to_string(),
-            })
-        } else {
-            Ok(all_models)
-        }
+        Ok(crate::network::v2_api::local_model_scanner::scan_all_local_models())
     }
 
+    /// Ollama is fully retired. The node never creates Ollama-backed LLM
+    /// providers (which would talk to a local Ollama daemon over `/api/chat`).
+    /// All local inference goes through the Hanzo engine via OpenAI `/v1/` paths.
+    /// This is kept as a safe no-op so existing callers compile and never error.
     pub async fn internal_add_ollama_models(
-        db: Arc<SqliteManager>,
-        identity_manager: Arc<Mutex<IdentityManager>>,
-        job_manager: Arc<Mutex<JobManager>>,
-        identity_secret_key: SigningKey,
-        input_models: Vec<String>,
-        hanzo_name: HanzoName,
-        ws_manager: Option<Arc<Mutex<dyn WSUpdateHandler + Send>>>,
+        _db: Arc<SqliteManager>,
+        _identity_manager: Arc<Mutex<IdentityManager>>,
+        _job_manager: Arc<Mutex<JobManager>>,
+        _identity_secret_key: SigningKey,
+        _input_models: Vec<String>,
+        _hanzo_name: HanzoName,
+        _ws_manager: Option<Arc<Mutex<dyn WSUpdateHandler + Send>>>,
     ) -> Result<(), String> {
-        let requester_profile = hanzo_name.extract_profile().unwrap_or_else(|_| {
-            HanzoName::from_node_and_profile_names(hanzo_name.node_name, "main".to_string())
-                .expect("Failed to create main profile HanzoName")
-        });
-
-        let available_models = Self::internal_scan_ollama_models().await.map_err(|e| e.message)?;
-
-        // Ensure all input models are available
-        for model in &input_models {
-            if !available_models.iter().any(|m| m["name"].as_str() == Some(model)) {
-                return Err(format!("Model '{}' is not available.", model));
-            }
-        }
-
-        let llm_providers: Vec<SerializedLLMProvider> = input_models
-            .iter()
-            .map(|model| {
-                // Replace any non-alphanumeric character with underscore
-                let sanitized_model = model
-                    .chars()
-                    .map(|c| if c.is_alphanumeric() { c } else { '_' })
-                    .collect::<String>();
-
-                // Determine which URL to use based on the availability of the models
-                let model_data = available_models
-                    .iter()
-                    .find(|m| m["name"].as_str() == Some(model))
-                    .unwrap();
-                let external_url = format!(
-                    "http://localhost:{}",
-                    model_data["port_used"].as_str().unwrap_or("11434")
-                );
-
-                SerializedLLMProvider {
-                    id: format!("o_{}", sanitized_model), // Uses the extracted model name as id
-                    name: None,
-                    description: None,
-                    full_identity_name: HanzoName::new(format!(
-                        "{}/agent/o_{}",
-                        requester_profile.full_name, sanitized_model
-                    ))
-                    .expect("Failed to create HanzoName"),
-                    external_url: Some(external_url.to_string()),
-                    api_key: Some("".to_string()),
-                    model: LLMProviderInterface::Ollama(Ollama {
-                        model_type: model.clone(),
-                    }),
-                }
-            })
-            .collect();
-
-        // Deduplicate providers based on id
-        let mut seen_ids = std::collections::HashSet::new();
-        let llm_providers: Vec<SerializedLLMProvider> = llm_providers
-            .into_iter()
-            .filter(|provider| seen_ids.insert(provider.id.clone()))
-            .collect();
-
-        // Iterate over each agent and add it using internal_add_agent
-        for agent in llm_providers {
-            let profile_name = agent.full_identity_name.clone();
-
-            // Check if the provider already exists in the database
-            match db.get_llm_provider(&agent.id, &profile_name) {
-                Ok(_) => {
-                    // Provider already exists, skip it
-                    continue;
-                }
-                Err(SqliteManagerError::DataNotFound) => {
-                    // Provider doesn't exist, add it
-                    Self::internal_add_llm_provider(
-                        db.clone(),
-                        identity_manager.clone(),
-                        job_manager.clone(),
-                        identity_secret_key.clone(),
-                        agent,
-                        &profile_name,
-                        ws_manager.clone(),
-                    )
-                    .await
-                    .map_err(|e| format!("Failed to add agent: {}", e))?;
-                }
-                Err(e) => {
-                    // Some other error occurred
-                    return Err(format!("Error checking for existing provider: {}", e));
-                }
-            }
-        }
-
+        // No-op: Ollama support has been removed. Configure the local Hanzo
+        // engine (OpenAI-compatible on `/v1/`) as an agent instead.
         Ok(())
     }
 

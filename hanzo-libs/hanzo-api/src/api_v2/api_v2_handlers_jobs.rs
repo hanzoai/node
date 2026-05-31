@@ -8,7 +8,7 @@ use hanzo_messages::{
     schemas::{
         job_config::JobConfig,
         llm_providers::serialized_llm_provider::{
-            Exo, Gemini, Groq, LLMProviderInterface, Ollama, OpenAI, SerializedLLMProvider, HanzoBackend,
+            Exo, Gemini, Groq, LLMProviderInterface, LocalEngine, OpenAI, SerializedLLMProvider, HanzoBackend,
         },
         hanzo_name::{HanzoName, HanzoSubidentityType},
         smart_inbox::{LLMProviderSubset, V2SmartInbox},
@@ -320,7 +320,7 @@ pub struct GetAllSmartInboxesRequest {
 
 #[utoipa::path(
     post,
-    path = "/v2/retry_message",
+    path = "/v1/node/retry_message",
     request_body = RetryMessageRequest,
     responses(
         (status = 200, description = "Successfully retried message", body = Value),
@@ -360,7 +360,7 @@ pub async fn retry_message_handler(
 
 #[utoipa::path(
     post,
-    path = "/v2/create_job",
+    path = "/v1/node/create_job",
     request_body = CreateJobRequest,
     responses(
         (status = 200, description = "Successfully created job", body = Value),
@@ -401,7 +401,7 @@ pub async fn create_job_handler(
 
 #[utoipa::path(
     post,
-    path = "/v2/job_message",
+    path = "/v1/node/job_message",
     request_body = JobMessageRequest,
     responses(
         (status = 200, description = "Successfully processed job message", body = SendResponseBody),
@@ -441,7 +441,7 @@ pub async fn job_message_handler(
 
 #[utoipa::path(
     post,
-    path = "/v2/last_messages",
+    path = "/v1/node/last_messages",
     request_body = GetLastMessagesRequest,
     responses(
         (status = 200, description = "Successfully retrieved last messages", body = Vec<V2ChatMessage>),
@@ -483,7 +483,7 @@ pub async fn get_last_messages_handler(
 
 #[utoipa::path(
     get,
-    path = "/v2/all_inboxes",
+    path = "/v1/node/all_inboxes",
     params(
         ("limit" = Option<usize>, Query, description = "Maximum number of inboxes to return"),
         ("offset" = Option<String>, Query, description = "Inbox ID to start from (exclusive)")
@@ -529,7 +529,7 @@ pub async fn get_all_smart_inboxes_handler(
 
 #[utoipa::path(
     get,
-    path = "/v2/all_inboxes_paginated",
+    path = "/v1/node/all_inboxes_paginated",
     params(
         ("limit" = Option<usize>, Query, description = "Maximum number of inboxes to return"),
         ("offset" = Option<String>, Query, description = "Inbox ID to start from (exclusive)"),
@@ -576,7 +576,7 @@ pub async fn get_all_smart_inboxes_paginated_handler(
 
 #[utoipa::path(
     get,
-    path = "/v2/available_llm_providers",
+    path = "/v1/node/available_llm_providers",
     responses(
         (status = 200, description = "Successfully retrieved available LLM providers", body = Vec<SerializedLLMProvider>),
         (status = 400, description = "Bad request", body = APIError),
@@ -613,7 +613,7 @@ pub async fn get_available_llm_providers_handler(
 
 #[utoipa::path(
     post,
-    path = "/v2/update_smart_inbox_name",
+    path = "/v1/node/update_smart_inbox_name",
     request_body = UpdateSmartInboxNameRequest,
     responses(
         (status = 200, description = "Successfully updated smart inbox name", body = Value),
@@ -653,7 +653,7 @@ pub async fn update_smart_inbox_name_handler(
 
 #[utoipa::path(
     post,
-    path = "/v2/create_files_inbox",
+    path = "/v1/node/create_files_inbox",
     responses(
         (status = 200, description = "Successfully created files inbox", body = String),
         (status = 400, description = "Bad request", body = APIError),
@@ -689,7 +689,7 @@ pub async fn create_files_inbox_handler(
 
 #[utoipa::path(
     post,
-    path = "/v2/add_file_to_inbox",
+    path = "/v1/node/add_file_to_inbox",
     request_body = AddFileToInboxRequest,
     responses(
         (status = 200, description = "Successfully added file to inbox", body = String),
@@ -827,7 +827,7 @@ pub async fn add_file_to_inbox_handler(
 
 #[utoipa::path(
     post,
-    path = "/v2/change_job_llm_provider",
+    path = "/v1/node/change_job_llm_provider",
     request_body = APIChangeJobAgentRequest,
     responses(
         (status = 200, description = "Successfully changed job LLM provider", body = Value),
@@ -866,7 +866,7 @@ pub async fn change_job_llm_provider_handler(
 
 #[utoipa::path(
     post,
-    path = "/v2/last_messages_with_branches",
+    path = "/v1/node/last_messages_with_branches",
     request_body = GetLastMessagesWithBranchesRequest,
     responses(
         (status = 200, description = "Successfully retrieved last messages with branches", body = Vec<Vec<V2ChatMessage>>),
@@ -914,7 +914,7 @@ pub struct UpdateJobConfigRequest {
 
 #[utoipa::path(
     post,
-    path = "/v2/update_job_config",
+    path = "/v1/node/update_job_config",
     request_body = UpdateJobConfigRequest,
     responses(
         (status = 200, description = "Successfully updated job configuration", body = Value),
@@ -959,7 +959,7 @@ pub struct GetJobConfigRequest {
 
 #[utoipa::path(
     get,
-    path = "/v2/get_job_config",
+    path = "/v1/node/get_job_config",
     params(
         ("job_id" = String, Query, description = "Job ID to retrieve configuration for")
     ),
@@ -1006,7 +1006,7 @@ pub struct UpdateJobScopeRequest {
 
 #[utoipa::path(
     post,
-    path = "/v2/update_job_scope",
+    path = "/v1/node/update_job_scope",
     request_body = UpdateJobScopeRequest,
     responses(
         (status = 200, description = "Successfully updated job scope", body = Value),
@@ -1051,7 +1051,7 @@ pub struct GetJobScopeRequest {
 
 #[utoipa::path(
     get,
-    path = "/v2/get_job_scope",
+    path = "/v1/node/get_job_scope",
     params(
         ("job_id" = String, Query, description = "Job ID to retrieve scope for")
     ),
@@ -1102,7 +1102,7 @@ pub struct GetMessageTracesRequest {
 
 #[utoipa::path(
     get,
-    path = "/v2/get_tooling_logs",
+    path = "/v1/node/get_tooling_logs",
     params(
         ("message_id" = String, Query, description = "Message ID to retrieve tooling logs for")
     ),
@@ -1143,7 +1143,7 @@ pub async fn get_tooling_logs_handler(
 
 #[utoipa::path(
     get,
-    path = "/v2/get_message_traces",
+    path = "/v1/node/get_message_traces",
     params(
         ("message_id" = String, Query, description = "Message ID to retrieve traces for")
     ),
@@ -1184,7 +1184,7 @@ pub async fn get_message_traces_handler(
 
 #[utoipa::path(
     post,
-    path = "/v2/fork_job_messages",
+    path = "/v1/node/fork_job_messages",
     request_body = CreateJobRequest,
     responses(
         (status = 200, description = "Successfully created job", body = Value),
@@ -1225,7 +1225,7 @@ pub async fn fork_job_messages_handler(
 
 #[utoipa::path(
     post,
-    path = "/v2/remove_job",
+    path = "/v1/node/remove_job",
     request_body = RemoveJobRequest,
     responses(
         (status = 200, description = "Successfully removed job", body = SendResponseBody),
@@ -1264,7 +1264,7 @@ pub async fn remove_job_handler(
 
 #[utoipa::path(
     post,
-    path = "/v2/remove_jobs",
+    path = "/v1/node/remove_jobs",
     request_body = RemoveJobsRequest,
     responses(
         (status = 200, description = "Successfully removed jobs in bulk", body = Value),
@@ -1303,7 +1303,7 @@ pub async fn remove_jobs_handler(
 
 #[utoipa::path(
     post,
-    path = "/v2/export_messages_from_inbox",
+    path = "/v1/node/export_messages_from_inbox",
     request_body = ExportInboxMessagesRequest,
     responses(
         (status = 200, description = "Successfully retrieved last messages with branches", body = Value),
@@ -1344,7 +1344,7 @@ pub async fn export_messages_from_inbox_handler(
 
 #[utoipa::path(
     post,
-    path = "/v2/add_messages_god_mode",
+    path = "/v1/node/add_messages_god_mode",
     request_body = AddMessagesGodModeRequest,
     responses(
         (status = 200, description = "Successfully added messages", body = Value),
@@ -1389,7 +1389,7 @@ pub struct GetJobProviderRequest {
 
 #[utoipa::path(
     get,
-    path = "/v2/get_job_provider",
+    path = "/v1/node/get_job_provider",
     params(
         ("job_id" = String, Query, description = "Job ID to retrieve LLM provider for")
     ),
@@ -1458,7 +1458,7 @@ pub async fn get_job_provider_handler(
             UpdateJobConfigRequest, UpdateSmartInboxNameRequest, SerializedLLMProvider, JobCreationInfo,
             JobMessage, NodeApiData, LLMProviderSubset, AssociatedUI, MinimalJobScope, CallbackAction, HanzoName,
             LLMProviderInterface, RetryMessageRequest, UpdateJobScopeRequest, ExportInboxMessagesFormat, ExportInboxMessagesRequest,
-            HanzoSubidentityType, OpenAI, Ollama, Groq, Gemini, Exo, HanzoBackend, SendResponseBody, SendResponseBodyData, APIError, GetToolingLogsRequest, GetMessageTracesRequest, ForkJobMessagesRequest, RemoveJobRequest, RemoveJobsRequest)
+            HanzoSubidentityType, OpenAI, LocalEngine, Groq, Gemini, Exo, HanzoBackend, SendResponseBody, SendResponseBodyData, APIError, GetToolingLogsRequest, GetMessageTracesRequest, ForkJobMessagesRequest, RemoveJobRequest, RemoveJobsRequest)
     ),
     tags(
         (name = "jobs", description = "Job API endpoints")

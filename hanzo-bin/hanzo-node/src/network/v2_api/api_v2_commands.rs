@@ -1,4 +1,3 @@
-use crate::llm_provider::providers::hanzo_backend::check_quota;
 use crate::managers::galxe_quests::{compute_quests, generate_proof};
 use crate::managers::tool_router::ToolRouter;
 use crate::network::node_shareable_logic::download_zip_from_url;
@@ -660,9 +659,13 @@ impl Node {
         }
     }
 
+    /// The cloud free-tier quota check is retired. The node runs against the
+    /// local Hanzo engine only, which has no per-model token quota. This endpoint
+    /// is kept for frontend compatibility and always returns a permissive,
+    /// effectively-unlimited quota with HTTP 200 (never a cloud call, never a 500).
     pub async fn v2_api_check_hanzo_backend_quota(
         db: Arc<SqliteManager>,
-        model_type: String,
+        _model_type: String,
         bearer: String,
         res: Sender<Result<QuotaResponse, APIError>>,
     ) -> Result<(), NodeError> {
@@ -671,19 +674,13 @@ impl Node {
             return Ok(());
         }
 
-        match check_quota(db, model_type).await {
-            Ok(quota_response) => {
-                let _ = res.send(Ok(quota_response)).await;
-            }
-            Err(err) => {
-                let api_error = APIError {
-                    code: StatusCode::INTERNAL_SERVER_ERROR.as_u16(),
-                    error: "Internal Server Error".to_string(),
-                    message: format!("Failed to fetch quota: {}", err),
-                };
-                let _ = res.send(Err(api_error)).await;
-            }
-        }
+        let unlimited_quota = QuotaResponse {
+            has_quota: true,
+            tokens_quota: u64::MAX,
+            used_tokens: 0,
+            reset_time: 0,
+        };
+        let _ = res.send(Ok(unlimited_quota)).await;
 
         Ok(())
     }
@@ -884,7 +881,7 @@ impl Node {
             requested_model,
             payload.force,
             Arc::clone(&is_migration_in_progress),
-            true, // Check Ollama availability for API calls
+            false, // Ollama is retired; model availability is verified by the engine on `/v1/embeddings`
             Some((
                 Arc::clone(&node_embedding_generator),
                 Arc::clone(&node_default_embedding_model),
@@ -937,27 +934,12 @@ impl Node {
         target_model: EmbeddingModelType,
         force: bool,
         is_migration_in_progress: Arc<AtomicBool>,
-        check_ollama_availability: bool,
+        _check_ollama_availability: bool,
         node_state_refs: Option<(Arc<Mutex<RemoteEmbeddingGenerator>>, Arc<Mutex<EmbeddingModelType>>)>,
     ) -> Result<(), String> {
-        // Check if model is available in Ollama (if requested)
-        if check_ollama_availability {
-            match Self::internal_scan_ollama_models().await {
-                Ok(available_models) => {
-                    let model_name = target_model.to_string();
-                    let model_available = available_models
-                        .iter()
-                        .any(|model| model["name"].as_str().map(|name| name == model_name).unwrap_or(false));
-
-                    if !model_available {
-                        return Err(format!("Embedding model '{}' is not available in Ollama", model_name));
-                    }
-                }
-                Err(_) => {
-                    return Err("Cannot connect to Ollama to verify model availability".to_string());
-                }
-            }
-        }
+        // Ollama is fully retired. Model availability is verified by the local
+        // Hanzo engine itself when embeddings are requested over `/v1/embeddings`,
+        // so there is no separate availability pre-check here.
 
         // Set migration status to in progress
         is_migration_in_progress.store(true, Ordering::Relaxed);
@@ -1050,6 +1032,13 @@ impl Node {
         Ok(())
     }
 
+    /// Native local-model scanner. Despite the legacy `ollama` name (kept for
+    /// frontend/route compatibility), this scans the local filesystem for every
+    /// known local-LLM source — Ollama, HuggingFace hub cache, LM Studio, and
+    /// Hanzo — and returns a unified list of records whose JSON shape matches the
+    /// desktop `ScanLocalModelsResponse` element type. It never errors: missing
+    /// source directories simply contribute nothing, so the endpoint always
+    /// returns HTTP 200.
     pub async fn v2_api_scan_ollama_models(
         db: Arc<SqliteManager>,
         bearer: String,
@@ -1060,21 +1049,15 @@ impl Node {
             return Ok(());
         }
 
-        match Self::internal_scan_ollama_models().await {
-            Ok(response) => {
-                let _ = res.send(Ok(response)).await;
-                Ok(())
-            }
-            Err(err) => {
-                let api_error = APIError {
-                    code: StatusCode::INTERNAL_SERVER_ERROR.as_u16(),
-                    error: "Internal Server Error".to_string(),
-                    message: format!("{}", err),
-                };
-                let _ = res.send(Err(api_error)).await;
-                Ok(())
-            }
-        }
+        // The filesystem walk can block; run it on the blocking pool.
+        let models = tokio::task::spawn_blocking(
+            crate::network::v2_api::local_model_scanner::scan_all_local_models,
+        )
+        .await
+        .unwrap_or_default();
+
+        let _ = res.send(Ok(models)).await;
+        Ok(())
     }
 
     pub async fn v2_api_add_ollama_models(
