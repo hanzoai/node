@@ -82,6 +82,12 @@ impl Serialize for OpenAIApiMessage {
         map.serialize_field("role", &self.role)?;
         if let Some(content) = &self.content {
             map.serialize_field("content", content)?;
+        } else if self.tool_calls.is_none() && self.function_call.is_none() {
+            // OpenAI-compatible engines (mistral.rs/hanzo-engine) reject an assistant
+            // turn with neither content nor tool calls ("No content was provided,
+            // expected tool calls"). Emit an empty string so multi-turn conversation
+            // history never 500s the engine on the 2nd+ message.
+            map.serialize_field("content", "")?;
         }
         if let Some(function_call) = &self.function_call {
             map.serialize_field("function_call", function_call)?;

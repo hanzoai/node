@@ -804,10 +804,18 @@ pub async fn handle_streaming_response(
             }
         }
 
-        // Fall back to generic error if we can't parse the specific format
-        return Err(LLMProviderError::APIError(
-            "AI Provider API Error: Unknown error occurred".to_string(),
-        ));
+        // mistral.rs / hanzo-engine returns errors as a top-level {"message": "..."}.
+        if let Some(msg) = error_json.get("message").and_then(|m| m.as_str()) {
+            return Err(LLMProviderError::APIError(
+                "AI Provider API Error: ".to_string() + msg,
+            ));
+        }
+
+        // Fall back to including the raw error body instead of a useless generic.
+        return Err(LLMProviderError::APIError(format!(
+            "AI Provider API Error: {}",
+            error_json
+        )));
     }
 
     // Check content type to determine if it's a stream
