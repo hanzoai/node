@@ -154,7 +154,7 @@ impl ModelCapabilitiesManager {
                     _ => vec![],
                 }
             }
-            LLMProviderInterface::Ollama(model) => Self::get_shared_capabilities(model.model_type().as_str()),
+            LLMProviderInterface::LocalEngine(model) => Self::get_shared_capabilities(model.model_type().as_str()),
             LLMProviderInterface::Exo(model) => Self::get_shared_capabilities(model.model_type().as_str()),
             LLMProviderInterface::Groq(model) => Self::get_shared_capabilities(model.model_type().as_str()),
             LLMProviderInterface::Gemini(gemini) => Self::get_gemini_capabilities(gemini.model_type.as_str()),
@@ -531,7 +531,7 @@ impl ModelCapabilitiesManager {
                 "FREE_TEXT_INFERENCE" => ModelCost::VeryCheap,
                 _ => ModelCost::Unknown,
             },
-            LLMProviderInterface::Ollama(_) => ModelCost::Free,
+            LLMProviderInterface::LocalEngine(_) => ModelCost::Free,
             LLMProviderInterface::Groq(_) => ModelCost::VeryCheap,
             LLMProviderInterface::Gemini(gemini) => Self::get_gemini_cost(gemini.model_type.as_str()),
             LLMProviderInterface::Exo(_) => ModelCost::Cheap,
@@ -586,7 +586,7 @@ impl ModelCapabilitiesManager {
                 "CODE_GENERATOR_NO_FEEDBACK" => ModelPrivacy::RemoteGreedy,
                 _ => ModelPrivacy::Unknown,
             },
-            LLMProviderInterface::Ollama(_) => ModelPrivacy::Local,
+            LLMProviderInterface::LocalEngine(_) => ModelPrivacy::Local,
             LLMProviderInterface::Groq(_) => ModelPrivacy::RemoteGreedy,
             LLMProviderInterface::Gemini(_) => ModelPrivacy::RemoteGreedy,
             LLMProviderInterface::Exo(_) => ModelPrivacy::Local,
@@ -662,13 +662,13 @@ impl ModelCapabilitiesManager {
             LLMProviderInterface::HanzoBackend(hanzo_backend) => Err(
                 ModelCapabilitiesManagerError::NotImplemented(hanzo_backend.model_type().clone()),
             ),
-            LLMProviderInterface::Ollama(ollama) => {
-                if Self::get_shared_capabilities(ollama.model_type().as_str()).is_empty() {
-                    Err(ModelCapabilitiesManagerError::NotImplemented(ollama.model_type.clone()))
+            LLMProviderInterface::LocalEngine(local_engine) => {
+                if Self::get_shared_capabilities(local_engine.model_type().as_str()).is_empty() {
+                    Err(ModelCapabilitiesManagerError::NotImplemented(local_engine.model_type.clone()))
                 } else {
                     let total_tokens = Self::get_max_tokens(model);
                     let messages_string =
-                        llama_prepare_messages(model, ollama.clone().model_type, prompt, total_tokens)?;
+                        llama_prepare_messages(model, local_engine.clone().model_type, prompt, total_tokens)?;
                     Ok(messages_string)
                 }
             }
@@ -774,7 +774,7 @@ impl ModelCapabilitiesManager {
                 _ => 128_000,
             },
             LLMProviderInterface::Gemini(gemini) => Self::get_gemini_max_tokens(gemini.model_type.as_str()),
-            LLMProviderInterface::Ollama(ollama) => Self::get_max_tokens_for_model_type(&ollama.model_type),
+            LLMProviderInterface::LocalEngine(local_engine) => Self::get_max_tokens_for_model_type(&local_engine.model_type),
             LLMProviderInterface::Exo(exo) => Self::get_max_tokens_for_model_type(&exo.model_type),
             LLMProviderInterface::Groq(groq) => Self::get_max_tokens_for_model_type(&groq.model_type),
             LLMProviderInterface::Grok(grok) => {
@@ -968,7 +968,7 @@ impl ModelCapabilitiesManager {
                     _ => 16384,
                 }
             }
-            LLMProviderInterface::Ollama(_) => {
+            LLMProviderInterface::LocalEngine(_) => {
                 // Fill in the appropriate logic for Ollama
                 if Self::get_max_tokens(model) <= 8000 {
                     2800
@@ -1147,7 +1147,7 @@ impl ModelCapabilitiesManager {
         match model {
             LLMProviderInterface::OpenAI(openai) => Self::openai_has_tool_capabilities(&openai.model_type),
             LLMProviderInterface::OpenAILegacy(openai) => Self::openai_has_tool_capabilities(&openai.model_type),
-            LLMProviderInterface::Ollama(model) => {
+            LLMProviderInterface::LocalEngine(model) => {
                 // For Ollama, check model type and respect the passed stream parameter
                 model.model_type.starts_with("llama3.1")
                     || model.model_type.starts_with("llama3.2")
@@ -1250,11 +1250,11 @@ impl ModelCapabilitiesManager {
         match model {
             LLMProviderInterface::OpenAI(openai) => Self::openai_has_reasoning_capabilities(&openai.model_type),
             LLMProviderInterface::OpenAILegacy(openai) => Self::openai_has_reasoning_capabilities(&openai.model_type),
-            LLMProviderInterface::Ollama(ollama) => {
-                ollama.model_type.starts_with("deepseek-r1")
-                    || ollama.model_type.starts_with("magistral")
-                    || ollama.model_type.starts_with("gpt-oss")
-                    || ollama.model_type.starts_with("qwen3")
+            LLMProviderInterface::LocalEngine(local_engine) => {
+                local_engine.model_type.starts_with("deepseek-r1")
+                    || local_engine.model_type.starts_with("magistral")
+                    || local_engine.model_type.starts_with("gpt-oss")
+                    || local_engine.model_type.starts_with("qwen3")
             }
             LLMProviderInterface::Groq(groq) => {
                 groq.model_type.starts_with("deepseek-r1-distill-llama-70b")

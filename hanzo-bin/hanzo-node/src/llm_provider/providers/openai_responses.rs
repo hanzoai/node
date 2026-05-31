@@ -44,8 +44,10 @@ impl LLMService for OpenAI {
         let session_id = Uuid::new_v4().to_string();
         if let Some(base_url) = url {
             if let Some(key) = api_key {
-                // Use the Responses API endpoint
-                let url = format!("{}{}", base_url, "/v1/responses");
+                // Use the engine's Responses API endpoint. The local Hanzo engine
+                // namespaces its inference routes under `/v1/engine/` (matching the
+                // chat-completions path in `openai.rs`), so target `/v1/engine/responses`.
+                let url = format!("{}{}", base_url, "/v1/engine/responses");
 
                 // Enable streaming if requested (SSE)
                 let is_stream = config.as_ref().and_then(|c| c.stream).unwrap_or(true);

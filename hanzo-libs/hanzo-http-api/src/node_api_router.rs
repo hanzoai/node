@@ -153,7 +153,20 @@ pub async fn run_api(
             .with(compression::gzip()),
     );
 
-    let v2_routes = warp::path("v2").and(
+    // Mount prefix for this node's HTTP API. Defaults to `v1/node` — the prefix the
+    // desktop frontend calls (hanzo-message-ts routes every node endpoint under
+    // `/v1/node/*`). Configurable via `NODE_API_PREFIX`; the value is split on `/` so
+    // multi-segment prefixes (e.g. `v1/node`) are supported.
+    let node_api_prefix = std::env::var("NODE_API_PREFIX").unwrap_or_else(|_| "v1/node".to_string());
+    let node_api_prefix_filter = node_api_prefix
+        .split('/')
+        .filter(|segment| !segment.is_empty())
+        .map(|segment| segment.to_string())
+        .fold(warp::any().boxed(), |filter, segment| {
+            filter.and(warp::path(segment)).boxed()
+        });
+
+    let v2_routes = node_api_prefix_filter.and(
         api_v2::api_v2_router::v2_routes(node_commands_sender.clone(), node_name.clone())
             .recover(handle_rejection)
             .with(log)
@@ -175,8 +188,13 @@ pub async fn run_api(
             .with(cors.clone()),
     );
 
-    // Combine all routes (avoid applying gzip compression globally so SSE is not compressed)
-    let routes = v1_routes.or(v2_routes).or(mcp_routes).or(ws_routes).with(log).with(cors);
+    // Combine all routes (avoid applying gzip compression globally so SSE is not compressed).
+    // The node API routes (mounted at `/v1/node` by default) are evaluated before the
+    // `/v1/*` OpenAI-compatible gateway: both share the `v1` first segment, and the
+    // gateway recovers its own rejections (which would otherwise shadow `/v1/node/*`),
+    // so the node routes must be tried first. A `/v1/node/...` request matches here; any
+    // other `/v1/...` request fails the `node` segment and falls through to the gateway.
+    let routes = v2_routes.or(v1_routes).or(mcp_routes).or(ws_routes).with(log).with(cors);
 
     // Wrap the HTTP server in an async block that returns a Result
     let http_server = async {

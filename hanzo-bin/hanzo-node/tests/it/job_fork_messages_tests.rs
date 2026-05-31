@@ -1,6 +1,6 @@
 use hanzo_http_api::node_commands::NodeCommand;
 use hanzo_messages::schemas::llm_providers::serialized_llm_provider::{
-    LLMProviderInterface, Ollama, SerializedLLMProvider,
+    LLMProviderInterface, LocalEngine, SerializedLLMProvider,
 };
 use hanzo_messages::schemas::hanzo_name::HanzoName;
 use hanzo_messages::hanzo_message::hanzo_message_schemas::JobMessage;
@@ -107,7 +107,7 @@ fn test_fork_job_messages() {
                     )
                     .create();
 
-                let ollama = Ollama {
+                let local_engine = LocalEngine {
                     model_type: "mixtral:8x7b-instruct-v0.1-q4_1".to_string(),
                 };
 
@@ -118,7 +118,7 @@ fn test_fork_job_messages() {
                     description: Some("Test Agent Description".to_string()),
                     external_url: Some(server.url()),
                     api_key: Some("".to_string()),
-                    model: LLMProviderInterface::Ollama(ollama),
+                    model: LLMProviderInterface::LocalEngine(local_engine),
                 };
                 api_llm_provider_registration(
                     node1_commands_sender.clone(),

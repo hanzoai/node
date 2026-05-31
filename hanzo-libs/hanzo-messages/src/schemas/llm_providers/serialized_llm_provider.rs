@@ -23,7 +23,7 @@ impl SerializedLLMProvider {
             LLMProviderInterface::OpenAI(_) => "openai",
             LLMProviderInterface::OpenAILegacy(_) => "openai-legacy",
             LLMProviderInterface::TogetherAI(_) => "togetherai",
-            LLMProviderInterface::Ollama(_) => "ollama",
+            LLMProviderInterface::LocalEngine(_) => "local",
             LLMProviderInterface::HanzoBackend(_) => "hanzo-backend",
             LLMProviderInterface::Groq(_) => "groq",
             LLMProviderInterface::Grok(_) => "grok",
@@ -42,7 +42,7 @@ impl SerializedLLMProvider {
             LLMProviderInterface::OpenAI(_) => "openai".to_string(),
             LLMProviderInterface::OpenAILegacy(_) => "openai".to_string(),
             LLMProviderInterface::TogetherAI(_) => "openai-generic".to_string(),
-            LLMProviderInterface::Ollama(_) => "ollama".to_string(),
+            LLMProviderInterface::LocalEngine(_) => "openai-generic".to_string(),
             LLMProviderInterface::HanzoBackend(_) => "hanzo-backend".to_string(),
             LLMProviderInterface::Groq(_) => "openai-generic".to_string(),
             LLMProviderInterface::Grok(_) => "openai-generic".to_string(),
@@ -60,7 +60,7 @@ impl SerializedLLMProvider {
             LLMProviderInterface::OpenAI(openai) => openai.model_type.clone(),
             LLMProviderInterface::OpenAILegacy(openailegacy) => openailegacy.model_type.clone(),
             LLMProviderInterface::TogetherAI(togetherai) => togetherai.model_type.clone(),
-            LLMProviderInterface::Ollama(ollama) => ollama.model_type.clone(),
+            LLMProviderInterface::LocalEngine(local_engine) => local_engine.model_type.clone(),
             LLMProviderInterface::HanzoBackend(hanzobackend) => hanzobackend.model_type.clone(),
             LLMProviderInterface::Groq(groq) => groq.model_type.clone(),
             LLMProviderInterface::Grok(grok) => grok.model_type.clone(),
@@ -106,7 +106,7 @@ impl SerializedLLMProvider {
 
         // Conditionally append "/v1" based on the model type
         match &self.model {
-            LLMProviderInterface::OpenAI(_) | LLMProviderInterface::Ollama(_) => {
+            LLMProviderInterface::OpenAI(_) | LLMProviderInterface::LocalEngine(_) => {
                 if !base_url.ends_with("/v1") {
                     base_url = format!("{}/v1", base_url.trim_end_matches('/'));
                 }
@@ -123,7 +123,7 @@ pub enum LLMProviderInterface {
     OpenAI(OpenAI),
     OpenAILegacy(OpenAILegacy),
     TogetherAI(TogetherAI),
-    Ollama(Ollama),
+    LocalEngine(LocalEngine),
     HanzoBackend(HanzoBackend),
     Groq(Groq),
     Grok(Grok),
@@ -136,11 +136,11 @@ pub enum LLMProviderInterface {
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone, PartialEq, ToSchema)]
-pub struct Ollama {
+pub struct LocalEngine {
     pub model_type: String,
 }
 
-impl Ollama {
+impl LocalEngine {
     pub fn model_type(&self) -> String {
         self.model_type.to_string()
     }
@@ -272,9 +272,15 @@ impl FromStr for LLMProviderInterface {
         } else if s.starts_with("togetherai:") {
             let model_type = s.strip_prefix("togetherai:").unwrap_or("").to_string();
             Ok(LLMProviderInterface::TogetherAI(TogetherAI { model_type }))
-        } else if s.starts_with("ollama:") {
-            let model_type = s.strip_prefix("ollama:").unwrap_or("").to_string();
-            Ok(LLMProviderInterface::Ollama(Ollama { model_type }))
+        } else if s.starts_with("local:") || s.starts_with("ollama:") {
+            // `local:` is the canonical local-engine prefix; `ollama:` is accepted
+            // for backward compatibility with already-onboarded DB rows.
+            let model_type = s
+                .strip_prefix("local:")
+                .or_else(|| s.strip_prefix("ollama:"))
+                .unwrap_or("")
+                .to_string();
+            Ok(LLMProviderInterface::LocalEngine(LocalEngine { model_type }))
         } else if s.starts_with("hanzo-backend:") {
             let model_type = s.strip_prefix("hanzo-backend:").unwrap_or("").to_string();
             Ok(LLMProviderInterface::HanzoBackend(HanzoBackend { model_type }))
@@ -326,8 +332,8 @@ impl Serialize for LLMProviderInterface {
                 let model_type = format!("togetherai:{}", togetherai.model_type);
                 serializer.serialize_str(&model_type)
             }
-            LLMProviderInterface::Ollama(ollama) => {
-                let model_type = format!("ollama:{}", ollama.model_type);
+            LLMProviderInterface::LocalEngine(local_engine) => {
+                let model_type = format!("local:{}", local_engine.model_type);
                 serializer.serialize_str(&model_type)
             }
             LLMProviderInterface::HanzoBackend(hanzobackend) => {
@@ -394,7 +400,9 @@ impl<'de> Visitor<'de> for LLMProviderInterfaceVisitor {
             "togetherai" => Ok(LLMProviderInterface::TogetherAI(TogetherAI {
                 model_type: parts.get(1).unwrap_or(&"").to_string(),
             })),
-            "ollama" => Ok(LLMProviderInterface::Ollama(Ollama {
+            // `local` is canonical; `ollama` is kept as a back-compat alias so existing
+            // DB rows that serialized as `ollama:<model>` still deserialize.
+            "local" | "ollama" => Ok(LLMProviderInterface::LocalEngine(LocalEngine {
                 model_type: parts.get(1).unwrap_or(&"").to_string(),
             })),
             "hanzo-backend" => Ok(LLMProviderInterface::HanzoBackend(HanzoBackend {
@@ -430,9 +438,9 @@ impl<'de> Visitor<'de> for LLMProviderInterfaceVisitor {
                     "openai",
                     "openai-legacy",
                     "togetherai",
+                    "local",
                     "ollama",
                     "hanzo-backend",
-                    "local-llm",
                     "groq",
                     "grok",
                     "exo",

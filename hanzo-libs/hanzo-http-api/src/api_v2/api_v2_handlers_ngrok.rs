@@ -54,7 +54,7 @@ pub fn ngrok_routes(
 
 #[utoipa::path(
     post,
-    path = "/v2/set_ngrok_auth_token",
+    path = "/v1/node/set_ngrok_auth_token",
     request_body = SetNgrokAuthTokenRequest,
     responses(
         (status = 200, description = "Successfully set ngrok auth token", body = Value),
@@ -96,7 +96,7 @@ pub async fn set_ngrok_auth_token_handler(
 
 #[utoipa::path(
     post,
-    path = "/v2/clear_ngrok_auth_token",
+    path = "/v1/node/clear_ngrok_auth_token",
     responses(
         (status = 200, description = "Successfully cleared ngrok auth token", body = Value),
         (status = 400, description = "Bad request", body = APIError),
@@ -130,7 +130,7 @@ pub async fn clear_ngrok_auth_token_handler(
 
 #[utoipa::path(
     post,
-    path = "/v2/set_ngrok_enabled",
+    path = "/v1/node/set_ngrok_enabled",
     request_body = SetNgrokEnabledRequest,
     responses(
         (status = 200, description = "Successfully set ngrok enabled state", body = Value),
@@ -170,7 +170,7 @@ pub async fn set_ngrok_enabled_handler(
 
 #[utoipa::path(
     get,
-    path = "/v2/get_ngrok_status",
+    path = "/v1/node/get_ngrok_status",
     responses(
         (status = 200, description = "Successfully got ngrok status", body = Value),
         (status = 400, description = "Bad request", body = APIError),

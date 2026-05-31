@@ -17,7 +17,7 @@ use serde_json::json;
 use serde_json::Value as JsonValue;
 use hanzo_messages::schemas::inbox_name::InboxName;
 use hanzo_messages::schemas::job_config::JobConfig;
-use hanzo_messages::schemas::llm_providers::serialized_llm_provider::{LLMProviderInterface, Ollama};
+use hanzo_messages::schemas::llm_providers::serialized_llm_provider::{LLMProviderInterface, LocalEngine};
 use hanzo_messages::schemas::prompts::Prompt;
 use hanzo_messages::schemas::ws_types::WSUpdateHandler;
 use hanzo_messages::hanzo_utils::hanzo_logging::{hanzo_log, HanzoLogLevel, HanzoLogOption};
@@ -48,7 +48,13 @@ pub fn truncate_image_content_in_payload(payload: &mut JsonValue) {
 }
 
 #[async_trait]
-impl LLMService for Ollama {
+impl LLMService for LocalEngine {
+    // Ollama is fully retired. The node only performs local inference through the
+    // Hanzo engine over OpenAI `/v1/chat/completions` (the `OpenAILegacy` provider).
+    // Ollama-backed providers can no longer be created (model scan/add are no-ops),
+    // so this `call_api` is unreachable in practice. We hard-guard it to guarantee
+    // the node never emits a legacy Ollama `/api/chat` request.
+    #[allow(unreachable_code, unused_variables)]
     async fn call_api(
         &self,
         client: &Client,
@@ -63,6 +69,12 @@ impl LLMService for Ollama {
         db: Arc<SqliteManager>,
         tracing_message_id: Option<String>,
     ) -> Result<LLMInferenceResponse, LLMProviderError> {
+        return Err(LLMProviderError::InvalidModelType(
+            "Ollama support has been removed. Configure the local Hanzo engine \
+             (OpenAI-compatible on /v1/chat/completions) instead."
+                .to_string(),
+        ));
+
         let session_id = Uuid::new_v4().to_string();
         if let Some(base_url) = url {
             let url = format!("{}{}", base_url, "/api/chat");

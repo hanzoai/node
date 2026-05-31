@@ -15,8 +15,9 @@ use std::time::Duration;
 // TODO: remove blocking / non-blocking methods
 
 lazy_static! {
-    pub static ref DEFAULT_EMBEDDINGS_SERVER_URL: &'static str = "https://api.hanzo.ai/embeddings";
-    pub static ref DEFAULT_EMBEDDINGS_LOCAL_URL: &'static str = "http://localhost:11434/";
+    // Local Hanzo engine (OpenAI-compatible `/v1/embeddings`). Ollama is fully retired.
+    pub static ref DEFAULT_EMBEDDINGS_SERVER_URL: &'static str = "http://localhost:36901";
+    pub static ref DEFAULT_EMBEDDINGS_LOCAL_URL: &'static str = "http://localhost:36901";
 }
 
 /// A trait for types that can generate embeddings from text.
@@ -219,13 +220,14 @@ impl RemoteEmbeddingGenerator {
         }
     }
 
-    /// String of the main endpoint url for generating embeddings via
-    /// Ollama Text Embedding Interface server
-    fn ollama_endpoint_url(&self) -> String {
+    /// String of the main endpoint url for generating embeddings via the local Hanzo
+    /// engine's OpenAI-compatible `/v1/engine/embeddings` endpoint (the engine namespaces
+    /// its inference routes under `/v1/engine/`). Ollama is fully retired.
+    fn embeddings_endpoint_url(&self) -> String {
         if self.api_url.ends_with('/') {
-            format!("{}api/embeddings", self.api_url)
+            format!("{}v1/engine/embeddings", self.api_url)
         } else {
-            format!("{}/api/embeddings", self.api_url)
+            format!("{}/v1/engine/embeddings", self.api_url)
         }
     }
 
@@ -242,10 +244,15 @@ impl RemoteEmbeddingGenerator {
         let mut input_string = input_string.clone();
 
         loop {
-            // Prepare the request body
-            let request_body = OllamaEmbeddingsRequestBody {
-                model: model.clone(),
-                prompt: input_string.clone(),
+            // Prepare the request body using the OpenAI `/v1/embeddings` schema:
+            // {"model": <model>, "input": <text>}. The local engine maps the sentinel
+            // `"default"` to whichever embedding model it has loaded, so the node uses
+            // the engine's model without hardcoding a name (the vector dimension is
+            // auto-detected). `model` is the caller's configured label, kept for compat.
+            let _ = &model;
+            let request_body = EmbeddingRequestBody {
+                input: input_string.clone(),
+                model: "default".to_string(),
             };
 
             // Create the HTTP client with a custom timeout
@@ -254,7 +261,7 @@ impl RemoteEmbeddingGenerator {
 
             // Build the request
             let mut request = client
-                .post(self.ollama_endpoint_url().to_string())
+                .post(self.embeddings_endpoint_url().to_string())
                 .header("Content-Type", "application/json")
                 .json(&request_body);
 
@@ -268,12 +275,18 @@ impl RemoteEmbeddingGenerator {
 
             match response {
                 Ok(response) if response.status().is_success() => {
-                    let embedding_response: Result<OllamaEmbeddingsResponse, _> =
-                        response.json::<OllamaEmbeddingsResponse>().await;
+                    // OpenAI `/v1/embeddings` response: {"data": [{"embedding": [...]}], ...}
+                    let embedding_response: Result<EmbeddingResponse, _> =
+                        response.json::<EmbeddingResponse>().await;
                     match embedding_response {
-                        Ok(embedding_response) => {
-                            return Ok(embedding_response.embedding);
-                        }
+                        Ok(embedding_response) => match embedding_response.data.into_iter().next() {
+                            Some(first) => return Ok(first.embedding),
+                            None => {
+                                return Err(HanzoEmbeddingError::RequestFailed(
+                                    "Embeddings response contained no data".to_string(),
+                                ));
+                            }
+                        },
                         Err(err) => {
                             return Err(HanzoEmbeddingError::RequestFailed(format!(
                                 "Failed to deserialize response JSON: {}",
@@ -323,12 +336,15 @@ impl RemoteEmbeddingGenerator {
         }
     }
 
-    /// Generate an Embedding for an input string by using the external Ollama API.
+    /// Generate an Embedding for an input string by using the local Hanzo
+    /// engine's OpenAI-compatible `/v1/embeddings` endpoint (blocking).
     fn generate_embedding_ollama_blocking(&self, input_string: &str) -> Result<Vec<f32>, HanzoEmbeddingError> {
-        // Prepare the request body
-        let request_body = OllamaEmbeddingsRequestBody {
-            model: self.model_type.to_string(),
-            prompt: String::from(input_string),
+        // Prepare the request body using the OpenAI `/v1/embeddings` schema. We send
+        // the sentinel `"default"` so the engine uses its loaded embedding model
+        // (no model name hardcoded); see `generate_embedding_ollama` for rationale.
+        let request_body = EmbeddingRequestBody {
+            input: String::from(input_string),
+            model: "default".to_string(),
         };
 
         // Create the HTTP client
@@ -336,7 +352,7 @@ impl RemoteEmbeddingGenerator {
 
         // Build the request
         let mut request = client
-            .post(&format!("{}", self.ollama_endpoint_url()))
+            .post(self.embeddings_endpoint_url())
             .header("Content-Type", "application/json")
             .json(&request_body);
 
@@ -353,10 +369,15 @@ impl RemoteEmbeddingGenerator {
 
         // Check if the response is successful
         if response.status().is_success() {
-            let embedding_response: OllamaEmbeddingsResponse = response.json().map_err(|err| {
+            let embedding_response: EmbeddingResponse = response.json().map_err(|err| {
                 HanzoEmbeddingError::RequestFailed(format!("Failed to deserialize response JSON: {}", err))
             })?;
-            Ok(embedding_response.embedding)
+            match embedding_response.data.into_iter().next() {
+                Some(first) => Ok(first.embedding),
+                None => Err(HanzoEmbeddingError::RequestFailed(
+                    "Embeddings response contained no data".to_string(),
+                )),
+            }
         } else {
             Err(HanzoEmbeddingError::RequestFailed(format!(
                 "HTTP request failed with status: {}",
@@ -477,7 +498,7 @@ impl RemoteEmbeddingGenerator {
 
         // Build the request
         let mut request = client
-            .post(self.api_url.to_string())
+            .post(self.embeddings_endpoint_url())
             .header("Content-Type", "application/json")
             .json(&request_body);
 
@@ -523,34 +544,26 @@ struct EmbeddingRequestBody {
 #[allow(dead_code)]
 struct EmbeddingResponseData {
     embedding: Vec<f32>,
+    #[serde(default)]
     index: usize,
+    #[serde(default)]
     object: String,
 }
 
 #[derive(Deserialize)]
 #[allow(dead_code)]
 struct EmbeddingResponse {
+    #[serde(default)]
     object: String,
+    #[serde(default)]
     model: String,
     data: Vec<EmbeddingResponseData>,
-    usage: serde_json::Value, // or define a separate struct for this if you need to use these values
+    #[serde(default)]
+    usage: serde_json::Value,
 }
 
 #[derive(Serialize)]
 #[allow(dead_code)]
 struct EmbeddingArrayRequestBody {
     inputs: Vec<String>,
-}
-
-#[derive(Debug, Serialize)]
-#[allow(dead_code)]
-struct OllamaEmbeddingsRequestBody {
-    model: String,
-    prompt: String,
-}
-
-#[derive(Deserialize)]
-#[allow(dead_code)]
-struct OllamaEmbeddingsResponse {
-    embedding: Vec<f32>,
 }
