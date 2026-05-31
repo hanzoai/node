@@ -2,6 +2,7 @@ use crate::{SqliteManager, SqliteManagerError};
 use bytemuck::cast_slice;
 use rusqlite::{params, OptionalExtension, Result};
 use serde_json::Value;
+use hanzo_embed::embedding_generator::EmbeddingGenerator;
 use hanzo_messages::schemas::custom_prompt::CustomPrompt;
 
 impl SqliteManager {
@@ -334,6 +335,60 @@ impl SqliteManager {
             };
 
             // Add or update the prompt based on whether it has a rowid
+            if prompt.rowid.is_some() {
+                self.update_prompt_with_vector(&prompt, embedding)?;
+            } else {
+                self.add_prompt_with_vector(&prompt, embedding)
+                    .map_err(SqliteManagerError::DatabaseError)?;
+            }
+        }
+        Ok(())
+    }
+
+    /// Like `add_prompts_from_json_values`, but ignores any baked-in embedding
+    /// vectors and RE-EMBEDS each prompt's text with the live engine, so static
+    /// prompts always match the active embedding dimension regardless of which
+    /// model/dimension is in use (zen 1024, gemma 768, ...).
+    pub async fn add_prompts_from_json_values_reembed(
+        &self,
+        prompts: Vec<Value>,
+        generator: &dyn EmbeddingGenerator,
+    ) -> Result<(), SqliteManagerError> {
+        for prompt_value in prompts {
+            let name = prompt_value["name"].as_str().unwrap_or_default().to_string();
+            let is_system = prompt_value["is_system"].as_bool().unwrap_or(false);
+            let is_enabled = prompt_value["is_enabled"].as_bool().unwrap_or(true);
+            let version = prompt_value["version"].as_str().unwrap_or_default().to_string();
+            let prompt_text = prompt_value["prompt"].as_str().unwrap_or_default().to_string();
+            let is_favorite = prompt_value["is_favorite"].as_bool().unwrap_or(false);
+            let rowid = prompt_value.get("rowid").and_then(|v| v.as_i64());
+
+            // Skip if a prompt with this rowid already exists
+            if let Some(id) = rowid {
+                if let Ok(Some(_)) = self.get_prompt(id) {
+                    continue;
+                }
+            }
+
+            // Re-embed the prompt text at the active dimension rather than trusting
+            // the (possibly wrong-dimension) baked vector.
+            let embedding = generator
+                .generate_embedding_default(&prompt_text)
+                .await
+                .map_err(|e| {
+                    SqliteManagerError::SerializationError(format!("Static prompt embedding failed: {}", e))
+                })?;
+
+            let prompt = CustomPrompt {
+                rowid,
+                name,
+                is_system,
+                is_enabled,
+                version,
+                prompt: prompt_text,
+                is_favorite,
+            };
+
             if prompt.rowid.is_some() {
                 self.update_prompt_with_vector(&prompt, embedding)?;
             } else {

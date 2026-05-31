@@ -565,7 +565,7 @@ impl ToolRouter {
         Ok(())
     }
 
-    pub async fn add_static_prompts(&self, _: Arc<dyn EmbeddingGenerator>) -> Result<(), ToolError> {
+    pub async fn add_static_prompts(&self, generator: Arc<dyn EmbeddingGenerator>) -> Result<(), ToolError> {
         // Check if ONLY_TESTING_PROMPTS is set
         if env::var("ONLY_TESTING_PROMPTS").unwrap_or_default() == "1"
             || env::var("ONLY_TESTING_PROMPTS").unwrap_or_default().to_lowercase() == "true"
@@ -587,10 +587,13 @@ impl ToolRouter {
 
         println!("Number of static prompts to add: {}", json_array.len());
 
-        // Use the add_prompts_from_json_values method
+        // Re-embed each static prompt's text with the live engine so they always
+        // match the active embedding dimension (zen 1024, gemma 768, ...) instead
+        // of inserting the baked-in (fixed-dimension) vectors.
         {
             self.sqlite_manager
-                .add_prompts_from_json_values(json_array)
+                .add_prompts_from_json_values_reembed(json_array, generator.as_ref())
+                .await
                 .map_err(|e| ToolError::DatabaseError(e.to_string()))?;
         }
 

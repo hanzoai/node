@@ -483,8 +483,15 @@ impl Node {
                 generator_guard.clone()
             };
             let reinstall_tools = std::env::var("REINSTALL_TOOLS").unwrap_or_else(|_| "false".to_string()) == "true";
+            let db_for_reconcile = self.db.clone();
 
             tokio::spawn(async move {
+                // Detect the live embedding dimension from the engine and reconcile
+                // the vector DB to match it — supports ANY embedder / ANY dimension
+                // (zen 1024, gemma 768, ...) with nothing hardcoded. Runs before tool
+                // + static-prompt seeding so everything is embedded at the right size.
+                db_for_reconcile.reconcile_embedding_dimension(&generator).await;
+
                 if reinstall_tools {
                     if let Err(e) = tool_router.force_reinstall_all(Arc::new(generator.clone())).await {
                         hanzo_log(
