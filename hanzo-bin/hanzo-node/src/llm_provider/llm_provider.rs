@@ -156,8 +156,8 @@ impl LLMProvider {
                     )
                     .await
             }
-            LLMProviderInterface::Ollama(ollama) => {
-                ollama
+            LLMProviderInterface::LocalEngine(local_engine) => {
+                local_engine
                     .call_api(
                         &self.client,
                         self.external_url.as_ref(),

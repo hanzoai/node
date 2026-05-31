@@ -76,7 +76,7 @@ impl LLMService for OpenAILegacy {
         let session_id = Uuid::new_v4().to_string();
         if let Some(base_url) = url {
             if let Some(key) = api_key {
-                let url = format!("{}{}", base_url, "/v1/chat/completions");
+                let url = format!("{}{}", base_url, "/v1/engine/chat/completions");
 
                 let is_stream = config.as_ref().and_then(|c| c.stream).unwrap_or(true);
 

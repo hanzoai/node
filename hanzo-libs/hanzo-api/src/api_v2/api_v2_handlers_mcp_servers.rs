@@ -119,7 +119,7 @@ pub fn mcp_server_routes(
 
 #[utoipa::path(
     get,
-    path = "/v2/list_mcp_servers",
+    path = "/v1/node/list_mcp_servers",
     responses(
         (status = 200, description = "Successfully retrieved MCP servers", body = Vec<MCPServer>),
         (status = 500, description = "Internal server error", body = APIError)
@@ -149,7 +149,7 @@ pub async fn list_mcp_servers_handler(
 
 #[utoipa::path(
     post,
-    path = "/v2/add_mcp_server",
+    path = "/v1/node/add_mcp_server",
     request_body = AddMCPServerRequest,
     responses(
         (status = 200, description = "Successfully added MCP server", body = String),
@@ -183,7 +183,7 @@ pub async fn add_mcp_server_handler(
 
 #[utoipa::path(
     post,
-    path = "/v2/delete_mcp_server",
+    path = "/v1/node/delete_mcp_server",
     request_body = DeleteMCPServerRequest,
     responses(
         (status = 200, description = "Successfully deleted MCP server", body = DeleteMCPServerResponse),
@@ -217,7 +217,7 @@ pub async fn delete_mcp_server_handler(
 
 #[utoipa::path(
     get,
-    path = "/v2/get_all_mcp_server_tools",
+    path = "/v1/node/get_all_mcp_server_tools",
     responses(
         (status = 200, description = "Successfully retrieved MCP server tools", body = Vec<HanzoTool>),
         (status = 400, description = "Bad request", body = APIError),
@@ -250,7 +250,7 @@ pub async fn get_all_mcp_server_tools_handler(
 
 #[utoipa::path(
     post,
-    path = "/v2/import_mcp_server_from_github_url",
+    path = "/v1/node/import_mcp_server_from_github_url",
     request_body = ImportMCPServerFromGitHubRequest,
     responses(
         (status = 200, description = "Successfully imported MCP server", body = AddMCPServerRequest),
@@ -284,7 +284,7 @@ pub async fn import_mcp_server_from_github_url_handler(
 
 #[utoipa::path(
     post,
-    path = "/v2/set_enable_mcp_server",
+    path = "/v1/node/set_enable_mcp_server",
     request_body = SetEnableMCPServerRequest,
     responses(
         (status = 200, description = "Successfully set enable MCP server", body = MCPServer),
@@ -319,7 +319,7 @@ pub async fn set_enable_mcp_server_handler(
 
 #[utoipa::path(
     post,
-    path = "/v2/update_mcp_server",
+    path = "/v1/node/update_mcp_server",
     request_body = UpdateMCPServerRequest,
     responses(
         (status = 200, description = "Successfully updated MCP server", body = MCPServer),

@@ -3,7 +3,7 @@ use crate::it::utils::vecfs_test_utils::{get_files_for_job, get_folder_name_for_
 use super::utils::test_boilerplate::run_test_one_node_network;
 use hanzo_http_api::node_commands::NodeCommand;
 use hanzo_messages::schemas::llm_providers::serialized_llm_provider::{
-    LLMProviderInterface, Ollama, SerializedLLMProvider,
+    LLMProviderInterface, LocalEngine, SerializedLLMProvider,
 };
 use hanzo_messages::schemas::hanzo_name::HanzoName;
 use hanzo_messages::hanzo_message::hanzo_message_schemas::JobMessage;
@@ -92,7 +92,7 @@ fn job_image_analysis() {
                     )
                     .create();
 
-                let ollama = Ollama {
+                let local_engine = LocalEngine {
                     model_type: "llava".to_string(),
                 };
 
@@ -103,7 +103,7 @@ fn job_image_analysis() {
                     full_identity_name: agent_name,
                     external_url: Some(server.url()),
                     api_key: Some("mockapikey".to_string()),
-                    model: LLMProviderInterface::Ollama(ollama),
+                    model: LLMProviderInterface::LocalEngine(local_engine),
                 };
                 api_llm_provider_registration(
                     node1_commands_sender.clone(),
