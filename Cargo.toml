@@ -33,6 +33,12 @@ hanzo-zap = "0.6.75"
 # hanzoai/engine (local path during dev; pin to 0.6.0 for crates.io publish)
 hanzo-engine = { version = "0.6.0", path = "../engine/hanzo-engine" }
 
+# Native-ML pipeline crates — live alongside hanzo-engine in ~/work/hanzo/engine.
+# Single source of truth: only that path should ever appear here.
+hanzo-federation = { path = "../engine/hanzo-federation" }
+hanzo-quant = { path = "../engine/hanzo-quant" }
+hanzo-zen5 = { path = "../engine/hanzo-zen5", default-features = false }
+
 # Locals
 hanzo-test-framework = { path = "./hanzo-test-framework" }
 hanzo-test-macro = { path = "./hanzo-test-macro" }
