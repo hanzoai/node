@@ -8,6 +8,7 @@
 //!   2. HTTP: fallback                      → http://127.0.0.1:{NODE_API_PORT}/v1/…
 
 use async_channel::Sender;
+use hanzo_http_api::node_api_router::APIError;
 use hanzo_http_api::node_commands::NodeCommand;
 use hanzo_zap::{
     ZapServer, cloud_handler,
@@ -17,8 +18,10 @@ use hanzo_zap::{
 use log::{info, error};
 use tokio::net::TcpStream;
 
-/// Forward a cloud request to the engine via native ZAP binary protocol.
-async fn forward_via_zap(
+/// Make a ZAP cloud request to any ZAP endpoint (engine OR a cluster peer) and return
+/// `(status, body, error)`. This is the node's reusable ZAP *client* — cluster peer
+/// forwarding rides this instead of HTTP.
+pub async fn forward_via_zap(
     engine_addr: &str,
     method: &str,
     auth: &str,
@@ -99,11 +102,48 @@ async fn forward_via_http(
     Ok((status, resp_body.to_vec(), String::new()))
 }
 
+/// Dispatch a cluster-internal ZAP method into the node command channel. This is how a
+/// peer's forwarded chat/search arrives over ZAP (binary, not HTTP) and gets served by
+/// the local engine / RAG. The `*_local` commands never re-route, so forwarding can't loop.
+async fn zap_dispatch_local(
+    sender: &Sender<NodeCommand>,
+    method: &str,
+    body: Vec<u8>,
+) -> Result<(u32, Vec<u8>, String), String> {
+    let payload: serde_json::Value =
+        serde_json::from_slice(&body).map_err(|e| format!("ZAP {method}: bad json body: {e}"))?;
+    let (tx, rx) = async_channel::bounded::<Result<serde_json::Value, APIError>>(1);
+    let cmd = match method {
+        "cluster.chat_local" => NodeCommand::V2ApiClusterChatLocal { payload, res: tx },
+        "cluster.search_local" => NodeCommand::V2ApiClusterSearchLocal { payload, res: tx },
+        other => return Ok((404, Vec::new(), format!("unknown cluster method: {other}"))),
+    };
+    sender
+        .send(cmd)
+        .await
+        .map_err(|e| format!("ZAP {method}: command send failed: {e}"))?;
+    match rx.recv().await {
+        Ok(Ok(v)) => Ok((200, serde_json::to_vec(&v).unwrap_or_default(), String::new())),
+        Ok(Err(api_err)) => Ok((api_err.code as u32, Vec::new(), api_err.message)),
+        Err(e) => Err(format!("ZAP {method}: command recv failed: {e}")),
+    }
+}
+
 /// Start the native ZAP listener alongside the HTTP API.
 pub async fn start_zap_server(
     listen_addr: std::net::SocketAddr,
-    _node_commands_sender: Sender<NodeCommand>,
+    node_commands_sender: Sender<NodeCommand>,
 ) {
+    // In cluster mode, bind ZAP on all interfaces so LAN peers can reach it for cross-node
+    // forwarding (default NODE_ZAP_IP is loopback-only, which would block peer ZAP calls).
+    let cluster_mode = std::env::var("HANZO_CLUSTER_MODE")
+        .map(|v| matches!(v.trim().to_lowercase().as_str(), "1" | "true" | "yes" | "on"))
+        .unwrap_or(false);
+    let listen_addr = if cluster_mode {
+        std::net::SocketAddr::new(std::net::Ipv4Addr::UNSPECIFIED.into(), listen_addr.port())
+    } else {
+        listen_addr
+    };
     info!("Starting ZAP server on {}", listen_addr);
 
     // Read forwarding config once at startup
@@ -123,13 +163,22 @@ pub async fn start_zap_server(
 
     let handler = cloud_handler(move |method, auth, body| {
         let engine_zap_url = engine_zap_url.clone();
+        let node_commands_sender = node_commands_sender.clone();
         async move {
-            if let Some(ref engine_addr) = engine_zap_url {
-                // Preferred: native ZAP binary protocol to engine
-                forward_via_zap(engine_addr, &method, &auth, body).await
-            } else {
-                // Fallback: HTTP to local API
-                forward_via_http(api_port, &method, &auth, body).await
+            match method.as_str() {
+                // Cross-node cluster forwarding over ZAP (peers talk ZAP to us, not HTTP).
+                "cluster.chat_local" | "cluster.search_local" => {
+                    zap_dispatch_local(&node_commands_sender, &method, body).await
+                }
+                _ => {
+                    if let Some(ref engine_addr) = engine_zap_url {
+                        // Preferred: native ZAP binary protocol to engine
+                        forward_via_zap(engine_addr, &method, &auth, body).await
+                    } else {
+                        // Fallback: HTTP to local API
+                        forward_via_http(api_port, &method, &auth, body).await
+                    }
+                }
             }
         }
     });

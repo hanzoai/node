@@ -577,6 +577,202 @@ impl Node {
         Ok(())
     }
 
+    /// Run a vector search against THIS node's store and return ranked chunks WITH score
+    /// (lower = closer). Shared by the cluster-internal search endpoint and federated fan-out.
+    /// No bearer: this is a cluster-internal primitive, gated by cluster mode at the callers.
+    async fn cluster_local_search_results(
+        db: &Arc<SqliteManager>,
+        embedding_generator: &Arc<dyn EmbeddingGenerator>,
+        node_name: &str,
+        query: &str,
+        max_results: usize,
+        path: Option<&str>,
+    ) -> Vec<Value> {
+        if query.is_empty() {
+            return Vec::new();
+        }
+        let query_embedding = match embedding_generator.generate_embedding_default(query).await {
+            Ok(e) => e,
+            Err(_) => return Vec::new(),
+        };
+        let search_path = HanzoPath::from_string(path.unwrap_or("/").to_string());
+        let search_prefix = search_path.relative_path();
+        let mut file_ids: Vec<i64> = Vec::new();
+        let mut paths_map: HashMap<i64, String> = HashMap::new();
+        if let Ok(files) = db.get_parsed_files_by_prefix(&search_prefix) {
+            for f in files {
+                if let Some(id) = f.id {
+                    file_ids.push(id);
+                    paths_map.insert(id, f.relative_path.clone());
+                }
+            }
+        }
+        let results = db.search_chunks(&file_ids, query_embedding, max_results).unwrap_or_default();
+        results
+            .into_iter()
+            .map(|(chunk, dist)| {
+                serde_json::json!({
+                    "content": chunk.content,
+                    "score": dist,
+                    "position": chunk.position,
+                    "path": paths_map.get(&chunk.parsed_file_id),
+                    "node_name": node_name,
+                })
+            })
+            .collect()
+    }
+
+    /// `POST /v1/node/cluster/search_local` — cluster-internal local RAG search (no bearer);
+    /// peers call this during federated fan-out. Returns this node's ranked chunks.
+    pub async fn v2_api_cluster_search_local(
+        db: Arc<SqliteManager>,
+        embedding_generator: Arc<dyn EmbeddingGenerator>,
+        node_name: String,
+        payload: Value,
+        res: Sender<Result<Value, APIError>>,
+    ) -> Result<(), NodeError> {
+        if !Self::cluster_enabled() {
+            let _ = res
+                .send(Ok(serde_json::json!({ "error": "cluster mode is disabled (set HANZO_CLUSTER_MODE=1)" })))
+                .await;
+            return Ok(());
+        }
+        let query = payload
+            .get("query")
+            .or_else(|| payload.get("search"))
+            .and_then(|q| q.as_str())
+            .unwrap_or("");
+        let path = payload.get("path").and_then(|p| p.as_str());
+        let max_results = payload.get("max_results").and_then(|m| m.as_u64()).unwrap_or(10) as usize;
+        let results =
+            Self::cluster_local_search_results(&db, &embedding_generator, &node_name, query, max_results, path)
+                .await;
+        let _ = res
+            .send(Ok(serde_json::json!({ "node_name": node_name, "result_count": results.len(), "results": results })))
+            .await;
+        Ok(())
+    }
+
+    /// `POST /v1/node/cluster/search` — federated RAG. Search THIS node + fan out to every
+    /// connected peer's /cluster/search_local, then fuse the ranked lists with Reciprocal
+    /// Rank Fusion. Returns fused results + which nodes were queried.
+    pub async fn v2_api_cluster_search(
+        node_name: String,
+        cluster_peers: Option<crate::network::libp2p_manager::ClusterPeersHandle>,
+        db: Arc<SqliteManager>,
+        embedding_generator: Arc<dyn EmbeddingGenerator>,
+        payload: Value,
+        res: Sender<Result<Value, APIError>>,
+    ) -> Result<(), NodeError> {
+        if !Self::cluster_enabled() {
+            let _ = res
+                .send(Ok(serde_json::json!({ "error": "cluster mode is disabled (set HANZO_CLUSTER_MODE=1)" })))
+                .await;
+            return Ok(());
+        }
+        let query = payload
+            .get("query")
+            .or_else(|| payload.get("search"))
+            .and_then(|q| q.as_str())
+            .unwrap_or("")
+            .to_string();
+        if query.is_empty() {
+            let _ = res
+                .send(Ok(serde_json::json!({ "error": "request body must include a 'query' field" })))
+                .await;
+            return Ok(());
+        }
+        let max_results = payload.get("max_results").and_then(|m| m.as_u64()).unwrap_or(10) as usize;
+        let path = payload.get("path").and_then(|p| p.as_str());
+
+        let mut queried: Vec<Value> = Vec::new();
+        let mut ranked_lists: Vec<Vec<Value>> = Vec::new();
+
+        // 1) Local results.
+        let local =
+            Self::cluster_local_search_results(&db, &embedding_generator, &node_name, &query, max_results, path)
+                .await;
+        queried.push(serde_json::json!({ "node_name": node_name, "location": "local", "result_count": local.len() }));
+        ranked_lists.push(local);
+
+        // 2) Fan out to connected peers' cluster.search_local over ZAP (binary, not HTTP).
+        let mut peer_targets: Vec<(String, u64, String)> = Vec::new();
+        if let Some(cp) = cluster_peers.as_ref() {
+            for (_pid, entry) in cp.read().await.iter() {
+                if !entry.connected {
+                    continue;
+                }
+                let card = match &entry.card {
+                    Some(c) => c,
+                    None => continue,
+                };
+                let pname = card.get("node_name").and_then(|v| v.as_str()).unwrap_or("unknown").to_string();
+                let zap_port = card.get("zap_port").and_then(|p| p.as_u64());
+                if let (Some(ip), Some(zp)) = (Self::extract_ip4(&entry.address), zap_port) {
+                    peer_targets.push((ip, zp, pname));
+                }
+            }
+        }
+        let fan_payload = serde_json::json!({ "query": query, "max_results": max_results, "path": path });
+        for (ip, zap_port, pname) in peer_targets {
+            match Self::cluster_zap_call(&ip, zap_port, "cluster.search_local", &fan_payload).await {
+                Ok(body) => {
+                    let r = body.get("results").and_then(|x| x.as_array()).cloned().unwrap_or_default();
+                    queried.push(serde_json::json!({ "node_name": pname, "location": "peer", "result_count": r.len() }));
+                    ranked_lists.push(r);
+                }
+                Err(e) => {
+                    queried.push(serde_json::json!({ "node_name": pname, "location": "peer", "error": e }));
+                }
+            }
+        }
+
+        // 3) Reciprocal Rank Fusion across all lists.
+        let fused = Self::rrf_fuse(ranked_lists, max_results);
+        let _ = res
+            .send(Ok(serde_json::json!({ "query": query, "result_count": fused.len(), "results": fused, "queried": queried })))
+            .await;
+        Ok(())
+    }
+
+    /// Reciprocal Rank Fusion of several already-ranked (best-first) result lists. Dedupes
+    /// by content, sums 1/(k + rank) with k=60, returns the top `limit` by fused score.
+    fn rrf_fuse(lists: Vec<Vec<Value>>, limit: usize) -> Vec<Value> {
+        const K: f64 = 60.0;
+        let mut scores: HashMap<String, f64> = HashMap::new();
+        let mut repr: HashMap<String, Value> = HashMap::new();
+        let mut sources: HashMap<String, Vec<Value>> = HashMap::new();
+        for list in lists {
+            for (rank, item) in list.into_iter().enumerate() {
+                let key = item.get("content").and_then(|c| c.as_str()).unwrap_or("").to_string();
+                if key.is_empty() {
+                    continue;
+                }
+                *scores.entry(key.clone()).or_insert(0.0) += 1.0 / (K + rank as f64 + 1.0);
+                let node = item.get("node_name").cloned().unwrap_or(Value::Null);
+                sources.entry(key.clone()).or_default().push(node);
+                repr.entry(key.clone()).or_insert(item);
+            }
+        }
+        let mut fused: Vec<(String, f64)> = scores.into_iter().collect();
+        fused.sort_by(|a, b| b.1.partial_cmp(&a.1).unwrap_or(std::cmp::Ordering::Equal));
+        fused
+            .into_iter()
+            .take(limit)
+            .filter_map(|(key, score)| {
+                let mut item = repr.get(&key).cloned()?;
+                if let Some(obj) = item.as_object_mut() {
+                    obj.insert("rrf_score".to_string(), serde_json::json!(score));
+                    obj.insert("sources".to_string(), serde_json::json!(sources.get(&key).cloned().unwrap_or_default()));
+                }
+                Some(item)
+            })
+            .collect()
+    }
+
+    // (cluster_forward_search removed — peer federated search now rides ZAP via
+    // Self::cluster_zap_call("cluster.search_local"), no HTTP between nodes.)
+
     pub async fn v2_retrieve_vector_resource(
         db: Arc<SqliteManager>,
         _identity_manager: Arc<Mutex<IdentityManager>>,

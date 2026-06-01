@@ -1,11 +1,11 @@
 use ed25519_dalek::SigningKey;
 use futures::prelude::*;
 use libp2p::{
-    dcutr, identify,
+    dcutr, identify, mdns,
     multiaddr::Protocol,
     noise, ping, relay,
     request_response::{self, ResponseChannel},
-    swarm::{NetworkBehaviour, SwarmEvent},
+    swarm::{behaviour::toggle::Toggle, NetworkBehaviour, SwarmEvent},
     tcp, yamux, Multiaddr, PeerId, Swarm,
 };
 use hanzo_messages::{
@@ -28,6 +28,13 @@ pub struct HanzoNetworkBehaviour {
     pub relay_client: relay::client::Behaviour,
     pub dcutr: dcutr::Behaviour,
     pub request_response: request_response::json::Behaviour<HanzoMessage, HanzoMessage>,
+    /// Cluster-card exchange (engine/model advertisement between LAN peers). Enabled
+    /// only in cluster mode; a no-op Toggle otherwise so a standalone node is unchanged.
+    pub cluster_card: Toggle<request_response::json::Behaviour<ClusterCardRequest, ClusterCardResponse>>,
+    /// Optional mDNS for zero-config LAN peer discovery (Hanzo cluster mode).
+    /// A no-op unless HANZO_CLUSTER_MODE is enabled at startup, so a standalone
+    /// node behaves exactly as before.
+    pub mdns: Toggle<mdns::tokio::Behaviour>,
 }
 
 /// Events that can be sent through the network
@@ -62,6 +69,34 @@ pub struct QueuedMessage {
     pub last_attempt: std::time::Instant,
 }
 
+/// A peer discovered for Hanzo cluster mode (via mDNS) plus its current connection state.
+#[derive(Debug, Clone)]
+pub struct ClusterPeerEntry {
+    pub address: Multiaddr,
+    pub connected: bool,
+    /// The peer's most recent cluster card ({node_name, engine}), learned via the
+    /// cluster-card request_response protocol. None until the first exchange completes.
+    pub card: Option<serde_json::Value>,
+}
+
+/// Lock-light shared snapshot of cluster peers. Readable by API command handlers
+/// WITHOUT locking the LibP2PManager (which is held for the lifetime of `run()`).
+pub type ClusterPeersHandle = Arc<tokio::sync::RwLock<HashMap<PeerId, ClusterPeerEntry>>>;
+
+/// Shared handle to this node's own cluster card (node_name + engine). The node refreshes
+/// it in the background; the manager serves it to peers on cluster-card requests.
+pub type LocalCardHandle = Arc<tokio::sync::RwLock<serde_json::Value>>;
+
+/// Cluster-card exchange payloads. The request is empty ("send me your card"); the
+/// response carries an opaque JSON card so the protocol need not track the card's shape.
+#[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
+pub struct ClusterCardRequest;
+
+#[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
+pub struct ClusterCardResponse {
+    pub card: serde_json::Value,
+}
+
 /// The main libp2p network manager
 pub struct LibP2PManager {
     swarm: Swarm<HanzoNetworkBehaviour>,
@@ -76,6 +111,10 @@ pub struct LibP2PManager {
     last_disconnection_time: Option<std::time::Instant>, // Track when we disconnected
     // Peer discovery fields
     discovered_peers: HashMap<String, (PeerId, Multiaddr)>, // identity -> (peer_id, circuit_addr)
+    // Cluster mode: shared snapshot of mDNS-discovered LAN peers + their connection state
+    cluster_peers: ClusterPeersHandle,
+    // Cluster mode: this node's own card (node_name + engine), served to peers on request
+    local_card: LocalCardHandle,
     // Message queue fields
     message_queue: VecDeque<QueuedMessage>, // Queue for messages that failed to send
     max_retry_attempts: u32,                // Maximum retry attempts per message
@@ -102,6 +141,46 @@ impl LibP2PManager {
             &format!("LIBP2P Local peer id: {}", local_peer_id),
         );
 
+        // Hanzo cluster mode: opt-in zero-config LAN peer discovery via mDNS.
+        // Off by default so a standalone node/desktop behaves exactly as before.
+        let cluster_mode = std::env::var("HANZO_CLUSTER_MODE")
+            .map(|v| matches!(v.trim().to_lowercase().as_str(), "1" | "true" | "yes" | "on"))
+            .unwrap_or(false);
+        let mdns_behaviour = if cluster_mode {
+            hanzo_log(
+                HanzoLogOption::Network,
+                HanzoLogLevel::Info,
+                "🛰️  Cluster mode ON — enabling mDNS LAN peer discovery",
+            );
+            Some(mdns::tokio::Behaviour::new(
+                mdns::Config::default(),
+                local_peer_id,
+            )?)
+        } else {
+            None
+        };
+
+        // Cluster-card exchange protocol — registered only in cluster mode.
+        let cluster_card_behaviour = if cluster_mode {
+            Some(request_response::json::Behaviour::new(
+                std::iter::once((
+                    libp2p::StreamProtocol::new("/hanzo/cluster-card/1.0.0"),
+                    request_response::ProtocolSupport::Full,
+                )),
+                request_response::Config::default().with_request_timeout(Duration::from_secs(10)),
+            ))
+        } else {
+            None
+        };
+
+        // In cluster mode, hold idle connections open longer so discovered LAN peers stay
+        // in a live session between card exchanges; standalone keeps the libp2p default.
+        let idle_timeout = if cluster_mode {
+            Duration::from_secs(60)
+        } else {
+            Duration::from_secs(10)
+        };
+
         // Create swarm
         let mut swarm = libp2p::SwarmBuilder::with_existing_identity(local_key)
             .with_tokio()
@@ -111,8 +190,9 @@ impl LibP2PManager {
                 yamux::Config::default,
             )?
             .with_relay_client(noise::Config::new, yamux::Config::default)?
-            .with_behaviour(|keypair, relay_behaviour| HanzoNetworkBehaviour {
+            .with_behaviour(move |keypair, relay_behaviour| HanzoNetworkBehaviour {
                 relay_client: relay_behaviour,
+                mdns: Toggle::from(mdns_behaviour),
                 ping: ping::Behaviour::new(
                     ping::Config::new()
                         .with_interval(Duration::from_secs(5)) // Reduced from 10s to 5s
@@ -133,7 +213,9 @@ impl LibP2PManager {
                     )),
                     request_response::Config::default().with_request_timeout(Duration::from_secs(30)),
                 ),
+                cluster_card: Toggle::from(cluster_card_behaviour),
             })?
+            .with_swarm_config(|cfg| cfg.with_idle_connection_timeout(idle_timeout))
             .build();
 
         // Listen on TCP
@@ -170,6 +252,9 @@ impl LibP2PManager {
             last_disconnection_time: None, // Track when we disconnected
             // Peer discovery fields
             discovered_peers: HashMap::new(), // identity -> (peer_id, circuit_addr)
+            // Cluster mode peer snapshot
+            cluster_peers: Arc::new(tokio::sync::RwLock::new(HashMap::new())),
+            local_card: Arc::new(tokio::sync::RwLock::new(serde_json::Value::Null)),
             // Message queue fields
             message_queue: VecDeque::new(), // Queue for messages that failed to send
             max_retry_attempts: 5,          // Maximum retry attempts per message
@@ -180,6 +265,19 @@ impl LibP2PManager {
     /// Get the event sender for sending network events
     pub fn event_sender(&self) -> mpsc::UnboundedSender<NetworkEvent> {
         self.event_sender.clone()
+    }
+
+    /// Shared handle to the cluster peer snapshot (mDNS-discovered LAN peers).
+    /// Grab this BEFORE the manager is moved into `run()` so API handlers can read
+    /// the peer set without locking the manager.
+    pub fn cluster_peers_handle(&self) -> ClusterPeersHandle {
+        self.cluster_peers.clone()
+    }
+
+    /// Shared handle to this node's own cluster card. Grab BEFORE the manager moves into
+    /// `run()`; the node's background refresher writes the served card here.
+    pub fn local_card_handle(&self) -> LocalCardHandle {
+        self.local_card.clone()
     }
 
     /// Get all connected peers
@@ -302,6 +400,7 @@ impl LibP2PManager {
     pub async fn run(&mut self) -> Result<(), Box<dyn std::error::Error>> {
         let mut reconnection_timer = tokio::time::interval(Duration::from_secs(3)); // Check reconnection every 3 seconds
         let mut message_retry_timer = tokio::time::interval(Duration::from_secs(1)); // Process message queue every 1 second
+        let mut cluster_card_timer = tokio::time::interval(Duration::from_secs(15)); // Re-exchange cluster cards / keep-alive
 
         loop {
             tokio::select! {
@@ -319,7 +418,27 @@ impl LibP2PManager {
                 _ = message_retry_timer.tick() => {
                     self.process_message_queue().await?;
                 }
+                _ = cluster_card_timer.tick() => {
+                    self.broadcast_cluster_card_requests().await;
+                }
             }
+        }
+    }
+
+    /// Ask one peer for its cluster card. No-op when cluster mode is off (Toggle disabled).
+    fn request_cluster_card(&mut self, peer: PeerId) {
+        if let Some(b) = self.swarm.behaviour_mut().cluster_card.as_mut() {
+            let _ = b.send_request(&peer, ClusterCardRequest);
+        }
+    }
+
+    /// Periodically request cards from all known cluster peers. Doubles as keep-alive
+    /// traffic (so connections stay live → connected:true) and a soft reconnect — a
+    /// send_request to a known-but-disconnected peer triggers a dial.
+    async fn broadcast_cluster_card_requests(&mut self) {
+        let peers: Vec<PeerId> = { self.cluster_peers.read().await.keys().cloned().collect() };
+        for peer in peers {
+            self.request_cluster_card(peer);
         }
     }
 
@@ -569,6 +688,87 @@ impl LibP2PManager {
                     self.swarm.add_peer_address(peer_id, addr.clone());
                 }
             }
+            SwarmEvent::Behaviour(HanzoNetworkBehaviourEvent::Mdns(mdns_event)) => {
+                match mdns_event {
+                    mdns::Event::Discovered(peers) => {
+                        for (peer_id, addr) in peers {
+                            hanzo_log(
+                                HanzoLogOption::Network,
+                                HanzoLogLevel::Info,
+                                &format!("🛰️  mDNS discovered peer {} at {}", peer_id, addr),
+                            );
+                            {
+                                let mut cp = self.cluster_peers.write().await;
+                                cp.entry(peer_id.clone())
+                                    .and_modify(|e| e.address = addr.clone())
+                                    .or_insert(ClusterPeerEntry {
+                                        address: addr.clone(),
+                                        connected: false,
+                                        card: None,
+                                    });
+                            }
+                            self.swarm.add_peer_address(peer_id, addr.clone());
+                            if let Err(e) = self.swarm.dial(addr.clone()) {
+                                hanzo_log(
+                                    HanzoLogOption::Network,
+                                    HanzoLogLevel::Debug,
+                                    &format!("mDNS dial to {} failed: {}", addr, e),
+                                );
+                            }
+                        }
+                    }
+                    mdns::Event::Expired(peers) => {
+                        for (peer_id, addr) in peers {
+                            hanzo_log(
+                                HanzoLogOption::Network,
+                                HanzoLogLevel::Debug,
+                                &format!("mDNS peer expired: {} at {}", peer_id, addr),
+                            );
+                            self.cluster_peers.write().await.remove(&peer_id);
+                        }
+                    }
+                }
+            }
+            SwarmEvent::Behaviour(HanzoNetworkBehaviourEvent::ClusterCard(card_event)) => {
+                match card_event {
+                    request_response::Event::Message { peer, message, .. } => match message {
+                        request_response::Message::Request { channel, .. } => {
+                            // Serve this node's current card from the shared cache.
+                            let card = self.local_card.read().await.clone();
+                            if let Some(b) = self.swarm.behaviour_mut().cluster_card.as_mut() {
+                                let _ = b.send_response(channel, ClusterCardResponse { card });
+                            }
+                        }
+                        request_response::Message::Response { response, .. } => {
+                            // Store the peer's card in the shared snapshot.
+                            let card = response.card;
+                            let mut cp = self.cluster_peers.write().await;
+                            cp.entry(peer)
+                                .and_modify(|e| e.card = Some(card.clone()))
+                                .or_insert_with(|| ClusterPeerEntry {
+                                    address: Multiaddr::empty(),
+                                    connected: true,
+                                    card: Some(card.clone()),
+                                });
+                        }
+                    },
+                    request_response::Event::OutboundFailure { peer, error, .. } => {
+                        hanzo_log(
+                            HanzoLogOption::Network,
+                            HanzoLogLevel::Debug,
+                            &format!("Cluster-card request to {} failed: {:?}", peer, error),
+                        );
+                    }
+                    request_response::Event::InboundFailure { peer, error, .. } => {
+                        hanzo_log(
+                            HanzoLogOption::Network,
+                            HanzoLogLevel::Debug,
+                            &format!("Cluster-card response to {} failed: {:?}", peer, error),
+                        );
+                    }
+                    request_response::Event::ResponseSent { .. } => {}
+                }
+            }
             SwarmEvent::Behaviour(HanzoNetworkBehaviourEvent::RequestResponse(req_resp_event)) => {
                 match req_resp_event {
                     request_response::Event::Message { peer, message, .. } => {
@@ -674,6 +874,21 @@ impl LibP2PManager {
                     &format!("✅ Connection established with {} at {:?}", peer_id, endpoint),
                 );
 
+                // Cluster mode: mark a known LAN peer as connected, then greet it with a
+                // card request (only for known cluster peers, so relays aren't probed).
+                let is_cluster_peer = {
+                    let mut cp = self.cluster_peers.write().await;
+                    if let Some(entry) = cp.get_mut(&peer_id) {
+                        entry.connected = true;
+                        true
+                    } else {
+                        false
+                    }
+                };
+                if is_cluster_peer {
+                    self.request_cluster_card(peer_id);
+                }
+
                 // Check if this is a direct connection to a relay server (not through a circuit)
                 let is_direct_to_relay = Self::is_external_address(&endpoint.get_remote_address())
                     && !Self::is_circuit_address(&endpoint.get_remote_address());
@@ -734,6 +949,14 @@ impl LibP2PManager {
                     HanzoLogLevel::Debug,
                     &format!("Disconnected from peer {}: {:?}", peer_id, cause),
                 );
+
+                // Cluster mode: mark a known LAN peer as disconnected
+                {
+                    let mut cp = self.cluster_peers.write().await;
+                    if let Some(entry) = cp.get_mut(&peer_id) {
+                        entry.connected = false;
+                    }
+                }
 
                 // Check if this was our relay connection and trigger reconnection
                 self.mark_relay_disconnected(peer_id);

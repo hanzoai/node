@@ -1,5 +1,6 @@
 use crate::node_commands::NodeCommand;
 
+use super::api_v2_handlers_cluster::cluster_routes;
 use super::api_v2_handlers_ext_agent_offers::ext_agent_offers_routes;
 use super::api_v2_handlers_general::general_routes;
 use super::api_v2_handlers_jobs::job_routes;
@@ -24,6 +25,7 @@ pub fn v2_routes(
     node_name: String,
 ) -> impl Filter<Extract = impl warp::Reply, Error = warp::Rejection> + Clone {
     let general_routes = general_routes(node_commands_sender.clone(), node_name.clone());
+    let cluster_routes = cluster_routes(node_commands_sender.clone());
     let vecfs_routes = vecfs_routes(node_commands_sender.clone(), node_name.clone());
     let job_routes = job_routes(node_commands_sender.clone(), node_name.clone());
     let ext_agent_offers = ext_agent_offers_routes(node_commands_sender.clone());
@@ -39,6 +41,7 @@ pub fn v2_routes(
 
     #[cfg(feature = "swagger-ui")]
     return general_routes
+        .or(cluster_routes)
         .or(vecfs_routes)
         .or(job_routes)
         .or(ext_agent_offers)
@@ -53,6 +56,7 @@ pub fn v2_routes(
 
     #[cfg(not(feature = "swagger-ui"))]
     return general_routes
+        .or(cluster_routes)
         .or(vecfs_routes)
         .or(job_routes)
         .or(ext_agent_offers)
