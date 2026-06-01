@@ -785,6 +785,575 @@ impl Node {
         Ok(())
     }
 
+    /// Returns the Hanzo cluster topology as seen by THIS node: its own identity plus
+    /// the LAN peers discovered over mDNS (and whether each is currently connected).
+    /// `peers` is empty when cluster mode is off or nothing has been discovered yet.
+    pub async fn v2_api_get_cluster_topology(
+        node_name: String,
+        identity_public_key: VerifyingKey,
+        cluster_peers: Option<crate::network::libp2p_manager::ClusterPeersHandle>,
+        res: Sender<Result<serde_json::Value, APIError>>,
+    ) -> Result<(), NodeError> {
+        use crate::network::libp2p_manager::verifying_key_to_peer_id;
+
+        let cluster_mode = std::env::var("HANZO_CLUSTER_MODE")
+            .map(|v| matches!(v.trim().to_lowercase().as_str(), "1" | "true" | "yes" | "on"))
+            .unwrap_or(false);
+
+        let peer_id = verifying_key_to_peer_id(identity_public_key)
+            .map(|p| p.to_string())
+            .unwrap_or_else(|_| "unknown".to_string());
+
+        let mut peers_json = Vec::new();
+        if let Some(cp) = cluster_peers.as_ref() {
+            let guard = cp.read().await;
+            for (pid, entry) in guard.iter() {
+                peers_json.push(serde_json::json!({
+                    "peer_id": pid.to_string(),
+                    "address": entry.address.to_string(),
+                    "connected": entry.connected,
+                    "card": entry.card,
+                }));
+            }
+        }
+
+        // Best-effort local engine card (capacity + loaded models). Never blocks the
+        // response: short timeout, and null if the engine isn't reachable.
+        let engine_url = std::env::var("HANZO_ENGINE_URL")
+            .unwrap_or_else(|_| "http://localhost:36900".to_string());
+        let engine = Self::cluster_fetch_engine_card(&engine_url).await;
+
+        let _ = res
+            .send(Ok(serde_json::json!({
+                "cluster_mode": cluster_mode,
+                "this_node": {
+                    "node_name": node_name,
+                    "peer_id": peer_id,
+                    "engine": engine,
+                },
+                "peer_count": peers_json.len(),
+                "peers": peers_json,
+            })))
+            .await;
+        Ok(())
+    }
+
+    /// Aggregate the cluster-wide model availability index: `model_id -> [serving nodes]`,
+    /// from this node's live engine card plus the cards exchanged with peers. Local entries
+    /// are marked `location:"local"`; peers carry their connection state.
+    async fn cluster_build_model_index(
+        node_name: &str,
+        local_peer_id: &str,
+        cluster_peers: &Option<crate::network::libp2p_manager::ClusterPeersHandle>,
+    ) -> serde_json::Value {
+        use std::collections::BTreeMap;
+        let mut index: BTreeMap<String, Vec<serde_json::Value>> = BTreeMap::new();
+
+        // This node's loaded models.
+        let engine_url =
+            std::env::var("HANZO_ENGINE_URL").unwrap_or_else(|_| "http://localhost:36900".to_string());
+        if let Some(engine) = Self::cluster_fetch_engine_card(&engine_url).await {
+            if let Some(models) = engine.get("models").and_then(|m| m.as_array()) {
+                for m in models {
+                    if let Some(id) = m.as_str() {
+                        index.entry(id.to_string()).or_default().push(serde_json::json!({
+                            "node_name": node_name,
+                            "peer_id": local_peer_id,
+                            "location": "local",
+                            "connected": true,
+                        }));
+                    }
+                }
+            }
+        }
+
+        // Peer models, learned via the cluster-card exchange.
+        if let Some(cp) = cluster_peers.as_ref() {
+            let guard = cp.read().await;
+            for (pid, entry) in guard.iter() {
+                let card = match &entry.card {
+                    Some(c) => c,
+                    None => continue,
+                };
+                let pname = card.get("node_name").and_then(|v| v.as_str()).unwrap_or("unknown");
+                let api_port = card.get("api_port").and_then(|p| p.as_u64());
+                let zap_port = card.get("zap_port").and_then(|p| p.as_u64());
+                let ip = Self::extract_ip4(&entry.address);
+                let api_base = ip
+                    .as_ref()
+                    .and_then(|ip| api_port.map(|port| format!("http://{}:{}", ip, port)));
+                if let Some(models) =
+                    card.get("engine").and_then(|e| e.get("models")).and_then(|m| m.as_array())
+                {
+                    for m in models {
+                        if let Some(id) = m.as_str() {
+                            index.entry(id.to_string()).or_default().push(serde_json::json!({
+                                "node_name": pname,
+                                "peer_id": pid.to_string(),
+                                "location": "peer",
+                                "connected": entry.connected,
+                                "api_base": api_base.clone(),
+                                "ip": ip.clone(),
+                                "zap_port": zap_port,
+                            }));
+                        }
+                    }
+                }
+            }
+        }
+
+        serde_json::to_value(index).unwrap_or(serde_json::Value::Null)
+    }
+
+    /// `GET /v1/node/cluster/models` — cluster-wide model availability index.
+    pub async fn v2_api_get_cluster_models(
+        node_name: String,
+        identity_public_key: VerifyingKey,
+        cluster_peers: Option<crate::network::libp2p_manager::ClusterPeersHandle>,
+        res: Sender<Result<serde_json::Value, APIError>>,
+    ) -> Result<(), NodeError> {
+        use crate::network::libp2p_manager::verifying_key_to_peer_id;
+
+        let cluster_mode = std::env::var("HANZO_CLUSTER_MODE")
+            .map(|v| matches!(v.trim().to_lowercase().as_str(), "1" | "true" | "yes" | "on"))
+            .unwrap_or(false);
+        let local_peer_id = verifying_key_to_peer_id(identity_public_key)
+            .map(|p| p.to_string())
+            .unwrap_or_else(|_| "unknown".to_string());
+
+        let models = Self::cluster_build_model_index(&node_name, &local_peer_id, &cluster_peers).await;
+        let model_count = models.as_object().map(|o| o.len()).unwrap_or(0);
+
+        let _ = res
+            .send(Ok(serde_json::json!({
+                "cluster_mode": cluster_mode,
+                "model_count": model_count,
+                "models": models,
+            })))
+            .await;
+        Ok(())
+    }
+
+    /// `GET /v1/node/cluster/route?model=X` — pick the node that should serve `model`.
+    /// Decision order: local engine → a connected peer → a known-but-offline peer →
+    /// none (placement required). The execution/proxy step is a separate layer.
+    pub async fn v2_api_route_cluster_model(
+        node_name: String,
+        identity_public_key: VerifyingKey,
+        cluster_peers: Option<crate::network::libp2p_manager::ClusterPeersHandle>,
+        model: String,
+        res: Sender<Result<serde_json::Value, APIError>>,
+    ) -> Result<(), NodeError> {
+        use crate::network::libp2p_manager::verifying_key_to_peer_id;
+
+        let local_peer_id = verifying_key_to_peer_id(identity_public_key)
+            .map(|p| p.to_string())
+            .unwrap_or_else(|_| "unknown".to_string());
+
+        let index = Self::cluster_build_model_index(&node_name, &local_peer_id, &cluster_peers).await;
+        let mut decision = Self::cluster_route_decision(&index, &model);
+        if let Some(obj) = decision.as_object_mut() {
+            obj.insert("model".to_string(), serde_json::json!(model));
+        }
+
+        let _ = res.send(Ok(decision)).await;
+        Ok(())
+    }
+
+    /// Whether cluster mode is enabled (opt-in via HANZO_CLUSTER_MODE). The engine-touching
+    /// cluster endpoints refuse to run when it's off, so a standalone node exposes no new
+    /// unauthenticated surface. Within cluster mode the LAN peers are a trust domain.
+    pub(crate) fn cluster_enabled() -> bool {
+        std::env::var("HANZO_CLUSTER_MODE")
+            .map(|v| matches!(v.trim().to_lowercase().as_str(), "1" | "true" | "yes" | "on"))
+            .unwrap_or(false)
+    }
+
+    /// Extract the first IPv4 from a peer multiaddr (/ip4/10.0.0.5/tcp/.. -> "10.0.0.5").
+    pub(crate) fn extract_ip4(addr: &libp2p::Multiaddr) -> Option<String> {
+        use libp2p::multiaddr::Protocol;
+        addr.iter().find_map(|p| match p {
+            Protocol::Ip4(ip) => Some(ip.to_string()),
+            _ => None,
+        })
+    }
+
+    /// Pick which node should serve `model` from the cluster model index. Order: local
+    /// engine → a connected peer → a known-but-offline peer → none (placement required).
+    /// Returns `{ decision, target, reason }` (callers add the "model" field for context).
+    fn cluster_route_decision(index: &serde_json::Value, model: &str) -> serde_json::Value {
+        let servers = index.get(model).and_then(|v| v.as_array()).cloned().unwrap_or_default();
+        let loc = |s: &serde_json::Value| s.get("location").and_then(|l| l.as_str()).map(String::from);
+        let is_connected =
+            |s: &serde_json::Value| s.get("connected").and_then(|c| c.as_bool()).unwrap_or(false);
+
+        // A peer is only forwardable if it advertises a ZAP endpoint (zap_port). Prefer a
+        // connected ZAP-capable peer; fall back to any connected peer (mixed-version cluster).
+        let has_zap = |s: &serde_json::Value| s.get("zap_port").and_then(|z| z.as_u64()).is_some();
+
+        let local = servers.iter().find(|s| loc(s).as_deref() == Some("local")).cloned();
+        let connected_peer = servers
+            .iter()
+            .find(|s| loc(s).as_deref() == Some("peer") && is_connected(s) && has_zap(s))
+            .or_else(|| servers.iter().find(|s| loc(s).as_deref() == Some("peer") && is_connected(s)))
+            .cloned();
+        let offline_peer = servers.iter().find(|s| loc(s).as_deref() == Some("peer")).cloned();
+
+        if let Some(t) = local {
+            serde_json::json!({ "decision": "local", "target": t, "reason": "served by the local engine" })
+        } else if let Some(t) = connected_peer {
+            serde_json::json!({ "decision": "peer", "target": t, "reason": "served by a connected peer" })
+        } else if let Some(t) = offline_peer {
+            serde_json::json!({ "decision": "peer_offline", "target": t, "reason": "served only by a known peer that is not currently connected" })
+        } else {
+            serde_json::json!({ "decision": "none", "target": serde_json::Value::Null, "reason": "no node in the cluster currently serves this model — placement required" })
+        }
+    }
+
+    /// POST an OpenAI-style chat payload to THIS node's local engine; return the raw body.
+    async fn cluster_engine_chat(payload: &serde_json::Value) -> Result<serde_json::Value, String> {
+        let engine_url =
+            std::env::var("HANZO_ENGINE_URL").unwrap_or_else(|_| "http://localhost:36900".to_string());
+        let client = reqwest::Client::builder()
+            .timeout(std::time::Duration::from_secs(120))
+            .build()
+            .map_err(|e| e.to_string())?;
+        // Engine builds differ: the hanzo-desktop engine serves /v1/engine/chat/completions;
+        // a stock mistralrs server serves /v1/chat/completions. Try the hanzo path, fall to OpenAI.
+        let mut last_err = String::new();
+        for path in ["/v1/engine/chat/completions", "/v1/chat/completions"] {
+            let resp = match client.post(format!("{}{}", engine_url, path)).json(payload).send().await {
+                Ok(r) => r,
+                Err(e) => {
+                    last_err = e.to_string();
+                    continue;
+                }
+            };
+            let status = resp.status();
+            if status.as_u16() == 404 {
+                last_err = format!("404 at {}", path);
+                continue;
+            }
+            let body: serde_json::Value = resp.json().await.map_err(|e| e.to_string())?;
+            if !status.is_success() {
+                return Err(format!("engine returned {}: {}", status, body));
+            }
+            return Ok(body);
+        }
+        Err(format!("engine chat failed: {}", last_err))
+    }
+
+    /// Call a PEER node over ZAP (binary protocol — NOT HTTP) at its advertised `zap_port`,
+    /// invoking a cluster method (e.g. "cluster.chat_local" / "cluster.search_local") with a
+    /// JSON payload, returning the peer's JSON reply. Reuses the node's ZAP client framing.
+    pub(crate) async fn cluster_zap_call(
+        ip: &str,
+        zap_port: u64,
+        method: &str,
+        payload: &serde_json::Value,
+    ) -> Result<serde_json::Value, String> {
+        let body = serde_json::to_vec(payload).map_err(|e| e.to_string())?;
+        let addr = format!("{}:{}", ip, zap_port);
+        let (status, resp, err) =
+            crate::zap_server::forward_via_zap(&addr, method, "", body).await?;
+        if status != 200 {
+            return Err(if err.is_empty() {
+                format!("peer ZAP returned status {}", status)
+            } else {
+                err
+            });
+        }
+        serde_json::from_slice(&resp).map_err(|e| format!("peer ZAP bad json: {}", e))
+    }
+
+    /// `POST /v1/node/cluster/chat` — route an OpenAI-style chat request to whichever node
+    /// serves `model` (local engine, or forward to a connected peer), then return the result.
+    pub async fn v2_api_cluster_chat(
+        node_name: String,
+        identity_public_key: VerifyingKey,
+        cluster_peers: Option<crate::network::libp2p_manager::ClusterPeersHandle>,
+        payload: serde_json::Value,
+        res: Sender<Result<serde_json::Value, APIError>>,
+    ) -> Result<(), NodeError> {
+        use crate::network::libp2p_manager::verifying_key_to_peer_id;
+
+        if !Self::cluster_enabled() {
+            let _ = res
+                .send(Ok(serde_json::json!({ "error": "cluster mode is disabled (set HANZO_CLUSTER_MODE=1)" })))
+                .await;
+            return Ok(());
+        }
+
+        let model = payload.get("model").and_then(|m| m.as_str()).unwrap_or("").to_string();
+        if model.is_empty() {
+            let _ = res
+                .send(Ok(serde_json::json!({ "error": "request body must include a 'model' field" })))
+                .await;
+            return Ok(());
+        }
+
+        let local_peer_id = verifying_key_to_peer_id(identity_public_key)
+            .map(|p| p.to_string())
+            .unwrap_or_else(|_| "unknown".to_string());
+        let index = Self::cluster_build_model_index(&node_name, &local_peer_id, &cluster_peers).await;
+        let decision = Self::cluster_route_decision(&index, &model);
+        let kind = decision.get("decision").and_then(|d| d.as_str()).unwrap_or("none");
+
+        let reply = match kind {
+            "local" => match Self::cluster_engine_chat(&payload).await {
+                Ok(body) => serde_json::json!({ "served_by": "local", "node_name": node_name, "response": body }),
+                Err(e) => serde_json::json!({ "error": e, "served_by": "local", "node_name": node_name }),
+            },
+            "peer" => {
+                let target = decision.get("target").cloned().unwrap_or(serde_json::Value::Null);
+                let ip = target.get("ip").and_then(|v| v.as_str());
+                let zap_port = target.get("zap_port").and_then(|v| v.as_u64());
+                match (ip, zap_port) {
+                    (Some(ip), Some(zp)) => {
+                        match Self::cluster_zap_call(ip, zp, "cluster.chat_local", &payload).await {
+                            Ok(body) => serde_json::json!({ "served_by": "peer", "transport": "zap", "peer": target, "response": body }),
+                            Err(e) => serde_json::json!({ "error": e, "served_by": "peer", "peer": target }),
+                        }
+                    }
+                    _ => serde_json::json!({ "error": "selected peer has no reachable ZAP endpoint", "peer": target }),
+                }
+            }
+            _ => serde_json::json!({ "error": "no node in the cluster serves this model — placement required", "decision": decision }),
+        };
+
+        let _ = res.send(Ok(reply)).await;
+        Ok(())
+    }
+
+    /// `POST /v1/node/cluster/chat_local` — serve a chat ONLY from this node's local engine
+    /// (no re-routing, so peer forwarding cannot loop). Returns the raw engine response.
+    pub async fn v2_api_cluster_chat_local(
+        payload: serde_json::Value,
+        res: Sender<Result<serde_json::Value, APIError>>,
+    ) -> Result<(), NodeError> {
+        if !Self::cluster_enabled() {
+            let _ = res
+                .send(Ok(serde_json::json!({ "error": "cluster mode is disabled (set HANZO_CLUSTER_MODE=1)" })))
+                .await;
+            return Ok(());
+        }
+        let reply = match Self::cluster_engine_chat(&payload).await {
+            Ok(body) => body,
+            Err(e) => serde_json::json!({ "error": e }),
+        };
+        let _ = res.send(Ok(reply)).await;
+        Ok(())
+    }
+
+    /// `POST /v1/node/cluster/v1/engine/chat/completions` — OpenAI-compatible passthrough that
+    /// routes the request's `model` across the cluster (local engine, or ZAP-forward to a peer)
+    /// and returns the RAW OpenAI response. This lets a peer-served model be registered as a
+    /// normal LLM provider (external_url = `http://<node>/v1/node/cluster`) and used in chat.
+    pub async fn v2_api_cluster_openai_chat(
+        node_name: String,
+        identity_public_key: VerifyingKey,
+        cluster_peers: Option<crate::network::libp2p_manager::ClusterPeersHandle>,
+        mut payload: serde_json::Value,
+        res: Sender<Result<serde_json::Value, APIError>>,
+    ) -> Result<(), NodeError> {
+        use crate::network::libp2p_manager::verifying_key_to_peer_id;
+
+        if !Self::cluster_enabled() {
+            let _ = res
+                .send(Ok(serde_json::json!({ "error": { "message": "cluster mode is disabled" } })))
+                .await;
+            return Ok(());
+        }
+        // Cross-node forwarding is request/response — force non-streaming.
+        if let Some(obj) = payload.as_object_mut() {
+            obj.insert("stream".to_string(), serde_json::json!(false));
+        }
+
+        let model = payload.get("model").and_then(|m| m.as_str()).unwrap_or("").to_string();
+        let local_peer_id = verifying_key_to_peer_id(identity_public_key)
+            .map(|p| p.to_string())
+            .unwrap_or_else(|_| "unknown".to_string());
+        let index = Self::cluster_build_model_index(&node_name, &local_peer_id, &cluster_peers).await;
+        let decision = Self::cluster_route_decision(&index, &model);
+
+        let result = match decision.get("decision").and_then(|d| d.as_str()).unwrap_or("none") {
+            "local" => Self::cluster_engine_chat(&payload).await,
+            "peer" => {
+                let target = decision.get("target").cloned().unwrap_or(serde_json::Value::Null);
+                let ip = target.get("ip").and_then(|v| v.as_str());
+                let zap_port = target.get("zap_port").and_then(|v| v.as_u64());
+                match (ip, zap_port) {
+                    (Some(ip), Some(zp)) => {
+                        Self::cluster_zap_call(ip, zp, "cluster.chat_local", &payload).await
+                    }
+                    _ => Err("selected peer has no reachable ZAP endpoint".to_string()),
+                }
+            }
+            _ => Err(format!("no node in the cluster serves model '{}'", model)),
+        };
+
+        let reply = match result {
+            Ok(body) => body,
+            Err(e) => serde_json::json!({ "error": { "message": e, "type": "cluster_routing_error" } }),
+        };
+        let _ = res.send(Ok(reply)).await;
+        Ok(())
+    }
+
+    /// `GET /v1/node/cluster/placement?model=X` — scheduler plan for where to LOAD a model
+    /// that isn't already being served. Loading itself is a deliberate, separate action
+    /// (kept manual to avoid contending for a busy GPU). Prefers the local engine and
+    /// lists connected peers as alternatives.
+    pub async fn v2_api_cluster_placement(
+        node_name: String,
+        identity_public_key: VerifyingKey,
+        cluster_peers: Option<crate::network::libp2p_manager::ClusterPeersHandle>,
+        model: String,
+        res: Sender<Result<serde_json::Value, APIError>>,
+    ) -> Result<(), NodeError> {
+        use crate::network::libp2p_manager::verifying_key_to_peer_id;
+        let local_peer_id = verifying_key_to_peer_id(identity_public_key)
+            .map(|p| p.to_string())
+            .unwrap_or_else(|_| "unknown".to_string());
+
+        let index = Self::cluster_build_model_index(&node_name, &local_peer_id, &cluster_peers).await;
+        let servers = index.get(&model).and_then(|v| v.as_array()).cloned().unwrap_or_default();
+        let connected: Vec<serde_json::Value> = servers
+            .iter()
+            .filter(|s| s.get("connected").and_then(|c| c.as_bool()).unwrap_or(false))
+            .cloned()
+            .collect();
+
+        // Connected peers that could instead host a new load.
+        let mut alternatives: Vec<serde_json::Value> = Vec::new();
+        if let Some(cp) = cluster_peers.as_ref() {
+            for (pid, entry) in cp.read().await.iter() {
+                if entry.connected {
+                    let pname = entry
+                        .card
+                        .as_ref()
+                        .and_then(|c| c.get("node_name"))
+                        .and_then(|v| v.as_str())
+                        .unwrap_or("unknown");
+                    alternatives
+                        .push(serde_json::json!({ "node_name": pname, "peer_id": pid.to_string(), "location": "peer" }));
+                }
+            }
+        }
+
+        let plan = if !connected.is_empty() {
+            serde_json::json!({
+                "model": model,
+                "plan": "already_available",
+                "served_by": connected,
+                "reason": "model is already served by a connected node — route, don't place",
+            })
+        } else {
+            serde_json::json!({
+                "model": model,
+                "plan": "load",
+                "target": { "node_name": node_name, "peer_id": local_peer_id, "location": "local" },
+                "alternatives": alternatives,
+                "reason": "no connected node serves this model — load it (default: local engine; alternatives are other connected nodes)",
+            })
+        };
+
+        let _ = res.send(Ok(plan)).await;
+        Ok(())
+    }
+
+    /// Build this node's cluster card ({node_name, engine}) for peer exchange — the same
+    /// engine source as the topology endpoint. The node refreshes this in the background.
+    pub(crate) async fn build_local_cluster_card(node_name: &str) -> serde_json::Value {
+        let engine_url = std::env::var("HANZO_ENGINE_URL")
+            .unwrap_or_else(|_| "http://localhost:36900".to_string());
+        let engine = Self::cluster_fetch_engine_card(&engine_url).await;
+        // LAN-reachable ports peers use to reach this node: api_port (HTTP, info/legacy) and
+        // zap_port (the ZAP binary protocol — how peers forward chat/search to us; no HTTP).
+        let api_port = std::env::var("NODE_API_PORT").ok().and_then(|p| p.parse::<u16>().ok());
+        let zap_port = std::env::var("NODE_ZAP_PORT")
+            .ok()
+            .and_then(|p| p.parse::<u16>().ok())
+            .or(Some(3692));
+        serde_json::json!({
+            "node_name": node_name,
+            "engine": engine,
+            "api_port": api_port,
+            "zap_port": zap_port,
+        })
+    }
+
+    /// Best-effort fetch of an engine's capacity + loaded-model list for the cluster
+    /// topology. Returns None on any error (engine down, timeout, bad response).
+    async fn cluster_fetch_engine_card(base: &str) -> Option<serde_json::Value> {
+        let client = reqwest::Client::builder()
+            .timeout(std::time::Duration::from_secs(2))
+            .build()
+            .ok()?;
+
+        // System info: engine builds differ — prefer the richer /system/info,
+        // fall back to /status (what the live zen engine exposes). null if neither.
+        let mut system: serde_json::Value = serde_json::Value::Null;
+        for path in ["/v1/engine/system/info", "/v1/engine/status"] {
+            if let Ok(resp) = client.get(format!("{}{}", base, path)).send().await {
+                if resp.status().is_success() {
+                    if let Ok(v) = resp.json::<serde_json::Value>().await {
+                        system = v;
+                        break;
+                    }
+                }
+            }
+        }
+
+        // Loaded models (best-effort; shape is {data:[{id,..}]} or {models:[..]}).
+        // Model list: hanzo engine = /v1/engine/models; stock mistralrs = /v1/models. Try both.
+        let mut model_ids: Vec<String> = Vec::new();
+        for path in ["/v1/engine/models", "/v1/models"] {
+            if !model_ids.is_empty() {
+                break;
+            }
+            if let Ok(m_resp) = client.get(format!("{}{}", base, path)).send().await {
+                if m_resp.status().is_success() {
+                    if let Ok(v) = m_resp.json::<serde_json::Value>().await {
+                        let arr = v
+                            .get("data")
+                            .or_else(|| v.get("models"))
+                            .and_then(|x| x.as_array())
+                            .cloned()
+                            .unwrap_or_default();
+                        for m in arr {
+                            if let Some(id) =
+                                m.get("id").or_else(|| m.get("model_id")).and_then(|i| i.as_str())
+                            {
+                                model_ids.push(id.to_string());
+                            } else if let Some(s) = m.as_str() {
+                                model_ids.push(s.to_string());
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        // Drop the generic "default" alias when a specific id is also present. Stock mistralrs
+        // reports BOTH "default" and the concrete model id; "default" collides across engines
+        // (every node would claim to serve "default"), the concrete id does not.
+        if model_ids.len() > 1 {
+            model_ids.retain(|id| id != "default");
+        }
+
+        // Engine entirely unreachable — no system info and no model list.
+        if system.is_null() && model_ids.is_empty() {
+            return None;
+        }
+
+        Some(serde_json::json!({
+            "url": base,
+            "system": system,
+            "models": model_ids,
+        }))
+    }
+
     pub async fn v2_api_health_check(
         db: Arc<SqliteManager>,
         public_https_certificate: Option<String>,

@@ -135,6 +135,8 @@ pub struct Node {
     pub libp2p_event_sender: Option<tokio::sync::mpsc::UnboundedSender<NetworkEvent>>,
     // LibP2P task handle
     pub libp2p_task: Option<tokio::task::JoinHandle<()>>,
+    // Cluster mode: shared snapshot of mDNS-discovered peers (read by the cluster API)
+    pub cluster_peers: Option<crate::network::libp2p_manager::ClusterPeersHandle>,
 }
 
 impl Node {
@@ -378,6 +380,7 @@ impl Node {
             libp2p_manager: None,
             libp2p_event_sender: None,
             libp2p_task: None,
+            cluster_peers: None,
         }))
     }
 
@@ -606,6 +609,27 @@ impl Node {
             {
                 Ok(libp2p_manager) => {
                     let event_sender = libp2p_manager.event_sender();
+                    let cluster_peers_handle = libp2p_manager.cluster_peers_handle();
+                    let local_card_handle = libp2p_manager.local_card_handle();
+
+                    // Cluster mode: keep this node's served card (node_name + engine) fresh
+                    // so peers requesting it over the cluster-card protocol get live data.
+                    let cluster_mode = std::env::var("HANZO_CLUSTER_MODE")
+                        .map(|v| matches!(v.trim().to_lowercase().as_str(), "1" | "true" | "yes" | "on"))
+                        .unwrap_or(false);
+                    if cluster_mode {
+                        let card_handle = local_card_handle.clone();
+                        let card_node_name = self.node_name.to_string();
+                        tokio::spawn(async move {
+                            let mut tick = tokio::time::interval(std::time::Duration::from_secs(15));
+                            loop {
+                                tick.tick().await;
+                                let card = Node::build_local_cluster_card(&card_node_name).await;
+                                *card_handle.write().await = card;
+                            }
+                        });
+                    }
+
                     let libp2p_manager_arc = Arc::new(Mutex::new(libp2p_manager));
                     // Spawn the libp2p task
                     let manager_clone = libp2p_manager_arc.clone();
@@ -622,6 +646,7 @@ impl Node {
 
                     self.libp2p_manager = Some(libp2p_manager_arc);
                     self.libp2p_event_sender = Some(event_sender.clone());
+                    self.cluster_peers = Some(cluster_peers_handle);
                     self.libp2p_task = Some(libp2p_task);
                     libp2p_event_sender_for_update = Some(event_sender);
 

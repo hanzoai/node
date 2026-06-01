@@ -1214,6 +1214,139 @@ impl Node {
                     .await;
                 });
             }
+            NodeCommand::V2ApiGetClusterTopology { res } => {
+                let node_name_clone = self.node_name.to_string();
+                let identity_public_key = self.identity_public_key;
+                let cluster_peers_clone = self.cluster_peers.clone();
+                tokio::spawn(async move {
+                    let _ = Node::v2_api_get_cluster_topology(
+                        node_name_clone,
+                        identity_public_key,
+                        cluster_peers_clone,
+                        res,
+                    )
+                    .await;
+                });
+            }
+            NodeCommand::V2ApiGetClusterModels { res } => {
+                let node_name_clone = self.node_name.to_string();
+                let identity_public_key = self.identity_public_key;
+                let cluster_peers_clone = self.cluster_peers.clone();
+                tokio::spawn(async move {
+                    let _ = Node::v2_api_get_cluster_models(
+                        node_name_clone,
+                        identity_public_key,
+                        cluster_peers_clone,
+                        res,
+                    )
+                    .await;
+                });
+            }
+            NodeCommand::V2ApiRouteClusterModel { model, res } => {
+                let node_name_clone = self.node_name.to_string();
+                let identity_public_key = self.identity_public_key;
+                let cluster_peers_clone = self.cluster_peers.clone();
+                tokio::spawn(async move {
+                    let _ = Node::v2_api_route_cluster_model(
+                        node_name_clone,
+                        identity_public_key,
+                        cluster_peers_clone,
+                        model,
+                        res,
+                    )
+                    .await;
+                });
+            }
+            NodeCommand::V2ApiClusterChat { payload, res } => {
+                let node_name_clone = self.node_name.to_string();
+                let identity_public_key = self.identity_public_key;
+                let cluster_peers_clone = self.cluster_peers.clone();
+                tokio::spawn(async move {
+                    let _ = Node::v2_api_cluster_chat(
+                        node_name_clone,
+                        identity_public_key,
+                        cluster_peers_clone,
+                        payload,
+                        res,
+                    )
+                    .await;
+                });
+            }
+            NodeCommand::V2ApiClusterChatLocal { payload, res } => {
+                tokio::spawn(async move {
+                    let _ = Node::v2_api_cluster_chat_local(payload, res).await;
+                });
+            }
+            NodeCommand::V2ApiClusterPlacement { model, res } => {
+                let node_name_clone = self.node_name.to_string();
+                let identity_public_key = self.identity_public_key;
+                let cluster_peers_clone = self.cluster_peers.clone();
+                tokio::spawn(async move {
+                    let _ = Node::v2_api_cluster_placement(
+                        node_name_clone,
+                        identity_public_key,
+                        cluster_peers_clone,
+                        model,
+                        res,
+                    )
+                    .await;
+                });
+            }
+            NodeCommand::V2ApiClusterSearchLocal { payload, res } => {
+                let db_clone = Arc::clone(&self.db);
+                let embedding_generator_ref = Arc::clone(&self.embedding_generator);
+                let node_name_clone = self.node_name.to_string();
+                tokio::spawn(async move {
+                    let embedding_generator = {
+                        let generator_guard = embedding_generator_ref.lock().await;
+                        generator_guard.clone()
+                    };
+                    let _ = Node::v2_api_cluster_search_local(
+                        db_clone,
+                        Arc::new(embedding_generator),
+                        node_name_clone,
+                        payload,
+                        res,
+                    )
+                    .await;
+                });
+            }
+            NodeCommand::V2ApiClusterOpenaiChat { payload, res } => {
+                let node_name_clone = self.node_name.to_string();
+                let identity_public_key = self.identity_public_key;
+                let cluster_peers_clone = self.cluster_peers.clone();
+                tokio::spawn(async move {
+                    let _ = Node::v2_api_cluster_openai_chat(
+                        node_name_clone,
+                        identity_public_key,
+                        cluster_peers_clone,
+                        payload,
+                        res,
+                    )
+                    .await;
+                });
+            }
+            NodeCommand::V2ApiClusterSearch { payload, res } => {
+                let db_clone = Arc::clone(&self.db);
+                let embedding_generator_ref = Arc::clone(&self.embedding_generator);
+                let node_name_clone = self.node_name.to_string();
+                let cluster_peers_clone = self.cluster_peers.clone();
+                tokio::spawn(async move {
+                    let embedding_generator = {
+                        let generator_guard = embedding_generator_ref.lock().await;
+                        generator_guard.clone()
+                    };
+                    let _ = Node::v2_api_cluster_search(
+                        node_name_clone,
+                        cluster_peers_clone,
+                        db_clone,
+                        Arc::new(embedding_generator),
+                        payload,
+                        res,
+                    )
+                    .await;
+                });
+            }
             NodeCommand::V2ApiTriggerEmbeddingMigration { bearer, payload, res } => {
                 let db_clone = Arc::clone(&self.db);
                 let embedding_generator_clone = Arc::clone(&self.embedding_generator);
