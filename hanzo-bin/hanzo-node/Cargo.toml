@@ -11,7 +11,16 @@ hanzo-tools-runner = { workspace = true, features = ["built-in-tools"] }
 
 # Features
 [features]
-default = []
+# Federation runtime is on by default: a stock `cargo build -p hanzo-node`
+# produces a hanzod that links `hanzo_federation::{Coordinator, Worker}`
+# and can act as a coordinator or worker out of the box. Build with
+# `--no-default-features` to drop it (e.g. for the most minimal image).
+# The zen5 adapter is always linked (it's behind the workspace
+# `hanzo-engine` dep with `default-features = false`); pick a backend with
+# `--features zen5-ffi` (vendored C runtime) or `--features zen5-native`
+# (candle-rs port). Without either backend the adapter compiles and
+# registers, but `Zen5InferenceAdapter::open` errors at load time.
+default = ["federation-runtime"]
 console = ["console-subscriber"]
 # Enable additional debug output when this feature is selected
 debug = []
@@ -19,6 +28,14 @@ debug = []
 ngrok = ["dep:ngrok"]
 # Enable swagger-ui when this feature is selected
 swagger-ui = ["hanzo-http-api/swagger-ui"]
+# Link the in-tree hanzo-federation crate. On by default — opt-out, not
+# opt-in. The crate is small; turning it off only saves linking time.
+federation-runtime = ["dep:hanzo-federation"]
+# Zen5 backend selection. Pick one (or both — the adapter prefers FFI
+# when present). FFI requires a working C toolchain at build time;
+# native is pure Rust.
+zen5-ffi = ["hanzo-engine/zen5-ffi"]
+zen5-native = ["hanzo-engine/zen5-native"]
 # static-pdf-parser = ["hanzo-vector_resources/static-pdf-parser"]
 
 [[bin]]
@@ -109,6 +126,10 @@ url = "2.5.0"
 serde_yaml = { workspace = true }
 thiserror = { workspace = true }
 ai-model-catalog = "0.1.0"
+libc = "0.2"
+# Federation manager — opt-in. Linked only when `federation-runtime`
+# feature is on. Until then we still load `[federation]` config and log.
+hanzo-federation = { workspace = true, optional = true }
 
 [dev-dependencies]
 mockito = "1.0.2"
@@ -119,7 +140,6 @@ utoipa = { workspace = true, features = ["yaml"] }
 hanzo-test-framework = {path = "../../hanzo-test-framework", version = "0.1.1"}
 hanzo-test-macro = {path = "../../hanzo-test-macro", version = "0.1.1"}
 criterion = { workspace = true }
-libc = "0.2"
 
 # Per-connection memory profile per SCALE_STANDARD.md §7. Run:
 #   cargo bench --bench conn_memory -- --conn-count 10000
