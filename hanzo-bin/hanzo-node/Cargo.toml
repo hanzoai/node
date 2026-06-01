@@ -60,6 +60,7 @@ reqwest = { workspace = true, features = [
     "tokio-native-tls",
     "multipart",
     "stream",
+    "gzip",
 ] }
 keyphrases = { workspace = true }
 hanzo-messages = { workspace = true }

@@ -507,6 +507,40 @@ pub enum NodeCommand {
     V2ApiHealthCheck {
         res: Sender<Result<serde_json::Value, APIError>>,
     },
+    V2ApiGetClusterTopology {
+        res: Sender<Result<serde_json::Value, APIError>>,
+    },
+    V2ApiGetClusterModels {
+        res: Sender<Result<serde_json::Value, APIError>>,
+    },
+    V2ApiRouteClusterModel {
+        model: String,
+        res: Sender<Result<serde_json::Value, APIError>>,
+    },
+    V2ApiClusterChat {
+        payload: serde_json::Value,
+        res: Sender<Result<serde_json::Value, APIError>>,
+    },
+    V2ApiClusterChatLocal {
+        payload: serde_json::Value,
+        res: Sender<Result<serde_json::Value, APIError>>,
+    },
+    V2ApiClusterPlacement {
+        model: String,
+        res: Sender<Result<serde_json::Value, APIError>>,
+    },
+    V2ApiClusterSearch {
+        payload: serde_json::Value,
+        res: Sender<Result<serde_json::Value, APIError>>,
+    },
+    V2ApiClusterSearchLocal {
+        payload: serde_json::Value,
+        res: Sender<Result<serde_json::Value, APIError>>,
+    },
+    V2ApiClusterOpenaiChat {
+        payload: serde_json::Value,
+        res: Sender<Result<serde_json::Value, APIError>>,
+    },
     V2ApiTriggerEmbeddingMigration {
         bearer: String,
         payload: EmbeddingMigrationRequest,
