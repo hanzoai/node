@@ -114,3 +114,43 @@ stream_timeout = 300
 swagger_ui_enabled = true
 debug_mode = false
 mock_providers_enabled = false
+
+[federation]
+# Native federated-training lab. Opt-in — set enabled = true to join.
+# Runtime lives at ~/work/hanzo/engine/hanzo-federation/. Linked into
+# hanzod by default (the `federation-runtime` cargo feature is on).
+enabled = false
+# Path to lab.yaml. Supports ${VAR} expansion.
+lab = "/etc/hanzo/lab.yaml"
+# Role election: "auto" picks coordinator if this host has the highest
+# (nic_gbps * tflops_hint) score in the lab, else worker.
+role = "auto"
+# Required only when role = "worker" AND no lab is reachable.
+# Otherwise the URL is synthesised from the elected coordinator's host.
+coordinator_url = ""
+# Bind address for coordinator HTTP (serves /v1/federation/*).
+bind = "0.0.0.0:8443"
+# Push deltas every N local steps.
+sync_interval_steps = 8
+# Aggregation: "mean" | "median" | "byzantine_robust".
+aggregation = "byzantine_robust"
+
+[zen5]
+# Native Zen5 inference family (zen-5-flash, zen-5-pro, zen-5-mini,
+# zen-5-coder). When enabled, hanzod loads each `<variant>.gguf` from
+# `weights_dir` through the hanzo-zen5 backend (mistral.rs / hanzo-engine
+# delegate) and registers a Zen5Registry as the process-wide inference
+# engine. EVM precompiles 0x0201 then dispatch to whichever model the
+# caller pins by `model_id = sha256("<variant>:<absolute path>")`.
+#
+# Coexists with MistralEngine on a first-writer-wins basis. When
+# enabled, this runs first; MistralEngine becomes a no-op.
+enabled = false
+# Directory containing `zen-5-*.gguf` weights files.
+weights_dir = "/var/lib/hanzo/zen5"
+# Subset of variants to load. Default loads all four.
+models = ["zen-5-flash", "zen-5-pro", "zen-5-mini", "zen-5-coder"]
+# Backend selection: "auto" (Metal on macOS, CUDA on Linux, CPU
+# elsewhere), "metal", "cuda", or "cpu". Build-time gated by the
+# `zen5-ffi` / `zen5-native` cargo features on hanzo-engine.
+backend = "auto"

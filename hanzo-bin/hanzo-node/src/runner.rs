@@ -1,5 +1,6 @@
 use super::network::Node;
 use super::utils::environment::NodeEnvironment;
+use crate::managers::federation::{FederationConfig, FederationManager};
 use crate::utils::args::parse_args;
 use crate::utils::cli::cli_handle_create_message;
 use crate::utils::environment::{fetch_llm_provider_env, fetch_node_environment};
@@ -8,6 +9,8 @@ use crate::zap_server::start_zap_server;
 use async_channel::{bounded, Receiver, Sender};
 use ed25519_dalek::VerifyingKey;
 use hanzo_embed::embedding_generator::RemoteEmbeddingGenerator;
+use hanzo_engine::{AutoDeviceMapParams, Hanzo, ModelDType, ModelSelected};
+use hanzo_server_core::hanzo_for_server_builder::HanzoForServerBuilder;
 use hanzo_http_api::node_api_router;
 use hanzo_http_api::node_commands::NodeCommand;
 use hanzo_messages::hanzo_utils::encryption::{
@@ -23,7 +26,7 @@ use std::error::Error as StdError;
 use std::fmt;
 use std::net::TcpListener;
 use std::path::Path;
-use std::sync::{Arc, Weak};
+use std::sync::{Arc, OnceLock, Weak};
 use std::{env, fs};
 
 use tokio::sync::Mutex;
@@ -60,64 +63,334 @@ fn port_is_available(port: u16) -> bool {
     }
 }
 
-/// Load + register the canonical inference/embedding engine used by EVM
-/// precompiles `0x0201` (AI inference) and `0x0202` (AI embedding).
+/// Process-wide handle to the inference/embedding engine, read by the EVM
+/// precompile handler for `0x0201` (AI inference) and `0x0202` (AI embedding).
 ///
-/// Configuration (preserved across the engine upgrade for forward-compat):
-/// * `HANZO_MODEL_PATH` — path to a local GGUF or safetensors directory.
-///   Preferred when set: avoids touching the network.
-/// * `HANZO_MODEL_REPO` — Hugging Face repo (e.g. `Qwen/Qwen3-4B`). Used
-///   when `HANZO_MODEL_PATH` is unset.
-///
-/// If neither variable is set, the precompiles revert at call time. This is
-/// the documented "fail open" contract: a node without a model is still a
-/// valid node — it just can't serve those two precompiles.
-///
-/// ============================ FLAG: HUMAN REVIEW ============================
-/// BREAKING ENGINE API CHANGE (convergence 2026-06, engine 0.6.0 → 1.0.2).
-///
-/// The 0.6.0 integration registered a global `hanzo_engine::MistralEngine`
-/// via `hanzo_engine::register_inference_engine` / `register_embedding_engine`
-/// (a trait registry added in engine commit a12549984). That entire surface —
-/// the `MistralEngine` type AND both `register_*` free functions — was REMOVED
-/// in engine 1.0.2. The 1.0.2 public API is builder-based:
-/// `hanzo_engine::{Hanzo, HanzoBuilder, EngineConfig, ModelSelected, Pipeline,
-/// Request, Response, ...}` and exposes NO global inference/embedding registry.
-///
-/// Re-wiring the precompiles to the 1.0.2 API (build a `Hanzo` via
-/// `HanzoBuilder` from MODEL_PATH/MODEL_REPO, then route `0x0201`/`0x0202`
-/// through it) is a non-trivial port that also depends on how/where the
-/// precompile handler now obtains its engine handle. It is intentionally NOT
-/// guessed here. Until it is implemented, this fn is a compile-safe NO-OP that
-/// honors the existing "fail open" contract (precompiles revert), so the rest
-/// of the node still builds and runs against engine 1.0.2.
-///
-/// TODO(convergence): port to `HanzoBuilder` and restore real inference/embed.
-/// ===========================================================================
-async fn install_engine() {
-    let configured = match (env::var("HANZO_MODEL_PATH"), env::var("HANZO_MODEL_REPO")) {
-        (Ok(path), _) if !path.is_empty() => Some(format!("path={path}")),
-        (_, Ok(repo)) if !repo.is_empty() => Some(format!("repo={repo}")),
-        _ => None,
-    };
+/// This replaces the engine 0.6.0 process-wide registry (the `register_*` free
+/// functions + global slot) that 1.0.2 removed. 1.0.2's public API is a pure
+/// builder that hands back an owned `Arc<Hanzo>`; there is no global slot in the
+/// engine anymore, so the node keeps its own. First writer wins: whichever of
+/// `install_zen5_engines` (native GGUF fast-path, runs first) or
+/// `install_engine` (HF-repo / safetensors fallback, runs second) populates the
+/// slot first owns it — the other becomes a logged no-op, matching the old
+/// first-writer-wins semantics exactly.
+static ENGINE: OnceLock<Arc<Hanzo>> = OnceLock::new();
 
-    match configured {
-        Some(source) => hanzo_log(
-            HanzoLogOption::Node,
-            HanzoLogLevel::Error,
-            &format!(
-                "hanzo_engine: model is configured ({source}) but the inference/embedding \
-                 wiring has NOT yet been ported from the removed 0.6.0 registry to the \
-                 engine 1.0.2 HanzoBuilder API. AI precompiles (0x0201, 0x0202) will revert. \
-                 See runner::install_engine FLAG."
-            ),
-        ),
-        None => hanzo_log(
+/// Borrow the installed engine, if any. The EVM precompile handler for
+/// `0x0201`/`0x0202` calls this; `None` means "no model loaded" and the
+/// precompile reverts ("fail open"). Lives in `hanzo_node::runner`.
+pub fn engine_handle() -> Option<Arc<Hanzo>> {
+    ENGINE.get().cloned()
+}
+
+/// Install `hanzo` into [`ENGINE`] iff the slot is still empty. Returns `true`
+/// if this call won the slot. `from` is a short human label for logs.
+fn try_install_engine(hanzo: Arc<Hanzo>, from: &str) -> bool {
+    if ENGINE.set(hanzo).is_ok() {
+        hanzo_log(
             HanzoLogOption::Node,
             HanzoLogLevel::Info,
-            "hanzo_engine: HANZO_MODEL_PATH and HANZO_MODEL_REPO unset; \
-             AI precompiles (0x0201, 0x0202) will revert until an engine is registered",
+            &format!("hanzo_engine: installed process engine via {from} (serves 0x0201 / 0x0202)"),
+        );
+        true
+    } else {
+        hanzo_log(
+            HanzoLogOption::Node,
+            HanzoLogLevel::Info,
+            &format!("hanzo_engine: {from} skipped — engine already installed (first-writer-wins)"),
+        );
+        false
+    }
+}
+
+/// Build an owned `Arc<Hanzo>` from a `ModelSelected` using the 1.0.2
+/// `HanzoForServerBuilder` (a thin wrapper over `HanzoBuilder` + `Loader` that
+/// owns the engine's private device/cache/scheduler wiring). `model_id` pins the
+/// API id so EVM precompiles can address a specific model. Auto-detects the
+/// device (GPU when a backend feature is on, else CPU).
+async fn build_hanzo(model: ModelSelected, model_id: &str) -> anyhow::Result<Arc<Hanzo>> {
+    HanzoForServerBuilder::new()
+        .with_model(model)
+        .with_model_id_override(model_id)
+        .build()
+        .await
+}
+
+/// Load + install the canonical inference/embedding engine used by EVM
+/// precompiles `0x0201` (AI inference) and `0x0202` (AI embedding).
+///
+/// Configuration:
+/// * `HANZO_MODEL_PATH` — path to a local model directory (safetensors).
+///   Preferred when set: avoids touching the network.
+/// * `HANZO_MODEL_REPO` — Hugging Face repo (e.g. `Qwen/Qwen3-4B`). Used when
+///   `HANZO_MODEL_PATH` is unset; downloaded + cached by the loader.
+///
+/// Both map to `ModelSelected::Plain { model_id, .. }` — the 1.0.2 loader treats
+/// `model_id` as a local path or HF repo transparently, which is the same dual
+/// behavior the removed `MistralEngine::{from_model_path, from_hf_repo}` had.
+/// (A local GGUF *file* needs the `[zen5]` path instead; this entry point is the
+/// safetensors / HF-repo fallback.)
+///
+/// Runs AFTER `install_zen5_engines` and only claims [`ENGINE`] if Zen5 did not
+/// (first-writer-wins) — the MistralEngine-as-fallback intent from main. If
+/// neither var is set, or the load fails, this logs and returns: the precompiles
+/// then revert at call time ("fail open"). A node without a model is still a
+/// valid node — it just can't serve those two precompiles.
+async fn install_engine() {
+    if ENGINE.get().is_some() {
+        hanzo_log(
+            HanzoLogOption::Node,
+            HanzoLogLevel::Debug,
+            "hanzo_engine: install_engine skipped — Zen5 already installed the engine",
+        );
+        return;
+    }
+
+    let (model_id, source) = match (env::var("HANZO_MODEL_PATH"), env::var("HANZO_MODEL_REPO")) {
+        (Ok(path), _) if !path.is_empty() => (path.clone(), format!("path={path}")),
+        (_, Ok(repo)) if !repo.is_empty() => (repo.clone(), format!("repo={repo}")),
+        _ => {
+            hanzo_log(
+                HanzoLogOption::Node,
+                HanzoLogLevel::Info,
+                "hanzo_engine: HANZO_MODEL_PATH and HANZO_MODEL_REPO unset; \
+                 AI precompiles (0x0201, 0x0202) will revert until an engine is installed",
+            );
+            return;
+        }
+    };
+
+    hanzo_log(
+        HanzoLogOption::Node,
+        HanzoLogLevel::Info,
+        &format!("hanzo_engine: loading model from {source}"),
+    );
+
+    match build_hanzo(plain_model_selected(&model_id), &model_id).await {
+        Ok(hanzo) => {
+            try_install_engine(hanzo, &source);
+        }
+        Err(e) => hanzo_log(
+            HanzoLogOption::Node,
+            HanzoLogLevel::Error,
+            &format!("hanzo_engine: model load failed ({source}): {e}; AI precompiles will revert"),
         ),
+    }
+}
+
+/// `ModelSelected::Plain` with engine defaults, `model_id` doubling as the
+/// local-path-or-HF-repo source the loader resolves.
+fn plain_model_selected(model_id: &str) -> ModelSelected {
+    ModelSelected::Plain {
+        model_id: model_id.to_string(),
+        tokenizer_json: None,
+        arch: None,
+        dtype: ModelDType::Auto,
+        topology: None,
+        organization: None,
+        write_uqff: None,
+        from_uqff: None,
+        imatrix: None,
+        calibration_file: None,
+        max_seq_len: AutoDeviceMapParams::DEFAULT_MAX_SEQ_LEN,
+        max_batch_size: AutoDeviceMapParams::DEFAULT_MAX_BATCH_SIZE,
+        hf_cache_path: None,
+        matformer_config_path: None,
+        matformer_slice_name: None,
+    }
+}
+
+/// The Zen5 model ladder. Was `hanzo_engine::DEFAULT_VARIANTS` in the 0.6.0
+/// integration; engine 1.0.2 dropped the whole zen5 surface, so the node owns
+/// the canonical list now. Each `<variant>` resolves to `<variant>.gguf` under
+/// the `[zen5]` `weights_dir`.
+const ZEN5_DEFAULT_VARIANTS: &[&str] = &["zen-5-flash", "zen-5-pro", "zen-5-mini", "zen-5-coder"];
+
+/// `[zen5]` block in `hanzo.toml`. Opt-in. When `enabled = true` and the
+/// `weights_dir` contains one or more `<variant>.gguf` files, hanzod builds the
+/// first loadable variant into an `Arc<Hanzo>` (via the 1.0.2 GGUF loader) and
+/// installs it as the process engine ([`ENGINE`]). Each variant's API
+/// `model_id` is `sha256("<variant>:<abs path to <variant>.gguf>")` — stable
+/// across restarts, so EVM precompiles can pin a specific model.
+///
+/// Coexists with `install_engine` (HF-repo / safetensors fallback) on a
+/// first-writer-wins basis: Zen5 runs first when enabled, so it claims [`ENGINE`]
+/// and `install_engine` becomes a no-op. The layering is intentional — Zen5 is
+/// the native GGUF fast-path; `install_engine` is the catch-all for HF repos.
+///
+/// `backend` is retained from main's schema for forward-compat; under 1.0.2 the
+/// device/backend is auto-selected by the loader (and by the GPU cargo features
+/// on hanzo-engine), so the field is currently advisory only.
+#[derive(Debug, Clone, serde::Deserialize)]
+pub struct Zen5Config {
+    #[serde(default)]
+    pub enabled: bool,
+    #[serde(default = "default_zen5_weights_dir")]
+    pub weights_dir: String,
+    #[serde(default = "default_zen5_models")]
+    pub models: Vec<String>,
+    #[serde(default = "default_zen5_backend")]
+    pub backend: String,
+}
+
+fn default_zen5_weights_dir() -> String {
+    "/var/lib/hanzo/zen5".to_string()
+}
+
+fn default_zen5_models() -> Vec<String> {
+    ZEN5_DEFAULT_VARIANTS.iter().map(|s| (*s).to_string()).collect()
+}
+
+fn default_zen5_backend() -> String {
+    "auto".to_string()
+}
+
+impl Default for Zen5Config {
+    fn default() -> Self {
+        Self {
+            enabled: false,
+            weights_dir: default_zen5_weights_dir(),
+            models: default_zen5_models(),
+            backend: default_zen5_backend(),
+        }
+    }
+}
+
+impl Zen5Config {
+    /// Load from the `[zen5]` table of `hanzo.toml`. Returns a disabled
+    /// default if the file or section is absent.
+    pub fn load_from(path: &Path) -> Self {
+        let raw = match std::fs::read_to_string(path) {
+            Ok(s) => s,
+            Err(_) => return Self::default(),
+        };
+        let value: toml::Value = match toml::from_str(&raw) {
+            Ok(v) => v,
+            Err(_) => return Self::default(),
+        };
+        let Some(table) = value.get("zen5") else {
+            return Self::default();
+        };
+        match table.clone().try_into::<Zen5Config>() {
+            Ok(c) => c,
+            Err(e) => {
+                hanzo_log(
+                    HanzoLogOption::Node,
+                    HanzoLogLevel::Error,
+                    &format!("[zen5] parse error in {}: {e}", path.display()),
+                );
+                Self::default()
+            }
+        }
+    }
+}
+
+/// Stable, restart-independent model id for a Zen5 variant: `sha256` over
+/// `"<variant>:<absolute path to the .gguf>"`. Matches the scheme main pinned
+/// so an EVM precompile can address one specific local model.
+fn zen5_model_id(variant: &str, gguf_path: &Path) -> String {
+    use sha2::{Digest, Sha256};
+    let abs = gguf_path
+        .canonicalize()
+        .unwrap_or_else(|_| gguf_path.to_path_buf());
+    let mut hasher = Sha256::new();
+    hasher.update(variant.as_bytes());
+    hasher.update(b":");
+    hasher.update(abs.to_string_lossy().as_bytes());
+    hex::encode(hasher.finalize())
+}
+
+/// `ModelSelected::GGUF` for a single Zen5 variant file. `quantized_model_id` is
+/// the local `weights_dir` (the loader reads the file from there), and
+/// `quantized_filename` is `<variant>.gguf`. The tokenizer is taken from the
+/// same directory.
+fn zen5_model_selected(weights_dir: &Path, gguf_filename: &str) -> ModelSelected {
+    ModelSelected::GGUF {
+        tok_model_id: Some(weights_dir.to_string_lossy().to_string()),
+        quantized_model_id: weights_dir.to_string_lossy().to_string(),
+        quantized_filename: gguf_filename.to_string(),
+        dtype: ModelDType::Auto,
+        topology: None,
+        max_seq_len: AutoDeviceMapParams::DEFAULT_MAX_SEQ_LEN,
+        max_batch_size: AutoDeviceMapParams::DEFAULT_MAX_BATCH_SIZE,
+    }
+}
+
+/// Build the Zen5 family from `hanzo.toml` if `[zen5]` is enabled, and install
+/// the first variant that loads as the process [`ENGINE`]. No-op when disabled.
+/// See [`Zen5Config`] for layering rules (first-writer-wins vs `install_engine`).
+///
+/// Engine 1.0.2 has no multi-model process registry, so this loads variants in
+/// `cfg.models` order and installs the first one that builds. The chosen
+/// variant's `sha256` model id is logged so a precompile / operator can pin it.
+/// (The remaining variants are noted but not held; multi-model hosting can be
+/// layered on later via `Hanzo`'s per-model senders if needed.)
+async fn install_zen5_engines() {
+    let config_path = env::var("HANZO_CONFIG_PATH").unwrap_or_else(|_| "hanzo.toml".to_string());
+    let cfg = Zen5Config::load_from(Path::new(&config_path));
+    if !cfg.enabled {
+        hanzo_log(
+            HanzoLogOption::Node,
+            HanzoLogLevel::Debug,
+            "[zen5] disabled (no [zen5] block or enabled=false)",
+        );
+        return;
+    }
+    let weights_dir = Path::new(&cfg.weights_dir);
+    if !weights_dir.is_dir() {
+        hanzo_log(
+            HanzoLogOption::Node,
+            HanzoLogLevel::Info,
+            &format!(
+                "[zen5] enabled but weights_dir {} not found; nothing installed",
+                weights_dir.display()
+            ),
+        );
+        return;
+    }
+
+    let mut found_any = false;
+    for variant in &cfg.models {
+        let gguf_filename = format!("{variant}.gguf");
+        let gguf_path = weights_dir.join(&gguf_filename);
+        if !gguf_path.is_file() {
+            continue;
+        }
+        found_any = true;
+        let model_id = zen5_model_id(variant, &gguf_path);
+        hanzo_log(
+            HanzoLogOption::Node,
+            HanzoLogLevel::Info,
+            &format!(
+                "[zen5] loading {variant} ({}) as model_id={model_id} (backend={})",
+                gguf_path.display(),
+                cfg.backend,
+            ),
+        );
+        match build_hanzo(zen5_model_selected(weights_dir, &gguf_filename), &model_id).await {
+            Ok(hanzo) => {
+                if try_install_engine(hanzo, &format!("zen5:{variant}")) {
+                    return;
+                }
+            }
+            Err(e) => hanzo_log(
+                HanzoLogOption::Node,
+                HanzoLogLevel::Error,
+                &format!("[zen5] {variant} failed to load: {e}"),
+            ),
+        }
+    }
+
+    if !found_any {
+        hanzo_log(
+            HanzoLogOption::Node,
+            HanzoLogLevel::Info,
+            &format!(
+                "[zen5] enabled but no <variant>.gguf found in {} for {:?}; nothing installed",
+                weights_dir.display(),
+                cfg.models,
+            ),
+        );
     }
 }
 
@@ -309,12 +582,26 @@ pub async fn initialize_node() -> Result<
     )
     .await;
 
-    // Install the canonical inference + embedding engine before any
-    // request can fan out through the EVM precompiles (`0x0201` /
-    // `0x0202`). NOTE: currently a no-op pending the engine 0.6.0→1.0.2
-    // API port — the precompiles revert at call time ("fail open").
-    // See `install_engine` FLAG.
+    // Inference engine boot, before any request can fan out through the EVM
+    // precompiles (`0x0201` / `0x0202`). Two paths populate the node-local
+    // `ENGINE` handle (first writer wins — engine 1.0.2 has no global registry):
+    //   1. Zen5 family (zen-5-flash/pro/mini/coder) — native GGUF fast-path,
+    //      gated by `[zen5] enabled = true` in hanzo.toml. Runs first.
+    //   2. install_engine — HF-repo / safetensors fallback (HANZO_MODEL_PATH /
+    //      HANZO_MODEL_REPO). Runs second; if Zen5 already claimed the slot it
+    //      is a no-op that we log + ignore.
+    // If neither installs anything the precompiles revert at call time
+    // ("fail open").
+    install_zen5_engines().await;
     install_engine().await;
+
+    // Federation (lab mode) — opt-in via `[federation]` in hanzo.toml.
+    // Loads config, elects role, spawns coordinator OR worker. When the
+    // `federation-runtime` feature is off we log and park; the rest of
+    // the node keeps running. The manager is leaked into a static slot
+    // so the spawned task lives for the process lifetime; node tasks
+    // own their own teardown and shut us down via Drop on process exit.
+    init_federation();
 
     // Put the Node in an Arc<Mutex<Node>> for use in a task
     let start_node = Arc::clone(&node);
@@ -468,6 +755,39 @@ fn init_embedding_generator(node_env: &NodeEnvironment) -> RemoteEmbeddingGenera
         .expect("EMBEDDINGS_SERVER_URL not found in node_env");
     let api_key = node_env.embeddings_server_api_key.clone();
     RemoteEmbeddingGenerator::new(node_env.default_embedding_model.clone(), &api_url, api_key)
+}
+
+/// Boot the federation manager from `hanzo.toml` (or `HANZO_CONFIG_PATH`).
+///
+/// The manager is opt-in: if `[federation]` is absent or `enabled = false`,
+/// this is a no-op log line. The manager is stored in a process-lifetime
+/// `OnceLock` so its background task survives until process exit; Drop
+/// will signal the spawned coordinator/worker if the slot is ever cleared.
+fn init_federation() {
+    use std::sync::OnceLock;
+    static FEDERATION: OnceLock<tokio::sync::Mutex<FederationManager>> = OnceLock::new();
+
+    let config_path = env::var("HANZO_CONFIG_PATH").unwrap_or_else(|_| "hanzo.toml".to_string());
+    let cfg = FederationConfig::load_from(Path::new(&config_path));
+    if !cfg.enabled {
+        hanzo_log(
+            HanzoLogOption::Node,
+            HanzoLogLevel::Debug,
+            "[federation] disabled (no [federation] block or enabled=false)",
+        );
+        return;
+    }
+    let mgr = FEDERATION.get_or_init(|| tokio::sync::Mutex::new(FederationManager::new(cfg)));
+    // Use try_lock — at boot nothing else holds it. If contended (unexpected),
+    // log and skip rather than block the runner.
+    match mgr.try_lock() {
+        Ok(mut guard) => guard.start(),
+        Err(_) => hanzo_log(
+            HanzoLogOption::Node,
+            HanzoLogLevel::Error,
+            "[federation] manager already locked at boot; not starting",
+        ),
+    }
 }
 
 /// Prints Useful Node information at startup
