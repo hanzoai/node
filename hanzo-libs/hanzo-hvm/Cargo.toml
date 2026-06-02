@@ -1,0 +1,10 @@
+[package]
+name = "hanzo-hvm"
+version = "0.1.0"
+edition = "2021"
+description = "Hanzo HVM — the Hamiltonian VM / Market Maker (HIP-0008). Symplectic price discovery for AI compute. hanzo.network is pure Rust; this is the single, canonical impl (no Go, no cross-language conformance needed)."
+
+[lib]
+path = "src/lib.rs"
+
+[workspace]
