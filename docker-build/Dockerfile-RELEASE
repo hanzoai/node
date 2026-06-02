@@ -1,4 +1,4 @@
-FROM rust:1.88-slim-bookworm AS base-builder
+FROM rust:1.96-slim-bookworm AS base-builder
 RUN apt-get update && apt-get install pkg-config clang cmake libssl-dev --no-install-recommends -y
 
 FROM base-builder AS hanzo-node-builder
