@@ -32,17 +32,23 @@ WORKDIR /app
 # Clone the repository
 COPY . .
 
-# Set up Rust toolchain
-RUN rustup default 1.88
+# Set up Rust toolchain (pinned; keep in sync with docker/Dockerfile and CI)
+RUN rustup default 1.96
 RUN rustup component add rustfmt
 
 # Limit parallel jobs to prevent OOM on arm64 (16GB Graviton).
 # lld linker configured in .cargo/config.toml (uses ~3x less RAM than ld).
 ENV CARGO_BUILD_JOBS=4
 
-# Build main code, pre-compile tests, and cleanup in SINGLE layer
-# This is critical - separate RUN commands create Docker layers that preserve old data
-# Even if we delete files in a later layer, the image size includes all layers
+# Build main code, pre-compile tests, and cleanup in SINGLE layer.
+# This is critical - separate RUN commands create Docker layers that preserve old data,
+# so the throwaway target/debug intermediates are pruned in the same layer that creates them.
+#
+# IMPORTANT: do NOT delete the cargo registry/git caches here. The runtime entrypoints
+# (.github/run-main*.sh) re-run `cargo test` inside the container against this pre-built
+# target, which needs the downloaded crate sources/index baked into the image. Deleting
+# /root/.cargo/registry (or $CARGO_HOME) forces a full re-download on every container start
+# and breaks offline runs. The compiled deps in target/debug are kept for the same reason.
 RUN CARGO_BUILD_RERUN_IF_CHANGED=1 cargo build $([ "$BUILD_TYPE" = "release" ] && echo "--release") && \
     cargo test --no-run 2>/dev/null || true && \
     rm -rf /app/target/debug/incremental && \
@@ -51,9 +57,6 @@ RUN CARGO_BUILD_RERUN_IF_CHANGED=1 cargo build $([ "$BUILD_TYPE" = "release" ] &
     rm -rf /app/target/debug/examples && \
     rm -rf /app/target/debug/deps/*.d && \
     rm -rf /app/target/.rustc_info.json && \
-    rm -rf /root/.cargo/registry/cache && \
-    rm -rf /root/.cargo/git/checkouts && \
-    rm -rf /root/.cargo/registry/index && \
     echo "=== Target size after cleanup ===" && \
     du -sh /app/target/ && \
     du -sh /app/target/debug/ && \
