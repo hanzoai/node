@@ -13,8 +13,15 @@ edition = "2021"
 authors = ["Nico Arqueros <nico@hanzo.ai>"]
 
 [workspace.dependencies]
-# hanzonet/* crates (resolved from crates.io). The four `package = "hanzonet-*"`
-# rename trick keeps `use hanzo_pqc::...` imports unchanged at the call site.
+# hanzo/* node libs (resolved from crates.io). hanzo-mcp is now published under
+# its real name (1.1.21), so the former `package = "hanzonet-mcp"` rename trick
+# has been dropped — `use hanzo_mcp::...` at call sites is unchanged.
+#
+# Version note (convergence 2026-06): the plan targets a unified 1.1.21 line.
+# fs/http-api/job-queue-manager/mcp/tools are published at 1.1.21 and bumped.
+# db-sqlite/embed/identity/libp2p-relayer/messages/model-discovery/runtime are
+# only published up to 1.1.13 on crates.io, so they stay at 1.1.13 until a
+# 1.1.21 of each is published from the zoo monorepo (see CONVERGENCE_PLAN B.4).
 hanzo-db-sqlite = "1.1.13"
 hanzo-embed = "1.1.13"
 hanzo-fs = "1.1.21"
@@ -22,7 +29,7 @@ hanzo-http-api = "1.1.21"
 hanzo-identity = "1.1.13"
 hanzo-job-queue-manager = "1.1.21"
 hanzo-libp2p-relayer = "1.1.13"
-hanzo-mcp = { version = "1.1.21", package = "hanzonet-mcp" }
+hanzo-mcp = "1.1.21"
 hanzo-messages = "1.1.13"
 hanzo-model-discovery = "1.1.13"
 hanzo-runtime = "1.1.13"
@@ -30,8 +37,14 @@ hanzo-tools = "1.1.21"
 hanzo-tools-runner = "1.0.2"
 hanzo-zap = "0.6.75"
 
-# hanzoai/engine (local path during dev; pin to 0.6.0 for crates.io publish)
-hanzo-engine = { version = "0.6.0", path = "../engine/hanzo-engine" }
+# hanzoai/engine — canonical inference + embedding engine (powers EVM AI
+# precompiles 0x0201/0x0202 via runner::install_engine). Path dep for the
+# sibling-checkout dev layout (node <- engine <- ml); the `version` pins the
+# crates.io release for a published node. Engine is now 1.0.2 (was 0.6.0).
+# NOTE: 1.0.2 is not yet on crates.io (only 0.6.0 is published; engine main is
+# at 1.0.2). Publishing 1.0.2 is Part A of the plan — until then this resolves
+# via the path dep only.
+hanzo-engine = { version = "1.0.2", path = "../engine/hanzo-engine" }
 
 # Locals
 hanzo-test-framework = { path = "./hanzo-test-framework" }

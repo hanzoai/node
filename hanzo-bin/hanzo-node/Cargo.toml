@@ -21,6 +21,17 @@ ngrok = ["dep:ngrok"]
 swagger-ui = ["hanzo-http-api/swagger-ui"]
 # static-pdf-parser = ["hanzo-vector_resources/static-pdf-parser"]
 
+# GPU inference backends — passthrough to hanzo-engine (which fans out to
+# hanzo-ml/hanzo-nn/hanzo-quant). Off by default; the default build is CPU.
+# These select the backend the embedded MistralEngine runs on for the AI
+# precompiles. vulkan/rocm are this fork's differentiating backends; cuda
+# needs nvcc and metal needs macOS (see CONVERGENCE_PLAN A.1).
+vulkan = ["hanzo-engine/vulkan"]
+rocm = ["hanzo-engine/rocm"]
+cuda = ["hanzo-engine/cuda"]
+metal = ["hanzo-engine/metal"]
+flash-attn = ["hanzo-engine/flash-attn"]
+
 [[bin]]
 name = "hanzod"
 path = "src/main.rs"
@@ -64,10 +75,12 @@ reqwest = { workspace = true, features = [
 keyphrases = { workspace = true }
 hanzo-messages = { workspace = true }
 hanzo-identity = { workspace = true }
-# Canonical inference + embedding engine. The node registers a real
-# MistralEngine at startup so EVM precompiles 0x0201 / 0x0202 produce
-# real outputs. See `runner::install_engine`.
-hanzo-engine = { path = "../../../engine/hanzo-engine" }
+# Canonical inference + embedding engine, sourced from the workspace dep
+# (1.0.2, path = ../engine/hanzo-engine) — single source of truth. Intended
+# to back EVM precompiles 0x0201 / 0x0202. NOTE: the runtime registration in
+# `runner::install_engine` is a no-op pending the 0.6.0 → 1.0.2 API port
+# (see the FLAG there), so those precompiles currently revert ("fail open").
+hanzo-engine = { workspace = true }
 hanzo-job-queue-manager = { workspace = true }
 hanzo-tools = { workspace = true }
 hanzo-libp2p-relayer = { workspace = true }
