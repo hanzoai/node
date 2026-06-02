@@ -11,6 +11,14 @@ hanzo-tools-runner = { workspace = true, features = ["built-in-tools"] }
 
 # Features
 [features]
+# Convergence (2026-06): `default` is empty in this sync checkout. main shipped
+# `default = ["federation-runtime"]` plus `zen5-ffi`/`zen5-native`, but those
+# reference crates/features not present here: the `hanzo-federation` crate is
+# not vendored in this checkout, and engine 1.0.2 dropped the `zen5-ffi`/
+# `zen5-native` cargo features (the old hanzo-zen5 surface). federation.rs keeps
+# its `#[cfg(not(feature = "federation-runtime"))]` no-op path; Zen5 inference
+# is ported to the 1.0.2 HanzoBuilder via runner::install_zen5_engines (GGUF
+# loaded through hanzo-server-core), so no engine feature is needed.
 default = []
 console = ["console-subscriber"]
 # Enable additional debug output when this feature is selected
@@ -19,18 +27,25 @@ debug = []
 ngrok = ["dep:ngrok"]
 # Enable swagger-ui when this feature is selected
 swagger-ui = ["hanzo-http-api/swagger-ui"]
+# Declared (not default) so federation.rs's `#[cfg(feature = "federation-runtime")]`
+# is a known cfg, not an "unexpected cfg" warning. It links no crate in this
+# checkout: the `hanzo-federation` crate is not vendored here, so enabling this
+# feature will fail to resolve `use hanzo_federation` until that crate is added
+# to the workspace. Off by default keeps federation.rs on its no-op path.
+federation-runtime = []
 # static-pdf-parser = ["hanzo-vector_resources/static-pdf-parser"]
 
 # GPU inference backends — passthrough to hanzo-engine (which fans out to
 # hanzo-ml/hanzo-nn/hanzo-quant). Off by default; the default build is CPU.
-# These select the backend the embedded MistralEngine runs on for the AI
-# precompiles. vulkan/rocm are this fork's differentiating backends; cuda
-# needs nvcc and metal needs macOS (see CONVERGENCE_PLAN A.1).
-vulkan = ["hanzo-engine/vulkan"]
-rocm = ["hanzo-engine/rocm"]
-cuda = ["hanzo-engine/cuda"]
-metal = ["hanzo-engine/metal"]
-flash-attn = ["hanzo-engine/flash-attn"]
+# These select the backend the embedded engine runs on for the AI precompiles.
+# vulkan/rocm are this fork's differentiating backends; cuda needs nvcc and
+# metal needs macOS (see CONVERGENCE_PLAN A.1). server-core mirrors each flag so
+# the loader builds for the same backend.
+vulkan = ["hanzo-engine/vulkan", "hanzo-server-core/vulkan"]
+rocm = ["hanzo-engine/rocm", "hanzo-server-core/rocm"]
+cuda = ["hanzo-engine/cuda", "hanzo-server-core/cuda"]
+metal = ["hanzo-engine/metal", "hanzo-server-core/metal"]
+flash-attn = ["hanzo-engine/flash-attn", "hanzo-server-core/flash-attn"]
 
 [[bin]]
 name = "hanzod"
@@ -76,11 +91,16 @@ keyphrases = { workspace = true }
 hanzo-messages = { workspace = true }
 hanzo-identity = { workspace = true }
 # Canonical inference + embedding engine, sourced from the workspace dep
-# (1.0.2, path = ../engine/hanzo-engine) — single source of truth. Intended
-# to back EVM precompiles 0x0201 / 0x0202. NOTE: the runtime registration in
-# `runner::install_engine` is a no-op pending the 0.6.0 → 1.0.2 API port
-# (see the FLAG there), so those precompiles currently revert ("fail open").
+# (1.0.2, path = ../engine/hanzo-engine) — single source of truth. Backs EVM
+# precompiles 0x0201 / 0x0202 via runner::install_engine + install_zen5_engines,
+# which build an owned `Arc<Hanzo>` (no global registry in 1.0.2) and store it
+# in runner::ENGINE for the precompile handler to read.
 hanzo-engine = { workspace = true }
+# High-level builder (`HanzoForServerBuilder`) that wraps the 1.0.2
+# `HanzoBuilder` + Loader. The node uses it to turn a HANZO_MODEL_PATH/REPO or a
+# Zen5 `<variant>.gguf` into an `Arc<Hanzo>` without re-implementing the engine's
+# private device/cache/scheduler setup. default-features off drops swagger-ui.
+hanzo-server-core = { workspace = true }
 hanzo-job-queue-manager = { workspace = true }
 hanzo-tools = { workspace = true }
 hanzo-libp2p-relayer = { workspace = true }
@@ -122,6 +142,11 @@ url = "2.5.0"
 serde_yaml = { workspace = true }
 thiserror = { workspace = true }
 ai-model-catalog = "0.1.0"
+libc = "0.2"
+# NOTE: main's `hanzo-federation = { workspace = true, optional = true }` is
+# dropped here — the crate is not vendored in this sync checkout and the
+# `federation-runtime` feature was removed (see [features]). federation.rs
+# compiles via its `#[cfg(not(feature = "federation-runtime"))]` no-op path.
 
 [dev-dependencies]
 mockito = "1.0.2"
@@ -132,7 +157,6 @@ utoipa = { workspace = true, features = ["yaml"] }
 hanzo-test-framework = {path = "../../hanzo-test-framework", version = "0.1.1"}
 hanzo-test-macro = {path = "../../hanzo-test-macro", version = "0.1.1"}
 criterion = { workspace = true }
-libc = "0.2"
 
 # Per-connection memory profile per SCALE_STANDARD.md §7. Run:
 #   cargo bench --bench conn_memory -- --conn-count 10000

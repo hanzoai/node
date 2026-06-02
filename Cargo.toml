@@ -1,9 +1,23 @@
 [workspace]
+# Convergence (2026-06): this sync checkout uses the slimmed layout — the
+# hanzo-libs/* cluster lives in the standalone `hanzonet` workspace and is
+# consumed from crates.io (see [workspace.dependencies]). main's monorepo listed
+# ~35 hanzo-libs path-members; this checkout only ships the two bins + their test
+# crates as members. main's new node-side libs (hanzo-brain, hanzo-pqc) are
+# present on disk under hanzo-libs/ but are NOT members here: nothing in this
+# workspace consumes them, and hanzo-pqc pulls extra path-deps (lux-crypto, oqs)
+# outside the slim graph. They belong to the hanzonet workspace; keep them out
+# of node's members so `cargo` resolves the focused bin graph.
 members = [
   "hanzo-test-framework",
   "hanzo-test-macro",
   "hanzo-bin/hanzo-node",
-  "hanzo-bin/hanzoai",
+  # "hanzo-bin/hanzoai", # Excluded: pre-existing breakage (independent of the
+  # engine 1.0.2 port). Its deps path to `../../../net/hanzo-{embed,messages,
+  # model-discovery}`, which do not exist in this checkout or on net's main
+  # (net is Python; only hanzo-zap is a Rust crate there). A broken member
+  # blocks resolution of the whole workspace, so it is excluded until the net
+  # Rust crates are published/vendored. Tracked separately from this port.
 ]
 resolver = "2"
 
@@ -45,46 +59,54 @@ hanzo-zap = "0.6.75"
 # at 1.0.2). Publishing 1.0.2 is Part A of the plan — until then this resolves
 # via the path dep only.
 hanzo-engine = { version = "1.0.2", path = "../engine/hanzo-engine" }
+# Convergence (2026-06, engine 0.6.0 -> 1.0.2 port): `install_engine` /
+# `install_zen5_engines` build an owned `Arc<Hanzo>` via the server-core
+# `HanzoForServerBuilder` (which wraps the 1.0.2 `HanzoBuilder` + Loader). The
+# 0.6.0 process-wide engine registry was removed, so the node keeps its own
+# handle (runner::ENGINE). Same path-dep/version layering as hanzo-engine.
+hanzo-server-core = { version = "1.0.2", path = "../engine/hanzo-server-core", default-features = false }
 
-# Locals
-hanzo-test-framework = { path = "./hanzo-test-framework" }
-hanzo-test-macro = { path = "./hanzo-test-macro" }
 
-# Third-party shared
-rmcp = "0.8"
+rmcp = { version = "0.8" }
 futures = "0.3.30"
 keyphrases = "0.3.3"
-tokio = { version = "1.36", features = ["rt", "rt-multi-thread", "macros", "fs", "io-util", "net", "sync", "time"] }
+tokio = { version = "1.36", features = [
+  "rt",
+  "rt-multi-thread",
+  "macros",
+  "fs",
+  "io-util",
+  "net",
+  "sync",
+  "time",
+] }
 tokio-util = "0.7.13"
-tokio-tungstenite = "0.26.2"
-async-trait = "0.1.74"
-async-channel = "1.6.1"
 bincode = "1.3.3"
 log = "0.4.20"
 chrono = "0.4"
 serde_json = "1.0.117"
 anyhow = "1.0.94"
-thiserror = "2.0.3"
+blake3 = "1.2.0"
+sha2 = "0.10"
 serde = "1.0.219"
-serde_yaml = "0.9.34-deprecated"
 base64 = "0.22.0"
-hex = "=0.4.3"
 reqwest = "0.11.27"
 regex = "1"
-uuid = "1.6.1"
+uuid = { version = "1.6.1" }
 rand = "=0.8.5"
+hex = "=0.4.3"
 env_logger = "0.11.5"
+async-trait = "0.1.74"
 ed25519-dalek = { version = "2.1.1", features = ["rand_core"] }
 x25519-dalek = { version = "2.0.1", features = ["static_secrets"] }
-chacha20poly1305 = "0.10"
-hpke = "0.12"
-sha2 = "0.10"
-blake3 = "1.2.0"
 tempfile = "3.19"
 lazy_static = "1.5.0"
-once_cell = "1.21"
+async-channel = "1.6.1"
 csv = "1.1.6"
+thiserror = "2.0.3"
 dashmap = "5.5.3"
+hpke = "0.12"
+chacha20poly1305 = "0.10"
 clap = "3.0.0-beta.5"
 r2d2 = "0.8.10"
 r2d2_sqlite = "0.25"
@@ -92,14 +114,37 @@ rusqlite = { version = "0.32.1", features = ["bundled"] }
 os_path = "0.8.0"
 utoipa = "4.2.3"
 warp = "0.3.7"
+once_cell = "1.21"
 home = "0.5"
 strip-ansi-escapes = "0.2"
 tracing = "0.1.40"
+serde_yaml = "0.9.34-deprecated"
+tokio-tungstenite = "0.26.2"
 rustls = "0.23.27"
+# Native embedding support via hanzoai/engine (our mistral.rs fork)
+# hanzo_engine = { git = "https://github.com/hanzoai/engine.git", default-features = false }
+# candle-core = "0.8"
+# candle-nn = "0.8"
+# candle-transformers = "0.8"
+# hf-hub = "0.3"
+# tokenizers = "0.20"
 dirs = "5.0"
-libp2p = { version = "0.55.0", features = ["noise", "yamux", "tcp", "quic", "dcutr", "identify", "ping", "relay", "request-response", "json", "tokio", "macros"] }
+libp2p = { version = "0.55.0", features = [
+  "noise",
+  "yamux",
+  "tcp",
+  "quic",
+  "dcutr",
+  "identify",
+  "ping",
+  "relay",
+  "request-response",
+  "json",
+  "tokio",
+  "macros",
+] }
 
-# Dev
+# Dev dependencies
 criterion = "0.5"
 proptest = "1.0"
 tokio-test = "0.4"
