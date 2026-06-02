@@ -60,92 +60,65 @@ fn port_is_available(port: u16) -> bool {
     }
 }
 
-/// Load + register the canonical [`hanzo_engine::MistralEngine`] used by
-/// EVM precompiles `0x0201` (AI inference) and `0x0202` (AI embedding).
+/// Load + register the canonical inference/embedding engine used by EVM
+/// precompiles `0x0201` (AI inference) and `0x0202` (AI embedding).
 ///
-/// Configuration:
+/// Configuration (preserved across the engine upgrade for forward-compat):
 /// * `HANZO_MODEL_PATH` — path to a local GGUF or safetensors directory.
 ///   Preferred when set: avoids touching the network.
 /// * `HANZO_MODEL_REPO` — Hugging Face repo (e.g. `Qwen/Qwen3-4B`). Used
-///   when `HANZO_MODEL_PATH` is unset. The model is downloaded by
-///   `mistralrs` the first time and cached.
+///   when `HANZO_MODEL_PATH` is unset.
 ///
-/// If neither variable is set, or the load fails, the function logs and
-/// returns. The precompiles then revert with
-/// `EngineError::NoInferenceEngine` / `NoEmbeddingEngine` at call time.
-/// This is the documented "fail open" contract: a node without a model
-/// is still a valid node — it just can't serve those two precompiles.
+/// If neither variable is set, the precompiles revert at call time. This is
+/// the documented "fail open" contract: a node without a model is still a
+/// valid node — it just can't serve those two precompiles.
+///
+/// ============================ FLAG: HUMAN REVIEW ============================
+/// BREAKING ENGINE API CHANGE (convergence 2026-06, engine 0.6.0 → 1.0.2).
+///
+/// The 0.6.0 integration registered a global `hanzo_engine::MistralEngine`
+/// via `hanzo_engine::register_inference_engine` / `register_embedding_engine`
+/// (a trait registry added in engine commit a12549984). That entire surface —
+/// the `MistralEngine` type AND both `register_*` free functions — was REMOVED
+/// in engine 1.0.2. The 1.0.2 public API is builder-based:
+/// `hanzo_engine::{Hanzo, HanzoBuilder, EngineConfig, ModelSelected, Pipeline,
+/// Request, Response, ...}` and exposes NO global inference/embedding registry.
+///
+/// Re-wiring the precompiles to the 1.0.2 API (build a `Hanzo` via
+/// `HanzoBuilder` from MODEL_PATH/MODEL_REPO, then route `0x0201`/`0x0202`
+/// through it) is a non-trivial port that also depends on how/where the
+/// precompile handler now obtains its engine handle. It is intentionally NOT
+/// guessed here. Until it is implemented, this fn is a compile-safe NO-OP that
+/// honors the existing "fail open" contract (precompiles revert), so the rest
+/// of the node still builds and runs against engine 1.0.2.
+///
+/// TODO(convergence): port to `HanzoBuilder` and restore real inference/embed.
+/// ===========================================================================
 async fn install_engine() {
-    use std::sync::Arc;
-
-    let load_result = match (env::var("HANZO_MODEL_PATH"), env::var("HANZO_MODEL_REPO")) {
-        (Ok(path), _) if !path.is_empty() => {
-            hanzo_log(
-                HanzoLogOption::Node,
-                HanzoLogLevel::Info,
-                &format!("hanzo_engine: loading MistralEngine from path: {path}"),
-            );
-            hanzo_engine::MistralEngine::from_model_path(&path)
-                .await
-                .map(|engine| (engine, format!("path={path}")))
-        }
-        (_, Ok(repo)) if !repo.is_empty() => {
-            hanzo_log(
-                HanzoLogOption::Node,
-                HanzoLogLevel::Info,
-                &format!("hanzo_engine: loading MistralEngine from HF repo: {repo}"),
-            );
-            hanzo_engine::MistralEngine::from_hf_repo(&repo)
-                .await
-                .map(|engine| (engine, format!("repo={repo}")))
-        }
-        _ => {
-            hanzo_log(
-                HanzoLogOption::Node,
-                HanzoLogLevel::Info,
-                "hanzo_engine: HANZO_MODEL_PATH and HANZO_MODEL_REPO unset; \
-                 AI precompiles (0x0201, 0x0202) will revert until an engine is registered",
-            );
-            return;
-        }
+    let configured = match (env::var("HANZO_MODEL_PATH"), env::var("HANZO_MODEL_REPO")) {
+        (Ok(path), _) if !path.is_empty() => Some(format!("path={path}")),
+        (_, Ok(repo)) if !repo.is_empty() => Some(format!("repo={repo}")),
+        _ => None,
     };
 
-    let (engine, source) = match load_result {
-        Ok(pair) => pair,
-        Err(e) => {
-            hanzo_log(
-                HanzoLogOption::Node,
-                HanzoLogLevel::Error,
-                &format!("hanzo_engine: model load failed ({e}); AI precompiles will revert"),
-            );
-            return;
-        }
-    };
-
-    let arc: Arc<hanzo_engine::MistralEngine> = Arc::new(engine);
-
-    // `MistralEngine` implements both `InferenceEngine` and `EmbeddingEngine`,
-    // so the same `Arc` registers under both surfaces.
-    if let Err(e) = hanzo_engine::register_inference_engine(arc.clone()) {
-        hanzo_log(
+    match configured {
+        Some(source) => hanzo_log(
             HanzoLogOption::Node,
             HanzoLogLevel::Error,
-            &format!("hanzo_engine: inference registration failed ({e})"),
-        );
-    }
-    if let Err(e) = hanzo_engine::register_embedding_engine(arc) {
-        hanzo_log(
+            &format!(
+                "hanzo_engine: model is configured ({source}) but the inference/embedding \
+                 wiring has NOT yet been ported from the removed 0.6.0 registry to the \
+                 engine 1.0.2 HanzoBuilder API. AI precompiles (0x0201, 0x0202) will revert. \
+                 See runner::install_engine FLAG."
+            ),
+        ),
+        None => hanzo_log(
             HanzoLogOption::Node,
-            HanzoLogLevel::Error,
-            &format!("hanzo_engine: embedding registration failed ({e})"),
-        );
+            HanzoLogLevel::Info,
+            "hanzo_engine: HANZO_MODEL_PATH and HANZO_MODEL_REPO unset; \
+             AI precompiles (0x0201, 0x0202) will revert until an engine is registered",
+        ),
     }
-
-    hanzo_log(
-        HanzoLogOption::Node,
-        HanzoLogLevel::Info,
-        &format!("hanzo_engine: MistralEngine registered ({source})"),
-    );
 }
 
 pub async fn initialize_node() -> Result<
@@ -338,9 +311,9 @@ pub async fn initialize_node() -> Result<
 
     // Install the canonical inference + embedding engine before any
     // request can fan out through the EVM precompiles (`0x0201` /
-    // `0x0202`). Best-effort: if the model can't be loaded the
-    // precompiles will revert with `EngineError::NoInferenceEngine` /
-    // `NoEmbeddingEngine` at call time, which is the documented contract.
+    // `0x0202`). NOTE: currently a no-op pending the engine 0.6.0→1.0.2
+    // API port — the precompiles revert at call time ("fail open").
+    // See `install_engine` FLAG.
     install_engine().await;
 
     // Put the Node in an Arc<Mutex<Node>> for use in a task
