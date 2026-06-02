@@ -1,50 +1,23 @@
 [workspace]
+# Convergence (2026-06): this sync checkout uses the slimmed layout — the
+# hanzo-libs/* cluster lives in the standalone `hanzonet` workspace and is
+# consumed from crates.io (see [workspace.dependencies]). main's monorepo listed
+# ~35 hanzo-libs path-members; this checkout only ships the two bins + their test
+# crates as members. main's new node-side libs (hanzo-brain, hanzo-pqc) are
+# present on disk under hanzo-libs/ but are NOT members here: nothing in this
+# workspace consumes them, and hanzo-pqc pulls extra path-deps (lux-crypto, oqs)
+# outside the slim graph. They belong to the hanzonet workspace; keep them out
+# of node's members so `cargo` resolves the focused bin graph.
 members = [
-  "hanzo-libs/hanzo-api",
-  "hanzo-libs/hanzo-brain",
-  "hanzo-libs/hanzo-config",
-  "hanzo-libs/hanzo-database",
-  # "hanzo-libs/hanzo-db", # Excluded: not in publish list, has feature-gated dependencies
-  "hanzo-libs/hanzo-db-sqlite",
-  "hanzo-libs/hanzo-did",
-  "hanzo-libs/hanzo-embed",
-  "hanzo-libs/hanzo-fs",
-  # "hanzo-libs/hanzo-hmm", # Excluded: type inference issues
-  "hanzo-libs/hanzo-http-api",
-  "hanzo-libs/hanzo-identity",
-  "hanzo-libs/hanzo-job-queue-manager",
-  "hanzo-libs/hanzo-jobs",
-  # "hanzo-libs/hanzo-kbs", # Excluded: incomplete implementation with missing types
-  "hanzo-libs/hanzo-l2",
-  "hanzo-libs/hanzo-libp2p",
-  "hanzo-libs/hanzo-libp2p-relayer",
-  "hanzo-libs/hanzo-llm",
-  "hanzo-libs/hanzo-mcp",
-  "hanzo-libs/hanzo-messages",
-  "hanzo-libs/hanzo-mining",
-  "hanzo-libs/hanzo-vm",
-  "hanzo-libs/hanzo-consensus",
-  "hanzo-libs/hanzo-compute",
-  "hanzo-libs/hanzo-ai-format",
-  "hanzo-libs/hanzo-model-discovery",
-  "hanzo-libs/hanzo-models",
-  "hanzo-libs/hanzo-pqc",
-  "hanzo-libs/hanzo-runner",
-  "hanzo-libs/hanzo-runtime",
-  "hanzo-libs/hanzo-runtime-tests",
-  # "hanzo-libs/hanzo-sheet", # Excluded: depends on non-existent sheet module
-  # "hanzo-libs/hanzo-simulation",
-  # "hanzo-libs/hanzo-tests", # Excluded: test-only crate with compilation errors
-  "hanzo-libs/hanzo-tools",
-  "hanzo-libs/hanzo-tools-runner",
-  "hanzo-libs/hanzo-wasm",
-  "hanzo-libs/hanzo-wasm-runtime",
-  "hanzo-libs/hanzo-zap",
-  "hanzo-test-framework",  # Required by hanzo-node
-  "hanzo-test-macro",      # Required by hanzo-node
+  "hanzo-test-framework",
+  "hanzo-test-macro",
   "hanzo-bin/hanzo-node",
-  "hanzo-bin/hanzoai",
-  # "hanzo-bin/hanzo-migrate", # Excluded: depends on hanzo-db which has feature-gated deps
+  # "hanzo-bin/hanzoai", # Excluded: pre-existing breakage (independent of the
+  # engine 1.0.2 port). Its deps path to `../../../net/hanzo-{embed,messages,
+  # model-discovery}`, which do not exist in this checkout or on net's main
+  # (net is Python; only hanzo-zap is a Rust crate there). A broken member
+  # blocks resolution of the whole workspace, so it is excluded until the net
+  # Rust crates are published/vendored. Tracked separately from this port.
 ]
 resolver = "2"
 
@@ -54,51 +27,44 @@ edition = "2021"
 authors = ["Nico Arqueros <nico@hanzo.ai>"]
 
 [workspace.dependencies]
-hanzo-api = { path = "./hanzo-libs/hanzo-api", version = "1.1.12" }
-hanzo-config = { path = "./hanzo-libs/hanzo-config", version = "1.1.19" }
-hanzo-database = { path = "./hanzo-libs/hanzo-database", version = "1.1.12" }
-hanzo-db = { path = "./hanzo-libs/hanzo-db", version = "0.1.1" }
-hanzo-db-sqlite = { path = "./hanzo-libs/hanzo-db-sqlite", version = "1.1.12" }
-hanzo-did = { path = "./hanzo-libs/hanzo-did", version = "1.1.11" }
-hanzo-embed = { path = "./hanzo-libs/hanzo-embed", version = "1.1.12" }
-hanzo-fs = { path = "./hanzo-libs/hanzo-fs" }
-hanzo-hmm = { path = "./hanzo-libs/hanzo-hmm", version = "0.1.1" }
-hanzo-http-api = { path = "./hanzo-libs/hanzo-http-api" }
-hanzo-identity = { path = "./hanzo-libs/hanzo-identity", version = "1.1.12" }
-hanzo-job-queue-manager = { path = "./hanzo-libs/hanzo-job-queue-manager" }
-hanzo-jobs = { path = "./hanzo-libs/hanzo-jobs", version = "1.1.12" }
-hanzo-kbs = { path = "./hanzo-libs/hanzo-kbs", version = "1.1.11" }
-hanzo-l2 = { path = "./hanzo-libs/hanzo-l2", version = "1.1.19" }
-hanzo-libp2p = { path = "./hanzo-libs/hanzo-libp2p", version = "1.1.12" }
-hanzo-libp2p-relayer = { path = "./hanzo-libs/hanzo-libp2p-relayer", version = "1.1.12" }
-hanzo-llm = { path = "./hanzo-libs/hanzo-llm", version = "1.1.11" }
-hanzo-mcp = { path = "./hanzo-libs/hanzo-mcp", version = "1.1.11" }
-hanzo-messages = { path = "./hanzo-libs/hanzo-messages", version = "1.1.12" }
-hanzo-mining = { path = "./hanzo-libs/hanzo-mining", version = "1.1.19" }
-hanzo-consensus = { path = "./hanzo-libs/hanzo-consensus", version = "1.1.19" }
-hanzo-compute = { path = "./hanzo-libs/hanzo-compute", version = "1.1.19" }
-hanzo-ai-format = { path = "./hanzo-libs/hanzo-ai-format", version = "1.1.19" }
-hanzo-model-discovery = { path = "./hanzo-libs/hanzo-model-discovery", version = "1.1.12" }
-hanzo-models = { path = "./hanzo-libs/hanzo-models", version = "1.1.12" }
-hanzo-pqc = { path = "./hanzo-libs/hanzo-pqc", version = "1.1.12" }
-# Canonical lux-crypto Rust crate (calls into luxcpp/crypto C-ABI).
-# Path dep alongside existing `oqs` / `k256` / `ed25519-dalek` so a future PR
-# can migrate call sites one by one. NO -sys suffix: we author the C/C++
-# ourselves at luxcpp/crypto. See /Users/z/work/lux/crypto/rust/lux-crypto.
-lux-crypto = { path = "../../lux/crypto/rust/lux-crypto", version = "0.1.0" }
-hanzo-runner = { path = "./hanzo-libs/hanzo-runner", version = "1.1.12" }
-hanzo-runtime = { path = "./hanzo-libs/hanzo-runtime", version = "1.1.12" }
-hanzo-runtime-tests = { path = "./hanzo-libs/hanzo-runtime-tests", version = "0.1.1" }
-hanzo-sheet = { path = "./hanzo-libs/hanzo-sheet", version = "0.1.1" }
-# hanzo-simulation = { path = "./hanzo-libs/hanzo-simulation" }
-hanzo-tests = { path = "./hanzo-libs/hanzo-tests", version = "0.1.1" }
-hanzo-tools = { path = "./hanzo-libs/hanzo-tools" }
-hanzo-tools-runner = { path = "./hanzo-libs/hanzo-tools-runner", version = "1.0.1" }
-hanzo-wasm = { path = "./hanzo-libs/hanzo-wasm", version = "0.1.1" }
-hanzo-vm = { path = "./hanzo-libs/hanzo-vm", version = "1.1.19" }
-hanzo-wasm-runtime = { path = "./hanzo-libs/hanzo-wasm-runtime", version = "1.1.19" }
-hanzo-zap = { path = "./hanzo-libs/hanzo-zap", version = "0.1.0" }
+# hanzo/* node libs (resolved from crates.io). hanzo-mcp is now published under
+# its real name (1.1.21), so the former `package = "hanzonet-mcp"` rename trick
+# has been dropped — `use hanzo_mcp::...` at call sites is unchanged.
+#
+# Version note (convergence 2026-06): the plan targets a unified 1.1.21 line.
+# fs/http-api/job-queue-manager/mcp/tools are published at 1.1.21 and bumped.
+# db-sqlite/embed/identity/libp2p-relayer/messages/model-discovery/runtime are
+# only published up to 1.1.13 on crates.io, so they stay at 1.1.13 until a
+# 1.1.21 of each is published from the zoo monorepo (see CONVERGENCE_PLAN B.4).
+hanzo-db-sqlite = "1.1.13"
+hanzo-embed = "1.1.13"
+hanzo-fs = "1.1.21"
+hanzo-http-api = "1.1.21"
+hanzo-identity = "1.1.13"
+hanzo-job-queue-manager = "1.1.21"
+hanzo-libp2p-relayer = "1.1.13"
+hanzo-mcp = "1.1.21"
+hanzo-messages = "1.1.13"
+hanzo-model-discovery = "1.1.13"
+hanzo-runtime = "1.1.13"
+hanzo-tools = "1.1.21"
+hanzo-tools-runner = "1.0.2"
+hanzo-zap = "0.6.75"
 
+# hanzoai/engine — canonical inference + embedding engine (powers EVM AI
+# precompiles 0x0201/0x0202 via runner::install_engine). Path dep for the
+# sibling-checkout dev layout (node <- engine <- ml); the `version` pins the
+# crates.io release for a published node. Engine is now 1.0.2 (was 0.6.0).
+# NOTE: 1.0.2 is not yet on crates.io (only 0.6.0 is published; engine main is
+# at 1.0.2). Publishing 1.0.2 is Part A of the plan — until then this resolves
+# via the path dep only.
+hanzo-engine = { version = "1.0.2", path = "../engine/hanzo-engine" }
+# Convergence (2026-06, engine 0.6.0 -> 1.0.2 port): `install_engine` /
+# `install_zen5_engines` build an owned `Arc<Hanzo>` via the server-core
+# `HanzoForServerBuilder` (which wraps the 1.0.2 `HanzoBuilder` + Loader). The
+# 0.6.0 process-wide engine registry was removed, so the node keeps its own
+# handle (runner::ENGINE). Same path-dep/version layering as hanzo-engine.
+hanzo-server-core = { version = "1.0.2", path = "../engine/hanzo-server-core", default-features = false }
 
 
 rmcp = { version = "0.8" }
