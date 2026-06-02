@@ -1,5 +1,6 @@
 use super::network::Node;
 use super::utils::environment::NodeEnvironment;
+use crate::managers::federation::{FederationConfig, FederationManager};
 use crate::utils::args::parse_args;
 use crate::utils::cli::cli_handle_create_message;
 use crate::utils::environment::{fetch_llm_provider_env, fetch_node_environment};
@@ -146,6 +147,129 @@ async fn install_engine() {
         HanzoLogLevel::Info,
         &format!("hanzo_engine: MistralEngine registered ({source})"),
     );
+}
+
+/// `[zen5]` block in `hanzo.toml`. Opt-in. When `enabled = true` and the
+/// `weights_dir` contains one or more `<variant>.gguf` files, hanzod
+/// registers a [`hanzo_engine::Zen5Registry`] as the process inference
+/// engine. Each variant's `model_id` is `sha256("<variant>:<weights_dir>/<variant>.gguf")`
+/// — stable across restarts, so EVM precompiles can pin a specific model.
+///
+/// Coexists with `install_engine` (MistralEngine) on a first-writer-wins
+/// basis: Zen5 runs first when enabled, so MistralEngine becomes a no-op
+/// register-fails-and-logs path. The opposite layering is intentional —
+/// Zen5 is the native fast-path; MistralEngine is the catch-all for HF
+/// repos.
+#[derive(Debug, Clone, serde::Deserialize)]
+pub struct Zen5Config {
+    #[serde(default)]
+    pub enabled: bool,
+    #[serde(default = "default_zen5_weights_dir")]
+    pub weights_dir: String,
+    #[serde(default = "default_zen5_models")]
+    pub models: Vec<String>,
+    #[serde(default = "default_zen5_backend")]
+    pub backend: String,
+}
+
+fn default_zen5_weights_dir() -> String {
+    "/var/lib/hanzo/zen5".to_string()
+}
+
+fn default_zen5_models() -> Vec<String> {
+    hanzo_engine::DEFAULT_VARIANTS
+        .iter()
+        .map(|s| (*s).to_string())
+        .collect()
+}
+
+fn default_zen5_backend() -> String {
+    "auto".to_string()
+}
+
+impl Default for Zen5Config {
+    fn default() -> Self {
+        Self {
+            enabled: false,
+            weights_dir: default_zen5_weights_dir(),
+            models: default_zen5_models(),
+            backend: default_zen5_backend(),
+        }
+    }
+}
+
+impl Zen5Config {
+    /// Load from the `[zen5]` table of `hanzo.toml`. Returns a disabled
+    /// default if the file or section is absent.
+    pub fn load_from(path: &Path) -> Self {
+        let raw = match std::fs::read_to_string(path) {
+            Ok(s) => s,
+            Err(_) => return Self::default(),
+        };
+        let value: toml::Value = match toml::from_str(&raw) {
+            Ok(v) => v,
+            Err(_) => return Self::default(),
+        };
+        let Some(table) = value.get("zen5") else {
+            return Self::default();
+        };
+        match table.clone().try_into::<Zen5Config>() {
+            Ok(c) => c,
+            Err(e) => {
+                hanzo_log(
+                    HanzoLogOption::Node,
+                    HanzoLogLevel::Error,
+                    &format!("[zen5] parse error in {}: {e}", path.display()),
+                );
+                Self::default()
+            }
+        }
+    }
+}
+
+/// Register the Zen5 family with `hanzo_engine` if `[zen5]` is enabled in
+/// `hanzo.toml`. No-op when disabled. See [`Zen5Config`] for layering rules.
+fn install_zen5_engines() {
+    let config_path = env::var("HANZO_CONFIG_PATH").unwrap_or_else(|_| "hanzo.toml".to_string());
+    let cfg = Zen5Config::load_from(Path::new(&config_path));
+    if !cfg.enabled {
+        hanzo_log(
+            HanzoLogOption::Node,
+            HanzoLogLevel::Debug,
+            "[zen5] disabled (no [zen5] block or enabled=false)",
+        );
+        return;
+    }
+    let weights_dir = Path::new(&cfg.weights_dir);
+    if !weights_dir.is_dir() {
+        hanzo_log(
+            HanzoLogOption::Node,
+            HanzoLogLevel::Info,
+            &format!(
+                "[zen5] enabled but weights_dir {} not found; nothing registered",
+                weights_dir.display()
+            ),
+        );
+        return;
+    }
+    let variants: Vec<&str> = cfg.models.iter().map(|s| s.as_str()).collect();
+    match hanzo_engine::register_zen5_engines_at_startup(weights_dir, &variants) {
+        Ok(registry) => hanzo_log(
+            HanzoLogOption::Node,
+            HanzoLogLevel::Info,
+            &format!(
+                "[zen5] registered {} models from {} (backend={})",
+                registry.len(),
+                weights_dir.display(),
+                cfg.backend,
+            ),
+        ),
+        Err(e) => hanzo_log(
+            HanzoLogOption::Node,
+            HanzoLogLevel::Error,
+            &format!("[zen5] register failed: {e}"),
+        ),
+    }
 }
 
 pub async fn initialize_node() -> Result<
@@ -336,12 +460,23 @@ pub async fn initialize_node() -> Result<
     )
     .await;
 
-    // Install the canonical inference + embedding engine before any
-    // request can fan out through the EVM precompiles (`0x0201` /
-    // `0x0202`). Best-effort: if the model can't be loaded the
-    // precompiles will revert with `EngineError::NoInferenceEngine` /
-    // `NoEmbeddingEngine` at call time, which is the documented contract.
+    // Inference engine boot. Two paths share the process-wide registry
+    // (first writer wins):
+    //   1. Zen5 family registry (zen-5-flash/pro/mini/coder) — native,
+    //      gated by `[zen5] enabled = true` in hanzo.toml. Runs first.
+    //   2. MistralEngine — fallback / HF-repo path. Runs second; if
+    //      Zen5 already claimed the slot the register call is a no-op
+    //      that we log + ignore.
+    install_zen5_engines();
     install_engine().await;
+
+    // Federation (lab mode) — opt-in via `[federation]` in hanzo.toml.
+    // Loads config, elects role, spawns coordinator OR worker. When the
+    // `federation-runtime` feature is off we log and park; the rest of
+    // the node keeps running. The manager is leaked into a static slot
+    // so the spawned task lives for the process lifetime; node tasks
+    // own their own teardown and shut us down via Drop on process exit.
+    init_federation();
 
     // Put the Node in an Arc<Mutex<Node>> for use in a task
     let start_node = Arc::clone(&node);
@@ -495,6 +630,39 @@ fn init_embedding_generator(node_env: &NodeEnvironment) -> RemoteEmbeddingGenera
         .expect("EMBEDDINGS_SERVER_URL not found in node_env");
     let api_key = node_env.embeddings_server_api_key.clone();
     RemoteEmbeddingGenerator::new(node_env.default_embedding_model.clone(), &api_url, api_key)
+}
+
+/// Boot the federation manager from `hanzo.toml` (or `HANZO_CONFIG_PATH`).
+///
+/// The manager is opt-in: if `[federation]` is absent or `enabled = false`,
+/// this is a no-op log line. The manager is stored in a process-lifetime
+/// `OnceLock` so its background task survives until process exit; Drop
+/// will signal the spawned coordinator/worker if the slot is ever cleared.
+fn init_federation() {
+    use std::sync::OnceLock;
+    static FEDERATION: OnceLock<tokio::sync::Mutex<FederationManager>> = OnceLock::new();
+
+    let config_path = env::var("HANZO_CONFIG_PATH").unwrap_or_else(|_| "hanzo.toml".to_string());
+    let cfg = FederationConfig::load_from(Path::new(&config_path));
+    if !cfg.enabled {
+        hanzo_log(
+            HanzoLogOption::Node,
+            HanzoLogLevel::Debug,
+            "[federation] disabled (no [federation] block or enabled=false)",
+        );
+        return;
+    }
+    let mgr = FEDERATION.get_or_init(|| tokio::sync::Mutex::new(FederationManager::new(cfg)));
+    // Use try_lock — at boot nothing else holds it. If contended (unexpected),
+    // log and skip rather than block the runner.
+    match mgr.try_lock() {
+        Ok(mut guard) => guard.start(),
+        Err(_) => hanzo_log(
+            HanzoLogOption::Node,
+            HanzoLogLevel::Error,
+            "[federation] manager already locked at boot; not starting",
+        ),
+    }
 }
 
 /// Prints Useful Node information at startup
