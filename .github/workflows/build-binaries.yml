@@ -8,6 +8,7 @@ on:
 jobs:
   build-binaries:
     name: Build binary
+    timeout-minutes: 90
     strategy:
       fail-fast: false
       matrix:
@@ -163,6 +164,7 @@ jobs:
   build-docker-image:
     name: Build and push Docker image to Docker Hub
     runs-on: ubuntu-latest
+    timeout-minutes: 90
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
