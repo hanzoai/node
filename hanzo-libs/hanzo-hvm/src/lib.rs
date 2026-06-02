@@ -69,3 +69,5 @@ impl Market {
         (0..self.q.len()).map(|i| self.q[i] * self.p[i]).sum()
     }
 }
+
+pub mod claim;
