@@ -7,6 +7,7 @@ jobs:
   build:
     name: Build binary
     runs-on: ubuntu-22.04
+    timeout-minutes: 90
     steps:
         - name: Checkout sources
           uses: actions/checkout@v4
