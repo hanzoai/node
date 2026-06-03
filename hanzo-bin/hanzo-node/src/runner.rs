@@ -86,7 +86,7 @@ async fn install_engine() {
                 HanzoLogLevel::Info,
                 &format!("hanzo_engine: loading MistralEngine from path: {path}"),
             );
-            hanzo_engine::MistralEngine::from_model_path(&path)
+            hanzo_engine::MistralEngine::from_model_path(std::path::Path::new(&path))
                 .await
                 .map(|engine| (engine, format!("path={path}")))
         }

@@ -1,0 +1,39 @@
+[package]
+name = "hanzo-mining"
+description = "Hanzo AI - Mining Library"
+license = "MIT"
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+
+[dependencies]
+serde = { workspace = true, features = ["derive"] }
+serde_json = { workspace = true }
+tokio = { workspace = true }
+toml = "0.8"
+dirs = { workspace = true }
+walkdir = "2"
+thiserror = { workspace = true }
+hex = "0.4"
+reqwest = { workspace = true, features = ["json"] }
+rand = "0.8"
+blake3 = { workspace = true }
+zeroize = { version = "1.8", features = ["derive"] }
+chacha20poly1305 = "0.10"
+
+# Lux Consensus SDK for native L1 integration (optional)
+# Enable with: --features consensus
+# Note: lux-consensus is only available when building with the lux monorepo
+# For standalone builds, this feature is disabled
+# [dependencies.lux-consensus]
+# path = "../../../../lux/consensus/pkg/rust"
+# optional = true
+
+[features]
+default = []
+# Enable embedded Lux consensus for native L1 operation (requires lux monorepo)
+# consensus = ["lux-consensus"]
+
+[dev-dependencies]
+tokio = { workspace = true, features = ["full", "test-util"] }
+tempfile = { workspace = true }

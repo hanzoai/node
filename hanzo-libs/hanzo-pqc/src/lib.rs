@@ -26,7 +26,6 @@ pub use config::PqcConfig;
 pub use errors::{PqcError, Result};
 
 // Re-export common types
-#[cfg(feature = "legacy-oqs")]
 pub use oqs;
 
 /// Initialize the PQC subsystem with FIPS-compliant RNG

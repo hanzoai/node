@@ -1,0 +1,59 @@
+[package]
+name = "hanzo-vm"
+description = "Lux VM interface for Hanzo L2 - wraps EVM execution"
+license = "MIT"
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+
+[features]
+default = []
+# Enable embedded Lux consensus for native L1 operation (requires lux monorepo)
+# consensus = ["lux-consensus"]
+# Tests under this feature assume a real LLM engine has been registered by
+# upstream startup code (production runtime). Default builds run without it
+# and verify the dispatch / error-on-missing-engine contract instead.
+real-llm = []
+
+[dependencies]
+# Workspace deps
+tokio = { workspace = true }
+serde = { workspace = true, features = ["derive"] }
+serde_json = { workspace = true }
+anyhow = { workspace = true }
+thiserror = { workspace = true }
+log = { workspace = true }
+sha2 = { workspace = true }
+blake3 = { workspace = true }
+async-trait = { workspace = true }
+hex = { workspace = true }
+
+# PQC
+hanzo-pqc = { workspace = true }
+
+# LLM routing/pricing (HMM market maker)
+hanzo-llm = { workspace = true }
+
+# Inference + embedding engine registry. Precompiles 0x0201/0x0202 call
+# `hanzo_engine::infer` / `embed` against the process-wide registered
+# engine. In the current build this is a stub that returns "no backend"
+# until the canonical engine source tree is restored — see
+# ~/.claude/projects/-Users-z-work-zen/memory/hanzod-engine-stub-facade.md
+hanzo-engine = { workspace = true }
+
+# Canonical Go-backed precompile dispatch (Quasar, ML-DSA, etc.)
+luxprecompile-sys = { path = "../../../../lux/precompile/bindings/rust", package = "lux-precompile" }
+
+# State storage (bundled SQLite for dev; MPT later)
+rusqlite = { workspace = true }
+
+# Lux Consensus SDK for native L1 integration (optional)
+# Enable with: --features consensus
+# Note: lux-consensus is only available when building with the lux monorepo
+# [dependencies.lux-consensus]
+# path = "../../../../lux/consensus/pkg/rust"
+# optional = true
+
+[dev-dependencies]
+tokio-test = { workspace = true }
+tempfile = { workspace = true }
