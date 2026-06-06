@@ -54,10 +54,10 @@ impl HanzoName {
     // Define a list of valid endings for legacy @@ format
     const VALID_ENDINGS: [&'static str; 4] = [".hanzo", ".sepolia-hanzo", ".arb-sep-hanzo", ".sep-hanzo"];
     
-    /// Check if name is in DID format (did:hanzo:* or did:lux:*)
+    /// Check if name is in DID format (did:hanzo:* , did:lux:* or did:zoo:*)
     fn is_did_format(name: &str) -> bool {
         let base = name.split('/').next().unwrap_or(name);
-        base.starts_with("did:hanzo:") || base.starts_with("did:lux:")
+        base.starts_with("did:hanzo:") || base.starts_with("did:lux:") || base.starts_with("did:zoo:")
     }
 
     /// Validate DID format names
@@ -80,15 +80,15 @@ impl HanzoName {
         // Validate DID structure: did:method:network[:optional]
         let did_segments: Vec<&str> = did_part.split(':').collect();
         if did_segments.len() < 3 {
-            return Err("Invalid DID format. Expected did:hanzo:network or did:lux:network.");
+            return Err("Invalid DID format. Expected did:hanzo:network, did:lux:network, or did:zoo:network.");
         }
 
         if did_segments[0] != "did" {
             return Err("DID must start with 'did:'.");
         }
 
-        if did_segments[1] != "hanzo" && did_segments[1] != "lux" {
-            return Err("DID method must be 'hanzo' or 'lux'.");
+        if did_segments[1] != "hanzo" && did_segments[1] != "lux" && did_segments[1] != "zoo" {
+            return Err("DID method must be 'hanzo', 'lux', or 'zoo'.");
         }
 
         // Validate network identifier (alphanumeric)
