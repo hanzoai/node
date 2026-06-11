@@ -1,6 +1,9 @@
 target/
 bin/
 .env
+# go build ./... output for the root `main` package (github.com/hanzoai/node)
+/node
+/hanzod
 /db
 ./db_tests/
 db_tests/
