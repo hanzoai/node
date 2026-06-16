@@ -30,8 +30,8 @@ hanzo-tools = "1.1.21"
 hanzo-tools-runner = "1.0.2"
 hanzo-zap = "0.6.75"
 
-# hanzoai/engine (local path during dev; pin to 0.6.0 for crates.io publish)
-hanzo-engine = { version = "0.6.0", path = "../engine/hanzo-engine" }
+# hanzoai/engine (local path during dev; pin to 0.9.0 for crates.io publish)
+hanzo-engine = { version = "0.9.0", path = "../engine/hanzo-engine" }
 
 # Locals
 hanzo-test-framework = { path = "./hanzo-test-framework" }

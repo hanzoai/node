@@ -67,7 +67,7 @@ hanzo-identity = { workspace = true }
 # Canonical inference + embedding engine. The node registers a real
 # MistralEngine at startup so EVM precompiles 0x0201 / 0x0202 produce
 # real outputs. See `runner::install_engine`.
-hanzo-engine = { path = "../../../engine/hanzo-engine" }
+hanzo-engine = { path = "../../../engine/hanzo-engine", features = ["metal"] }
 hanzo-job-queue-manager = { workspace = true }
 hanzo-tools = { workspace = true }
 hanzo-libp2p-relayer = { workspace = true }
