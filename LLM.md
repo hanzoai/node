@@ -1,4 +1,4 @@
-# node — AI Assistant Context
+# node
 
 <h1 align="center">
   <img src="files/icon.png"/><br/>
