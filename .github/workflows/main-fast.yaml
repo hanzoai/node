@@ -39,7 +39,7 @@ jobs:
   # Build Stage - Compile and push Docker image
   # =============================================================================
   build:
-    runs-on: ubuntu-latest
+    runs-on: hanzo-build-linux-amd64
     timeout-minutes: 60
     if: ${{ github.event_name == 'push' || !github.event.pull_request.draft }}
     permissions:
@@ -85,7 +85,7 @@ jobs:
   # Contract Tests - Run separately (no Docker needed)
   # =============================================================================
   test-contracts:
-    runs-on: ubuntu-latest
+    runs-on: hanzo-build-linux-amd64
     timeout-minutes: 10
     if: ${{ github.event_name == 'push' || !github.event.pull_request.draft }}
     steps:
@@ -106,7 +106,7 @@ jobs:
   # These packages have pure functions, crypto ops, parsing - safe to parallelize
   # =============================================================================
   test-unit-pure:
-    runs-on: ubuntu-latest
+    runs-on: hanzo-build-linux-amd64
     timeout-minutes: 15
     needs: build
     if: ${{ github.event_name == 'push' || !github.event.pull_request.draft }}
@@ -160,7 +160,7 @@ jobs:
   # Database Tests - Medium Parallelization (isolated temp DBs)
   # =============================================================================
   test-database:
-    runs-on: ubuntu-latest
+    runs-on: hanzo-build-linux-amd64
     timeout-minutes: 15
     needs: build
     if: ${{ github.event_name == 'push' || !github.event.pull_request.draft }}
@@ -209,7 +209,7 @@ jobs:
   # API & Network Tests - Low Parallelization (port/network constraints)
   # =============================================================================
   test-api:
-    runs-on: ubuntu-latest
+    runs-on: hanzo-build-linux-amd64
     timeout-minutes: 20
     needs: build
     if: ${{ github.event_name == 'push' || !github.event.pull_request.draft }}
@@ -273,7 +273,7 @@ jobs:
   # Node Integration Tests - Serial (full node startup required)
   # =============================================================================
   test-node:
-    runs-on: ubuntu-latest
+    runs-on: hanzo-build-linux-amd64
     timeout-minutes: 30
     needs: build
     if: ${{ github.event_name == 'push' || !github.event.pull_request.draft }}
@@ -324,7 +324,7 @@ jobs:
   # Network Integration Tests - Serial (requires network infrastructure)
   # =============================================================================
   test-integration:
-    runs-on: ubuntu-latest
+    runs-on: hanzo-build-linux-amd64
     timeout-minutes: 30
     needs: build
     if: ${{ github.event_name == 'push' || !github.event.pull_request.draft }}
@@ -377,7 +377,7 @@ jobs:
   # Other Library Tests - Medium Parallelization
   # =============================================================================
   test-libs-other:
-    runs-on: ubuntu-latest
+    runs-on: hanzo-build-linux-amd64
     timeout-minutes: 15
     needs: build
     if: ${{ github.event_name == 'push' || !github.event.pull_request.draft }}
