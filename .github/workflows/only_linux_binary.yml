@@ -6,7 +6,7 @@ on:
 jobs:
   build:
     name: Build binary
-    runs-on: ubuntu-22.04
+    runs-on: hanzo-build-linux-amd64
     timeout-minutes: 90
     steps:
         - name: Checkout sources
