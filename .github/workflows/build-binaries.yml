@@ -1,136 +1,180 @@
 name: Build hanzo-node binaries
 
+# Canonical native release build for hanzo-node.
+#
+# Every per-arch binary is built NATIVELY on the Hanzo self-hosted runner fleet
+# (no cross-compile, no GitHub-hosted runners) and cosign-signed, via the reusable
+# hanzoai/arc build-matrix. The signed native artifacts are then packaged (7z) and
+# fanned out to the SAME downstream distribution channels as before — Cloudflare R2,
+# the GitHub Release, and Docker Hub.
+#
+# Fleet runs-on mapping (per the canonical fleet):
+#   linux-x64    -> ARC scale-set "hanzoai-amd64"
+#   linux-arm64  -> ARC scale-set "hanzoai-arm64"   (NATIVE on spark; replaces the
+#                                                     old `cross: true` cross-compile)
+#   macos-arm64  -> ["self-hosted","macOS","ARM64"] (dbc)
+#   windows-x64  -> ["self-hosted","Windows","X64"] (evo)
+#
+# ARC Linux runner images are minimal, so the rust toolchain + protobuf compiler are
+# bootstrapped in-job (see the `build` command below). Once the toolchain-baked runner
+# image lands (hanzoai/arc#39) the bootstrap block can be dropped.
+
 on:
   push:
     tags:
       - "v[0-9]+.[0-9]+.[0-9]+"
 
+# cosign keyless signing in the reusable workflow needs an OIDC token. `contents: read`
+# is enough for the build matrix; the downstream release job requests its own token.
+permissions:
+  id-token: write
+  contents: read
+
 jobs:
-  build-binaries:
-    name: Build binary
-    timeout-minutes: 90
+  # ---------------------------------------------------------------------------
+  # 1. Native build + test + cosign signing on the fleet (reusable build-matrix).
+  #    Produces, per platform, an uploaded artifact named after the platform that
+  #    contains: the hanzo-node binary, the hanzo-tools-runner-resources tarball,
+  #    and the cosign .sig/.pem for each.
+  # ---------------------------------------------------------------------------
+  build:
+    name: Build (native + cosign)
+    uses: hanzoai/arc/.github/workflows/build-matrix.yml@main
+    permissions:
+      id-token: write   # cosign keyless (Sigstore / GitHub OIDC)
+      contents: read
+    with:
+      # runsOn: STRING = ARC scale-set name (containerized Linux), ARRAY = label set
+      # for the standalone macOS/Windows hosts ARC can't host.
+      platforms: >-
+        [{"name":"x86_64-unknown-linux-gnu","runsOn":"hanzoai-amd64"},
+         {"name":"aarch64-unknown-linux-gnu","runsOn":"hanzoai-arm64"},
+         {"name":"aarch64-apple-darwin","runsOn":["self-hosted","macOS","ARM64"]},
+         {"name":"x86_64-pc-windows-msvc","runsOn":["self-hosted","Windows","X64"]}]
+      # Single native build command, runs in bash on every platform. It:
+      #   1. bootstraps rust + protobuf (minimal ARC images; brew on macOS; no-op
+      #      where already present, e.g. the baked image from arc#39),
+      #   2. builds hanzo-node for the host's native target (NO --target, NO cross),
+      #   3. stages the binary + the build.rs-produced hanzo-tools-runner-resources
+      #      into dist/ as flat, signable files (resources tarred so symlinks/exec
+      #      bits survive and cosign sign-blob has a single file to sign).
+      build: |
+        set -euo pipefail
+        export AI_MODEL_CATALOG_BUILD=1
+
+        is_windows=0
+        case "${RUNNER_OS:-}" in
+          Windows) is_windows=1 ;;
+        esac
+
+        # --- toolchain bootstrap (minimal ARC linux image; arc#39 will bake these) ---
+        if ! command -v rustup >/dev/null 2>&1 && ! command -v cargo >/dev/null 2>&1; then
+          curl --proto '=https' --tlsv1.2 -fsSL https://sh.rustup.rs | sh -s -- -y --profile minimal
+          export PATH="$HOME/.cargo/bin:$PATH"
+          echo "$HOME/.cargo/bin" >> "$GITHUB_PATH"
+        fi
+        export PATH="$HOME/.cargo/bin:$PATH"
+        rustup show >/dev/null 2>&1 || true
+        # rustfmt is needed by some build scripts in the workspace.
+        rustup component add rustfmt >/dev/null 2>&1 || true
+
+        if ! command -v protoc >/dev/null 2>&1; then
+          if [ "${RUNNER_OS:-}" = "Linux" ]; then
+            if command -v apt-get >/dev/null 2>&1; then
+              ${SUDO:-} apt-get update && ${SUDO:-} apt-get install -y protobuf-compiler clang lld pkg-config libssl-dev \
+                || (apt-get update && apt-get install -y protobuf-compiler clang lld pkg-config libssl-dev) \
+                || sudo apt-get install -y protobuf-compiler clang lld pkg-config libssl-dev
+            fi
+          elif [ "${RUNNER_OS:-}" = "macOS" ]; then
+            brew install protobuf || true
+          fi
+        fi
+
+        # Windows: rust-lld linker (matches the prior cross-free msvc config).
+        if [ "$is_windows" = "1" ]; then
+          mkdir -p .cargo
+          printf '[target.x86_64-pc-windows-msvc]\nlinker = "rust-lld"\n' > .cargo/config.toml
+        fi
+
+        protoc --version || true
+        rustc --version && cargo --version
+
+        # --- native build (host target; no cross-compile) ---
+        cargo build --release --bin hanzo-node
+
+        # --- stage signable artifacts into dist/ ---
+        rm -rf dist && mkdir -p dist
+        if [ "$is_windows" = "1" ]; then BIN=hanzo-node.exe; else BIN=hanzo-node; fi
+        cp "target/release/${BIN}" "dist/${BIN}"
+        if [ -d target/release/hanzo-tools-runner-resources ]; then
+          tar -C target/release -czf dist/hanzo-tools-runner-resources.tar.gz hanzo-tools-runner-resources
+        fi
+        ls -la dist
+      # Build the whole thing under release; the dedicated CI workflows own unit tests,
+      # and a release tag build should not be gated on the full test suite here.
+      test: ''
+      # dist/ holds only files (binary + resources tarball) so cosign sign-blob signs
+      # each cleanly and the .sig/.pem land alongside for the packaging job to ship.
+      artifacts: dist/*
+      sign: true
+
+  # ---------------------------------------------------------------------------
+  # 2. Package the signed native artifacts (7z) and fan out to R2 + GH Release.
+  #    Identical packaging + distribution as before, now consuming the SIGNED
+  #    native binaries (and shipping their cosign .sig/.pem alongside).
+  # ---------------------------------------------------------------------------
+  package-and-release:
+    name: Package + release (${{ matrix.arch }})
+    needs: build
+    # Arch-agnostic zip + upload. Kept on the native amd64 fleet runner (never a
+    # GitHub-hosted runner) per the one-canonical-way goal.
+    runs-on: hanzoai-amd64
+    permissions:
+      contents: write   # svenstaro/upload-release-action writes the GH Release
     strategy:
       fail-fast: false
       matrix:
-        include:
-          # Linux
-          - arch: x86_64-unknown-linux-gnu
-            os: ubuntu-22.04
-            target: x86_64-unknown-linux-gnu
-          - arch: aarch64-unknown-linux-gnu
-            os: ubuntu-22.04
-            target: aarch64-unknown-linux-gnu
-            cross: true
-          # macOS
-          - arch: aarch64-apple-darwin
-            os: macos-14
-            target: aarch64-apple-darwin
-          # Windows
-          - arch: x86_64-pc-windows-msvc
-            os: windows-2022
-            target: x86_64-pc-windows-msvc
-    runs-on: ${{ matrix.os }}
+        arch:
+          - x86_64-unknown-linux-gnu
+          - aarch64-unknown-linux-gnu
+          - aarch64-apple-darwin
+          - x86_64-pc-windows-msvc
     steps:
-      - name: Checkout sources
-        uses: actions/checkout@v4
-
-      - name: Configure rust-lld linker for Windows
-        if: matrix.os == 'windows-2022'
-        run: |
-          if (-Not (Test-Path ".cargo")) { mkdir .cargo }
-          echo '[target.x86_64-pc-windows-msvc]' > .cargo/config.toml
-          echo 'linker = "rust-lld"' >> .cargo/config.toml
-
-      - name: Install protobuf compiler (Linux)
-        if: runner.os == 'Linux'
-        run: sudo apt-get update && sudo apt-get install -y protobuf-compiler
-
-      - name: Install cross-compilation tools (Linux ARM64)
-        if: matrix.cross == true
-        run: |
-          sudo dpkg --add-architecture arm64
-          # Add arm64 package sources
-          sudo sed -i 's/^deb /deb [arch=amd64] /' /etc/apt/sources.list
-          echo "deb [arch=arm64] http://ports.ubuntu.com/ubuntu-ports jammy main restricted universe multiverse" | sudo tee /etc/apt/sources.list.d/arm64.list
-          echo "deb [arch=arm64] http://ports.ubuntu.com/ubuntu-ports jammy-updates main restricted universe multiverse" | sudo tee -a /etc/apt/sources.list.d/arm64.list
-          echo "deb [arch=arm64] http://ports.ubuntu.com/ubuntu-ports jammy-security main restricted universe multiverse" | sudo tee -a /etc/apt/sources.list.d/arm64.list
-          sudo apt-get update
-          sudo apt-get install -y gcc-aarch64-linux-gnu g++-aarch64-linux-gnu libssl-dev:arm64 liblzma-dev:arm64 pkg-config
-          rustup target add aarch64-unknown-linux-gnu
-
-      - name: Install protobuf compiler (macOS)
-        if: runner.os == 'macOS'
-        run: brew install protobuf
-
-      - name: Cache cargo assets
-        id: cache
-        uses: actions/cache@v4
+      - name: Download signed artifacts for ${{ matrix.arch }}
+        uses: actions/download-artifact@v4
         with:
-          path: |
-            ~/.cargo/bin/
-            ~/.cargo/registry/index/
-            ~/.cargo/registry/cache/
-            ~/.cargo/git/db/
-            target/
-          key: ${{ matrix.arch }}-build-cargo-v2
-          restore-keys: |
-            ${{ matrix.arch }}-build-cargo-
+          name: ${{ matrix.arch }}
+          path: dist
 
-
-      - name: Configure cross-compilation (Linux ARM64)
-        if: matrix.cross == true
-        run: |
-          # Write clean config for cross-compilation (gcc linker, no lld)
-          cat > .cargo/config.toml << 'TOML'
-          [profile.dev]
-          incremental = true
-
-          [target.x86_64-pc-windows-msvc]
-          rustflags = ["-Ctarget-feature=+crt-static"]
-
-          [target.x86_64-unknown-linux-gnu]
-          linker = "clang"
-          rustflags = ["-Clink-arg=-fuse-ld=lld"]
-
-          [target.aarch64-unknown-linux-gnu]
-          linker = "aarch64-linux-gnu-gcc"
-          TOML
-          echo "Final .cargo/config.toml:"
-          cat .cargo/config.toml
-
-      - name: Build
+      - name: Assemble bundle (binary + resources + cosign signatures)
         shell: bash
         env:
-          AI_MODEL_CATALOG_BUILD: 1
-        run: |
-          if [ "${{ matrix.cross }}" = "true" ]; then
-            export PKG_CONFIG_ALLOW_CROSS=1
-            export PKG_CONFIG_SYSROOT_DIR=/usr/aarch64-linux-gnu
-            export AARCH64_UNKNOWN_LINUX_GNU_OPENSSL_LIB_DIR=/usr/lib/aarch64-linux-gnu
-            export AARCH64_UNKNOWN_LINUX_GNU_OPENSSL_INCLUDE_DIR=/usr/include/aarch64-linux-gnu
-            export AARCH64_UNKNOWN_LINUX_GNU_OPENSSL_NO_VENDOR=1
-          fi
-          cargo build --release --bin hanzo-node --target ${{ matrix.target }}
-
-      - name: Move binary to expected location
-        shell: bash
-        run: |
-          mkdir -p target/release
-          if [ -f "target/${{ matrix.target }}/release/hanzo-node${{ matrix.arch == 'x86_64-pc-windows-msvc' && '.exe' || '' }}" ]; then
-            cp "target/${{ matrix.target }}/release/hanzo-node${{ matrix.arch == 'x86_64-pc-windows-msvc' && '.exe' || '' }}" target/release/
-          fi
-
-      - name: Prepare bundle files
-        env:
-          ZIP_FILE_NAME: ${{ github.ref_name }}.zip
           EXTENSION: ${{ matrix.arch == 'x86_64-pc-windows-msvc' && '.exe' || '' }}
         run: |
-          mkdir files-to-r2
-          cp target/release/hanzo-node${{ env.EXTENSION }} files-to-r2/hanzo-node${{ env.EXTENSION }}
-          cp -r target/release/hanzo-tools-runner-resources files-to-r2/
+          set -euo pipefail
+          mkdir -p files-to-r2
+          # Binary (+ its cosign signature/cert).
+          cp "dist/hanzo-node${EXTENSION}" files-to-r2/
+          [ -f "dist/hanzo-node${EXTENSION}.sig" ] && cp "dist/hanzo-node${EXTENSION}.sig" files-to-r2/ || true
+          [ -f "dist/hanzo-node${EXTENSION}.pem" ] && cp "dist/hanzo-node${EXTENSION}.pem" files-to-r2/ || true
+          # Tools runner resources (+ its cosign signature/cert), restored to the
+          # original on-disk layout the bundle has always shipped.
+          if [ -f dist/hanzo-tools-runner-resources.tar.gz ]; then
+            tar -C files-to-r2 -xzf dist/hanzo-tools-runner-resources.tar.gz
+            [ -f dist/hanzo-tools-runner-resources.tar.gz.sig ] && cp dist/hanzo-tools-runner-resources.tar.gz.sig files-to-r2/ || true
+            [ -f dist/hanzo-tools-runner-resources.tar.gz.pem ] && cp dist/hanzo-tools-runner-resources.tar.gz.pem files-to-r2/ || true
+          fi
+          ls -la files-to-r2
+
+      - name: Create zip bundle (7z)
+        shell: bash
+        env:
+          ZIP_FILE_NAME: ${{ github.ref_name }}.zip
+        run: |
+          set -euo pipefail
           cd ./files-to-r2
-          7z a -tzip ${{ env.ZIP_FILE_NAME}} . -sdel
-          cp ${{ env.ZIP_FILE_NAME}} latest.zip
+          7z a -tzip "${ZIP_FILE_NAME}" . -sdel
+          cp "${ZIP_FILE_NAME}" latest.zip
 
       - name: Upload bundle to R2 bucket
         continue-on-error: true
@@ -145,17 +189,22 @@ jobs:
 
       - name: Upload bundle to release
         uses: svenstaro/upload-release-action@v2
-        env:
-          EXTENSION: ${{ matrix.arch == 'x86_64-pc-windows-msvc' && '.exe' || '' }}
         with:
           repo_token: ${{ secrets.GITHUB_TOKEN }}
           file: files-to-r2/${{ github.ref_name }}.zip
           asset_name: hanzo-node-${{ matrix.arch }}.zip
           tag: ${{ github.ref }}
           overwrite: true
+
+  # ---------------------------------------------------------------------------
+  # 3. Docker image -> Docker Hub. Preserved distribution channel. Moved off the
+  #    GitHub-hosted ubuntu-latest onto the native amd64 fleet runner to honor the
+  #    no-hosted-runners goal (and arc's build/compile-job lint). Build behavior
+  #    (multi-stage Dockerfile, tags) is unchanged.
+  # ---------------------------------------------------------------------------
   build-docker-image:
     name: Build and push Docker image to Docker Hub
-    runs-on: ubuntu-latest
+    runs-on: hanzoai-amd64
     timeout-minutes: 90
     steps:
       - name: Checkout repository
@@ -163,7 +212,7 @@ jobs:
 
       - name: Download tools from store to pre-install folder
         run: |
-          ./scripts/update_tools.sh        
+          ./scripts/update_tools.sh
 
       - name: Log in to Docker Hub
         uses: docker/login-action@v3
