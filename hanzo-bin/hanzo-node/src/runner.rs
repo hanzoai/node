@@ -3,7 +3,7 @@ use super::utils::environment::NodeEnvironment;
 use crate::utils::args::parse_args;
 use crate::utils::cli::cli_handle_create_message;
 use crate::utils::environment::{fetch_llm_provider_env, fetch_node_environment};
-use crate::utils::keys::generate_or_load_keys;
+use crate::utils::keys::{generate_or_load_keys, resolve_identity_name};
 use crate::zap_server::start_zap_server;
 use async_channel::{bounded, Receiver, Sender};
 use ed25519_dalek::VerifyingKey;
@@ -142,6 +142,16 @@ pub async fn initialize_node() -> Result<
     } else {
         global_identity_name
     };
+
+    // If GLOBAL_IDENTITY_NAME is a chain-only DID prefix (e.g. "did:hanzo:",
+    // "did:zoo:", "did:lux:", or "did:<chain>:auto"), derive the node's own
+    // identity DID from a real secp256k1 wallet that is itself deterministically
+    // derived from the ed25519 secret seed:
+    //   did:<chain>:0x<evm_address>
+    // so identity == wallet == mining-payout address. A full identity (e.g.
+    // "did:hanzo:mainnet" or a legacy "@@..." name) is kept verbatim.
+    let global_identity_name =
+        resolve_identity_name(&global_identity_name, &node_keys.identity_secret_key);
 
     // Initialization, creating Tokio runtime and fetching needed startup data
     let initial_llm_providers = fetch_llm_provider_env(global_identity_name.clone());

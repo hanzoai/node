@@ -634,6 +634,10 @@ pub enum NodeCommand {
         bearer: String,
         res: Sender<Result<Value, APIError>>,
     },
+    V2ApiNodeWallet {
+        bearer: String,
+        res: Sender<Result<Value, APIError>>,
+    },
     V2ApiGetWalletBalance {
         bearer: String,
         res: Sender<Result<Value, APIError>>,

@@ -64,6 +64,7 @@ reqwest = { workspace = true, features = [
 ] }
 keyphrases = { workspace = true }
 hanzo-messages = { workspace = true }
+hanzo-did = { workspace = true }
 hanzo-identity = { workspace = true }
 hanzo-job-queue-manager = { workspace = true }
 hanzo-tools = { workspace = true }
@@ -81,6 +82,8 @@ urlencoding = "2.1.0"
 hex = { workspace = true }
 aes-gcm = "0.10.3"
 blake3 = { workspace = true }
+k256 = { workspace = true }
+tiny-keccak = { workspace = true }
 cron-parser = "0.8.1"
 dashmap = { workspace = true }
 async-lock = "2.4.0"
