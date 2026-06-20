@@ -5871,6 +5871,7 @@ dependencies = [
  "futures",
  "governor",
  "hanzo-db-sqlite",
+ "hanzo-did",
  "hanzo-embed",
  "hanzo-fs",
  "hanzo-http-api",
@@ -5886,6 +5887,7 @@ dependencies = [
  "hanzo-tools-runner",
  "hanzo-zap",
  "hex",
+ "k256",
  "keyphrases",
  "lazy_static",
  "libp2p",
@@ -5910,6 +5912,7 @@ dependencies = [
  "sha2",
  "tempfile",
  "thiserror 2.0.12",
+ "tiny-keccak",
  "tokio",
  "tokio-tungstenite 0.26.2",
  "tokio-util",
@@ -7478,6 +7481,7 @@ dependencies = [
  "elliptic-curve",
  "once_cell",
  "sha2",
+ "signature",
 ]
 
 [[package]]

@@ -1710,6 +1710,14 @@ impl Node {
                     let _ = Node::v2_api_list_wallets(db_clone, wallet_manager_clone, bearer, res).await;
                 });
             }
+            NodeCommand::V2ApiNodeWallet { bearer: _bearer, res } => {
+                let identity_secret_key =
+                    hanzo_messages::hanzo_utils::signatures::clone_signature_secret_key(&self.identity_secret_key);
+                let node_name = self.node_name.clone();
+                tokio::spawn(async move {
+                    let _ = Node::v2_api_node_wallet(identity_secret_key, node_name, res).await;
+                });
+            }
             NodeCommand::V2ApiGetWalletBalance { bearer, res } => {
                 let db_clone = Arc::clone(&self.db);
                 let wallet_manager_clone = self.wallet_manager.clone();

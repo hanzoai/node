@@ -15,6 +15,97 @@ use hanzo_messages::hanzo_utils::{
 use std::{collections::HashMap, env, fs};
 use x25519_dalek::{PublicKey as EncryptionPublicKey, StaticSecret as EncryptionStaticKey};
 
+use k256::ecdsa::SigningKey as Secp256k1SigningKey;
+use k256::elliptic_curve::sec1::ToEncodedPoint;
+use tiny_keccak::{Hasher, Keccak};
+
+/// keccak256 of an arbitrary byte slice.
+fn keccak256(bytes: &[u8]) -> [u8; 32] {
+    let mut hasher = Keccak::v256();
+    let mut out = [0u8; 32];
+    hasher.update(bytes);
+    hasher.finalize(&mut out);
+    out
+}
+
+/// Deterministically derive a real, signable secp256k1 (Ethereum/EVM) private key
+/// from the node's ed25519 SECRET seed.
+///
+/// The 32-byte ed25519 seed (`SigningKey::to_bytes()`) is hashed with keccak256 to
+/// produce 32 bytes used as the secp256k1 scalar. `k256`'s `SigningKey::from_slice`
+/// rejects scalars that are zero or ≥ the curve order; in the astronomically
+/// unlikely event of such a candidate we re-hash until we obtain a valid scalar.
+/// The result is a real secp256k1 key that can sign EVM transactions.
+pub fn derive_secp256k1_signing_key(identity_secret_key: &SigningKey) -> Secp256k1SigningKey {
+    let seed = identity_secret_key.to_bytes();
+    let mut candidate = keccak256(&seed);
+    loop {
+        match Secp256k1SigningKey::from_slice(&candidate) {
+            Ok(key) => return key,
+            // Candidate was 0 or ≥ curve order — re-hash and retry (≈ 2^-128 odds each).
+            Err(_) => candidate = keccak256(&candidate),
+        }
+    }
+}
+
+/// Derive the lowercase `0x`-prefixed 40-hex-char EVM address for a secp256k1 key:
+/// `keccak256(uncompressed_pubkey[1..65])[12..32]`.
+pub fn evm_address_from_secp256k1(signing_key: &Secp256k1SigningKey) -> String {
+    let verifying_key = signing_key.verifying_key();
+    let encoded = verifying_key.to_encoded_point(false); // uncompressed: 0x04 || X || Y
+    let pubkey_bytes = encoded.as_bytes(); // 65 bytes
+    let hash = keccak256(&pubkey_bytes[1..65]);
+    format!("0x{}", hex::encode(&hash[12..32]))
+}
+
+/// Derive the node's real EVM wallet address (`0x` + 40 lowercase hex) from its
+/// ed25519 secret seed via the canonical secp256k1 derivation above.
+pub fn derive_eth_address_from_identity(identity_secret_key: &SigningKey) -> String {
+    let secp = derive_secp256k1_signing_key(identity_secret_key);
+    evm_address_from_secp256k1(&secp)
+}
+
+/// Derive a node's identity DID from its ed25519 SECRET key when the configured
+/// `GLOBAL_IDENTITY_NAME` is a chain-only DID prefix.
+///
+/// The node's wallet is unified with its identity: a real, signable secp256k1
+/// keypair is deterministically derived from the ed25519 secret seed (see
+/// [`derive_secp256k1_signing_key`]), and the resulting EVM address becomes the
+/// node's DID id. Thus identity == wallet == mining-payout address.
+///
+/// Behavior:
+/// - Input like `did:hanzo:`, `did:zoo:`, `did:lux:`, or `did:<chain>:auto`
+///   (with optional trailing slash/whitespace) → `did:<chain>:0x<evm_address>`.
+/// - Any other value (a full identity such as `did:hanzo:mainnet` or a legacy
+///   `@@name.hanzo`) is returned verbatim.
+pub fn resolve_identity_name(raw_name: &str, identity_secret_key: &SigningKey) -> String {
+    let trimmed = raw_name.trim();
+
+    // Only the supported chains may be auto-derived.
+    let chain = ["hanzo", "zoo", "lux"].into_iter().find_map(|chain| {
+        let prefix = format!("did:{chain}:");
+        let rest = trimmed.strip_prefix(&prefix)?;
+        // Chain-only prefix: nothing after `did:<chain>:`, or the explicit `auto`
+        // sentinel. A trailing slash is tolerated.
+        let rest = rest.trim_end_matches('/');
+        if rest.is_empty() || rest == "auto" {
+            Some(chain)
+        } else {
+            None
+        }
+    });
+
+    match chain {
+        Some(chain) => {
+            let address = derive_eth_address_from_identity(identity_secret_key);
+            // hanzo-did builds `did:<method>:<id>` via Display; id == `0x<addr>`.
+            hanzo_did::DID::new(chain, address).to_string()
+        }
+        // Full identity (or legacy format) — keep verbatim.
+        None => trimmed.to_string(),
+    }
+}
+
 pub struct NodeKeys {
     pub identity_secret_key: SigningKey,
     pub identity_public_key: VerifyingKey,
