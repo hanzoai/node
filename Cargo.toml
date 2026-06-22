@@ -58,13 +58,13 @@ hanzo-zap = "0.6.75"
 # NOTE: 1.0.2 is not yet on crates.io (only 0.6.0 is published; engine main is
 # at 1.0.2). Publishing 1.0.2 is Part A of the plan — until then this resolves
 # via the path dep only.
-hanzo-engine = { version = "1.0.2", path = "../engine/hanzo-engine" }
+hanzo-engine = { path = "../engine/hanzo-engine" }
 # Convergence (2026-06, engine 0.6.0 -> 1.0.2 port): `install_engine` /
 # `install_zen5_engines` build an owned `Arc<Hanzo>` via the server-core
 # `HanzoForServerBuilder` (which wraps the 1.0.2 `HanzoBuilder` + Loader). The
 # 0.6.0 process-wide engine registry was removed, so the node keeps its own
 # handle (runner::ENGINE). Same path-dep/version layering as hanzo-engine.
-hanzo-server-core = { version = "1.0.2", path = "../engine/hanzo-server-core", default-features = false }
+hanzo-server-core = { path = "../engine/hanzo-server-core", default-features = false }
 
 
 rmcp = { version = "0.8" }
