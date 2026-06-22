@@ -3514,7 +3514,7 @@ dependencies = [
 
 [[package]]
 name = "hanzo-audio"
-version = "1.0.2"
+version = "0.8.3"
 dependencies = [
  "anyhow",
  "apodize",
@@ -3590,7 +3590,7 @@ dependencies = [
 
 [[package]]
 name = "hanzo-engine"
-version = "1.0.2"
+version = "0.8.3"
 dependencies = [
  "ahash 0.8.12",
  "akin",
@@ -3673,7 +3673,7 @@ dependencies = [
  "symphonia",
  "sysinfo",
  "thiserror 2.0.18",
- "tokenizers",
+ "tokenizers 0.21.4",
  "tokio",
  "tokio-rayon",
  "tokio-tungstenite 0.28.0",
@@ -3692,12 +3692,23 @@ dependencies = [
 
 [[package]]
 name = "hanzo-flash-attn"
-version = "0.9.2"
+version = "0.11.0"
 dependencies = [
  "anyhow",
  "bindgen_cuda",
  "half",
+ "hanzo-flash-attn-build",
  "hanzo-ml",
+]
+
+[[package]]
+name = "hanzo-flash-attn-build"
+version = "0.11.0"
+dependencies = [
+ "anyhow",
+ "flate2",
+ "tar",
+ "ureq",
 ]
 
 [[package]]
@@ -3808,8 +3819,9 @@ dependencies = [
 
 [[package]]
 name = "hanzo-kernels"
-version = "0.9.2"
+version = "0.11.0"
 dependencies = [
+ "glob",
  "hanzo-bindgen-cuda",
 ]
 
@@ -3841,7 +3853,7 @@ dependencies = [
 
 [[package]]
 name = "hanzo-llm-mcp"
-version = "1.0.2"
+version = "0.8.3"
 dependencies = [
  "anyhow",
  "async-trait",
@@ -3934,8 +3946,9 @@ dependencies = [
 
 [[package]]
 name = "hanzo-metal-kernels"
-version = "0.9.2"
+version = "0.11.0"
 dependencies = [
+ "block2",
  "half",
  "objc2",
  "objc2-foundation",
@@ -3947,7 +3960,7 @@ dependencies = [
 
 [[package]]
 name = "hanzo-ml"
-version = "0.9.2"
+version = "0.11.0"
 dependencies = [
  "ash",
  "byteorder",
@@ -3971,13 +3984,14 @@ dependencies = [
  "rocm-rs",
  "safetensors 0.7.0",
  "thiserror 2.0.18",
+ "tokenizers 0.22.2",
  "yoke 0.8.2",
- "zip 7.2.0",
+ "zip 8.6.0",
 ]
 
 [[package]]
 name = "hanzo-nn"
-version = "0.9.2"
+version = "0.11.0"
 dependencies = [
  "half",
  "hanzo-metal-kernels",
@@ -4076,7 +4090,7 @@ dependencies = [
 
 [[package]]
 name = "hanzo-paged-attn"
-version = "1.0.2"
+version = "0.8.3"
 dependencies = [
  "anyhow",
  "cudaforge",
@@ -4092,7 +4106,7 @@ dependencies = [
 
 [[package]]
 name = "hanzo-quant"
-version = "1.0.2"
+version = "0.8.3"
 dependencies = [
  "byteorder",
  "cudaforge",
@@ -4103,6 +4117,7 @@ dependencies = [
  "hanzo-ml",
  "hanzo-nn",
  "hf-hub",
+ "indicatif 0.18.4",
  "lazy_static",
  "memmap2",
  "objc2-foundation",
@@ -4121,7 +4136,7 @@ dependencies = [
 
 [[package]]
 name = "hanzo-rocm-kernels"
-version = "0.10.2"
+version = "0.11.0"
 dependencies = [
  "dirs 5.0.1",
  "half",
@@ -4184,7 +4199,7 @@ dependencies = [
 
 [[package]]
 name = "hanzo-sandbox"
-version = "1.0.2"
+version = "0.8.3"
 dependencies = [
  "anyhow",
  "itoa",
@@ -4200,7 +4215,7 @@ dependencies = [
 
 [[package]]
 name = "hanzo-server-core"
-version = "1.0.2"
+version = "0.8.3"
 dependencies = [
  "anyhow",
  "axum 0.8.9",
@@ -4312,7 +4327,7 @@ dependencies = [
 
 [[package]]
 name = "hanzo-ug"
-version = "0.9.2"
+version = "0.11.0"
 dependencies = [
  "ug",
  "ug-cuda",
@@ -4321,7 +4336,7 @@ dependencies = [
 
 [[package]]
 name = "hanzo-vision"
-version = "1.0.2"
+version = "0.8.3"
 dependencies = [
  "hanzo-ml",
  "image",
@@ -10303,6 +10318,39 @@ dependencies = [
 ]
 
 [[package]]
+name = "tokenizers"
+version = "0.22.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "b238e22d44a15349529690fb07bd645cf58149a1b1e44d6cb5bd1641ff1a6223"
+dependencies = [
+ "ahash 0.8.12",
+ "aho-corasick",
+ "compact_str",
+ "dary_heap",
+ "derive_builder 0.20.2",
+ "esaxx-rs",
+ "getrandom 0.3.4",
+ "itertools 0.14.0",
+ "log",
+ "macro_rules_attribute",
+ "monostate",
+ "onig",
+ "paste",
+ "rand 0.9.4",
+ "rayon",
+ "rayon-cond",
+ "regex",
+ "regex-syntax",
+ "serde",
+ "serde_json",
+ "spm_precompiled",
+ "thiserror 2.0.18",
+ "unicode-normalization-alignments",
+ "unicode-segmentation",
+ "unicode_categories",
+]
+
+[[package]]
 name = "tokio"
 version = "1.52.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -10502,7 +10550,7 @@ dependencies = [
  "log",
  "serde",
  "serde_json",
- "tokenizers",
+ "tokenizers 0.21.4",
  "toktrie",
 ]
 
@@ -12583,9 +12631,9 @@ dependencies = [
 
 [[package]]
 name = "zip"
-version = "7.2.0"
+version = "8.6.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "c42e33efc22a0650c311c2ef19115ce232583abbe80850bc8b66509ebef02de0"
+checksum = "2d04a6b5381502aa6087c94c669499eb1602eb9c5e8198e534de571f7154809b"
 dependencies = [
  "crc32fast",
  "indexmap 2.14.0",
