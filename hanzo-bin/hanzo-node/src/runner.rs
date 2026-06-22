@@ -9,7 +9,7 @@ use crate::zap_server::start_zap_server;
 use async_channel::{bounded, Receiver, Sender};
 use ed25519_dalek::VerifyingKey;
 use hanzo_embed::embedding_generator::RemoteEmbeddingGenerator;
-use hanzo_engine::{AutoDeviceMapParams, Hanzo, ModelDType, ModelSelected};
+use hanzo_engine::{register_engine, AutoDeviceMapParams, Hanzo, ModelDType, ModelSelected};
 use hanzo_server_core::hanzo_for_server_builder::HanzoForServerBuilder;
 use hanzo_http_api::node_api_router;
 use hanzo_http_api::node_commands::NodeCommand;
@@ -26,7 +26,7 @@ use std::error::Error as StdError;
 use std::fmt;
 use std::net::TcpListener;
 use std::path::Path;
-use std::sync::{Arc, OnceLock, Weak};
+use std::sync::{Arc, Weak};
 use std::{env, fs};
 
 use tokio::sync::Mutex;
@@ -66,27 +66,24 @@ fn port_is_available(port: u16) -> bool {
 /// Process-wide handle to the inference/embedding engine, read by the EVM
 /// precompile handler for `0x0201` (AI inference) and `0x0202` (AI embedding).
 ///
-/// This replaces the engine 0.6.0 process-wide registry (the `register_*` free
-/// functions + global slot) that 1.0.2 removed. 1.0.2's public API is a pure
-/// builder that hands back an owned `Arc<Hanzo>`; there is no global slot in the
-/// engine anymore, so the node keeps its own. First writer wins: whichever of
-/// `install_zen5_engines` (native GGUF fast-path, runs first) or
-/// `install_engine` (HF-repo / safetensors fallback, runs second) populates the
-/// slot first owns it — the other becomes a logged no-op, matching the old
-/// first-writer-wins semantics exactly.
-static ENGINE: OnceLock<Arc<Hanzo>> = OnceLock::new();
+/// The process-wide engine now lives in `hanzo_engine::precompile_bridge` (the
+/// ONE registry — `register_engine` / `engine_handle` / `infer` / `embed`), so
+/// the VM precompile handlers (`0x0201` / `0x0202`) and the node share a single
+/// slot instead of two. First writer wins: whichever of `install_zen5_engines`
+/// (native GGUF fast-path, runs first) or `install_engine` (HF-repo /
+/// safetensors fallback, runs second) populates it first owns it.
 
 /// Borrow the installed engine, if any. The EVM precompile handler for
-/// `0x0201`/`0x0202` calls this; `None` means "no model loaded" and the
-/// precompile reverts ("fail open"). Lives in `hanzo_node::runner`.
+/// `0x0201`/`0x0202` reads it through the same bridge; `None` means "no model
+/// loaded" and the precompile reverts ("fail open").
 pub fn engine_handle() -> Option<Arc<Hanzo>> {
-    ENGINE.get().cloned()
+    hanzo_engine::engine_handle()
 }
 
-/// Install `hanzo` into [`ENGINE`] iff the slot is still empty. Returns `true`
-/// if this call won the slot. `from` is a short human label for logs.
+/// Install `hanzo` into the shared engine bridge iff the slot is still empty.
+/// Returns `true` if this call won the slot. `from` is a short human label.
 fn try_install_engine(hanzo: Arc<Hanzo>, from: &str) -> bool {
-    if ENGINE.set(hanzo).is_ok() {
+    if register_engine(hanzo) {
         hanzo_log(
             HanzoLogOption::Node,
             HanzoLogLevel::Info,
@@ -137,7 +134,7 @@ async fn build_hanzo(model: ModelSelected, model_id: &str) -> anyhow::Result<Arc
 /// then revert at call time ("fail open"). A node without a model is still a
 /// valid node — it just can't serve those two precompiles.
 async fn install_engine() {
-    if ENGINE.get().is_some() {
+    if hanzo_engine::engine_handle().is_some() {
         hanzo_log(
             HanzoLogOption::Node,
             HanzoLogLevel::Debug,
