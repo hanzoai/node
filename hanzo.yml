@@ -1,0 +1,40 @@
+# Canonical CI/CD config for hanzoai/node — read by both the hanzoai/ci
+# reusable workflow (.github/workflows/cicd.yml) and platform.hanzo.ai.
+#
+# Builds `hanzod` — the Hanzo AI Network node: a reth/revm EVM L2 that
+# settles to Lux L1, with AI mining and the hanzo-l2 bridge/sequencer.
+#
+# The production image is docker/Dockerfile (pure env-var config, no config
+# files at runtime, multi-stage, --release --locked, /v2/health_check probe).
+# It builds the single `hanzod` binary target from the hanzo-node package.
+images:
+  - name: node
+    context: .
+    dockerfile: docker/Dockerfile
+    repo: ghcr.io/hanzoai/node
+    tag-suffix: node
+    build-args:
+      BUILD_TYPE: release
+
+# No `test:` block here: the Rust workspace test matrix is heavy (Deno/uv tool
+# runners, libp2p, network harness) and already runs in main.yaml / main-fast.yaml.
+# This file owns the image build + L2 rollout, not the unit-test matrix.
+
+# Deploy: roll the freshly-built image onto the Hanzo L2 sequencer deployment.
+# Fires only on the `main` branch (and tags), and only when KMS hands back a
+# kubeconfig — so PRs and forks never deploy. The hanzod L2 runs in the
+# hanzo-mainnet namespace on do-sfo3-hanzo-k8s, settling to Lux L1.
+deploy:
+  cluster: do-sfo3-hanzo-k8s
+  namespace: hanzo-mainnet
+  on: [main]
+  services:
+    - name: hanzod
+      image: node
+
+# KMS (kms.hanzo.ai, Universal Auth) supplies the GHCR push token and the
+# target kubeconfig at run time. Only KMS_CLIENT_ID / KMS_CLIENT_SECRET live in
+# GitHub (org-level secrets, already present); KMS_WORKSPACE is a repo/org var.
+kms:
+  path: /deploy
+  environment: prod
