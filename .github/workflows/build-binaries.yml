@@ -9,8 +9,8 @@ name: Build hanzo-node binaries
 # the GitHub Release, and Docker Hub.
 #
 # Fleet runs-on mapping (per the canonical fleet):
-#   linux-x64    -> ARC scale-set "hanzoai-amd64"
-#   linux-arm64  -> ARC scale-set "hanzoai-arm64"   (NATIVE on spark; replaces the
+#   linux-x64    -> ARC scale-set "hanzo-build-linux-amd64"
+#   linux-arm64  -> ARC scale-set "hanzo-build-linux-arm64"   (NATIVE on spark; replaces the
 #                                                     old `cross: true` cross-compile)
 #   macos-arm64  -> ["self-hosted","macOS","ARM64"] (dbc)
 #   windows-x64  -> ["self-hosted","Windows","X64"] (evo)
@@ -47,8 +47,8 @@ jobs:
       # runsOn: STRING = ARC scale-set name (containerized Linux), ARRAY = label set
       # for the standalone macOS/Windows hosts ARC can't host.
       platforms: >-
-        [{"name":"x86_64-unknown-linux-gnu","runsOn":"hanzoai-amd64"},
-         {"name":"aarch64-unknown-linux-gnu","runsOn":"hanzoai-arm64"},
+        [{"name":"x86_64-unknown-linux-gnu","runsOn":"hanzo-build-linux-amd64"},
+         {"name":"aarch64-unknown-linux-gnu","runsOn":"hanzo-build-linux-arm64"},
          {"name":"aarch64-apple-darwin","runsOn":["self-hosted","macOS","ARM64"]},
          {"name":"x86_64-pc-windows-msvc","runsOn":["self-hosted","Windows","X64"]}]
       # Single native build command, runs in bash on every platform. It:
@@ -128,7 +128,7 @@ jobs:
     needs: build
     # Arch-agnostic zip + upload. Kept on the native amd64 fleet runner (never a
     # GitHub-hosted runner) per the one-canonical-way goal.
-    runs-on: hanzoai-amd64
+    runs-on: hanzo-build-linux-amd64
     permissions:
       contents: write   # svenstaro/upload-release-action writes the GH Release
     strategy:
@@ -204,7 +204,7 @@ jobs:
   # ---------------------------------------------------------------------------
   build-docker-image:
     name: Build and push Docker image to Docker Hub
-    runs-on: hanzoai-amd64
+    runs-on: hanzo-build-linux-amd64
     timeout-minutes: 90
     steps:
       - name: Checkout repository
