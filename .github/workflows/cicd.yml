@@ -9,4 +9,10 @@ on:
 jobs:
   cicd:
     uses: hanzoai/ci/.github/workflows/build.yml@v1
+    # Pin to the live Hanzo ARC build scale-set. The reusable's default
+    # ["self-hosted","linux","amd64"] only matches the evo-* pool, which is
+    # currently scaled to zero; hanzo-build-linux-amd64 is the ephemeral
+    # scale-set that actually picks up queued jobs (it backs Workflow Sanity).
+    with:
+      runner: '["hanzo-build-linux-amd64"]'
     secrets: inherit
