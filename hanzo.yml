@@ -22,11 +22,12 @@ images:
 
 # Deploy: roll the freshly-built image onto the Hanzo L2 sequencer deployment.
 # Fires only on the `main` branch (and tags), and only when KMS hands back a
-# kubeconfig — so PRs and forks never deploy. The hanzod L2 runs in the
-# hanzo-mainnet namespace on do-sfo3-hanzo-k8s, settling to Lux L1.
+# kubeconfig — so PRs and forks never deploy. The hanzod L2 runs in the `hanzo`
+# namespace (the legacy mainnet ns, labelled hanzo.ai/env=mainnet,
+# hanzo.ai/chain-id=36963) on do-sfo3-hanzo-k8s, settling to Lux L1.
 deploy:
   cluster: do-sfo3-hanzo-k8s
-  namespace: hanzo-mainnet
+  namespace: hanzo
   # Quoted: a bare `on:` key is parsed as the boolean true under YAML 1.1
   # (the same "Norway problem" that bites `no`/`yes`); the CI reads
   # deploy['on'] by string key, so it must stay a string.
