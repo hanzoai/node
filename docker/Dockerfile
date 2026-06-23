@@ -48,13 +48,14 @@ RUN rustup component add rustfmt
 # lld is configured as the linker via .cargo/config.toml (uses ~3x less RAM than ld).
 ENV CARGO_BUILD_JOBS=4
 
-# Build the project
-# Build the entire workspace to properly resolve all dependencies
-# Then extract just the hanzo_node binary we need
+# Build the project.
+# The hanzo-node package builds a single binary target named `hanzod`
+# (package name = hanzo-node, [[bin]] name = hanzod, default-run = hanzod).
+# We build that bin and stage it + the tools-runner resources for the runtime.
 RUN --mount=type=cache,target=/usr/local/cargo/registry \
     --mount=type=cache,target=/build/target \
-    cargo build --locked --bin hanzo-node $([ "$BUILD_TYPE" = "release" ] && echo "--release") && \
-    cp target/${BUILD_TYPE}/hanzo-node /build/hanzo-node && \
+    cargo build --locked --bin hanzod $([ "$BUILD_TYPE" = "release" ] && echo "--release") && \
+    cp target/${BUILD_TYPE}/hanzod /build/hanzod && \
     cp -r target/${BUILD_TYPE}/hanzo-tools-runner-resources /build/hanzo-tools-runner-resources || true
 
 # ============================================================================
@@ -95,11 +96,11 @@ WORKDIR /app
 COPY docker/run_node.sh /app/
 
 # Copy built binaries and resources from builder
-COPY --from=builder /build/hanzo-node /app/
+COPY --from=builder /build/hanzod /app/
 COPY --from=builder /build/hanzo-tools-runner-resources /app/hanzo-tools-runner-resources
 
 # Make script executable
-RUN chmod +x /app/run_node.sh /app/hanzo-node
+RUN chmod +x /app/run_node.sh /app/hanzod
 
 # Set ownership
 RUN chown -R hanzo:hanzo /app

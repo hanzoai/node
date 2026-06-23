@@ -1,0 +1,13 @@
+# Declares the self-hosted ARC runner labels used across this repo's
+# workflows so actionlint (run label-strict in the Workflow Sanity check)
+# recognizes them instead of flagging "unknown label".
+#
+# These are the canonical Hanzo ARC scale-set labels (one-and-only-one
+# naming): hanzo-build-linux-{amd64,arm64} for builds, hanzo-deploy-linux-amd64
+# for deploys. macOS/Windows self-hosted hosts (which ARC can't run) are
+# covered by actionlint's builtin self-hosted/macOS/Windows/ARM64/X64 labels.
+self-hosted-runner:
+  labels:
+    - hanzo-build-linux-amd64
+    - hanzo-build-linux-arm64
+    - hanzo-deploy-linux-amd64
