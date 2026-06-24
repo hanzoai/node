@@ -3610,6 +3610,7 @@ dependencies = [
  "derive-new",
  "derive_more 2.1.1",
  "dirs 6.0.0",
+ "ed25519-dalek",
  "either",
  "float8",
  "futures",
