@@ -96,10 +96,8 @@ jobs:
         uses: actions/checkout@v4
         with:
           submodules: recursive
-          # contracts/lib/standard -> luxfi/standard is a PRIVATE repo; the
-          # default GITHUB_TOKEN only scopes to hanzoai/node, so a recursive
-          # submodule checkout fails fast (~4s) without a cross-org token.
-          token: ${{ secrets.GH_PAT }}
+          # luxfi/standard (+ openzeppelin, forge-std) are PUBLIC HTTPS submodules;
+          # the default GITHUB_TOKEN clones them. No PAT (empty GH_PAT breaks checkout).
 
       - name: Install Foundry
         uses: foundry-rs/foundry-toolchain@v1
