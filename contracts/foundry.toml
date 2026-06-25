@@ -2,12 +2,20 @@
 src = "src"
 out = "out"
 libs = ["lib"]
-evm_version = "paris"
-solc_version = "0.8.24"
+# cancun + via_ir + 0.8.30 to consume @luxfi/standard/ai (LP-302 pins ^0.8.30).
+# 0.8.30 is the floor that compiles the canonical ComputeProofLib; not bumped higher.
+evm_version = "cancun"
+solc_version = "0.8.30"
+via_ir = true
 
+# @luxfi/standard scoped to its own contracts/ root so node-go's vendored
+# OpenZeppelin v5.5.0 stays authoritative for @openzeppelin/ (the standard
+# submodule carries OZ v5.6.1 — we never let its tree win the remap; we only
+# import the dependency-free ComputeProofLib + the IComputeVerifier interface).
 remappings = [
     "@openzeppelin/contracts/=lib/openzeppelin-contracts/contracts/",
     "forge-std/=lib/forge-std/src/",
+    "@luxfi/standard/=lib/standard/contracts/",
 ]
 
 # See more config options https://github.com/foundry-rs/foundry/blob/master/crates/config/README.md#all-options
