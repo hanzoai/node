@@ -1,11 +1,17 @@
 use reqwest::Client;
 use rusqlite::Result;
-use serde::{Deserialize, Serialize};
+use serde::Deserialize;
 use hanzo_embed::model_type::EmbeddingModelType;
 
-#[derive(Serialize, Deserialize)]
-struct OllamaResponse {
+// Native hanzo-engine OpenAI-compatible embeddings response (`/v1/embeddings`).
+#[derive(Deserialize)]
+struct EmbeddingData {
     embedding: Vec<f32>,
+}
+
+#[derive(Deserialize)]
+struct EmbeddingResponse {
+    data: Vec<EmbeddingData>,
 }
 
 pub struct EmbeddingFunction {
@@ -37,13 +43,13 @@ impl EmbeddingFunction {
 
         let request_body = serde_json::json!({
             "model": model_str,
-            "prompt": truncated_prompt
+            "input": truncated_prompt
         });
 
         let full_url = if self.api_url.ends_with('/') {
-            format!("{}api/embeddings", self.api_url)
+            format!("{}v1/embeddings", self.api_url)
         } else {
-            format!("{}/api/embeddings", self.api_url)
+            format!("{}/v1/embeddings", self.api_url)
         };
 
         let response = self.client.post(&full_url).json(&request_body).send().await;
@@ -54,12 +60,17 @@ impl EmbeddingFunction {
                     println!("Failed to send request to embedding API: {}", response.status());
                     return Err(rusqlite::Error::InvalidQuery);
                 }
-                let ollama_response = response.json::<OllamaResponse>().await.map_err(|e| {
-                    println!("Failed to convert response to OllamaResponse: {}", e);
+                let embedding_response = response.json::<EmbeddingResponse>().await.map_err(|e| {
+                    println!("Failed to convert response to EmbeddingResponse: {}", e);
                     rusqlite::Error::InvalidQuery
                 })?;
 
-                Ok(ollama_response.embedding)
+                embedding_response
+                    .data
+                    .into_iter()
+                    .next()
+                    .map(|d| d.embedding)
+                    .ok_or(rusqlite::Error::InvalidQuery)
             }
             Err(e) => {
                 println!("Failed to send request to embedding API: {}", e);
