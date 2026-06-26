@@ -56,8 +56,9 @@ impl HanzoName {
     
     /// Check if name is in DID format (did:hanzo:* or did:lux:*)
     fn is_did_format(name: &str) -> bool {
+        // Any sovereign-L1 brand: did:hanzo:, did:lux:, did:zoo:, did:pars:, …
         let base = name.split('/').next().unwrap_or(name);
-        base.starts_with("did:hanzo:") || base.starts_with("did:lux:")
+        base.starts_with("did:")
     }
 
     /// Validate DID format names
@@ -80,15 +81,18 @@ impl HanzoName {
         // Validate DID structure: did:method:network[:optional]
         let did_segments: Vec<&str> = did_part.split(':').collect();
         if did_segments.len() < 3 {
-            return Err("Invalid DID format. Expected did:hanzo:network or did:lux:network.");
+            return Err("Invalid DID format. Expected did:<brand>:network (e.g. did:hanzo:mainnet, did:zoo:0x…).");
         }
 
         if did_segments[0] != "did" {
             return Err("DID must start with 'did:'.");
         }
 
-        if did_segments[1] != "hanzo" && did_segments[1] != "lux" {
-            return Err("DID method must be 'hanzo' or 'lux'.");
+        // DID method = sovereign-L1 brand (hanzo, lux, zoo, pars, …); accept any
+        // alphanumeric brand rather than hardcoding a whitelist.
+        let method_regex = Regex::new(r"^[a-zA-Z0-9_]+$").unwrap();
+        if !method_regex.is_match(did_segments[1]) {
+            return Err("DID method must be alphanumeric.");
         }
 
         // Validate network identifier (alphanumeric)
