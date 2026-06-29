@@ -1,3 +1,5 @@
+<p align="center"><img src=".github/hero.svg" alt="node" width="880"></p>
+
 <h1 align="center">
   <img src="files/icon.png"/><br/>
   Hanzo Node
