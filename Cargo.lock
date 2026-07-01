@@ -3514,7 +3514,7 @@ dependencies = [
 
 [[package]]
 name = "hanzo-audio"
-version = "0.8.3"
+version = "1.3.0"
 dependencies = [
  "anyhow",
  "apodize",
@@ -3590,7 +3590,7 @@ dependencies = [
 
 [[package]]
 name = "hanzo-engine"
-version = "0.8.3"
+version = "1.3.0"
 dependencies = [
  "ahash 0.8.12",
  "akin",
@@ -3610,6 +3610,7 @@ dependencies = [
  "derive-new",
  "derive_more 2.1.1",
  "dirs 6.0.0",
+ "ed25519-dalek",
  "either",
  "float8",
  "futures",
@@ -3668,6 +3669,7 @@ dependencies = [
  "serde_json",
  "serde_plain",
  "sha1",
+ "sha3",
  "statrs",
  "strum",
  "symphonia",
@@ -3692,7 +3694,9 @@ dependencies = [
 
 [[package]]
 name = "hanzo-flash-attn"
-version = "0.11.0"
+version = "0.11.7"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "c4c8f21201b1445da6be935188e00bbe6c3e6944d6059fda4ec9cedcafa2207e"
 dependencies = [
  "anyhow",
  "bindgen_cuda",
@@ -3703,7 +3707,9 @@ dependencies = [
 
 [[package]]
 name = "hanzo-flash-attn-build"
-version = "0.11.0"
+version = "0.11.7"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "52698f13c18ea84d0abb7edfaac876e0747d31b565b7f6117d1bc96aa615bc70"
 dependencies = [
  "anyhow",
  "flate2",
@@ -3819,7 +3825,9 @@ dependencies = [
 
 [[package]]
 name = "hanzo-kernels"
-version = "0.11.0"
+version = "0.11.7"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "31ea74ff8c954696328a7d2281f214f1d4491905624f1983fc7358263a77978f"
 dependencies = [
  "glob",
  "hanzo-bindgen-cuda",
@@ -3853,7 +3861,7 @@ dependencies = [
 
 [[package]]
 name = "hanzo-llm-mcp"
-version = "0.8.3"
+version = "1.3.0"
 dependencies = [
  "anyhow",
  "async-trait",
@@ -3946,7 +3954,9 @@ dependencies = [
 
 [[package]]
 name = "hanzo-metal-kernels"
-version = "0.11.0"
+version = "0.11.7"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "6c426a0607465b6d07af05677a642d21aa97d34ba92aab1bd4725e32d6e64e18"
 dependencies = [
  "block2",
  "half",
@@ -3960,7 +3970,9 @@ dependencies = [
 
 [[package]]
 name = "hanzo-ml"
-version = "0.11.0"
+version = "0.11.7"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "a57c6a9ce2500bde482c0cffcd9a80c587b831f75f11e43946f4dfef0089727c"
 dependencies = [
  "ash",
  "byteorder",
@@ -3970,6 +3982,7 @@ dependencies = [
  "half",
  "hanzo-kernels",
  "hanzo-metal-kernels",
+ "hanzo-rocm",
  "hanzo-rocm-kernels",
  "hanzo-ug",
  "libm",
@@ -3981,7 +3994,6 @@ dependencies = [
  "rand 0.9.4",
  "rand_distr 0.5.1",
  "rayon",
- "rocm-rs",
  "safetensors 0.7.0",
  "thiserror 2.0.18",
  "tokenizers 0.22.2",
@@ -3991,7 +4003,9 @@ dependencies = [
 
 [[package]]
 name = "hanzo-nn"
-version = "0.11.0"
+version = "0.11.7"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "09c0c912c4561160eb723ba591ad2f892dc539be33e8ceb67f598673adaa5b01"
 dependencies = [
  "half",
  "hanzo-metal-kernels",
@@ -4090,7 +4104,7 @@ dependencies = [
 
 [[package]]
 name = "hanzo-paged-attn"
-version = "0.8.3"
+version = "1.3.0"
 dependencies = [
  "anyhow",
  "cudaforge",
@@ -4106,7 +4120,7 @@ dependencies = [
 
 [[package]]
 name = "hanzo-quant"
-version = "0.8.3"
+version = "1.3.0"
 dependencies = [
  "byteorder",
  "cudaforge",
@@ -4135,12 +4149,25 @@ dependencies = [
 ]
 
 [[package]]
+name = "hanzo-rocm"
+version = "0.5.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "0dbfef9cc690175e1da724aa4880e1500e02f63b65ce4fdc56961e091c6d4392"
+dependencies = [
+ "bindgen",
+ "paste",
+ "rocm_kernel_macros",
+]
+
+[[package]]
 name = "hanzo-rocm-kernels"
-version = "0.11.0"
+version = "0.11.7"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "679fdbbebad1325a95df4d6443c82efaf36dd587545debf9f382dcb2a37c7989"
 dependencies = [
  "dirs 5.0.1",
  "half",
- "rocm-rs",
+ "hanzo-rocm",
  "sha2",
  "thiserror 2.0.18",
  "tracing",
@@ -4199,7 +4226,7 @@ dependencies = [
 
 [[package]]
 name = "hanzo-sandbox"
-version = "0.8.3"
+version = "1.3.0"
 dependencies = [
  "anyhow",
  "itoa",
@@ -4215,7 +4242,7 @@ dependencies = [
 
 [[package]]
 name = "hanzo-server-core"
-version = "0.8.3"
+version = "1.3.0"
 dependencies = [
  "anyhow",
  "axum 0.8.9",
@@ -4327,7 +4354,9 @@ dependencies = [
 
 [[package]]
 name = "hanzo-ug"
-version = "0.11.0"
+version = "0.11.7"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "8a0f5e14d1fbd812ab5ff1a936e5ad99bf6f02f033d72f553e83f89b5adf9de8"
 dependencies = [
  "ug",
  "ug-cuda",
@@ -4336,7 +4365,7 @@ dependencies = [
 
 [[package]]
 name = "hanzo-vision"
-version = "0.8.3"
+version = "1.3.0"
 dependencies = [
  "hanzo-ml",
  "image",
@@ -5429,6 +5458,15 @@ dependencies = [
  "futures-util",
  "once_cell",
  "wasm-bindgen",
+]
+
+[[package]]
+name = "keccak"
+version = "0.1.6"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "cb26cec98cce3a3d96cbb7bced3c4b16e3d13f27ec56dbd62cbc8f39cfb9d653"
+dependencies = [
+ "cpufeatures 0.2.17",
 ]
 
 [[package]]
@@ -8507,17 +8545,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "rocm-rs"
-version = "0.5.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "98a18e8f29858c4500ba06282a64ce3f5f1844b652e3b4c0773daf372ce9b931"
-dependencies = [
- "bindgen",
- "paste",
- "rocm_kernel_macros",
-]
-
-[[package]]
 name = "rocm_kernel_macros"
 version = "0.5.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -9349,6 +9376,16 @@ dependencies = [
  "cfg-if",
  "cpufeatures 0.2.17",
  "digest",
+]
+
+[[package]]
+name = "sha3"
+version = "0.10.9"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "77fd7028345d415a4034cf8777cd4f8ab1851274233b45f84e3d955502d93874"
+dependencies = [
+ "digest",
+ "keccak",
 ]
 
 [[package]]

@@ -3,6 +3,7 @@ module github.com/hanzoai/node
 go 1.26.4
 
 require (
+	github.com/luxfi/crypto v1.19.20
 	github.com/luxfi/node v1.30.9
 	github.com/spf13/pflag v1.0.10
 )
@@ -82,7 +83,6 @@ require (
 	github.com/luxfi/constants v1.5.8 // indirect
 	github.com/luxfi/container v0.0.4 // indirect
 	github.com/luxfi/corona v0.7.6 // indirect
-	github.com/luxfi/crypto v1.19.20 // indirect
 	github.com/luxfi/crypto/ipa v1.2.4 // indirect
 	github.com/luxfi/database v1.19.2 // indirect
 	github.com/luxfi/filesystem v0.0.1 // indirect
