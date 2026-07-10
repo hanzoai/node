@@ -117,6 +117,18 @@ pub struct AppSpec {
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub component: Option<String>,
 
+    /// PodDisruptionBudget. Rendered as policy/v1 when enabled; the owned PDB is
+    /// DELETED when disabled/absent (owner-checked prune).
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub pdb: Option<Pdb>,
+
+    /// Zero-downtime same-node RWO-PVC handoff (operator 0.6.17+ semantics):
+    /// RollingUpdate maxSurge=1/maxUnavailable=0 + a soft self-podAffinity so the
+    /// surge pod co-schedules on the volume's node and bind-mounts the
+    /// already-attached PVC. Ignored when strategy is Recreate.
+    #[serde(default)]
+    pub surge_colocation: bool,
+
     /// Catch-all for any spec field hanzod does NOT model (pdb, networkPolicy,
     /// serviceMonitor, kmsSecrets, surgeColocation, …). Non-empty ⇒ the CR is
     /// Rejected — fail-closed, never a silent drop. `schemars(skip)` keeps the
@@ -399,6 +411,20 @@ pub struct Storage {
     /// Catch-all: any unmodeled key at this level makes the App Rejected with a
     /// dotted path (MED-4 nested reject). `schemars(skip)` keeps the schema
     /// structural; serde captures the keys at runtime.
+    #[serde(flatten)]
+    #[schemars(skip)]
+    pub extra: BTreeMap<String, serde_json::Value>,
+}
+
+#[derive(Clone, Debug, Default, Deserialize, Serialize, JsonSchema)]
+#[serde(rename_all = "camelCase")]
+pub struct Pdb {
+    #[serde(default)]
+    pub enabled: bool,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub min_available: Option<i32>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub max_unavailable: Option<i32>,
     #[serde(flatten)]
     #[schemars(skip)]
     pub extra: BTreeMap<String, serde_json::Value>,

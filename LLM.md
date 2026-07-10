@@ -133,9 +133,25 @@ backup → data loss. Modeled today: image, replicas, strategy, command/args, en
 (+valueFrom/envFrom), ports, resources, probes (exec>tcp>http), labels/
 annotations, serviceAccountName, imagePullSecrets, fsGroup, init/sidecar
 containers, volumes/mounts, ingress, **persistence**, **autoscaling**, partOf/
-component. Rejected until modeled: pdb (11 CRs), surgeColocation (3),
-networkPolicy/serviceMonitor/kmsSecrets (unused) — model these next to unblock
-their CRs; the reject path keeps them fail-closed-safe meanwhile.
+component, **pdb**, **surgeColocation**. Rejected until modeled: networkPolicy/
+serviceMonitor/kmsSecrets (unused) — the reject path keeps them fail-closed-safe.
+
+- `pdb` → a `policy/v1 PodDisruptionBudget` selecting the app's pods
+  (minAvailable/maxUnavailable pass through; defaults maxUnavailable:1). Owner-
+  checked prune when disabled.
+- `surgeColocation` (true, strategy != Recreate) → RollingUpdate
+  maxSurge=1/maxUnavailable=0 + a soft self-podAffinity (topology hostname,
+  selector app=<name>) so the surge pod co-schedules on the RWO PVC's node
+  (operator 0.6.17+ semantics). Recreate suppresses it.
+- persistence also renders an owned idempotent `<app>-db-bucket` Job (mirrors
+  console-sqlite.yaml: `s3 mb --ignore-existing` + the LTX lifecycle rule,
+  applied BEFORE the Deployment) — replicate does not create S3 buckets, so a
+  greenfield app's first snapshot 404s without it. **RBAC**: the operator
+  ClusterRole must add `batch/jobs: create` (it currently grants only cronjobs);
+  `policy/poddisruptionbudgets` is already granted.
+
+`hanzod-operator plan < cloud.json` renders clean (Deployment + Service + PDB, no
+reject) — cloud (pdb + surgeColocation) is now migratable.
 
 ### persistence (durable SQLite via hanzoai/replicate)
 

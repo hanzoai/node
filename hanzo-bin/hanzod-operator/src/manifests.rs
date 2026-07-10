@@ -11,7 +11,9 @@
 
 use std::collections::BTreeMap;
 
-use k8s_openapi::api::apps::v1::{Deployment, DeploymentSpec, DeploymentStrategy};
+use k8s_openapi::api::apps::v1::{Deployment, DeploymentSpec, DeploymentStrategy, RollingUpdateDeployment};
+use k8s_openapi::api::batch::v1 as batchv1;
+use k8s_openapi::api::policy::v1 as policyv1;
 use k8s_openapi::api::autoscaling::v2 as hpav2;
 use k8s_openapi::api::core::v1 as corev1;
 use k8s_openapi::api::networking::v1 as netv1;
@@ -46,6 +48,11 @@ pub struct Plan {
     /// The replicate config (the age block lives here — cmd/replicate reads age
     /// ONLY from config, never env). `None` when persistence is disabled.
     pub configmap: Option<corev1::ConfigMap>,
+    /// PodDisruptionBudget — `None` means "ensure absent" (prune).
+    pub pdb: Option<policyv1::PodDisruptionBudget>,
+    /// Idempotent bucket-init Job (replicate does NOT auto-create S3 buckets).
+    /// `None` when persistence is disabled.
+    pub bucket_job: Option<batchv1::Job>,
 }
 
 pub fn plan(app: &App) -> anyhow::Result<Plan> {
@@ -56,6 +63,8 @@ pub fn plan(app: &App) -> anyhow::Result<Plan> {
         pvc: build_pvc(app),
         hpa: build_hpa(app),
         configmap: build_replicate_config(app),
+        pdb: build_pdb(app),
+        bucket_job: build_bucket_job(app),
     })
 }
 
@@ -67,9 +76,12 @@ impl Plan {
     /// a single CR is migrated. Prune targets (absent Ingress/HPA) are omitted:
     /// there is no object to render for "ensure deleted".
     pub fn objects(&self) -> Result<Vec<serde_json::Value>, serde_json::Error> {
-        let mut out = Vec::with_capacity(6);
+        let mut out = Vec::with_capacity(8);
         if let Some(cm) = &self.configmap {
             out.push(ssa_body(cm)?);
+        }
+        if let Some(job) = &self.bucket_job {
+            out.push(ssa_body(job)?);
         }
         if let Some(pvc) = &self.pvc {
             out.push(ssa_body(pvc)?);
@@ -81,6 +93,9 @@ impl Plan {
         }
         if let Some(hpa) = &self.hpa {
             out.push(ssa_body(hpa)?);
+        }
+        if let Some(pdb) = &self.pdb {
+            out.push(ssa_body(pdb)?);
         }
         Ok(out)
     }
@@ -137,7 +152,14 @@ pub fn build_deployment(app: &App) -> anyhow::Result<Deployment> {
         .map(volume)
         .collect::<anyhow::Result<Vec<_>>>()?;
 
+    // surgeColocation: RollingUpdate maxSurge=1/maxUnavailable=0 + soft
+    // self-podAffinity so the surge pod co-locates on the RWO PVC's node. Only
+    // when strategy != Recreate (Recreate is the single-writer fallback).
+    let recreate = spec.strategy.as_deref() == Some("Recreate");
+    let surge = spec.surge_colocation && !recreate;
+
     let mut pod_spec = corev1::PodSpec {
+        affinity: surge.then(|| colocation_affinity(&name)),
         service_account_name: spec.service_account_name.clone(),
         image_pull_secrets: opt_vec(
             &spec
@@ -178,7 +200,7 @@ pub fn build_deployment(app: &App) -> anyhow::Result<Deployment> {
                 match_labels: Some(selector_labels(&name)),
                 match_expressions: None,
             },
-            strategy: strategy(spec.strategy.as_deref()),
+            strategy: deployment_strategy(spec.strategy.as_deref(), surge),
             template: corev1::PodTemplateSpec {
                 metadata: Some(ObjectMeta {
                     labels: Some(template_labels),
@@ -591,14 +613,124 @@ fn owner_reference(app: &App) -> Option<OwnerReference> {
     })
 }
 
-fn strategy(kind: Option<&str>) -> Option<DeploymentStrategy> {
+fn deployment_strategy(kind: Option<&str>, surge: bool) -> Option<DeploymentStrategy> {
     match kind {
         Some("Recreate") => Some(DeploymentStrategy {
             type_: Some("Recreate".to_string()),
             rolling_update: None,
         }),
-        _ => None,
+        _ if surge => Some(DeploymentStrategy {
+            type_: Some("RollingUpdate".to_string()),
+            rolling_update: Some(RollingUpdateDeployment {
+                max_surge: Some(IntOrString::Int(1)),
+                max_unavailable: Some(IntOrString::Int(0)),
+            }),
+        }),
+        _ => None, // default RollingUpdate
     }
+}
+
+/// Soft (preferred) self-podAffinity co-locating the surge pod on the SAME node
+/// as the app's running pods (topology `kubernetes.io/hostname`), so it can
+/// bind-mount the already-attached RWO PVC instead of triggering a Multi-Attach
+/// deadlock. Mirrors the operator 0.6.17+ `colocation_affinity`.
+fn colocation_affinity(name: &str) -> corev1::Affinity {
+    corev1::Affinity {
+        pod_affinity: Some(corev1::PodAffinity {
+            preferred_during_scheduling_ignored_during_execution: Some(vec![corev1::WeightedPodAffinityTerm {
+                weight: 100,
+                pod_affinity_term: corev1::PodAffinityTerm {
+                    label_selector: Some(LabelSelector {
+                        match_labels: Some(selector_labels(name)),
+                        match_expressions: None,
+                    }),
+                    topology_key: "kubernetes.io/hostname".to_string(),
+                    ..Default::default()
+                },
+            }]),
+            ..Default::default()
+        }),
+        ..Default::default()
+    }
+}
+
+/// PodDisruptionBudget selecting the app's pods. `minAvailable`/`maxUnavailable`
+/// pass through; when neither is set, default `maxUnavailable: 1` (the shape
+/// every live CR uses) so an enabled PDB is always valid.
+pub fn build_pdb(app: &App) -> Option<policyv1::PodDisruptionBudget> {
+    let pdb = app.spec.pdb.as_ref().filter(|p| p.enabled)?;
+    let name = app.name_any();
+    let (min, max) = match (pdb.min_available, pdb.max_unavailable) {
+        (None, None) => (None, Some(IntOrString::Int(1))),
+        (min, max) => (min.map(IntOrString::Int), max.map(IntOrString::Int)),
+    };
+    Some(policyv1::PodDisruptionBudget {
+        metadata: object_meta(app, &name),
+        spec: Some(policyv1::PodDisruptionBudgetSpec {
+            min_available: min,
+            max_unavailable: max,
+            selector: Some(LabelSelector {
+                match_labels: Some(selector_labels(&name)),
+                match_expressions: None,
+            }),
+            ..Default::default()
+        }),
+        status: None,
+    })
+}
+
+/// Idempotent bucket bootstrap for a persistence target — replicate does NOT
+/// create S3 buckets, so a greenfield app's first snapshot 404s without this.
+/// Mirrors console-sqlite.yaml's `<app>-db-bucket` Job: `s3 mb --ignore-existing`
+/// + the noncurrent-LTX lifecycle rule, applied before the Deployment.
+pub fn build_bucket_job(app: &App) -> Option<batchv1::Job> {
+    let p = app.spec.persistence.as_ref().filter(|p| p.enabled)?;
+    let bucket = p.bucket.clone().unwrap_or_default();
+    if bucket.is_empty() {
+        return None; // no bucket (validation rejects this CR anyway)
+    }
+    let name = app.name_any();
+    let job_name = format!("{name}-db-bucket");
+    let endpoint = p.s3_endpoint.as_deref().unwrap_or(DEFAULT_S3_ENDPOINT);
+    let creds = p.credentials_secret.clone().unwrap_or_else(|| DEFAULT_CREDS_SECRET.to_string());
+    let script = format!(
+        r#"set -e
+s3 alias set local {endpoint} "$S3_ROOT_USER" "$S3_ROOT_PASSWORD"
+s3 mb --ignore-existing local/{bucket}
+s3 ilm rule add --noncurrent-expire-days 7 local/{bucket} || true
+echo "{bucket} bucket ready"
+"#
+    );
+    let container = corev1::Container {
+        name: "s3-cli".to_string(),
+        image: Some("ghcr.io/hanzoai/s3-cli:0.1.0".to_string()),
+        command: Some(vec!["/bin/sh".to_string(), "-c".to_string(), script]),
+        env: Some(vec![
+            secret_env("S3_ROOT_USER", &creds, "access-key"),
+            secret_env("S3_ROOT_PASSWORD", &creds, "secret-key"),
+        ]),
+        ..Default::default()
+    };
+    Some(batchv1::Job {
+        metadata: object_meta(app, &job_name),
+        spec: Some(batchv1::JobSpec {
+            backoff_limit: Some(5),
+            ttl_seconds_after_finished: Some(600),
+            template: corev1::PodTemplateSpec {
+                metadata: Some(ObjectMeta {
+                    labels: Some(base_labels(app, &job_name)),
+                    ..Default::default()
+                }),
+                spec: Some(corev1::PodSpec {
+                    restart_policy: Some("OnFailure".to_string()),
+                    containers: vec![container],
+                    ..Default::default()
+                }),
+            },
+            ..Default::default()
+        }),
+        status: None,
+    })
 }
 
 fn container_port(p: &crd::Port) -> corev1::ContainerPort {
@@ -1059,6 +1191,78 @@ mod tests {
     }
 
     #[test]
+    fn pdb_renders_with_selector_and_threshold() {
+        let mut app = billing();
+        app.spec.pdb = Some(crate::crd::Pdb { enabled: true, max_unavailable: Some(1), ..Default::default() });
+        let pdb = build_pdb(&app).unwrap();
+        assert_eq!(pdb.metadata.name.as_deref(), Some("billing"));
+        let spec = pdb.spec.unwrap();
+        assert!(matches!(spec.max_unavailable.as_ref().unwrap(), IntOrString::Int(1)));
+        assert!(spec.min_available.is_none());
+        assert_eq!(
+            spec.selector.unwrap().match_labels.unwrap().get("app.kubernetes.io/name").unwrap(),
+            "billing"
+        );
+    }
+
+    #[test]
+    fn pdb_defaults_max_unavailable_and_prunes_when_disabled() {
+        let mut app = billing();
+        app.spec.pdb = Some(crate::crd::Pdb { enabled: true, ..Default::default() });
+        let spec = build_pdb(&app).unwrap().spec.unwrap();
+        assert!(matches!(spec.max_unavailable.as_ref().unwrap(), IntOrString::Int(1)));
+        let mut off = billing();
+        off.spec.pdb = Some(crate::crd::Pdb { enabled: false, ..Default::default() });
+        assert!(build_pdb(&off).is_none()); // disabled -> ensure-absent (prune)
+    }
+
+    #[test]
+    fn surge_colocation_renders_rollingupdate_and_affinity() {
+        let mut app = billing();
+        app.spec.surge_colocation = true;
+        app.spec.strategy = Some("RollingUpdate".into());
+        let dspec = build_deployment(&app).unwrap().spec.unwrap();
+        let ru = dspec.strategy.unwrap().rolling_update.unwrap();
+        assert!(matches!(ru.max_surge.as_ref().unwrap(), IntOrString::Int(1)));
+        assert!(matches!(ru.max_unavailable.as_ref().unwrap(), IntOrString::Int(0)));
+        let aff = dspec.template.spec.unwrap().affinity.unwrap();
+        let term = &aff.pod_affinity.unwrap().preferred_during_scheduling_ignored_during_execution.unwrap()[0];
+        assert_eq!(term.pod_affinity_term.topology_key, "kubernetes.io/hostname");
+        assert_eq!(
+            term.pod_affinity_term.label_selector.as_ref().unwrap().match_labels.as_ref().unwrap().get("app.kubernetes.io/name").unwrap(),
+            "billing"
+        );
+    }
+
+    #[test]
+    fn surge_colocation_suppressed_under_recreate() {
+        let mut app = billing();
+        app.spec.surge_colocation = true;
+        app.spec.strategy = Some("Recreate".into());
+        let dspec = build_deployment(&app).unwrap().spec.unwrap();
+        // Recreate wins; no surge rolling-update, no colocation affinity.
+        assert_eq!(dspec.strategy.unwrap().type_.as_deref(), Some("Recreate"));
+        assert!(dspec.template.spec.unwrap().affinity.is_none());
+    }
+
+    #[test]
+    fn bucket_job_renders_idempotent_mb() {
+        // billing has no persistence -> no bucket job.
+        assert!(build_bucket_job(&billing()).is_none());
+        // chat has persistence -> owned <app>-db-bucket job.
+        let job = build_bucket_job(&chat()).unwrap();
+        assert_eq!(job.metadata.name.as_deref(), Some("chat-db-bucket"));
+        let pod = job.spec.unwrap().template.spec.unwrap();
+        assert_eq!(pod.restart_policy.as_deref(), Some("OnFailure"));
+        let c = &pod.containers[0];
+        assert_eq!(c.image.as_deref(), Some("ghcr.io/hanzoai/s3-cli:0.1.0"));
+        let script = &c.command.as_ref().unwrap()[2];
+        assert!(script.contains("mb --ignore-existing local/chat-db"));
+        assert!(script.contains("noncurrent-expire-days 7"));
+        assert!(c.env.as_ref().unwrap().iter().any(|e| e.name == "S3_ROOT_USER"));
+    }
+
+    #[test]
     fn plan_composes_owned_objects() {
         // billing: deployment+service+ingress, no pvc/hpa
         let p = plan(&billing()).unwrap();
@@ -1100,6 +1304,6 @@ mod tests {
             .iter()
             .map(|o| o["kind"].as_str().unwrap().to_string())
             .collect();
-        assert_eq!(&chat_kinds[..3], ["ConfigMap", "PersistentVolumeClaim", "Deployment"]);
+        assert_eq!(&chat_kinds[..4], ["ConfigMap", "Job", "PersistentVolumeClaim", "Deployment"]);
     }
 }

@@ -26,6 +26,7 @@ use k8s_openapi::api::apps::v1::Deployment;
 use k8s_openapi::api::autoscaling::v2 as hpav2;
 use k8s_openapi::api::core::v1 as corev1;
 use k8s_openapi::api::networking::v1 as netv1;
+use k8s_openapi::api::policy::v1 as policyv1;
 use kube::api::{Api, DeleteParams, ListParams, Patch, PatchParams};
 use kube::runtime::controller::{Action, Controller};
 use kube::runtime::watcher;
@@ -189,6 +190,12 @@ async fn apply_plan(ctx: &Context, ns: &str, name: &str, app: &App) -> Result<()
     if let Some(cm) = &plan.configmap {
         apply(&ctx.client, ns, cm).await?;
     }
+    // Bucket-init Job before the Deployment: a greenfield app's first snapshot
+    // 404s (NoSuchBucket) without it. Idempotent (`mb --ignore-existing`); never
+    // pruned (TTL cleans it up).
+    if let Some(job) = &plan.bucket_job {
+        apply(&ctx.client, ns, job).await?;
+    }
     if let Some(pvc) = &plan.pvc {
         apply(&ctx.client, ns, pvc).await?;
     }
@@ -202,6 +209,10 @@ async fn apply_plan(ctx: &Context, ns: &str, name: &str, app: &App) -> Result<()
     match &plan.hpa {
         Some(hpa) => apply(&ctx.client, ns, hpa).await?,
         None => prune::<hpav2::HorizontalPodAutoscaler>(&ctx.client, ns, name).await?,
+    }
+    match &plan.pdb {
+        Some(pdb) => apply(&ctx.client, ns, pdb).await?,
+        None => prune::<policyv1::PodDisruptionBudget>(&ctx.client, ns, name).await?,
     }
     Ok(())
 }
@@ -248,6 +259,9 @@ fn unknown_fields(app: &App) -> Vec<String> {
     }
     if let Some(a) = &app.spec.autoscaling {
         push("autoscaling", &a.extra);
+    }
+    if let Some(pdb) = &app.spec.pdb {
+        push("pdb", &pdb.extra);
     }
     if let Some(pr) = &app.spec.liveness_probe {
         push("livenessProbe", &pr.extra);
@@ -444,9 +458,9 @@ mod tests {
 
     #[test]
     fn unknown_fields_flags_unmodeled_spec_keys() {
-        // A CR using pdb (which hanzod does not model yet) is flagged for reject.
-        let app = app_with(json!({"image": {"repository": "r"}, "pdb": {"enabled": true}}));
-        assert_eq!(unknown_fields(&app), vec!["pdb".to_string()]);
+        // networkPolicy is still unmodeled -> flagged for reject (pdb is modeled now).
+        let app = app_with(json!({"image": {"repository": "r"}, "networkPolicy": {"enabled": true}}));
+        assert_eq!(unknown_fields(&app), vec!["networkPolicy".to_string()]);
     }
 
     #[test]
@@ -507,6 +521,20 @@ mod tests {
                             "dataDir": "/d", "storage": {"size": "1Gi"}}
         }));
         assert!(rejection_reasons(&app).iter().any(|r| r.contains("dirMode")));
+    }
+
+    #[test]
+    fn cloud_like_cr_with_pdb_and_surge_is_not_rejected() {
+        // cloud.yaml carries pdb + surgeColocation, which USED to be rejected.
+        let app = app_with(json!({
+            "image": {"repository": "ghcr.io/hanzoai/cloud", "tag": "1"},
+            "replicas": 1,
+            "strategy": "Recreate",
+            "surgeColocation": false,
+            "pdb": {"enabled": true, "maxUnavailable": 1},
+            "partOf": "cloud", "component": "api"
+        }));
+        assert!(rejection_reasons(&app).is_empty(), "cloud CR must not be rejected: {:?}", rejection_reasons(&app));
     }
 
     #[test]
