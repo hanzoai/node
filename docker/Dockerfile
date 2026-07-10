@@ -99,6 +99,13 @@ COPY docker/run_node.sh /app/
 COPY --from=builder /build/hanzod /app/
 COPY --from=builder /build/hanzo-tools-runner-resources /app/hanzo-tools-runner-resources
 
+# Canonical Hanzo operator — single source of truth (hanzoai/operator).
+# node vendors zero operator source; `hanzod operator` / `hanzod install` exec
+# this binary (resolved on PATH at /usr/local/bin/operator). Pin: bump to
+# 0.6.22-amd64 once the tenant_rbac release publishes — 0.6.21-amd64 is the
+# current immutable baseline.
+COPY --from=ghcr.io/hanzoai/operator:0.6.21-amd64 /usr/local/bin/operator /usr/local/bin/operator
+
 # Make script executable
 RUN chmod +x /app/run_node.sh /app/hanzod
 
