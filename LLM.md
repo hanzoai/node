@@ -140,24 +140,48 @@ their CRs; the reject path keeps them fail-closed-safe meanwhile.
 ### persistence (durable SQLite via hanzoai/replicate)
 
 `persistence.enabled` wires: a retained PVC (`<app>-<volume>`, RWO, sized from
-`storage.size`) or an emptyDir; the volume mounted at `dataDir` in the main
-container; a `replicate restore -if-db-not-exists <dataDir/db>` init container
-APPENDED after user init containers (paas rationale: a migrate-first init would
-create an empty DB and skip the snapshot); and a continuous `replicate replicate`
-WAL sidecar. Config via `REPLICATE_*` env (BUCKET/PATH/REPLICA_URL/ENDPOINT/
-REGION/FORCE_PATH_STYLE/ALLOW_PLAINTEXT, ACCESS_KEY_ID+SECRET_ACCESS_KEY from
-`credentialsSecret`, AGE_IDENTITY on restore / AGE_RECIPIENT on replicate from
-`ageSecret`). Required before chat/paas/dataroom migrate.
+`storage.size`) or an emptyDir; the volume mounted at `dataDir`; a restore init
+container APPENDED after user init containers (paas rationale: a migrate-first
+init would create an empty DB and skip the snapshot); and a continuous WAL
+sidecar. **The argv is byte-matched to `cmd/replicate` (litestream-derived, NOT
+the SDK):**
+- restore: `replicate restore -if-db-not-exists -o <dataDir/db> "<s3-url>"`
+  (arg0 MUST be a URL or it is read as a config path; `-o` is REQUIRED).
+- sidecar: `replicate replicate <dataDir/db> "<s3-url>"` (one positional db =
+  "must specify at least one replica URL" → CrashLoop).
+- `<s3-url>` = `s3://<bucket>/<s3Path>?endpoint=…&region=…&forcePathStyle=…` —
+  endpoint/region/forcePathStyle are URL QUERY PARAMS (s3/replica_client.go
+  `NewReplicaClientFromURL`), NOT env. The `REPLICATE_*` SDK env vars
+  (BUCKET/PATH/ENDPOINT/REGION/…) are ignored by this CLI and are NOT emitted.
+- env the CLI DOES read: `REPLICATE_ACCESS_KEY_ID`/`SECRET_ACCESS_KEY` (from
+  `credentialsSecret`), `REPLICATE_AGE_IDENTITY` (restore) / `AGE_RECIPIENT`
+  (replicate) from `ageSecret`, `REPLICATE_ALLOW_PLAINTEXT`.
+- Prove it: `hanzod-operator plan < app.json` and read the init/sidecar argv.
 
-### Prune, autoscaling, backoff
+Required persistence sub-fields (bucket/dataDir/dbPath/storage) are validated in
+reconcile → `status.phase=Rejected` if missing (a pruned/typo'd critical field
+would otherwise silently default and mount the DB at the wrong path = data loss).
+`dirMode` is rejected (multi-DB config-file mode not yet supported).
 
-- MED-3: a disabled Ingress/HPA is DELETED by name (not orphaned). A data PVC is
-  never deleted.
-- MED-6: under `autoscaling.enabled`, Deployment.replicas is left unset (hanzod
-  never fights the HPA) and an autoscaling/v2 HPA is emitted (CPU 80% default).
-- MED-8: reconcile failures back off exponentially (5s → 600s cap); after 6
-  consecutive failures the CR is quarantined `status.phase=Invalid` (stops the
-  hot-loop until the CR changes).
+### Prune, autoscaling, backoff, guards
+
+- MED-2: prune (of a disabled Ingress/HPA) only DELETES an object that exists AND
+  carries `app.kubernetes.io/managed-by=hanzod` — never a hand-created same-named
+  object, and no spurious DELETE when already absent. A data PVC is never deleted.
+- MED-3: the single-replica boot guard fails CLOSED — in-cluster, a
+  `requires_single_replica` coordinator that cannot READ its own Deployment's
+  replica count REFUSES to start. `HANZOD_DEPLOYMENT_NAME` MUST name the
+  operator's Deployment in-cluster (no default — the shipped name differs, e.g.
+  `operator-controller-manager`); local/standalone runs (no SA) are exempt.
+- MED-4: reject-unknown is recursive — nested unmodeled keys are flagged with a
+  dotted path (`ingress.zeroTrustPolicy`) via per-struct `extra` catch-alls;
+  data-critical pruned typos are caught by the required-field validation above.
+- MED-6: under `autoscaling.enabled`, Deployment.replicas is unset (hanzod never
+  fights the HPA) and an autoscaling/v2 HPA is emitted (CPU 80% default).
+- MED-8: failures back off exponentially (5s → 600s); after 6 consecutive
+  failures the CR is quarantined `status.phase=Invalid`.
+- LOW-5: a CR already terminal (Rejected/Invalid) for its CURRENT generation is
+  not re-processed (operator restart doesn't re-spend the retry budget).
 
 Reconcile is idempotent server-side-apply under field manager `hanzod`, sets
 `ownerReferences` (GC + `owns()` watch), writes the `status` subresource.

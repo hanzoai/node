@@ -114,6 +114,8 @@ pub enum CoordError {
     Membership(String),
     #[error("StaticCoordinator with operator replicas={0}: split-brain. Set replicas:1 or wire a leaderless Coordinator (Lease/ZAP membership).")]
     SplitBrain(i32),
+    #[error("in-cluster but could not verify the operator's own replica count (set POD_NAMESPACE + HANZOD_DEPLOYMENT_NAME and grant get deployments); refusing to start rather than risk split-brain")]
+    Unverifiable,
 }
 
 /// The live, reconcile-eligible hanzod set plus this node's own id — the ONE
@@ -185,6 +187,30 @@ pub fn check_singleton(requires_single: bool, observed_replicas: i32) -> Result<
         return Err(CoordError::SplitBrain(observed_replicas));
     }
     Ok(())
+}
+
+/// Fail-CLOSED boot decision for MED-3. `in_cluster` is whether the operator is
+/// running under a k8s ServiceAccount (as opposed to a local/standalone run).
+/// `resolved_replicas` is `Some` only when the operator could actually READ its
+/// own Deployment's replica count; `None` means it could not verify.
+///
+/// - A coordinator that fences N replicas (`requires_single=false`) → always OK.
+/// - Not in-cluster → a single process, single-replica by construction → OK.
+/// - In-cluster + `requires_single` + could NOT verify replicas → REFUSE
+///   (never proceed unverified — an unread replicas:2 is silent split-brain).
+/// - In-cluster + verified → OK iff replicas == 1.
+pub fn singleton_boot_decision(
+    requires_single: bool,
+    in_cluster: bool,
+    resolved_replicas: Option<i32>,
+) -> Result<(), CoordError> {
+    if !requires_single || !in_cluster {
+        return Ok(());
+    }
+    match resolved_replicas {
+        Some(r) => check_singleton(true, r),
+        None => Err(CoordError::Unverifiable),
+    }
 }
 
 /// Single-node default: always the owner. This is the drop-in
@@ -327,5 +353,18 @@ mod tests {
         assert!(check_singleton(true, 1).is_ok());
         // A real leaderless coordinator (requires_single=false) fences N replicas.
         assert!(check_singleton(false, 5).is_ok());
+    }
+
+    #[test]
+    fn boot_decision_fails_closed_when_unverifiable() {
+        // In-cluster + single-replica coordinator + can't read own replicas → REFUSE.
+        assert!(singleton_boot_decision(true, true, None).is_err());
+        // In-cluster + verified >1 → refuse; verified ==1 → ok.
+        assert!(singleton_boot_decision(true, true, Some(2)).is_err());
+        assert!(singleton_boot_decision(true, true, Some(1)).is_ok());
+        // Not in-cluster (local/standalone) → single process → ok even if unread.
+        assert!(singleton_boot_decision(true, false, None).is_ok());
+        // Leaderless coordinator fences N → ok regardless.
+        assert!(singleton_boot_decision(false, true, None).is_ok());
     }
 }

@@ -380,10 +380,14 @@ fn wire_persistence(pod: &mut corev1::PodSpec, app_name: &str, p: &Persistence) 
         let db = p.db_path.clone().unwrap_or_else(|| DEFAULT_DB.to_string());
         format!("{data_dir}/{db}")
     };
+    let url = replica_url(p);
     let image = p.image.clone().unwrap_or_else(|| REPLICATE_IMAGE.to_string());
 
-    // Restore init — appended AFTER user init containers (paas.yaml rationale:
-    // a migrate-first init would create an empty DB and skip the snapshot).
+    // Restore init. cmd/replicate/restore.go: URL form REQUIRES `-o <db>` and
+    // arg0 must be a URL (a bare db path is treated as a config path). Appended
+    // AFTER user init containers (paas.yaml: a migrate-first init would create
+    // an empty DB and skip the snapshot). `-if-db-not-exists` short-circuits
+    // AFTER the URL is loaded, so it is safe here.
     let restore = corev1::Container {
         name: "replicate-restore".to_string(),
         image: Some(image.clone()),
@@ -391,7 +395,9 @@ fn wire_persistence(pod: &mut corev1::PodSpec, app_name: &str, p: &Persistence) 
             "replicate".to_string(),
             "restore".to_string(),
             "-if-db-not-exists".to_string(),
+            "-o".to_string(),
             db_target.clone(),
+            url.clone(),
         ]),
         env: Some(replicate_env(app_name, p, true)),
         volume_mounts: Some(vec![mount.clone()]),
@@ -399,11 +405,13 @@ fn wire_persistence(pod: &mut corev1::PodSpec, app_name: &str, p: &Persistence) 
     };
     pod.init_containers.get_or_insert_with(Vec::new).push(restore);
 
-    // Continuous WAL replication sidecar.
+    // Continuous WAL replication sidecar. cmd/replicate/replicate.go needs
+    // `<db> <replica-url>` (one positional db = "must specify at least one
+    // replica URL" -> CrashLoop).
     let sidecar = corev1::Container {
         name: "replicate".to_string(),
         image: Some(image),
-        command: Some(vec!["replicate".to_string(), "replicate".to_string(), db_target]),
+        command: Some(vec!["replicate".to_string(), "replicate".to_string(), db_target, url]),
         env: Some(replicate_env(app_name, p, false)),
         volume_mounts: Some(vec![mount]),
         ..Default::default()
@@ -411,21 +419,27 @@ fn wire_persistence(pod: &mut corev1::PodSpec, app_name: &str, p: &Persistence) 
     pod.containers.push(sidecar);
 }
 
-/// `REPLICATE_*` env for the replicate init/sidecar. `restore` selects the age
-/// identity (decrypt, restore) vs recipient (encrypt, replicate).
-fn replicate_env(app_name: &str, p: &Persistence, restore: bool) -> Vec<corev1::EnvVar> {
+/// The replicate S3 replica URL. cmd/replicate (litestream-derived) reads the
+/// endpoint/region/forcePathStyle as URL QUERY PARAMS (s3/replica_client.go
+/// NewReplicaClientFromURL) — NOT from REPLICATE_* env, which only the SDK reads.
+fn replica_url(p: &Persistence) -> String {
     let bucket = p.bucket.clone().unwrap_or_default();
-    let s3_path = p.s3_path.clone().unwrap_or_default();
+    let path = p.s3_path.clone().unwrap_or_default();
+    let endpoint = p.s3_endpoint.as_deref().unwrap_or(DEFAULT_S3_ENDPOINT);
+    let region = p.s3_region.as_deref().unwrap_or(DEFAULT_S3_REGION);
+    format!(
+        "s3://{bucket}/{path}?endpoint={endpoint}&region={region}&forcePathStyle={}",
+        p.force_path_style
+    )
+}
+
+/// Env the replicate CLI DOES read: S3 credentials (mapped to the AWS SDK) and
+/// the age keypair (identity to decrypt on restore, recipient to encrypt on
+/// replicate). Endpoint/region/forcePathStyle go in the replica URL, not here.
+fn replicate_env(app_name: &str, p: &Persistence, restore: bool) -> Vec<corev1::EnvVar> {
     let creds = p.credentials_secret.clone().unwrap_or_else(|| DEFAULT_CREDS_SECRET.to_string());
     let age = p.age_secret.clone().unwrap_or_else(|| format!("{app_name}-replicate-age"));
-
     let mut env = vec![
-        plain_env("REPLICATE_BUCKET", &bucket),
-        plain_env("REPLICATE_PATH", &s3_path),
-        plain_env("REPLICATE_REPLICA_URL", &format!("s3://{bucket}/{s3_path}")),
-        plain_env("REPLICATE_ENDPOINT", p.s3_endpoint.as_deref().unwrap_or(DEFAULT_S3_ENDPOINT)),
-        plain_env("REPLICATE_REGION", p.s3_region.as_deref().unwrap_or(DEFAULT_S3_REGION)),
-        plain_env("REPLICATE_FORCE_PATH_STYLE", if p.force_path_style { "true" } else { "false" }),
         plain_env("REPLICATE_ALLOW_PLAINTEXT", "1"),
         secret_env("REPLICATE_ACCESS_KEY_ID", &creds, "access-key"),
         secret_env("REPLICATE_SECRET_ACCESS_KEY", &creds, "secret-key"),
@@ -872,18 +886,36 @@ mod tests {
         let m = main.volume_mounts.as_ref().unwrap().iter().find(|m| m.name == "data").unwrap();
         assert_eq!(m.mount_path, "/var/lib/hanzo/chat");
 
-        // restore init container, appended, restore-if-db-not-exists <dataDir/db>
+        // The replica URL carries endpoint/region/forcePathStyle as QUERY PARAMS
+        // (what cmd/replicate actually parses), NOT env.
+        let url = "s3://chat-db/chat/app?endpoint=http://s3.hanzo.svc:9000&region=us-east-1&forcePathStyle=true";
+
+        // restore init: URL form REQUIRES `-o <db>` and a URL positional.
         let restore = pod.init_containers.as_ref().unwrap().iter().find(|c| c.name == "replicate-restore").unwrap();
         assert_eq!(
             restore.command.as_ref().unwrap(),
-            &vec!["replicate".to_string(), "restore".into(), "-if-db-not-exists".into(), "/var/lib/hanzo/chat/chat.db".into()]
+            &vec![
+                "replicate".to_string(),
+                "restore".into(),
+                "-if-db-not-exists".into(),
+                "-o".into(),
+                "/var/lib/hanzo/chat/chat.db".into(),
+                url.into(),
+            ]
         );
-        let ident = restore.env.as_ref().unwrap().iter().find(|e| e.name == "REPLICATE_AGE_IDENTITY").unwrap();
+        let renv = restore.env.as_ref().unwrap();
+        let ident = renv.iter().find(|e| e.name == "REPLICATE_AGE_IDENTITY").unwrap();
         assert_eq!(ident.value_from.as_ref().unwrap().secret_key_ref.as_ref().unwrap().name, "chat-replicate-age");
+        assert!(renv.iter().any(|e| e.name == "REPLICATE_ACCESS_KEY_ID"));
+        // CLI-ignored SDK env must be GONE (endpoint/region/bucket live in the URL).
+        assert!(!renv.iter().any(|e| e.name == "REPLICATE_ENDPOINT" || e.name == "REPLICATE_BUCKET"));
 
-        // replication sidecar
+        // sidecar: `replicate <db> <url>` — one positional db would CrashLoop.
         let sidecar = pod.containers.iter().find(|c| c.name == "replicate").unwrap();
-        assert_eq!(sidecar.command.as_ref().unwrap()[1], "replicate");
+        assert_eq!(
+            sidecar.command.as_ref().unwrap(),
+            &vec!["replicate".to_string(), "replicate".into(), "/var/lib/hanzo/chat/chat.db".into(), url.into()]
+        );
         assert!(sidecar.env.as_ref().unwrap().iter().any(|e| e.name == "REPLICATE_AGE_RECIPIENT"));
     }
 
@@ -906,6 +938,7 @@ mod tests {
             max_replicas: Some(8),
             target_cpu_utilization: Some(70),
             target_memory_utilization: None,
+            ..Default::default()
         });
         // MED-6: Deployment must NOT force replicas under an HPA.
         let d = build_deployment(&app).unwrap();

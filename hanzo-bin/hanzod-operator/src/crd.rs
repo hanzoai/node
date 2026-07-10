@@ -243,6 +243,13 @@ pub struct Probe {
     pub initial_delay_seconds: Option<i32>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub period_seconds: Option<i32>,
+
+    /// Catch-all: any unmodeled key at this level makes the App Rejected with a
+    /// dotted path (MED-4 nested reject). `schemars(skip)` keeps the schema
+    /// structural; serde captures the keys at runtime.
+    #[serde(flatten)]
+    #[schemars(skip)]
+    pub extra: BTreeMap<String, serde_json::Value>,
 }
 
 #[derive(Clone, Debug, Default, Deserialize, Serialize, JsonSchema)]
@@ -314,6 +321,13 @@ pub struct Ingress {
     pub annotations: Option<BTreeMap<String, String>>,
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
     pub path_rules: Vec<PathRule>,
+
+    /// Catch-all: any unmodeled key at this level makes the App Rejected with a
+    /// dotted path (MED-4 nested reject). `schemars(skip)` keeps the schema
+    /// structural; serde captures the keys at runtime.
+    #[serde(flatten)]
+    #[schemars(skip)]
+    pub extra: BTreeMap<String, serde_json::Value>,
 }
 
 #[derive(Clone, Debug, Default, Deserialize, Serialize, JsonSchema)]
@@ -362,6 +376,13 @@ pub struct Persistence {
     pub age_secret: Option<String>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub storage: Option<Storage>,
+
+    /// Catch-all: any unmodeled key at this level makes the App Rejected with a
+    /// dotted path (MED-4 nested reject). `schemars(skip)` keeps the schema
+    /// structural; serde captures the keys at runtime.
+    #[serde(flatten)]
+    #[schemars(skip)]
+    pub extra: BTreeMap<String, serde_json::Value>,
 }
 
 #[derive(Clone, Debug, Default, Deserialize, Serialize, JsonSchema)]
@@ -374,6 +395,13 @@ pub struct Storage {
     pub volume_name: Option<String>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub retention_policy: Option<String>,
+
+    /// Catch-all: any unmodeled key at this level makes the App Rejected with a
+    /// dotted path (MED-4 nested reject). `schemars(skip)` keeps the schema
+    /// structural; serde captures the keys at runtime.
+    #[serde(flatten)]
+    #[schemars(skip)]
+    pub extra: BTreeMap<String, serde_json::Value>,
 }
 
 #[derive(Clone, Debug, Default, Deserialize, Serialize, JsonSchema)]
@@ -389,6 +417,13 @@ pub struct Autoscaling {
     pub target_cpu_utilization: Option<i32>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub target_memory_utilization: Option<i32>,
+
+    /// Catch-all: any unmodeled key at this level makes the App Rejected with a
+    /// dotted path (MED-4 nested reject). `schemars(skip)` keeps the schema
+    /// structural; serde captures the keys at runtime.
+    #[serde(flatten)]
+    #[schemars(skip)]
+    pub extra: BTreeMap<String, serde_json::Value>,
 }
 
 /// Status subresource. `phase`: Creating → Running (or Degraded); Rejected

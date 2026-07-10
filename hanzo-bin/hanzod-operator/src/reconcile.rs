@@ -92,14 +92,14 @@ pub async fn run(client: Client, coordinator: Arc<dyn Coordinator>) -> anyhow::R
         .await
         .map_err(|e| anyhow::anyhow!("apps.hanzo.ai not reachable — is the CRD installed? ({e})"))?;
 
-    // MED-5: a coordination-free coordinator is only safe at one replica.
+    // MED-3/MED-5: fail CLOSED. In-cluster, a single-replica coordinator MUST
+    // verify the operator is at replicas:1; if it cannot read its own count it
+    // refuses to start rather than risk a silent split-brain.
+    let (in_cluster, replicas) = own_deployment_replicas(&client).await;
+    coordinator::singleton_boot_decision(coordinator.requires_single_replica(), in_cluster, replicas)
+        .map_err(|e| anyhow::anyhow!("{e}"))?;
     if coordinator.requires_single_replica() {
-        if let Some(replicas) = own_deployment_replicas(&client).await {
-            coordinator::check_singleton(true, replicas).map_err(|e| anyhow::anyhow!("{e}"))?;
-            tracing::info!(replicas, "single-replica guard passed");
-        } else {
-            tracing::warn!("could not read own Deployment replicas; single-replica guard is best-effort");
-        }
+        tracing::info!(in_cluster, ?replicas, "single-replica boot guard passed");
     }
 
     let ctx = Arc::new(Context::new(client.clone(), coordinator));
@@ -140,12 +140,21 @@ async fn reconcile(app: Arc<App>, ctx: Arc<Context>) -> Result<Action, Error> {
         }
     }
 
-    // HIGH-1: fail-closed on any spec field hanzod does not model.
-    let unknown = unknown_fields(&app);
-    if !unknown.is_empty() {
+    // LOW-5: a CR already terminal (Rejected/Invalid) for its CURRENT generation
+    // is not re-processed (e.g. after an operator restart) — don't re-spend the
+    // retry budget or re-log. A spec change bumps generation and re-opens it.
+    if is_terminal_for_current_gen(&app) {
+        tracing::debug!(%key, "already terminal for this generation; skipping");
+        return Ok(Action::await_change());
+    }
+
+    // HIGH-1 + MED-4: fail-closed on unmodeled fields (top-level AND nested) and
+    // on missing required persistence fields — never a silent default/no-op.
+    let reasons = rejection_reasons(&app);
+    if !reasons.is_empty() {
         ctx.reset(&key);
-        let msg = format!("unsupported spec field(s): {} — the authoritative CRD (crds.yaml) is a superset; hanzod does not yet reconcile these", unknown.join(", "));
-        tracing::warn!(%key, fields = %unknown.join(","), "rejected: unmodeled fields");
+        let msg = reasons.join("; ");
+        tracing::warn!(%key, reasons = %msg, "rejected");
         write_status(&ctx.client, &app, terminal_status(&app, "Rejected", &msg)).await?;
         return Ok(Action::await_change()); // terminal until the CR changes
     }
@@ -211,11 +220,86 @@ fn backoff_duration(n: u32) -> Duration {
         .min(BACKOFF_CAP)
 }
 
-/// Spec keys hanzod does not model (captured by `AppSpec::extra`), sorted.
+/// Unmodeled keys anywhere hanzod carries an `extra` catch-all, as sorted dotted
+/// paths (`ingress.zeroTrustPolicy`, `persistence.dataDi`, …). MED-4: nested, not
+/// just top-level. NOTE the authoritative structural CRD prunes truly-unknown
+/// keys at admission, so this is defense-in-depth; the data-critical typos are
+/// caught by `persistence_reasons` below (a pruned required field ⇒ missing ⇒
+/// reject) rather than by observing the typo.
 fn unknown_fields(app: &App) -> Vec<String> {
-    let mut keys: Vec<String> = app.spec.extra.keys().cloned().collect();
-    keys.sort();
-    keys
+    let mut out = Vec::new();
+    let mut push = |prefix: &str, extra: &std::collections::BTreeMap<String, serde_json::Value>| {
+        for k in extra.keys() {
+            out.push(if prefix.is_empty() { k.clone() } else { format!("{prefix}.{k}") });
+        }
+    };
+    push("", &app.spec.extra);
+    if let Some(i) = &app.spec.ingress {
+        push("ingress", &i.extra);
+    }
+    if let Some(p) = &app.spec.persistence {
+        push("persistence", &p.extra);
+        if let Some(st) = &p.storage {
+            push("persistence.storage", &st.extra);
+        }
+    }
+    if let Some(a) = &app.spec.autoscaling {
+        push("autoscaling", &a.extra);
+    }
+    if let Some(pr) = &app.spec.liveness_probe {
+        push("livenessProbe", &pr.extra);
+    }
+    if let Some(pr) = &app.spec.readiness_probe {
+        push("readinessProbe", &pr.extra);
+    }
+    out.sort();
+    out
+}
+
+/// Required-field checks for enabled persistence — catches a pruned/typo'd
+/// critical field (dataDir/dbPath/bucket/storage) that would otherwise silently
+/// default and mount the DB at the wrong (ephemeral) path = data loss.
+fn persistence_reasons(app: &App) -> Vec<String> {
+    let mut r = Vec::new();
+    if let Some(p) = app.spec.persistence.as_ref().filter(|p| p.enabled) {
+        if p.dir_mode {
+            r.push("persistence.dirMode: multi-DB directory mode is not supported by hanzod yet".into());
+        }
+        if p.bucket.as_deref().unwrap_or("").is_empty() {
+            r.push("persistence.bucket: required when persistence is enabled".into());
+        }
+        if p.data_dir.as_deref().unwrap_or("").is_empty() {
+            r.push("persistence.dataDir: required when persistence is enabled".into());
+        }
+        if !p.dir_mode && p.db_path.as_deref().unwrap_or("").is_empty() {
+            r.push("persistence.dbPath: required unless dirMode".into());
+        }
+        match p.storage.as_ref() {
+            None => r.push("persistence.storage: required (retained PVC size)".into()),
+            Some(st) if st.size.trim().is_empty() => r.push("persistence.storage.size: required".into()),
+            _ => {}
+        }
+    }
+    r
+}
+
+/// All reasons to reject a CR (fail-closed). Empty ⇒ reconcilable.
+fn rejection_reasons(app: &App) -> Vec<String> {
+    let mut r = unknown_fields(app)
+        .into_iter()
+        .map(|f| format!("unsupported field: {f}"))
+        .collect::<Vec<_>>();
+    r.extend(persistence_reasons(app));
+    r
+}
+
+/// Whether the CR is already in a terminal phase (Rejected/Invalid) for its
+/// CURRENT generation — the LOW-5 short-circuit signal.
+fn is_terminal_for_current_gen(app: &App) -> bool {
+    let gen = app.meta().generation.unwrap_or(0);
+    app.status.as_ref().is_some_and(|st| {
+        matches!(st.phase.as_deref(), Some("Rejected") | Some("Invalid")) && st.observed_generation == gen
+    })
 }
 
 /// Server-side apply one owned object (GVK injected — SSA requires it).
@@ -235,7 +319,10 @@ where
     Ok(())
 }
 
-/// Delete an owned object by name, ignoring NotFound (idempotent prune).
+/// Delete a HANZOD-OWNED object by name (MED-2). Only deletes when the object
+/// exists AND carries `app.kubernetes.io/managed-by=hanzod` — never a
+/// hand-created same-named Ingress/HPA, and never a spurious DELETE when the
+/// object was already absent.
 async fn prune<K>(client: &Client, ns: &str, name: &str) -> Result<(), Error>
 where
     K: Resource<DynamicType = (), Scope = k8s_openapi::NamespaceResourceScope>
@@ -244,6 +331,13 @@ where
         + std::fmt::Debug,
 {
     let api: Api<K> = Api::namespaced(client.clone(), ns);
+    let Some(obj) = api.get_opt(name).await? else {
+        return Ok(()); // absent — nothing to prune, no DELETE call
+    };
+    if !owned_by_hanzod(&obj) {
+        tracing::debug!(kind = K::kind(&()).as_ref(), name, "not hanzod-owned; leaving in place");
+        return Ok(());
+    }
     match api.delete(name, &DeleteParams::default()).await {
         Ok(_) => {
             tracing::debug!(kind = K::kind(&()).as_ref(), name, "pruned disabled owned object");
@@ -252,6 +346,12 @@ where
         Err(kube::Error::Api(ae)) if ae.code == 404 => Ok(()),
         Err(e) => Err(e.into()),
     }
+}
+
+/// True iff the object carries hanzod's manager label — the marker every owned
+/// object gets via `manifests::base_labels`.
+fn owned_by_hanzod<K: ResourceExt>(obj: &K) -> bool {
+    obj.labels().get("app.kubernetes.io/managed-by").map(String::as_str) == Some("hanzod")
 }
 
 async fn deployment_replicas(client: &Client, ns: &str, name: &str) -> Result<(i32, i32), Error> {
@@ -298,18 +398,29 @@ async fn write_status(client: &Client, app: &App, status: Value) -> Result<(), E
     Ok(())
 }
 
-/// Best-effort read of the operator's OWN Deployment replica count for the
-/// MED-5 guard. Namespace from the in-cluster SA file (or `POD_NAMESPACE`);
-/// Deployment name from `HANZOD_DEPLOYMENT_NAME` (default `hanzod-operator`).
-async fn own_deployment_replicas(client: &Client) -> Option<i32> {
+/// `(in_cluster, replicas)` for the fail-closed boot guard. `in_cluster` is
+/// whether the operator runs under a k8s ServiceAccount (SA namespace file or
+/// `POD_NAMESPACE`). `replicas` is `Some` only when the operator's OWN
+/// Deployment was actually read. `HANZOD_DEPLOYMENT_NAME` MUST name that
+/// Deployment in-cluster — there is NO default (the shipped name differs per
+/// install, e.g. `operator-controller-manager`); when unset/mismatched,
+/// `replicas` is `None` and the boot guard refuses to start.
+async fn own_deployment_replicas(client: &Client) -> (bool, Option<i32>) {
     let ns = std::fs::read_to_string("/var/run/secrets/kubernetes.io/serviceaccount/namespace")
         .ok()
         .map(|s| s.trim().to_string())
-        .or_else(|| std::env::var("POD_NAMESPACE").ok())?;
-    let name = std::env::var("HANZOD_DEPLOYMENT_NAME").unwrap_or_else(|_| "hanzod-operator".to_string());
+        .or_else(|| std::env::var("POD_NAMESPACE").ok());
+    let in_cluster = ns.is_some();
+    let (Some(ns), Ok(name)) = (ns, std::env::var("HANZOD_DEPLOYMENT_NAME")) else {
+        return (in_cluster, None);
+    };
     let deps: Api<Deployment> = Api::namespaced(client.clone(), &ns);
-    let dep = deps.get_opt(&name).await.ok()??;
-    Some(dep.spec.and_then(|s| s.replicas).unwrap_or(1))
+    let replicas = deps
+        .get(&name)
+        .await
+        .ok()
+        .map(|d| d.spec.and_then(|s| s.replicas).unwrap_or(1));
+    (in_cluster, replicas)
 }
 
 
@@ -360,5 +471,80 @@ mod tests {
             prev = b;
         }
         assert_eq!(backoff_duration(100), BACKOFF_CAP);
+    }
+
+    #[test]
+    fn nested_unknown_field_flagged_with_dotted_path() {
+        // MED-4: an unmodeled key under ingress is caught with a dotted path.
+        let app = app_with(json!({
+            "image": {"repository": "r"},
+            "ingress": {"enabled": true, "zeroTrustPolicy": {"enabled": true}}
+        }));
+        assert_eq!(unknown_fields(&app), vec!["ingress.zeroTrustPolicy".to_string()]);
+    }
+
+    #[test]
+    fn persistence_missing_required_fields_is_rejected() {
+        // enabled persistence with only a bucket -> dataDir/dbPath/storage missing.
+        let app = app_with(json!({
+            "image": {"repository": "r"},
+            "persistence": {"enabled": true, "bucket": "b"}
+        }));
+        let reasons = rejection_reasons(&app);
+        assert!(reasons.iter().any(|r| r.contains("persistence.dataDir")));
+        assert!(reasons.iter().any(|r| r.contains("persistence.dbPath")));
+        assert!(reasons.iter().any(|r| r.contains("persistence.storage")));
+    }
+
+    #[test]
+    fn persistence_dir_mode_is_rejected() {
+        let app = app_with(json!({
+            "image": {"repository": "r"},
+            "persistence": {"enabled": true, "dirMode": true, "bucket": "b",
+                            "dataDir": "/d", "storage": {"size": "1Gi"}}
+        }));
+        assert!(rejection_reasons(&app).iter().any(|r| r.contains("dirMode")));
+    }
+
+    #[test]
+    fn complete_persistence_cr_is_accepted() {
+        let app = app_with(json!({
+            "image": {"repository": "r"},
+            "persistence": {"enabled": true, "bucket": "b", "dataDir": "/d",
+                            "dbPath": "a.db", "storage": {"size": "1Gi"}}
+        }));
+        assert!(rejection_reasons(&app).is_empty());
+    }
+
+    #[test]
+    fn prune_owner_check_only_matches_hanzod_managed() {
+        use k8s_openapi::api::networking::v1::Ingress;
+        use k8s_openapi::apimachinery::pkg::apis::meta::v1::ObjectMeta;
+        let mut managed = Ingress::default();
+        managed.metadata = ObjectMeta {
+            labels: Some(std::collections::BTreeMap::from([(
+                "app.kubernetes.io/managed-by".to_string(),
+                "hanzod".to_string(),
+            )])),
+            ..Default::default()
+        };
+        assert!(owned_by_hanzod(&managed));
+        // a hand-created object without the label must NOT be pruned
+        assert!(!owned_by_hanzod(&Ingress::default()));
+    }
+
+    #[test]
+    fn terminal_short_circuit_only_for_current_generation() {
+        let mut app = app_with(json!({"image": {"repository": "r"}}));
+        app.metadata.generation = Some(3);
+        app.status = Some(crate::crd::AppStatus {
+            phase: Some("Rejected".into()),
+            observed_generation: 3,
+            ..Default::default()
+        });
+        assert!(is_terminal_for_current_gen(&app)); // same gen -> skip
+        // a spec change bumps generation -> re-open for reconcile
+        app.metadata.generation = Some(4);
+        assert!(!is_terminal_for_current_gen(&app));
     }
 }
