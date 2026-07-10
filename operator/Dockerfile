@@ -1,8 +1,6 @@
 # Canonical Rust implementation of the Hanzo operator.
 #
-# Build with this directory as context: `docker build operator/`
-# (the COPY paths below are relative to operator/, not the repo root — a
-#  repo-root context would copy node's workspace Cargo.toml and break).
+# Build from the repo root: `docker build .`
 # Image: ghcr.io/hanzoai/operator:vX.Y.Z (Go sibling: ghcr.io/luxfi/operator).
 #
 # Builder — Rust 1.95: deps (clap_lex 1.1.0 via clap 4.6) require edition2024
