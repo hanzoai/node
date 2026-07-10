@@ -1,8 +1,9 @@
 // hanzod is the Hanzo Network node — an L1 on the Lux Network.
 //
 // Same consensus (Quasar), same transport (ZAP), same stack as luxd. The same
-// binary also fronts the merged Kubernetes operator (./operator), so one image
-// runs both the node and the control-plane reconciler.
+// binary also fronts the canonical Hanzo operator (ghcr.io/hanzoai/operator),
+// so one image runs both the node and the control-plane reconciler — the
+// operator binary is composed into the image, never vendored as source.
 //
 // Usage:
 //
@@ -34,7 +35,7 @@ func main() {
 			printVMs()
 			return
 		case "operator":
-			// Supervised handoff to the merged Rust operator (./operator).
+			// Supervised handoff to the canonical operator binary (ghcr.io/hanzoai/operator).
 			dispatchOperator(os.Args[2:])
 			return
 		case "install":

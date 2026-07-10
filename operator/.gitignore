@@ -1,8 +1,0 @@
-# The operator crate builds as its own Cargo workspace; ignore only its build
-# output, never its sources.
-/target/
-
-# `src/bin/generate_crd_yaml.rs` is real crate source (the generate-crd-yaml
-# bin declared in Cargo.toml). Re-include the directory against the repo-root
-# `bin/` rule, which would otherwise swallow the whole `src/bin` dir.
-!/src/bin/

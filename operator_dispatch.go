@@ -1,14 +1,15 @@
-// hanzod operator / hanzod install — supervised handoff to the merged
+// hanzod operator / hanzod install — supervised handoff to the canonical
 // Kubernetes operator.
 //
-// The operator is the canonical Rust reconcile loop, merged into this repo
-// under ./operator (crate `operator`, binary `operator`). It ships in the SAME
-// container image as hanzod, and `hanzod operator …` / `hanzod install …` exec
-// into it. One image, one install runs both the node and the operator without
-// fusing their runtimes: the Go node (luxfi/node) and the Rust operator do not
-// share an address space — they compose over the Kubernetes API. This is the
-// decomplected boundary (endorsed by the hanzod-unification design): supervised
-// multi-binary in one image, not FFI.
+// The operator is the canonical Rust reconcile loop with exactly ONE home:
+// hanzoai/operator (image ghcr.io/hanzoai/operator). node vendors zero operator
+// source. node's production image COPYs the operator binary from that image into
+// /usr/local/bin/operator (docker/Dockerfile), and `hanzod operator …` /
+// `hanzod install …` exec into it. One image runs both the node and the operator
+// without fusing their runtimes: the Go node (luxfi/node) and the Rust operator
+// do not share an address space — they compose over the Kubernetes API. This is
+// the decomplected boundary: supervised multi-binary in one image, not FFI, and
+// not a source fork.
 package main
 
 import (
@@ -19,7 +20,7 @@ import (
 	"syscall"
 )
 
-// operatorBinary resolves the merged operator executable, in order:
+// operatorBinary resolves the canonical operator executable, in order:
 //  1. $HANZO_OPERATOR_BIN — explicit override,
 //  2. `operator` on $PATH,
 //  3. an `operator` sitting next to the hanzod executable (the image layout,
