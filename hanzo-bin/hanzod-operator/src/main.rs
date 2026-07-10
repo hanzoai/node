@@ -4,7 +4,12 @@
 // you may not use this file except in compliance with the License.
 
 //! `hanzod-operator` binary. Runs the controller against the ambient kubeconfig
-//! / in-cluster service account. `hanzod-operator crd` prints the CRD and exits.
+//! / in-cluster service account.
+//!
+//! `hanzod-operator crd` prints hanzod's derived CRD for REFERENCE only. It does
+//! NOT replace `universe/infra/k8s/operator/crds.yaml`, which is the
+//! authoritative superset — never pipe this into `kubectl apply` over the live
+//! CRD.
 
 use std::sync::Arc;
 
@@ -15,6 +20,10 @@ async fn main() -> anyhow::Result<()> {
     init_tracing();
 
     if std::env::args().nth(1).as_deref() == Some("crd") {
+        eprintln!(
+            "# REFERENCE ONLY — the authoritative CRD is universe/infra/k8s/operator/crds.yaml\n\
+             # (a superset). Do NOT apply this over the live CRD."
+        );
         println!("{}", serde_json::to_string_pretty(&crd_definition())?);
         return Ok(());
     }

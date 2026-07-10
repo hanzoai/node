@@ -3,20 +3,19 @@
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
 
-//! `services.hanzo.ai/v1` — the CRD hanzod reconciles.
+//! `apps.hanzo.ai/v1` — the CRD hanzod reconciles (`kind: App`, short `app`).
 //!
-//! These types are the Rust source of truth for the `kind: Service` schema
-//! (`kubectl get hsvc`). The published CRD in
-//! `universe/infra/k8s/operator/crds.yaml` carries the `#[kube(...)]` derive's
-//! `Auto-generated derived type for ServiceSpec` marker — it was generated FROM
-//! a struct like this one. `hanzod-operator crd` re-emits it from here.
+//! Named `App` (not `Service`) to eliminate the collision with core k8s
+//! `Service`. `kubectl get apps.hanzo.ai`.
 //!
-//! Scope note: this foundation models the fields that map to the core workload
-//! (Deployment + Service + Ingress). serde ignores unknown fields on watch, so a
-//! CR carrying advanced fields not yet reconciled here (autoscaling, pdb,
-//! networkPolicy, serviceMonitor, kmsSecrets, persistence) deserializes cleanly;
-//! those become their own reconcilers next (`crds.yaml` stays authoritative for
-//! the full schema until the Rust types cover it end-to-end).
+//! These types model the fields hanzod reconciles. **The authoritative CRD is
+//! `universe/infra/k8s/operator/crds.yaml`** — it is a superset (7 more fields +
+//! `status.conditions`). hanzod NEVER applies its own narrower schema over it
+//! (that would prune stored fields); see [`crate::crd_definition`].
+//!
+//! Fail-closed on unmodeled fields: any spec key hanzod does not model is
+//! captured by [`AppSpec::extra`] and makes the CR `status.phase=Rejected` — a
+//! hard error, never a silent no-op that would drop e.g. a `persistence` PVC.
 
 use std::collections::BTreeMap;
 
@@ -24,19 +23,17 @@ use kube::CustomResource;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
-/// `spec` of a `services.hanzo.ai/v1` Service. The `#[kube]` derive generates
-/// the `Service` root object (`apiVersion: hanzo.ai/v1`, `kind: Service`) plus
-/// its `ServiceStatus` subresource.
+/// `spec` of an `apps.hanzo.ai/v1` App.
 #[derive(CustomResource, Clone, Debug, Default, Deserialize, Serialize, JsonSchema)]
 #[kube(
     group = "hanzo.ai",
     version = "v1",
-    kind = "Service",
-    plural = "services",
-    singular = "service",
-    shortname = "hsvc",
+    kind = "App",
+    plural = "apps",
+    singular = "app",
+    shortname = "app",
     namespaced,
-    status = "ServiceStatus",
+    status = "AppStatus",
     derive = "Default",
     printcolumn = r#"{"name":"Phase","jsonPath":".status.phase","type":"string"}"#,
     printcolumn = r#"{"name":"Ready","jsonPath":".status.readyReplicas","type":"integer"}"#,
@@ -44,11 +41,12 @@ use serde::{Deserialize, Serialize};
     printcolumn = r#"{"name":"Age","jsonPath":".metadata.creationTimestamp","type":"date"}"#
 )]
 #[serde(rename_all = "camelCase")]
-pub struct ServiceSpec {
+pub struct AppSpec {
     /// Container image. `repository` is required; `tag` defaults to `latest`.
     pub image: Image,
 
-    /// Desired replica count. `None` → 1.
+    /// Desired replica count. `None` → 1. Ignored (left unset) when
+    /// `autoscaling.enabled` so hanzod never fights an HPA.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub replicas: Option<i32>,
 
@@ -56,69 +54,76 @@ pub struct ServiceSpec {
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub strategy: Option<String>,
 
-    /// Entrypoint override (`command`) / arguments (`args`).
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
     pub command: Vec<String>,
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
     pub args: Vec<String>,
 
-    /// Environment: literal, from a ref, or bulk from a ConfigMap/Secret.
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
     pub env: Vec<EnvVar>,
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
     pub env_from: Vec<EnvFromSource>,
 
-    /// Exposed ports. Each becomes a container port and a Service port.
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
     pub ports: Vec<Port>,
 
-    /// Compute requests/limits (quantity strings, e.g. `cpu: "200m"`).
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub resources: Option<ResourceRequirements>,
 
-    /// Health checks. `exec` > `tcpSocket` > `httpGet` precedence.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub liveness_probe: Option<Probe>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub readiness_probe: Option<Probe>,
 
-    /// Extra labels / annotations propagated to the pod template.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub labels: Option<BTreeMap<String, String>>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub annotations: Option<BTreeMap<String, String>>,
 
-    /// Pod service account and image-pull secrets.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub service_account_name: Option<String>,
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
     pub image_pull_secrets: Vec<LocalObjectReference>,
 
-    /// Pod-level `securityContext.fsGroup` (non-root images writing a PVC).
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub fs_group: Option<i64>,
 
-    /// init / sidecar containers (share the env + volumeMount mapping).
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
     pub init_containers: Vec<ExtraContainer>,
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
     pub sidecars: Vec<ExtraContainer>,
 
-    /// Main-container volume mounts + the pod volumes they bind.
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
     pub volume_mounts: Vec<VolumeMount>,
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
     pub volumes: Vec<Volume>,
 
-    /// Optional Ingress. Emitted only when `enabled`.
+    /// Optional Ingress. Emitted only when `enabled`; when disabled/absent the
+    /// owned Ingress is DELETED (never left orphaned on the internet).
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub ingress: Option<Ingress>,
 
-    /// `app.kubernetes.io/part-of` / `component` labels.
+    /// Durable SeaweedFS-backed SQLite via `hanzoai/replicate` (PVC + restore
+    /// init + WAL sidecar). REQUIRED for chat/paas/dataroom.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub persistence: Option<Persistence>,
+
+    /// HPA. When `enabled`, hanzod omits Deployment.replicas and emits the HPA.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub autoscaling: Option<Autoscaling>,
+
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub part_of: Option<String>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub component: Option<String>,
+
+    /// Catch-all for any spec field hanzod does NOT model (pdb, networkPolicy,
+    /// serviceMonitor, kmsSecrets, surgeColocation, …). Non-empty ⇒ the CR is
+    /// Rejected — fail-closed, never a silent drop. `schemars(skip)` keeps the
+    /// generated schema structural; serde still captures the keys at runtime.
+    #[serde(flatten)]
+    #[schemars(skip)]
+    pub extra: BTreeMap<String, serde_json::Value>,
 }
 
 #[derive(Clone, Debug, Default, Deserialize, Serialize, JsonSchema)]
@@ -132,7 +137,6 @@ pub struct Image {
 }
 
 impl Image {
-    /// `repository:tag`, defaulting the tag to `latest`.
     pub fn reference(&self) -> String {
         match &self.tag {
             Some(t) if !t.is_empty() => format!("{}:{}", self.repository, t),
@@ -153,7 +157,6 @@ pub struct Port {
 }
 
 impl Port {
-    /// The Service port: `servicePort` if set, else the container port.
     pub fn effective_service_port(&self) -> i32 {
         self.service_port.unwrap_or(self.container_port)
     }
@@ -225,9 +228,6 @@ pub struct ResourceRequirements {
     pub limits: Option<BTreeMap<String, String>>,
 }
 
-/// A health probe. Handler precedence on materialization is `exec` >
-/// `tcpSocket` > `httpGet` (`path`/`port`) — matching the CRD's documented rule
-/// so non-HTTP stores (pg_isready, redis ping) are not mangled into httpGet.
 #[derive(Clone, Debug, Default, Deserialize, Serialize, JsonSchema)]
 #[serde(rename_all = "camelCase")]
 pub struct Probe {
@@ -269,9 +269,6 @@ pub struct VolumeMount {
     pub sub_path: Option<String>,
 }
 
-/// A pod volume. The volume source (emptyDir/configMap/secret/…) is passed
-/// through verbatim (`x-kubernetes-preserve-unknown-fields`) — hanzod does not
-/// interpret it, it only wires the `name` to the mount.
 #[derive(Clone, Debug, Default, Deserialize, Serialize, JsonSchema)]
 #[serde(rename_all = "camelCase")]
 pub struct Volume {
@@ -281,8 +278,6 @@ pub struct Volume {
     pub source: BTreeMap<String, serde_json::Value>,
 }
 
-/// An init or sidecar container. Reuses the same env / mount value types as the
-/// main container (DRY), so the two container kinds map identically.
 #[derive(Clone, Debug, Default, Deserialize, Serialize, JsonSchema)]
 #[serde(rename_all = "camelCase")]
 pub struct ExtraContainer {
@@ -309,7 +304,6 @@ pub struct Ingress {
     pub enabled: bool,
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
     pub hosts: Vec<String>,
-    /// Terminate TLS (cert-manager). Defaults true on the CRD.
     #[serde(default = "default_true")]
     pub tls: bool,
     #[serde(default, skip_serializing_if = "Option::is_none")]
@@ -318,8 +312,6 @@ pub struct Ingress {
     pub cluster_issuer: Option<String>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub annotations: Option<BTreeMap<String, String>>,
-    /// Explicit path routing. Empty → a single `/` Prefix rule per host to the
-    /// first Service port.
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
     pub path_rules: Vec<PathRule>,
 }
@@ -334,11 +326,77 @@ pub struct PathRule {
     pub service_name: Option<String>,
 }
 
-/// Status subresource. hanzod writes `observedGeneration` + replica counts +
-/// `phase` after each reconcile; the phase drives `kubectl get hsvc`.
+/// Durable SQLite via `hanzoai/replicate`: a PVC (or emptyDir) mounted at
+/// `dataDir`, a `restore -if-db-not-exists` init container (appended AFTER user
+/// init containers, so a migrate-first init can't create an empty DB and skip
+/// the snapshot), and a continuous `replicate` WAL sidecar. Mirrors the Go
+/// operator; config is passed via `REPLICATE_*` env.
 #[derive(Clone, Debug, Default, Deserialize, Serialize, JsonSchema)]
 #[serde(rename_all = "camelCase")]
-pub struct ServiceStatus {
+pub struct Persistence {
+    #[serde(default)]
+    pub enabled: bool,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub bucket: Option<String>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub data_dir: Option<String>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub db_path: Option<String>,
+    #[serde(default)]
+    pub dir_mode: bool,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub pattern: Option<String>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub image: Option<String>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub s3_endpoint: Option<String>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub s3_path: Option<String>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub s3_region: Option<String>,
+    #[serde(default = "default_true")]
+    pub force_path_style: bool,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub credentials_secret: Option<String>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub age_secret: Option<String>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub storage: Option<Storage>,
+}
+
+#[derive(Clone, Debug, Default, Deserialize, Serialize, JsonSchema)]
+#[serde(rename_all = "camelCase")]
+pub struct Storage {
+    pub size: String,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub storage_class_name: Option<String>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub volume_name: Option<String>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub retention_policy: Option<String>,
+}
+
+#[derive(Clone, Debug, Default, Deserialize, Serialize, JsonSchema)]
+#[serde(rename_all = "camelCase")]
+pub struct Autoscaling {
+    #[serde(default)]
+    pub enabled: bool,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub min_replicas: Option<i32>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub max_replicas: Option<i32>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub target_cpu_utilization: Option<i32>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub target_memory_utilization: Option<i32>,
+}
+
+/// Status subresource. `phase`: Creating → Running (or Degraded); Rejected
+/// (unmodeled field, fail-closed) or Invalid (quarantined after repeated
+/// reconcile failures) are terminal until the CR changes.
+#[derive(Clone, Debug, Default, Deserialize, Serialize, JsonSchema)]
+#[serde(rename_all = "camelCase")]
+pub struct AppStatus {
     #[serde(default)]
     pub observed_generation: i64,
     #[serde(default)]
@@ -347,6 +405,8 @@ pub struct ServiceStatus {
     pub available_replicas: i32,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub phase: Option<String>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub message: Option<String>,
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
     pub endpoints: Vec<String>,
 }

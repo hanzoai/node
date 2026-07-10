@@ -94,83 +94,102 @@ trainer can post deltas any Rust worker can ingest, and vice versa.
 ## hanzod Kubernetes Operator (`hanzo-bin/hanzod-operator`)
 
 hanzod's operator surface: one hanzod per cluster, a drop-in operator that
-watches the `services.hanzo.ai/v1` CRD (`kind: Service`, shortname `hsvc`) and
-reconciles each CR to a **Deployment + Service + optional Ingress**. It replaces
-the decommissioned Go operator (`ghcr.io/hanzoai/operator`); the CRD it consumes
-carries the `Auto-generated derived type for ServiceSpec` marker, i.e. the schema
-was always generated from Rust `kube::CustomResource` types — hanzod is now their
-home. Manifests: `~/work/hanzo/universe/infra/k8s/operator/{crds.yaml,deployment.yaml,rbac/}`.
+watches the `apps.hanzo.ai/v1` CRD (`kind: App`, short `app`) and reconciles each
+CR to **Deployment + Service + optional Ingress + optional PVC + optional HPA**.
+Replaces the decommissioned Go operator (`ghcr.io/hanzoai/operator`). Kind is
+`App` (renamed from `Service`) to avoid colliding with core k8s `Service`:
+`kubectl get apps.hanzo.ai`.
 
 Built on `kube-rs` 4.0 + `k8s-openapi` 0.28 + `schemars` 1.2. Self-contained
-workspace leaf (only crates.io deps) so it builds and tests independently of the
-inference-heavy `hanzo-node` binary; the node wires it in as a subcommand later.
+workspace leaf (crates.io deps only) so it builds/tests independently of the
+inference-heavy `hanzo-node` binary.
 
-### Layout — one concern per module (decomplected: values, not places)
+### Layout — one concern per module (decomplect: decision vs effect)
 
 | Module           | Concern                                                                 |
 | ---------------- | ----------------------------------------------------------------------- |
-| `crd.rs`         | `services.hanzo.ai` Rust types — the schema's source of truth.          |
-| `manifests.rs`   | **Pure** CR → Deployment/Service/Ingress mapping (the *decision*).      |
-| `reconcile.rs`   | The kube controller (the *effect*: gate → plan → SSA → status).         |
+| `crd.rs`         | `apps.hanzo.ai` Rust types (the modeled subset + a reject catch-all).   |
+| `manifests.rs`   | **Pure** CR → owned-objects mapping (the *decision*), unit-tested.      |
+| `reconcile.rs`   | The kube controller (the *effect*: gate → plan → apply/prune → status). |
 | `coordinator.rs` | The leaderless seam — who reconciles when N hanzods run.                |
 
-The decision (`manifests::plan`) is separated from the effect (`reconcile::apply`)
-so the whole CR → objects mapping is unit-tested directly with no cluster/client.
-Reconcile is idempotent server-side-apply under field manager `hanzod`; it sets
-`ownerReferences` (GC + `owns()` watch) and writes the `status` subresource
-(`observedGeneration`, `readyReplicas`, `availableReplicas`, derived `phase`).
+### CRD authority (HIGH-2)
 
-Run: `hanzod-operator` (ambient kubeconfig / in-cluster SA). `hanzod-operator crd`
-prints the CRD (`| kubectl apply -f -`) — types generate the schema, one way, no
-drift. Reconciled CR fields today: image, replicas, strategy, command/args, env
-(+valueFrom/envFrom), ports, resources, liveness/readiness probes (exec > tcp >
-http precedence), labels/annotations, serviceAccountName, imagePullSecrets,
-fsGroup, init/sidecar containers, volumes/volumeMounts, ingress (class annotation
-for `hanzoai/ingress` + cert-manager issuer), partOf/component. serde ignores
-unknown CR fields, so advanced fields not yet reconciled (autoscaling→HPA,
-pdb→PDB, networkPolicy, serviceMonitor, kmsSecrets, persistence) deserialize
-cleanly and become their own reconcilers next; `crds.yaml` stays authoritative for
-the full schema until the Rust types cover it end-to-end.
+**`universe/infra/k8s/operator/crds.yaml` is the authoritative CRD.** hanzod's
+derived schema is a strict SUBSET (missing pdb/networkPolicy/serviceMonitor/
+kmsSecrets/surgeColocation + status.conditions). hanzod must NEVER apply its
+narrower structural schema over the live one — that would make the apiserver
+PRUNE those fields off every stored CR. Two guards: `crd_definition()` injects
+`x-kubernetes-preserve-unknown-fields: true` at the spec root (non-destructive),
+and `hanzod-operator crd` is REFERENCE-only (prints a stderr warning; never pipe
+to `kubectl apply` over the live CRD).
+
+### Fail-closed on unmodeled fields (HIGH-1)
+
+serde captures any spec key hanzod does not model into `AppSpec::extra`; a
+non-empty `extra` makes the CR `status.phase=Rejected` (terminal until the CR
+changes) — NEVER a silent no-op that would drop e.g. a `persistence` PVC + WAL
+backup → data loss. Modeled today: image, replicas, strategy, command/args, env
+(+valueFrom/envFrom), ports, resources, probes (exec>tcp>http), labels/
+annotations, serviceAccountName, imagePullSecrets, fsGroup, init/sidecar
+containers, volumes/mounts, ingress, **persistence**, **autoscaling**, partOf/
+component. Rejected until modeled: pdb (11 CRs), surgeColocation (3),
+networkPolicy/serviceMonitor/kmsSecrets (unused) — model these next to unblock
+their CRs; the reject path keeps them fail-closed-safe meanwhile.
+
+### persistence (durable SQLite via hanzoai/replicate)
+
+`persistence.enabled` wires: a retained PVC (`<app>-<volume>`, RWO, sized from
+`storage.size`) or an emptyDir; the volume mounted at `dataDir` in the main
+container; a `replicate restore -if-db-not-exists <dataDir/db>` init container
+APPENDED after user init containers (paas rationale: a migrate-first init would
+create an empty DB and skip the snapshot); and a continuous `replicate replicate`
+WAL sidecar. Config via `REPLICATE_*` env (BUCKET/PATH/REPLICA_URL/ENDPOINT/
+REGION/FORCE_PATH_STYLE/ALLOW_PLAINTEXT, ACCESS_KEY_ID+SECRET_ACCESS_KEY from
+`credentialsSecret`, AGE_IDENTITY on restore / AGE_RECIPIENT on replicate from
+`ageSecret`). Required before chat/paas/dataroom migrate.
+
+### Prune, autoscaling, backoff
+
+- MED-3: a disabled Ingress/HPA is DELETED by name (not orphaned). A data PVC is
+  never deleted.
+- MED-6: under `autoscaling.enabled`, Deployment.replicas is left unset (hanzod
+  never fights the HPA) and an autoscaling/v2 HPA is emitted (CPU 80% default).
+- MED-8: reconcile failures back off exponentially (5s → 600s cap); after 6
+  consecutive failures the CR is quarantined `status.phase=Invalid` (stops the
+  hot-loop until the CR changes).
+
+Reconcile is idempotent server-side-apply under field manager `hanzod`, sets
+`ownerReferences` (GC + `owns()` watch), writes the `status` subresource.
 
 ### Consensus seam — leaderless, mirrors `github.com/hanzoai/ha` + Lux ZAP
 
-The vision: many hanzods across clusters forming a public, permissionless,
-leaderless blockchain, each hanzod one consensus participant. The reconcile loop
-asks exactly ONE question per object — `Coordinator::should_reconcile(key)` where
-`key = "<namespace>/<name>"` — and everything about how that is answered lives
-behind the trait. Four layers, composed not braided, deliberately mirroring `ha`
-(already proven in visor/cloud):
+The reconcile loop asks ONE question per object —
+`Coordinator::should_reconcile("<ns>/<name>")` — everything about how it is
+answered lives behind the trait. Mirrors `ha` (Membership + Owner + Fencer):
 
-1. **Membership** (`trait Membership`) — the live reconcile-eligible hanzod set +
-   this node's stable id. `StaticMembership` (single node/tests) or a cluster
-   source. Fail-closed on error/empty (no safe owner ⇒ stand aside).
-2. **Owner** (`fn owner`) — pure Rendezvous/HRW hashing over `(key, members)`,
-   `sha256(key ‖ 0x00 ‖ id)[..8]` — **byte-identical to `ha.weight`** (a golden
-   test locks it), so a Rust hanzod and a Go `ha` elect the same owner. HRW today.
-3. **Coordinator** (`trait Coordinator`) — `StaticCoordinator` (single-node
-   default, always owner) and `HrwCoordinator<M>` (composes Membership + owner).
-4. **Fencer / Round** (documented seam, not yet wired) — election answers who
-   SHOULD write; it cannot make a deposed/partitioned node STOP. A monotone
-   `Round` fencing token does. `ha` keeps this separate on purpose: the round is
-   the output of a *linearizable* source, and folding that in re-complects
-   election with consensus. Today: a single linearizable register. Tomorrow: a
-   **ZAP-BFT-agreed round** — Lux `~/work/lux/consensus1` over `~/work/lux/zap`
-   `conn_pq` PQ sessions (the quasar RSM) — plugged in behind `Fencer` with no
-   change at any call site. The k8s API server itself is the fenced store (SSA
-   with a per-round field manager / `resourceVersion` precondition rejects a stale
-   writer's patch).
+1. **Membership** — live reconcile-eligible hanzod set + self id; fail-closed on
+   error/empty. `StaticMembership` default.
+2. **Owner** (`fn owner`) — pure HRW `sha256(key ‖ 0x00 ‖ id)[..8]`,
+   byte-identical to `ha.weight` (golden-locked) → Rust hanzod and Go `ha` agree.
+3. **Coordinator** — `StaticCoordinator` (single-node default) + `HrwCoordinator`.
+   MED-5: `StaticCoordinator::requires_single_replica()==true`; `run()` reads the
+   operator's own Deployment replicas and hard-fails at boot if >1 (split-brain
+   guard) — the real fix is a leaderless `Membership` (Lease/ZAP) that fences N.
+4. **Fencer / Round** (seam, not wired) — a monotone `Round` fences a deposed
+   writer. Tomorrow: a ZAP-BFT-agreed round (`lux/consensus1` over `lux/zap`
+   `conn_pq`), the quasar RSM; plugs in behind `Fencer` with the k8s API server
+   as the fenced store, no call-site change.
 
-### What's left for full leaderless-BFT (follow-on)
+### What's left for full leaderless-BFT
 
-- Wire a real `Membership`: `KubeMembership` (list hanzod Leases in
-  `coordination.k8s.io`) or `ZapMembership` (mDNS/discovery peers over `zap`).
-- Add a `FencedCoordinator` = `owner` + `Fencer::acquire(key)`; stamp the round
-  onto every SSA (field manager `hanzod-r<round>`) so a deposed writer is fenced.
-- Back the `Fencer` with the ZAP-agreed round so "who" is BFT-agreed across
-  mutually-distrusting clusters, not just locally-HRW-agreed.
-- Reconcilers for the advanced CR fields (HPA/PDB/NetworkPolicy/ServiceMonitor/
-  KMSSecret/persistence) + apply-time pruning of orphaned owned objects.
+- A real `Membership` (K8s Lease over the granted `coordination.k8s.io` RBAC, or
+  ZAP mDNS discovery), retiring the boot-time single-replica guard.
+- A `FencedCoordinator` = `owner` + `Fencer::acquire(key)` stamping the round on
+  every apply; back the `Fencer` with the ZAP-agreed round.
+- Model pdb + surgeColocation (unblock 11+3 CRs), then networkPolicy/
+  serviceMonitor/kmsSecrets; apply-time prune of orphaned owned objects.
 
-Local build/test note: the repo `.cargo/config.toml` pins `-fuse-ld=lld` (CI has
-lld). On a box without it: `CARGO_TARGET_X86_64_UNKNOWN_LINUX_GNU_LINKER=cc
+Local build/test (repo `.cargo/config.toml` pins lld, absent on some boxes):
+`CARGO_TARGET_X86_64_UNKNOWN_LINUX_GNU_LINKER=cc
 CARGO_TARGET_X86_64_UNKNOWN_LINUX_GNU_RUSTFLAGS="" cargo test -p hanzod-operator`.

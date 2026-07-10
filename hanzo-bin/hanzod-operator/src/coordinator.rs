@@ -112,6 +112,8 @@ pub fn is_owner(key: &str, self_id: &str, members: &[Member]) -> bool {
 pub enum CoordError {
     #[error("membership unavailable: {0}")]
     Membership(String),
+    #[error("StaticCoordinator with operator replicas={0}: split-brain. Set replicas:1 or wire a leaderless Coordinator (Lease/ZAP membership).")]
+    SplitBrain(i32),
 }
 
 /// The live, reconcile-eligible hanzod set plus this node's own id — the ONE
@@ -163,6 +165,26 @@ pub trait Coordinator: Send + Sync {
     /// (another node owns it), or an `Err` the caller treats as stand-aside
     /// (fail-closed).
     async fn should_reconcile(&self, key: &str) -> Result<bool, CoordError>;
+
+    /// Whether this coordinator is only safe at ONE operator replica. A
+    /// coordination-free default (`StaticCoordinator`) is: two replicas would
+    /// both reconcile every object (split-brain). A real leaderless coordinator
+    /// (HRW/ZAP over a live membership) returns false — it fences N replicas.
+    /// `run()` hard-fails at boot if this is true and the operator Deployment
+    /// has replicas > 1.
+    fn requires_single_replica(&self) -> bool {
+        false
+    }
+}
+
+/// Boot guard for MED-5: reject an unsafe operator scale-out. Pure so it is
+/// unit-tested without a cluster. `observed_replicas` is the operator's own
+/// Deployment `spec.replicas`.
+pub fn check_singleton(requires_single: bool, observed_replicas: i32) -> Result<(), CoordError> {
+    if requires_single && observed_replicas > 1 {
+        return Err(CoordError::SplitBrain(observed_replicas));
+    }
+    Ok(())
 }
 
 /// Single-node default: always the owner. This is the drop-in
@@ -175,6 +197,9 @@ pub struct StaticCoordinator;
 impl Coordinator for StaticCoordinator {
     async fn should_reconcile(&self, _key: &str) -> Result<bool, CoordError> {
         Ok(true)
+    }
+    fn requires_single_replica(&self) -> bool {
+        true
     }
 }
 
@@ -288,5 +313,19 @@ mod tests {
             }
         }
         assert!(!HrwCoordinator::new(Empty).should_reconcile("k").await.unwrap());
+    }
+
+    #[test]
+    fn static_coordinator_requires_single_replica() {
+        assert!(StaticCoordinator.requires_single_replica());
+    }
+
+    #[test]
+    fn singleton_guard_rejects_operator_scale_out() {
+        // StaticCoordinator (requires_single=true) at replicas>1 is split-brain.
+        assert!(check_singleton(true, 2).is_err());
+        assert!(check_singleton(true, 1).is_ok());
+        // A real leaderless coordinator (requires_single=false) fences N replicas.
+        assert!(check_singleton(false, 5).is_ok());
     }
 }
