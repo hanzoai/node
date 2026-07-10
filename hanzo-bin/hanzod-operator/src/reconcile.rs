@@ -229,9 +229,7 @@ where
 {
     let api: Api<K> = Api::namespaced(client.clone(), ns);
     let name = obj.name_any();
-    let mut val = serde_json::to_value(obj)?;
-    val["apiVersion"] = json!(K::api_version(&()));
-    val["kind"] = json!(K::kind(&()));
+    let val = manifests::ssa_body(obj)?;
     api.patch(&name, &PatchParams::apply(FIELD_MANAGER).force(), &Patch::Apply(&val))
         .await?;
     Ok(())

@@ -51,6 +51,44 @@ pub fn plan(app: &App) -> anyhow::Result<Plan> {
     })
 }
 
+impl Plan {
+    /// The owned objects as server-side-apply JSON bodies, in apply order (PVC,
+    /// Deployment, Service, then Ingress/HPA when present) — exactly the bytes
+    /// [`crate::reconcile`] applies. `hanzod-operator plan` prints these for an
+    /// offline diff against the live objects, proving cutover equivalence before
+    /// a single CR is migrated. Prune targets (absent Ingress/HPA) are omitted:
+    /// there is no object to render for "ensure deleted".
+    pub fn objects(&self) -> Result<Vec<serde_json::Value>, serde_json::Error> {
+        let mut out = Vec::with_capacity(5);
+        if let Some(pvc) = &self.pvc {
+            out.push(ssa_body(pvc)?);
+        }
+        out.push(ssa_body(&self.deployment)?);
+        out.push(ssa_body(&self.service)?);
+        if let Some(ing) = &self.ingress {
+            out.push(ssa_body(ing)?);
+        }
+        if let Some(hpa) = &self.hpa {
+            out.push(ssa_body(hpa)?);
+        }
+        Ok(out)
+    }
+}
+
+/// Serialize an owned object to its server-side-apply body: the k8s-openapi JSON
+/// plus the `apiVersion`/`kind` that SSA requires (k8s-openapi types omit the
+/// GVK). The ONE place the GVK is injected — [`crate::reconcile`] applies this,
+/// `hanzod-operator plan` prints it, so the two can never drift.
+pub fn ssa_body<K>(obj: &K) -> Result<serde_json::Value, serde_json::Error>
+where
+    K: kube::Resource<DynamicType = ()> + serde::Serialize,
+{
+    let mut val = serde_json::to_value(obj)?;
+    val["apiVersion"] = serde_json::json!(K::api_version(&()));
+    val["kind"] = serde_json::json!(K::kind(&()));
+    Ok(val)
+}
+
 /// Whether autoscaling is on — when true, Deployment.replicas is left unset so
 /// hanzod does not fight the HPA (MED-6).
 fn autoscaling_enabled(app: &App) -> bool {
@@ -893,5 +931,38 @@ mod tests {
         assert!(p.hpa.is_none());
         // chat: adds a pvc
         assert!(plan(&chat()).unwrap().pvc.is_some());
+    }
+
+    #[test]
+    fn ssa_body_injects_gvk() {
+        // k8s-openapi types omit apiVersion/kind; ssa_body must inject them so
+        // the bytes reconcile applies == the bytes `plan` prints.
+        let d = build_deployment(&billing()).unwrap();
+        let v = ssa_body(&d).unwrap();
+        assert_eq!(v["apiVersion"], "apps/v1");
+        assert_eq!(v["kind"], "Deployment");
+        assert_eq!(v["metadata"]["name"], "billing");
+    }
+
+    #[test]
+    fn plan_objects_are_ordered_and_gvk_stamped() {
+        // billing → PVC absent, so [Deployment, Service, Ingress] with GVK set.
+        let kinds: Vec<String> = plan(&billing())
+            .unwrap()
+            .objects()
+            .unwrap()
+            .iter()
+            .map(|o| o["kind"].as_str().unwrap().to_string())
+            .collect();
+        assert_eq!(kinds, ["Deployment", "Service", "Ingress"]);
+        // chat → persistence adds a PVC first (volume exists before the pod).
+        let chat_kinds: Vec<String> = plan(&chat())
+            .unwrap()
+            .objects()
+            .unwrap()
+            .iter()
+            .map(|o| o["kind"].as_str().unwrap().to_string())
+            .collect();
+        assert_eq!(chat_kinds[0], "PersistentVolumeClaim");
     }
 }
