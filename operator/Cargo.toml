@@ -1,0 +1,73 @@
+[workspace]
+# Explicit empty workspace: this operator builds as its OWN orthogonal Cargo
+# graph inside the node repo. Its kube/k8s-openapi/aws-lc-rs deps stay decoupled
+# from the node's blockchain/AI workspace (libp2p/candle/rusqlite) — hanzod
+# composes it as a supervised binary in ONE image (talking over the k8s API),
+# not by fusing dependency graphs. This is the decomplected merge: one source of
+# truth, two orthogonal build graphs, one deployable artifact.
+
+[package]
+name = "operator"
+version = "0.6.20"
+edition = "2021"
+license = "BSD-3-Clause"
+repository = "https://github.com/hanzoai/node"
+description = "Kubernetes operator merged into hanzod (Hanzo node). Canonical Rust impl, all universes; wire-compatible with luxfi/operator."
+
+[lib]
+name = "operator"
+path = "src/lib.rs"
+
+[[bin]]
+name = "operator"
+path = "src/main.rs"
+
+[[bin]]
+name = "generate-crd-yaml"
+path = "src/bin/generate_crd_yaml.rs"
+
+[dependencies]
+tokio = { version = "1.48", features = ["full"] }
+async-trait = "0.1"
+futures = "0.3"
+
+# kube ↔ k8s-openapi ↔ schemars is a coherent set. kube 4 requires
+# k8s-openapi ^0.28 and schemars ^1; the CustomResource derive emits
+# schemars-1 JsonSchema, so our `#[derive(JsonSchema)]` must be schemars 1.
+kube = { version = "4.0", features = ["runtime", "derive", "ws"] }
+k8s-openapi = { version = "0.28", features = ["v1_33"] }
+
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+serde_yaml = "0.9"
+
+clap = { version = "4.5", features = ["derive", "env"] }
+
+tracing = "0.1"
+tracing-subscriber = { version = "0.3", features = ["env-filter"] }
+
+thiserror = "2.0"
+anyhow = "1.0"
+# k8s-openapi 0.28 moved meta/v1 Time + MicroTime onto jiff::Timestamp (kube 4
+# dropped chrono), so jiff is now the operator's sole timestamp library — used
+# both at the k8s boundary and for the CRD-wrapper RFC3339 strings.
+jiff = "0.2"
+schemars = "1.0"
+
+byteorder = "1"
+base64 = "0.22"
+rand = "0.9"
+sha2 = "0.10"
+
+# reqwest 0.13 replaced the old `rustls-tls` feature: `rustls` now pulls rustls
+# core + the aws-lc-rs provider + rustls-platform-verifier (cert roots), so we
+# no longer carry OpenSSL. `http2` keeps the h2 support 0.12 enabled by default.
+reqwest = { version = "0.13", default-features = false, features = ["json", "http2", "rustls"] }
+# rustls 0.23 compiles both aws-lc-rs (via reqwest) and ring (via kube) providers;
+# install aws-lc-rs explicitly at startup (main.rs) to resolve the otherwise-ambiguous
+# process-level CryptoProvider — rustls panics on first TLS use without this.
+rustls = { version = "0.23", features = ["aws_lc_rs"] }
+axum = "0.8"
+
+[dev-dependencies]
+tokio = { version = "1.48", features = ["full", "test-util"] }

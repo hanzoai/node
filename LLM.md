@@ -90,3 +90,26 @@ trainer can post deltas any Rust worker can ingest, and vice versa.
 | + Zen5 FFI (Metal/CUDA, vendored C)        | `--features zen5-ffi`                 |
 | + Zen5 native (pure-Rust candle)           | `--features zen5-native`              |
 | Minimal (no federation, no AI extensions)  | `--no-default-features`               |
+
+## Kubernetes operator — hanzod IS the operator
+
+The canonical Rust k8s operator is merged into this repo at `./operator`
+(crate/binary `operator`; the standalone `hanzoai/operator` repo is retired).
+The same `hanzod` binary fronts it:
+
+```
+hanzod operator [args]   # run the reconcile loop (28 CRD Kinds, all universes)
+hanzod install  [args]   # install hanzod as the in-cluster operator
+```
+
+- **Boundary:** supervised multi-binary in ONE image, over the k8s API — not
+  FFI. `hanzod operator`/`hanzod install` (`main.go` switch →
+  `operator_dispatch.go`) `execve` into the `operator` binary. The Go node
+  (luxfi/node) and the Rust operator never share an address space; the only
+  cross-process contract is the CRD schema. Two orthogonal build graphs, one
+  image.
+- **Build (own workspace):** `cd operator && cargo build` — the operator has its
+  own empty `[workspace]`, so it is excluded from the node's Rust workspace and
+  its kube/k8s-openapi deps stay decoupled from the node's blockchain/AI graph.
+- **Docs:** `operator/LLM.md` (subcommands, wire contract = live `0.6.19`,
+  cutover + k3s/ConsensusSet follow-ups).
