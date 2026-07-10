@@ -1,0 +1,62 @@
+name: Operator Image
+
+# Build & publish ghcr.io/hanzoai/operator from the self-contained operator/
+# crate. Independent of node's own image (docker/Dockerfile): this workflow
+# only reads operator/ and its success never depends on the node image build.
+# Version is the single source of truth in operator/VERSION.
+
+on:
+  push:
+    branches: [main]
+    paths: ["operator/**"]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  packages: write
+
+concurrency:
+  group: operator-image-${{ github.ref }}
+  cancel-in-progress: false
+
+# build-push-action@v6 uploads a build summary that fails the step when the
+# org Actions artifact quota is full; only the image push matters.
+env:
+  DOCKER_BUILD_SUMMARY: "false"
+  DOCKER_BUILD_RECORD_UPLOAD: "false"
+
+jobs:
+  docker:
+    runs-on: hanzo-build-linux-amd64
+    steps:
+      - uses: actions/checkout@v4
+
+      - id: version
+        run: echo "v=$(tr -d '[:space:]' < operator/VERSION)" >> "$GITHUB_OUTPUT"
+
+      - uses: docker/setup-buildx-action@v3
+        with:
+          driver: docker-container
+          driver-opts: network=host
+
+      - name: Reset Docker credential store (self-hosted runner hygiene)
+        run: |
+          mkdir -p "$HOME/.docker"
+          printf '{}' > "$HOME/.docker/config.json"
+
+      - uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.repository_owner }}
+          password: ${{ secrets.GH_PAT || secrets.GITHUB_TOKEN }}
+
+      - uses: docker/build-push-action@v6
+        with:
+          context: operator
+          file: operator/Dockerfile
+          platforms: linux/amd64
+          push: true
+          provenance: false
+          tags: |
+            ghcr.io/hanzoai/operator:${{ steps.version.outputs.v }}
+            ghcr.io/hanzoai/operator:${{ steps.version.outputs.v }}-amd64
