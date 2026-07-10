@@ -139,29 +139,46 @@ their CRs; the reject path keeps them fail-closed-safe meanwhile.
 
 ### persistence (durable SQLite via hanzoai/replicate)
 
-`persistence.enabled` wires: a retained PVC (`<app>-<volume>`, RWO, sized from
-`storage.size`) or an emptyDir; the volume mounted at `dataDir`; a restore init
-container APPENDED after user init containers (paas rationale: a migrate-first
-init would create an empty DB and skip the snapshot); and a continuous WAL
-sidecar. **The argv is byte-matched to `cmd/replicate` (litestream-derived, NOT
-the SDK):**
-- restore: `replicate restore -if-db-not-exists -o <dataDir/db> "<s3-url>"`
-  (arg0 MUST be a URL or it is read as a config path; `-o` is REQUIRED).
-- sidecar: `replicate replicate <dataDir/db> "<s3-url>"` (one positional db =
-  "must specify at least one replica URL" → CrashLoop).
-- `<s3-url>` = `s3://<bucket>/<s3Path>?endpoint=…&region=…&forcePathStyle=…` —
-  endpoint/region/forcePathStyle are URL QUERY PARAMS (s3/replica_client.go
-  `NewReplicaClientFromURL`), NOT env. The `REPLICATE_*` SDK env vars
-  (BUCKET/PATH/ENDPOINT/REGION/…) are ignored by this CLI and are NOT emitted.
-- env the CLI DOES read: `REPLICATE_ACCESS_KEY_ID`/`SECRET_ACCESS_KEY` (from
-  `credentialsSecret`), `REPLICATE_AGE_IDENTITY` (restore) / `AGE_RECIPIENT`
-  (replicate) from `ageSecret`, `REPLICATE_ALLOW_PLAINTEXT`.
-- Prove it: `hanzod-operator plan < app.json` and read the init/sidecar argv.
+`persistence.enabled` wires (mirroring the proven `console-sqlite.yaml`
+reference EXACTLY — verified against `cmd/replicate` + `s3/replica_client.go`):
+a retained PVC (`<app>-<volume>`, RWO, from `storage.size`) or emptyDir; the data
+volume mounted at `dataDir`; an **owned ConfigMap** `<app>-replicate` holding
+`replicate.yml`; a restore init container APPENDED after user init containers
+(paas rationale); and a continuous WAL sidecar. Both replicate containers mount
+the data volume + the config at `/etc/replicate` (ro).
+
+**The CLI is the CONFIG-FILE form, because `cmd/replicate` reads age encryption
+keys ONLY from the config's replica `age:` block — never env** (the `REPLICATE_*`
+age/URL env vars are SDK-only, zero CLI callers; the URL/CLI-arg form cannot carry
+age → empty age → `RequireEncryption` → write CrashLoop + restore can't decrypt =
+data loss):
+- restore: `/usr/local/bin/replicate restore -config /etc/replicate/replicate.yml
+  -if-db-not-exists -if-replica-exists <dataDir/db>` (arg0 is the DB path, NON-url
+  ⇒ config branch, `restore.go` loadFromConfig).
+- sidecar: `/usr/local/bin/replicate replicate -config /etc/replicate/replicate.yml`
+  (NArg==0 config form).
+- `replicate.yml` is a STRUCTURED s3 replica (no URL — so no percent-encoding
+  fragility): `type/bucket/path/endpoint/region/force-path-style` +
+  `access-key-id: ${S3_ACCESS_KEY_ID}` / `secret-access-key: ${S3_SECRET_ACCESS_KEY}`
+  and the `age:` block AT THE REPLICA LEVEL (ReplicaSettings is inline-embedded in
+  ReplicaConfig — a DB-level `age:` is silently ignored) with
+  `identities: [${AGE_IDENTITY}]` / `recipients: [${AGE_RECIPIENT}]`. ParseConfig
+  os.Expands the `${...}` from secret-backed env, so NO secret material is in the
+  ConfigMap.
+- env (matches the reference names): `S3_ACCESS_KEY_ID`/`S3_SECRET_ACCESS_KEY`
+  (secret `credentialsSecret` keys `access-key`/`secret-key`),
+  `AGE_IDENTITY`/`AGE_RECIPIENT` (secret `ageSecret` keys `identity`/`recipients`).
+  Both containers get all four (they share the one config that references all
+  four). No allow-plaintext — recipients present ⇒ replicate encrypts.
+- Prove it: `hanzod-operator plan < app.json` → the rendered ConfigMap + `-config`
+  argv (a unit test also asserts the YAML parses with the right nesting).
 
 Required persistence sub-fields (bucket/dataDir/dbPath/storage) are validated in
 reconcile → `status.phase=Rejected` if missing (a pruned/typo'd critical field
-would otherwise silently default and mount the DB at the wrong path = data loss).
-`dirMode` is rejected (multi-DB config-file mode not yet supported).
+would otherwise silently default = data loss). `dirMode` is rejected (multi-DB
+config-file mode not yet supported). REMAINING DEPLOY-GATE: the age/creds SECRET
+key names are mirrored from console-sqlite.yaml but a live SeaweedFS cold-start
+(restore + first snapshot) must be run before chat/paas/dataroom cut over.
 
 ### Prune, autoscaling, backoff, guards
 

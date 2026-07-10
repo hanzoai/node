@@ -184,8 +184,11 @@ async fn reconcile(app: Arc<App>, ctx: Arc<Context>) -> Result<Action, Error> {
 async fn apply_plan(ctx: &Context, ns: &str, name: &str, app: &App) -> Result<(), Error> {
     let plan = manifests::plan(app)?;
 
-    // PVC before Deployment so the volume exists when the pod schedules. Never
-    // pruned — deleting a data PVC is data loss.
+    // ConfigMap + PVC before Deployment so the config file + volume exist when
+    // the pod schedules. The PVC is never pruned — deleting it is data loss.
+    if let Some(cm) = &plan.configmap {
+        apply(&ctx.client, ns, cm).await?;
+    }
     if let Some(pvc) = &plan.pvc {
         apply(&ctx.client, ns, pvc).await?;
     }

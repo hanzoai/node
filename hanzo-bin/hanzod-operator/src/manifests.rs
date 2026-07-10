@@ -23,11 +23,15 @@ use kube::{Resource, ResourceExt};
 use crate::crd::{self, App, Persistence};
 
 const REPLICATE_IMAGE: &str = "ghcr.io/hanzoai/replicate:0.8.0-amd64";
+const REPLICATE_BIN: &str = "/usr/local/bin/replicate";
 const DEFAULT_S3_ENDPOINT: &str = "http://s3.hanzo.svc:9000";
 const DEFAULT_S3_REGION: &str = "us-east-1";
 const DEFAULT_CREDS_SECRET: &str = "s3-credentials";
 const DEFAULT_VOLUME: &str = "data";
 const DEFAULT_DB: &str = "app.db";
+const CONFIG_VOLUME: &str = "replicate-config";
+const CONFIG_DIR: &str = "/etc/replicate";
+const CONFIG_FILE: &str = "replicate.yml";
 
 /// The full set of owned objects an App CR reconciles to. `ingress`/`hpa`
 /// `None` mean "ensure absent" (prune); `pvc None` means "no managed volume"
@@ -39,6 +43,9 @@ pub struct Plan {
     pub ingress: Option<netv1::Ingress>,
     pub pvc: Option<corev1::PersistentVolumeClaim>,
     pub hpa: Option<hpav2::HorizontalPodAutoscaler>,
+    /// The replicate config (the age block lives here — cmd/replicate reads age
+    /// ONLY from config, never env). `None` when persistence is disabled.
+    pub configmap: Option<corev1::ConfigMap>,
 }
 
 pub fn plan(app: &App) -> anyhow::Result<Plan> {
@@ -48,6 +55,7 @@ pub fn plan(app: &App) -> anyhow::Result<Plan> {
         ingress: build_ingress(app),
         pvc: build_pvc(app),
         hpa: build_hpa(app),
+        configmap: build_replicate_config(app),
     })
 }
 
@@ -59,7 +67,10 @@ impl Plan {
     /// a single CR is migrated. Prune targets (absent Ingress/HPA) are omitted:
     /// there is no object to render for "ensure deleted".
     pub fn objects(&self) -> Result<Vec<serde_json::Value>, serde_json::Error> {
-        let mut out = Vec::with_capacity(5);
+        let mut out = Vec::with_capacity(6);
+        if let Some(cm) = &self.configmap {
+            out.push(ssa_body(cm)?);
+        }
         if let Some(pvc) = &self.pvc {
             out.push(ssa_body(pvc)?);
         }
@@ -338,10 +349,12 @@ fn pvc_name(app_name: &str, p: &Persistence) -> String {
     format!("{app_name}-{vol}")
 }
 
-/// Add the data volume, mount it into the main container, append the
-/// `restore -if-db-not-exists` init container (AFTER user init containers) and
-/// the continuous `replicate` WAL sidecar. Mirrors the Go operator; config via
-/// `REPLICATE_*` env.
+/// Add the data + config volumes, mount both into the restore init container
+/// (appended AFTER user init containers) and the continuous WAL sidecar. The
+/// replicate CLI is invoked in its CONFIG-FILE form (`-config <path>`) because
+/// age encryption keys are read ONLY from the config's `age:` block, never env
+/// (cmd/replicate/main.go: ReplicaSettings.Age); the URL/CLI-arg form cannot
+/// carry age and would crash-loop (write) / fail to decrypt (restore).
 fn wire_persistence(pod: &mut corev1::PodSpec, app_name: &str, p: &Persistence) {
     let vol = p
         .storage
@@ -374,86 +387,135 @@ fn wire_persistence(pod: &mut corev1::PodSpec, app_name: &str, p: &Persistence) 
         main.volume_mounts.get_or_insert_with(Vec::new).push(mount.clone());
     }
 
-    let db_target = if p.dir_mode {
-        data_dir.clone()
-    } else {
-        let db = p.db_path.clone().unwrap_or_else(|| DEFAULT_DB.to_string());
-        format!("{data_dir}/{db}")
+    // The replicate config file (age block + replica URL) from an owned ConfigMap.
+    pod.volumes.get_or_insert_with(Vec::new).push(corev1::Volume {
+        name: CONFIG_VOLUME.to_string(),
+        config_map: Some(corev1::ConfigMapVolumeSource {
+            name: config_name(app_name),
+            ..Default::default()
+        }),
+        ..Default::default()
+    });
+    let config_mount = corev1::VolumeMount {
+        name: CONFIG_VOLUME.to_string(),
+        mount_path: CONFIG_DIR.to_string(),
+        read_only: Some(true),
+        ..Default::default()
     };
-    let url = replica_url(p);
-    let image = p.image.clone().unwrap_or_else(|| REPLICATE_IMAGE.to_string());
+    let config_path = format!("{CONFIG_DIR}/{CONFIG_FILE}");
 
-    // Restore init. cmd/replicate/restore.go: URL form REQUIRES `-o <db>` and
-    // arg0 must be a URL (a bare db path is treated as a config path). Appended
-    // AFTER user init containers (paas.yaml: a migrate-first init would create
-    // an empty DB and skip the snapshot). `-if-db-not-exists` short-circuits
-    // AFTER the URL is loaded, so it is safe here.
+    let target = db_target(p, &data_dir);
+    let image = p.image.clone().unwrap_or_else(|| REPLICATE_IMAGE.to_string());
+    let mounts = vec![mount, config_mount];
+
+    // Mirrors the proven console-sqlite.yaml reference exactly. Restore config
+    // form: arg0 is the DB path (NON-url ⇒ config branch, restore.go
+    // loadFromConfig), `-config` supplies the age identities to decrypt.
+    // `-if-db-not-exists` exits 0 if the DB is already on the PVC;
+    // `-if-replica-exists` exits 0 on first-ever boot when the bucket has no
+    // snapshot yet. Appended AFTER user init containers (paas.yaml: a
+    // migrate-first init would create an empty DB and skip the snapshot).
     let restore = corev1::Container {
         name: "replicate-restore".to_string(),
         image: Some(image.clone()),
-        command: Some(vec![
-            "replicate".to_string(),
+        command: Some(vec![REPLICATE_BIN.to_string()]),
+        args: Some(vec![
             "restore".to_string(),
+            "-config".to_string(),
+            config_path.clone(),
             "-if-db-not-exists".to_string(),
-            "-o".to_string(),
-            db_target.clone(),
-            url.clone(),
+            "-if-replica-exists".to_string(),
+            target,
         ]),
-        env: Some(replicate_env(app_name, p, true)),
-        volume_mounts: Some(vec![mount.clone()]),
+        env: Some(replicate_env(app_name, p)),
+        volume_mounts: Some(mounts.clone()),
         ..Default::default()
     };
     pod.init_containers.get_or_insert_with(Vec::new).push(restore);
 
-    // Continuous WAL replication sidecar. cmd/replicate/replicate.go needs
-    // `<db> <replica-url>` (one positional db = "must specify at least one
-    // replica URL" -> CrashLoop).
+    // Continuous WAL sidecar — config form (`-config`, NArg==0); the config's
+    // age recipients make writes encrypted (empty age ⇒ RequireEncryption ⇒
+    // ErrEncryptionRequired ⇒ CrashLoop).
     let sidecar = corev1::Container {
         name: "replicate".to_string(),
         image: Some(image),
-        command: Some(vec!["replicate".to_string(), "replicate".to_string(), db_target, url]),
-        env: Some(replicate_env(app_name, p, false)),
-        volume_mounts: Some(vec![mount]),
+        command: Some(vec![REPLICATE_BIN.to_string()]),
+        args: Some(vec!["replicate".to_string(), "-config".to_string(), config_path]),
+        env: Some(replicate_env(app_name, p)),
+        volume_mounts: Some(mounts),
         ..Default::default()
     };
     pod.containers.push(sidecar);
 }
 
-/// The replicate S3 replica URL. cmd/replicate (litestream-derived) reads the
-/// endpoint/region/forcePathStyle as URL QUERY PARAMS (s3/replica_client.go
-/// NewReplicaClientFromURL) — NOT from REPLICATE_* env, which only the SDK reads.
-fn replica_url(p: &Persistence) -> String {
-    let bucket = p.bucket.clone().unwrap_or_default();
-    let path = p.s3_path.clone().unwrap_or_default();
-    let endpoint = p.s3_endpoint.as_deref().unwrap_or(DEFAULT_S3_ENDPOINT);
-    let region = p.s3_region.as_deref().unwrap_or(DEFAULT_S3_REGION);
-    format!(
-        "s3://{bucket}/{path}?endpoint={endpoint}&region={region}&forcePathStyle={}",
-        p.force_path_style
-    )
+fn config_name(app_name: &str) -> String {
+    format!("{app_name}-replicate")
 }
 
-/// Env the replicate CLI DOES read: S3 credentials (mapped to the AWS SDK) and
-/// the age keypair (identity to decrypt on restore, recipient to encrypt on
-/// replicate). Endpoint/region/forcePathStyle go in the replica URL, not here.
-fn replicate_env(app_name: &str, p: &Persistence, restore: bool) -> Vec<corev1::EnvVar> {
+/// `<dataDir>/<db>` (single-DB) — the path key the restore/replicate config
+/// entry is looked up by.
+fn db_target(p: &Persistence, data_dir: &str) -> String {
+    if p.dir_mode {
+        data_dir.to_string()
+    } else {
+        let db = p.db_path.clone().unwrap_or_else(|| DEFAULT_DB.to_string());
+        format!("{data_dir}/{db}")
+    }
+}
+
+/// The owned ConfigMap holding the replicate config, rendered to mirror the
+/// proven `console-sqlite.yaml` reference: a STRUCTURED s3 replica (no URL — so
+/// no percent-encoding fragility), with creds + age as `${...}` placeholders
+/// (ParseConfig os.Expands them from secret-backed env, so no secret material
+/// lands in the ConfigMap). The `age:` block is at the REPLICA level
+/// (ReplicaSettings is inline-embedded in ReplicaConfig; a DB-level `age:` is
+/// silently ignored).
+pub fn build_replicate_config(app: &App) -> Option<corev1::ConfigMap> {
+    let p = app.spec.persistence.as_ref().filter(|p| p.enabled)?;
+    let name = app.name_any();
+    let data_dir = p.data_dir.clone().unwrap_or_else(|| "/data".to_string());
+    let lines = [
+        "dbs:".to_string(),
+        format!("  - path: {}", db_target(p, &data_dir)),
+        "    replicas:".to_string(),
+        "      - type: s3".to_string(),
+        format!("        bucket: {}", p.bucket.clone().unwrap_or_default()),
+        format!("        path: {}", p.s3_path.clone().unwrap_or_default()),
+        format!("        endpoint: {}", p.s3_endpoint.as_deref().unwrap_or(DEFAULT_S3_ENDPOINT)),
+        format!("        region: {}", p.s3_region.as_deref().unwrap_or(DEFAULT_S3_REGION)),
+        format!("        force-path-style: {}", p.force_path_style),
+        "        access-key-id: ${S3_ACCESS_KEY_ID}".to_string(),
+        "        secret-access-key: ${S3_SECRET_ACCESS_KEY}".to_string(),
+        "        age:".to_string(),
+        "          identities:".to_string(),
+        "            - ${AGE_IDENTITY}".to_string(),
+        "          recipients:".to_string(),
+        "            - ${AGE_RECIPIENT}".to_string(),
+    ];
+    let yaml = format!("{}\n", lines.join("\n"));
+    Some(corev1::ConfigMap {
+        metadata: object_meta(app, &config_name(&name)),
+        data: Some(BTreeMap::from([(CONFIG_FILE.to_string(), yaml)])),
+        ..Default::default()
+    })
+}
+
+/// The `${...}` values the ConfigMap expands (matches console-sqlite.yaml env
+/// names): S3 creds `S3_ACCESS_KEY_ID`/`S3_SECRET_ACCESS_KEY` (secret keys
+/// `access-key`/`secret-key`) and the age keypair `AGE_IDENTITY`/`AGE_RECIPIENT`
+/// (secret keys `identity`/`recipients`). BOTH containers get all four because
+/// they share one config file that references all four; the read path uses the
+/// identity, the write path uses the recipient. No allow-plaintext — recipients
+/// present ⇒ replicate encrypts (the intended fail-closed policy).
+fn replicate_env(app_name: &str, p: &Persistence) -> Vec<corev1::EnvVar> {
     let creds = p.credentials_secret.clone().unwrap_or_else(|| DEFAULT_CREDS_SECRET.to_string());
     let age = p.age_secret.clone().unwrap_or_else(|| format!("{app_name}-replicate-age"));
-    let mut env = vec![
-        plain_env("REPLICATE_ALLOW_PLAINTEXT", "1"),
-        secret_env("REPLICATE_ACCESS_KEY_ID", &creds, "access-key"),
-        secret_env("REPLICATE_SECRET_ACCESS_KEY", &creds, "secret-key"),
-    ];
-    if restore {
-        env.push(secret_env("REPLICATE_AGE_IDENTITY", &age, "identity"));
-    } else {
-        env.push(secret_env("REPLICATE_AGE_RECIPIENT", &age, "recipients"));
-    }
-    env
-}
-
-fn plain_env(name: &str, value: &str) -> corev1::EnvVar {
-    corev1::EnvVar { name: name.to_string(), value: Some(value.to_string()), value_from: None }
+    vec![
+        secret_env("S3_ACCESS_KEY_ID", &creds, "access-key"),
+        secret_env("S3_SECRET_ACCESS_KEY", &creds, "secret-key"),
+        secret_env("AGE_IDENTITY", &age, "identity"),
+        secret_env("AGE_RECIPIENT", &age, "recipients"),
+    ]
 }
 
 fn secret_env(name: &str, secret: &str, key: &str) -> corev1::EnvVar {
@@ -886,37 +948,78 @@ mod tests {
         let m = main.volume_mounts.as_ref().unwrap().iter().find(|m| m.name == "data").unwrap();
         assert_eq!(m.mount_path, "/var/lib/hanzo/chat");
 
-        // The replica URL carries endpoint/region/forcePathStyle as QUERY PARAMS
-        // (what cmd/replicate actually parses), NOT env.
-        let url = "s3://chat-db/chat/app?endpoint=http://s3.hanzo.svc:9000&region=us-east-1&forcePathStyle=true";
+        // config-file form (mirrors console-sqlite.yaml): command=[bin], args=[...].
+        let cfg = "/etc/replicate/replicate.yml";
+        let bin = "/usr/local/bin/replicate";
 
-        // restore init: URL form REQUIRES `-o <db>` and a URL positional.
+        // restore: `restore -config <cfg> -if-db-not-exists -if-replica-exists <db>`
+        // (arg0=db is non-URL -> config branch, which carries the age identity).
         let restore = pod.init_containers.as_ref().unwrap().iter().find(|c| c.name == "replicate-restore").unwrap();
+        assert_eq!(restore.command.as_ref().unwrap(), &vec![bin.to_string()]);
         assert_eq!(
-            restore.command.as_ref().unwrap(),
+            restore.args.as_ref().unwrap(),
             &vec![
-                "replicate".to_string(),
-                "restore".into(),
+                "restore".to_string(),
+                "-config".into(),
+                cfg.into(),
                 "-if-db-not-exists".into(),
-                "-o".into(),
+                "-if-replica-exists".into(),
                 "/var/lib/hanzo/chat/chat.db".into(),
-                url.into(),
             ]
         );
+        // creds + both age vars present (shared config references all four); no
+        // allow-plaintext (recipients present ⇒ encryption on).
         let renv = restore.env.as_ref().unwrap();
-        let ident = renv.iter().find(|e| e.name == "REPLICATE_AGE_IDENTITY").unwrap();
-        assert_eq!(ident.value_from.as_ref().unwrap().secret_key_ref.as_ref().unwrap().name, "chat-replicate-age");
-        assert!(renv.iter().any(|e| e.name == "REPLICATE_ACCESS_KEY_ID"));
-        // CLI-ignored SDK env must be GONE (endpoint/region/bucket live in the URL).
-        assert!(!renv.iter().any(|e| e.name == "REPLICATE_ENDPOINT" || e.name == "REPLICATE_BUCKET"));
+        assert!(renv.iter().any(|e| e.name == "AGE_IDENTITY"));
+        assert!(renv.iter().any(|e| e.name == "AGE_RECIPIENT"));
+        assert!(renv.iter().any(|e| e.name == "S3_ACCESS_KEY_ID"));
+        assert!(!renv.iter().any(|e| e.name == "REPLICATE_ALLOW_PLAINTEXT"));
+        // age secret keys mirror the reference (identity / recipients).
+        let ident = renv.iter().find(|e| e.name == "AGE_IDENTITY").unwrap();
+        let skr = ident.value_from.as_ref().unwrap().secret_key_ref.as_ref().unwrap();
+        assert_eq!((skr.name.as_str(), skr.key.as_str()), ("chat-replicate-age", "identity"));
+        // config volume mounted read-only at /etc/replicate.
+        assert!(restore.volume_mounts.as_ref().unwrap().iter().any(|m| m.mount_path == "/etc/replicate"));
 
-        // sidecar: `replicate <db> <url>` — one positional db would CrashLoop.
+        // sidecar: `replicate -config <cfg>` (NArg==0 config form).
         let sidecar = pod.containers.iter().find(|c| c.name == "replicate").unwrap();
+        assert_eq!(sidecar.command.as_ref().unwrap(), &vec![bin.to_string()]);
         assert_eq!(
-            sidecar.command.as_ref().unwrap(),
-            &vec!["replicate".to_string(), "replicate".into(), "/var/lib/hanzo/chat/chat.db".into(), url.into()]
+            sidecar.args.as_ref().unwrap(),
+            &vec!["replicate".to_string(), "-config".into(), cfg.into()]
         );
-        assert!(sidecar.env.as_ref().unwrap().iter().any(|e| e.name == "REPLICATE_AGE_RECIPIENT"));
+        assert!(sidecar.env.as_ref().unwrap().iter().any(|e| e.name == "AGE_RECIPIENT"));
+
+        // the config ConfigMap volume references <app>-replicate
+        let cv = pod.volumes.as_ref().unwrap().iter().find(|v| v.name == "replicate-config").unwrap();
+        assert_eq!(cv.config_map.as_ref().unwrap().name, "chat-replicate");
+    }
+
+    #[test]
+    fn replicate_config_mirrors_reference_structured_replica() {
+        let cm = build_replicate_config(&chat()).unwrap();
+        assert_eq!(cm.metadata.name.as_deref(), Some("chat-replicate"));
+        let yaml = cm.data.as_ref().unwrap().get("replicate.yml").unwrap();
+        // structured s3 replica (no URL — mirrors console-sqlite.yaml).
+        assert!(yaml.contains("path: /var/lib/hanzo/chat/chat.db"));
+        assert!(yaml.contains("- type: s3"));
+        assert!(yaml.contains("bucket: chat-db"));
+        assert!(yaml.contains("path: chat/app"));
+        assert!(yaml.contains("endpoint: http://s3.hanzo.svc:9000"));
+        assert!(yaml.contains("region: us-east-1"));
+        assert!(yaml.contains("force-path-style: true"));
+        assert!(yaml.contains("access-key-id: ${S3_ACCESS_KEY_ID}"));
+        assert!(yaml.contains("secret-access-key: ${S3_SECRET_ACCESS_KEY}"));
+        // age block at the REPLICA level with env-expandable placeholders.
+        assert!(yaml.contains("age:"));
+        assert!(yaml.contains("- ${AGE_IDENTITY}"));
+        assert!(yaml.contains("- ${AGE_RECIPIENT}"));
+        // parses as valid YAML with the expected nesting.
+        let v: serde_json::Value = serde_yaml::from_str(yaml).expect("rendered config must be valid YAML");
+        let replica = &v["dbs"][0]["replicas"][0];
+        assert_eq!(replica["type"], "s3");
+        assert_eq!(replica["age"]["identities"][0], "${AGE_IDENTITY}");
+        assert_eq!(replica["age"]["recipients"][0], "${AGE_RECIPIENT}");
     }
 
     #[test]
@@ -988,7 +1091,8 @@ mod tests {
             .map(|o| o["kind"].as_str().unwrap().to_string())
             .collect();
         assert_eq!(kinds, ["Deployment", "Service", "Ingress"]);
-        // chat → persistence adds a PVC first (volume exists before the pod).
+        // chat → persistence adds the ConfigMap + PVC BEFORE the Deployment
+        // (both must exist when the pod mounts them).
         let chat_kinds: Vec<String> = plan(&chat())
             .unwrap()
             .objects()
@@ -996,6 +1100,6 @@ mod tests {
             .iter()
             .map(|o| o["kind"].as_str().unwrap().to_string())
             .collect();
-        assert_eq!(chat_kinds[0], "PersistentVolumeClaim");
+        assert_eq!(&chat_kinds[..3], ["ConfigMap", "PersistentVolumeClaim", "Deployment"]);
     }
 }

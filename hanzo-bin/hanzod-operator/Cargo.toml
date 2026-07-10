@@ -30,3 +30,4 @@ tracing-subscriber = { workspace = true }
 
 [dev-dependencies]
 tokio = { workspace = true, features = ["rt", "macros"] }
+serde_yaml = { workspace = true }
