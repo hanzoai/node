@@ -17,7 +17,7 @@ env:
 jobs:
   check-and-publish:
     name: Check and Publish Crates
-    runs-on: ubuntu-latest
+    runs-on: hanzo-build-linux-amd64
     timeout-minutes: 45
     if: github.ref == 'refs/heads/main'
 

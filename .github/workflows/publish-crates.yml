@@ -14,7 +14,7 @@ env:
 
 jobs:
   detect-changes:
-    runs-on: ubuntu-latest
+    runs-on: hanzo-build-linux-amd64
     timeout-minutes: 15
     outputs:
       changed-crates: ${{ steps.detect.outputs.crates }}
@@ -61,7 +61,7 @@ jobs:
   publish:
     needs: detect-changes
     if: needs.detect-changes.outputs.changed-crates != '[]'
-    runs-on: ubuntu-latest
+    runs-on: hanzo-build-linux-amd64
     timeout-minutes: 45
     strategy:
       matrix:
@@ -107,7 +107,7 @@ jobs:
   notify:
     needs: [detect-changes, publish]
     if: always()
-    runs-on: ubuntu-latest
+    runs-on: hanzo-build-linux-amd64
     timeout-minutes: 15
     steps:
       - name: Summary
