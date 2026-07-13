@@ -1,0 +1,56 @@
+Hanzo Node
+Copyright (c) 2026 Hanzo AI, Inc.
+
+This product includes software developed as a derivative of the Shinkai Node.
+
+Upstream project
+----------------
+Shinkai Node
+Repository: https://github.com/dcSpark/shinkai-node
+License:    Apache License, Version 2.0
+Copyright 2024 Mariana Layer Labs (BVI), LTD (dcSpark)
+
+Provenance
+----------
+Forked from https://github.com/dcSpark/shinkai-node
+Base import: commit 2a4014fd05ca4a9fb15c5f1ba7894ddaacd28d64
+(2025-09-30, "Merge pull request #1295 from dcSpark/feature/native-code-executor"),
+whose tree carried the original shinkai-bin/, shinkai-libs/,
+shinkai-test-framework/, and shinkai-test-macro/ directories.
+
+Both this software and the upstream are distributed under the Apache License,
+Version 2.0; the full license text is in the LICENSE file at the repository root.
+The upstream project does not ship a NOTICE file, so there is none to reproduce
+under Apache License section 4(d); this file records the upstream attribution.
+
+DEVIATIONS
+----------
+Changes made in Hanzo Node relative to the upstream Shinkai Node:
+
+- Rebranded the crate and directory layout from shinkai-* to hanzo-*: the base
+  import shipped shinkai-bin/, shinkai-libs/, shinkai-test-framework/, and
+  shinkai-test-macro/; this tree ships hanzo-bin/ (hanzo-node, hanzoai),
+  hanzo-libs/, hanzo-test-framework/, and hanzo-test-macro/.
+- Added a Go integration layer (go.mod module github.com/hanzoai/node) whose
+  main.go and node.go construct a github.com/luxfi/node application and register
+  the cevm (C-Chain), dexvm (D-Chain), and thresholdvm (T-Chain) virtual
+  machines; the upstream is Rust-only.
+- Added post-quantum cryptography under hanzo-libs/hanzo-pqc (with
+  pqc_benchmarks) and the hanzo-brain library under hanzo-libs/hanzo-brain.
+- Repointed container images to the Hanzo registry: compose.yml pulls
+  ghcr.io/hanzoai/node and ghcr.io/hanzoai/engine.
+- Moved CI to self-hosted Actions Runner Controller scale sets
+  (hanzo-build-linux-amd64 / hanzo-build-linux-arm64) instead of GitHub-hosted
+  runners, per .github/workflows/build-binaries.yml and cicd.yml.
+- Rebranded product surfaces in README.md to "Hanzo Node", pointing at
+  docs.hanzo.ai and the hanzoai/hanzo-apps companion repository.
+- Publishes the node libraries to crates.io under hanzo-* names (for example
+  hanzo-mcp 1.1.21), replacing the upstream shinkai-* crate names.
+- Slimmed the Cargo workspace: members are reduced to the shipped binaries plus
+  their test crates, with the broader hanzo-libs cluster consumed from crates.io
+  via the standalone hanzonet workspace (see the [workspace] comment in
+  Cargo.toml), versus the upstream monorepo's larger set of path members.
+- Added Hanzo-specific documentation under docs/, including
+  docs/COMPUTE_BROKER.md.
+- Unified the workspace version line at 1.1.x with authorship
+  "Nico Arqueros <nico@hanzo.ai>" in Cargo.toml.
