@@ -95,20 +95,48 @@ trainer can post deltas any Rust worker can ingest, and vice versa.
 
 hanzod's operator surface: one hanzod per cluster, a drop-in operator that
 watches the `apps.hanzo.ai/v1` CRD (`kind: App`, short `app`) and reconciles each
-CR to **Deployment + Service + optional Ingress + optional PVC + optional HPA**.
-Replaces the decommissioned Go operator (`ghcr.io/hanzoai/operator`). Kind is
-`App` (renamed from `Service`) to avoid colliding with core k8s `Service`:
-`kubectl get apps.hanzo.ai`.
+CR — dispatched on `spec.role` — to **Deployment + Service + optional Ingress +
+optional PVC + optional HPA + optional PDB**. Replaces the out-of-repo Rust
+operator (`ghcr.io/hanzoai/operator`) and the older decommissioned Go one — one
+canonical binary. `kubectl get apps.hanzo.ai`.
 
+**`App` is the COLLAPSE of the ~28 former `hanzo.ai/v1` Kinds** (Service, LLM,
+IAM, KMS, Datastore, Gateway, Ingress, DNS, MPC, the Lux chain fleet, …) into ONE
+Kind where the type is a VALUE — `spec.role` — not a place. Values, not places.
 Built on `kube-rs` 4.0 + `k8s-openapi` 0.28 + `schemars` 1.2. Self-contained
 workspace leaf (crates.io deps only) so it builds/tests independently of the
 inference-heavy `hanzo-node` binary.
+
+### Role dispatch — `spec.role` selects the profile (values, not places)
+
+`reconcile` classifies `spec.role` via `Role::classify` (`crd.rs`) into ONE of two
+dispositions — the whole `role → profile` map:
+
+- **Generic** (`crd::Role::Generic`) — absent/`generic`/`service` and the
+  schema-identical `llm`/`iam`/`kms`/`explorer`/`function`/`indexer`/
+  `observability`/`queue` (their former CRDs were byte-identical to Service). The
+  workload profile hanzod OWNS: the full `manifests::plan`. One reconcile, not
+  nine. `image` is required here (a generic App with no image is Rejected).
+- **Delegated** (`crd::Role::Delegated`) — every role that carries its own
+  child-resource logic (`datastore`/`sql`/`kv`/`s3`/`docdb`/`managedDatabase`,
+  `gateway`, `ingress`, `dns`, `static`, `spa`, `base`, `mpc`, and the Lux
+  `chain`/`network`/`nodeFleet`/`luxRuntime`/`validator`/`agentDeployment` fleet).
+  hanzod records `status.phase=Delegated` and stands aside — **no child objects,
+  no prune, and no reject on its role-specific fields** (those are expected for
+  that role, not "unmodeled"). The out-of-repo operator owns it during the
+  transition. Graduating a role to hanzod = add its builder + one arm of
+  `Role::classify`; nothing else changes (composition, not a new Kind).
+
+`image` is `Option` (image-less roles — `ingress`/`dns`/`validator`/`chain` — must
+deserialize into `App`). `spec.role` never lands in `AppSpec::extra`, so it is not
+counted against the fail-closed reject. `hanzod-operator plan` on a delegated CR
+prints `[]`; on a generic CR it renders the owned objects.
 
 ### Layout — one concern per module (decomplect: decision vs effect)
 
 | Module           | Concern                                                                 |
 | ---------------- | ----------------------------------------------------------------------- |
-| `crd.rs`         | `apps.hanzo.ai` Rust types (the modeled subset + a reject catch-all).   |
+| `crd.rs`         | `apps.hanzo.ai` Rust types + `Role::classify` (the modeled subset + reject catch-all + the role → profile map). |
 | `manifests.rs`   | **Pure** CR → owned-objects mapping (the *decision*), unit-tested.      |
 | `reconcile.rs`   | The kube controller (the *effect*: gate → plan → apply/prune → status). |
 | `coordinator.rs` | The leaderless seam — who reconciles when N hanzods run.                |
