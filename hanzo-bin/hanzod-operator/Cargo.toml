@@ -3,7 +3,7 @@ name = "hanzod-operator"
 version = { workspace = true }
 edition = { workspace = true }
 authors = { workspace = true }
-description = "hanzod — native Kubernetes operator that reconciles services.hanzo.ai CRs to Deployment+Service+Ingress; leaderless across clusters (ha/ZAP seam)"
+description = "hanzod — native Kubernetes operator that reconciles apps.hanzo.ai CRs (one kind: App, spec.role selects the profile) to Deployment+Service+Ingress; leaderless across clusters (ha/ZAP seam)"
 
 [lib]
 name = "hanzod_operator"

@@ -124,11 +124,17 @@ fn autoscaling_enabled(app: &App) -> bool {
 pub fn build_deployment(app: &App) -> anyhow::Result<Deployment> {
     let name = app.name_any();
     let spec = &app.spec;
+    // The generic profile requires an image. reconcile Rejects a generic App with
+    // no image before it ever reaches here; this keeps the pure builder total.
+    let image = spec
+        .image
+        .as_ref()
+        .ok_or_else(|| anyhow::anyhow!("spec.image is required for the generic role"))?;
 
     let main = corev1::Container {
         name: name.clone(),
-        image: Some(spec.image.reference()),
-        image_pull_policy: spec.image.pull_policy.clone(),
+        image: Some(image.reference()),
+        image_pull_policy: image.pull_policy.clone(),
         command: opt_vec(&spec.command),
         args: opt_vec(&spec.args),
         env: opt_vec(&spec.env.iter().map(env_var).collect::<Vec<_>>()),
@@ -878,11 +884,11 @@ mod tests {
 
     fn billing() -> App {
         let spec = crate::crd::AppSpec {
-            image: Image {
+            image: Some(Image {
                 repository: "ghcr.io/hanzoai/billing".into(),
                 tag: Some("1.0.2".into()),
                 pull_policy: Some("Always".into()),
-            },
+            }),
             replicas: Some(1),
             ports: vec![Port {
                 name: "http".into(),
@@ -938,7 +944,7 @@ mod tests {
         let mut app = App::new(
             "chat",
             crate::crd::AppSpec {
-                image: Image { repository: "ghcr.io/hanzoai/chat".into(), tag: Some("1".into()), ..Default::default() },
+                image: Some(Image { repository: "ghcr.io/hanzoai/chat".into(), tag: Some("1".into()), ..Default::default() }),
                 persistence: Some(Persistence {
                     enabled: true,
                     bucket: Some("chat-db".into()),
@@ -1047,7 +1053,7 @@ mod tests {
     #[test]
     fn image_defaults_tag_to_latest() {
         let mut app = billing();
-        app.spec.image.tag = None;
+        app.spec.image.as_mut().unwrap().tag = None;
         let d = build_deployment(&app).unwrap();
         let c = &d.spec.unwrap().template.spec.unwrap().containers[0];
         assert_eq!(c.image.as_deref(), Some("ghcr.io/hanzoai/billing:latest"));

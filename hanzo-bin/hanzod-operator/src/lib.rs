@@ -23,7 +23,7 @@ pub use coordinator::{
     check_singleton, is_owner, owner, CoordError, Coordinator, HrwCoordinator, Member, Membership,
     StaticCoordinator, StaticMembership,
 };
-pub use crd::{App, AppSpec, AppStatus};
+pub use crd::{App, AppSpec, AppStatus, Role};
 pub use manifests::{plan, Plan};
 pub use reconcile::run;
 

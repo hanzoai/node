@@ -647,6 +647,7 @@ dependencies = [
  "matchit 0.8.4",
  "memchr",
  "mime",
+ "multer 3.1.0",
  "percent-encoding",
  "pin-project-lite",
  "serde_core",
@@ -2885,6 +2886,17 @@ dependencies = [
 ]
 
 [[package]]
+name = "fancy-regex"
+version = "0.18.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "e1e1dacd0d2082dfcf1351c4bdd566bbe89a2b263235a2b50058f1e130a47277"
+dependencies = [
+ "bit-set 0.8.0",
+ "regex-automata",
+ "regex-syntax",
+]
+
+[[package]]
 name = "fastrand"
 version = "2.4.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -3640,7 +3652,7 @@ checksum = "b9dc246ef72490c348c62b93c06989605dc074e285657501c0aaa02d73c5b408"
 
 [[package]]
 name = "hanzo-audio"
-version = "1.7.2"
+version = "1.7.42"
 dependencies = [
  "anyhow",
  "apodize",
@@ -3716,7 +3728,7 @@ dependencies = [
 
 [[package]]
 name = "hanzo-engine"
-version = "1.7.2"
+version = "1.7.42"
 dependencies = [
  "ahash 0.8.12",
  "akin",
@@ -3752,6 +3764,7 @@ dependencies = [
  "hanzo-paged-attn",
  "hanzo-quant",
  "hanzo-sandbox",
+ "hanzo-transformers",
  "hanzo-vision",
  "hashbrown 0.16.1",
  "hf-hub",
@@ -3766,6 +3779,7 @@ dependencies = [
  "libc",
  "llguidance",
  "lrtable",
+ "memmap2",
  "mime_guess",
  "minijinja",
  "minijinja-contrib",
@@ -3988,7 +4002,7 @@ dependencies = [
 
 [[package]]
 name = "hanzo-llm-mcp"
-version = "1.7.2"
+version = "1.7.42"
 dependencies = [
  "anyhow",
  "async-trait",
@@ -4081,9 +4095,9 @@ dependencies = [
 
 [[package]]
 name = "hanzo-metal-kernels"
-version = "0.11.34"
+version = "0.11.36"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "5da82a964a843f362fdc8b5adf20138e3836e21a5e5e302428fdbee5bb60b8ad"
+checksum = "44ccda816a352e9394d93e1e8abf34e02c14d20083af14e1d46c5a73d451db03"
 dependencies = [
  "block2",
  "half",
@@ -4097,9 +4111,9 @@ dependencies = [
 
 [[package]]
 name = "hanzo-ml"
-version = "0.11.46"
+version = "0.11.54"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "658cd4d2aae479410b5127955fb10cf6d3bd0580dce14e97d078c9a1f6786b6f"
+checksum = "263e19ad38a2500f6f08b4a7ffb9fefb56cd3b9890759bff87749f9fd1684d12"
 dependencies = [
  "ash",
  "byteorder",
@@ -4112,6 +4126,7 @@ dependencies = [
  "hanzo-rocm",
  "hanzo-rocm-kernels",
  "hanzo-ug",
+ "libc",
  "libm",
  "memmap2",
  "num-traits",
@@ -4231,7 +4246,7 @@ dependencies = [
 
 [[package]]
 name = "hanzo-paged-attn"
-version = "1.7.2"
+version = "1.7.42"
 dependencies = [
  "anyhow",
  "cudaforge",
@@ -4247,7 +4262,7 @@ dependencies = [
 
 [[package]]
 name = "hanzo-quant"
-version = "1.7.2"
+version = "1.7.42"
 dependencies = [
  "byteorder",
  "cudaforge",
@@ -4298,6 +4313,15 @@ dependencies = [
  "sha2",
  "thiserror 2.0.18",
  "tracing",
+]
+
+[[package]]
+name = "hanzo-router"
+version = "0.1.1"
+dependencies = [
+ "serde",
+ "serde_json",
+ "serde_yaml",
 ]
 
 [[package]]
@@ -4353,7 +4377,7 @@ dependencies = [
 
 [[package]]
 name = "hanzo-sandbox"
-version = "1.7.2"
+version = "1.7.42"
 dependencies = [
  "anyhow",
  "itoa",
@@ -4369,7 +4393,7 @@ dependencies = [
 
 [[package]]
 name = "hanzo-server-core"
-version = "1.7.2"
+version = "1.7.42"
 dependencies = [
  "anyhow",
  "axum 0.8.9",
@@ -4380,6 +4404,7 @@ dependencies = [
  "hanzo-3d",
  "hanzo-engine",
  "hanzo-ml",
+ "hanzo-router",
  "image",
  "indexmap 2.14.0",
  "itertools 0.14.0",
@@ -4481,6 +4506,25 @@ dependencies = [
 ]
 
 [[package]]
+name = "hanzo-transformers"
+version = "0.11.9"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "b561ebf35167c463b2ce29ce318d44840f00d91a17dd9be021b0b2a1a9cca6a9"
+dependencies = [
+ "byteorder",
+ "fancy-regex 0.18.0",
+ "hanzo-ml",
+ "hanzo-nn",
+ "num-traits",
+ "rand 0.9.4",
+ "rayon",
+ "serde",
+ "serde_json",
+ "serde_plain",
+ "tracing",
+]
+
+[[package]]
 name = "hanzo-ug"
 version = "0.11.33"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -4493,7 +4537,7 @@ dependencies = [
 
 [[package]]
 name = "hanzo-vision"
-version = "1.7.2"
+version = "1.7.42"
 dependencies = [
  "hanzo-ml",
  "image",
@@ -6737,6 +6781,23 @@ dependencies = [
  "http 0.2.12",
  "httparse",
  "log",
+ "memchr",
+ "mime",
+ "spin 0.9.8",
+ "version_check",
+]
+
+[[package]]
+name = "multer"
+version = "3.1.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "83e87776546dc87511aa5ee218730c92b666d7264ab6ed41f9d215af9cd5224b"
+dependencies = [
+ "bytes",
+ "encoding_rs",
+ "futures-util",
+ "http 1.4.1",
+ "httparse",
  "memchr",
  "mime",
  "spin 0.9.8",
@@ -11843,7 +11904,7 @@ dependencies = [
  "log",
  "mime",
  "mime_guess",
- "multer",
+ "multer 2.1.0",
  "percent-encoding",
  "pin-project",
  "rustls-pemfile 2.2.0",

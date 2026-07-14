@@ -52,6 +52,17 @@ fn render_plan() -> anyhow::Result<()> {
     std::io::stdin().read_to_string(&mut buf)?;
     let app: App = serde_json::from_str(&buf)?;
 
+    // A delegated role emits no objects — the specialized operator owns it. Print
+    // an empty array so a cutover diff shows "hanzod adds nothing here".
+    if app.role().is_delegated() {
+        let role = app.spec.role.clone().unwrap_or_default();
+        eprintln!(
+            "# DELEGATED role '{role}': hanzod reconciles nothing (owned by the specialized operator during transition)."
+        );
+        println!("[]");
+        return Ok(());
+    }
+
     if !app.spec.extra.is_empty() {
         let mut keys: Vec<&String> = app.spec.extra.keys().collect();
         keys.sort();

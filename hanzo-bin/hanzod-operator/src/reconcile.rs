@@ -149,6 +149,20 @@ async fn reconcile(app: Arc<App>, ctx: Arc<Context>) -> Result<Action, Error> {
         return Ok(Action::await_change());
     }
 
+    // Role dispatch (values, not places): hanzod OWNS the generic profile; every
+    // other role is reconciled by the specialized operator during the transition.
+    // A delegated role is recorded (phase=Delegated) and otherwise UNTOUCHED —
+    // fail-SAFE: no child objects, no prune, and no reject on its role-specific
+    // fields (those are expected for that role, not "unmodeled"). Graduating a
+    // role to hanzod = adding its builder + one arm of `Role::classify`.
+    if app.role().is_delegated() {
+        ctx.reset(&key);
+        let role = app.spec.role.clone().unwrap_or_default();
+        tracing::debug!(%key, %role, "delegated role; standing aside");
+        write_status(&ctx.client, &app, delegated_status(&app, &role)).await?;
+        return Ok(Action::await_change());
+    }
+
     // HIGH-1 + MED-4: fail-closed on unmodeled fields (top-level AND nested) and
     // on missing required persistence fields — never a silent default/no-op.
     let reasons = rejection_reasons(&app);
@@ -300,12 +314,18 @@ fn persistence_reasons(app: &App) -> Vec<String> {
     r
 }
 
-/// All reasons to reject a CR (fail-closed). Empty ⇒ reconcilable.
+/// All reasons to reject a CR (fail-closed). Empty ⇒ reconcilable. Only ever
+/// called on the GENERIC path — a delegated role short-circuits before this, so
+/// its role-specific fields are never counted as "unmodeled".
 fn rejection_reasons(app: &App) -> Vec<String> {
     let mut r = unknown_fields(app)
         .into_iter()
         .map(|f| format!("unsupported field: {f}"))
         .collect::<Vec<_>>();
+    // The generic profile builds a Deployment — it requires an image.
+    if app.spec.image.is_none() {
+        r.push("image: required for the generic role".into());
+    }
     r.extend(persistence_reasons(app));
     r
 }
@@ -396,6 +416,20 @@ fn running_status(app: &App, ready: i32, available: i32) -> Value {
         "availableReplicas": available,
         "phase": phase,
         "message": Value::Null, // clear any prior Rejected/Invalid message
+    }})
+}
+
+/// `status.phase=Delegated` — hanzod recognizes the role but stands aside for the
+/// specialized reconciler. NOT terminal: a rolling restart re-lists every App, so
+/// when a future hanzod graduates the role to the generic profile it is picked up
+/// without waiting for a CR edit.
+fn delegated_status(app: &App, role: &str) -> Value {
+    json!({ "status": {
+        "observedGeneration": app.meta().generation.unwrap_or(0),
+        "phase": "Delegated",
+        "message": format!(
+            "role '{role}' is reconciled by the specialized operator during transition; hanzod owns the generic profile"
+        ),
     }})
 }
 
@@ -545,6 +579,57 @@ mod tests {
                             "dbPath": "a.db", "storage": {"size": "1Gi"}}
         }));
         assert!(rejection_reasons(&app).is_empty());
+    }
+
+    #[test]
+    fn role_classifies_generic_and_delegated() {
+        use crate::crd::Role;
+        // absent + the schema-identical workload roles → the generic profile.
+        assert_eq!(Role::classify(None), Role::Generic);
+        for r in ["generic", "service", "llm", "iam", "kms", "explorer", "function",
+                  "indexer", "observability", "queue"] {
+            assert_eq!(Role::classify(Some(r)), Role::Generic, "{r} should be generic");
+        }
+        // everything with its own child-resource logic → delegated.
+        for r in ["datastore", "sql", "kv", "s3", "docdb", "managedDatabase", "gateway",
+                  "ingress", "dns", "static", "spa", "base", "mpc", "chain", "network",
+                  "nodeFleet", "luxRuntime", "validator", "agentDeployment"] {
+            assert_eq!(Role::classify(Some(r)), Role::Delegated, "{r} should be delegated");
+        }
+    }
+
+    #[test]
+    fn generic_app_without_image_is_rejected() {
+        // a generic App builds a Deployment, so it must carry an image.
+        let app = app_with(json!({"replicas": 1}));
+        assert!(app.role().is_generic());
+        assert!(rejection_reasons(&app).iter().any(|r| r.contains("image")));
+        // with an image it is fine.
+        let ok = app_with(json!({"image": {"repository": "r"}}));
+        assert!(rejection_reasons(&ok).is_empty());
+    }
+
+    #[test]
+    fn delegated_role_keeps_its_fields_and_is_not_reconciled_as_generic() {
+        // a datastore App carries storage/backup (role-specific). It is DELEGATED,
+        // so reconcile short-circuits BEFORE rejection_reasons — those fields are
+        // never mis-read as "unmodeled" and Rejected, and no image is required.
+        let app = app_with(json!({
+            "role": "datastore",
+            "image": {"repository": "postgres"},
+            "storage": {"size": "10Gi"},
+            "backup": {"schedule": "@daily"},
+            "serviceAliases": ["primary", "replica"]
+        }));
+        assert!(app.role().is_delegated());
+        // the delegated status is well-formed and non-terminal (re-listed on restart).
+        let st = delegated_status(&app, "datastore");
+        assert_eq!(st["status"]["phase"], "Delegated");
+        assert!(!is_terminal_for_current_gen(&{
+            let mut a = app.clone();
+            a.status = Some(crate::crd::AppStatus { phase: Some("Delegated".into()), ..Default::default() });
+            a
+        }));
     }
 
     #[test]

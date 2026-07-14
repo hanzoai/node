@@ -42,8 +42,22 @@ use serde::{Deserialize, Serialize};
 )]
 #[serde(rename_all = "camelCase")]
 pub struct AppSpec {
+    /// The role PROFILE that reconciles this App — the ONE knob that replaced the
+    /// ~28 former `hanzo.ai/v1` Kinds (values, not places). Absent/`generic`/
+    /// `service` — and the schema-identical `llm`/`iam`/`kms`/`explorer`/
+    /// `function`/`indexer`/`observability`/`queue` — select the generic workload
+    /// profile hanzod owns. Any other role is [`Role::Delegated`]: reconciled by
+    /// the specialized operator during the transition, never mis-run as a plain
+    /// Deployment. See [`Role`].
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub role: Option<String>,
+
     /// Container image. `repository` is required; `tag` defaults to `latest`.
-    pub image: Image,
+    /// Optional at the type level so image-less roles (`ingress`, `dns`,
+    /// `validator`, …) deserialize; the generic profile requires it (a generic
+    /// App with no image is Rejected — [`crate::reconcile`]).
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub image: Option<Image>,
 
     /// Desired replica count. `None` → 1. Ignored (left unset) when
     /// `autoscaling.enabled` so hanzod never fights an HPA.
@@ -474,4 +488,53 @@ pub struct AppStatus {
 
 fn default_true() -> bool {
     true
+}
+
+/// The reconcile PROFILE a [`AppSpec::role`] selects.
+///
+/// `values, not places`: the ~28 former `hanzo.ai/v1` Kinds are now VALUES of one
+/// field on one Kind (`App`). Two dispositions, one map:
+///
+/// - [`Role::Generic`] — the workload profile hanzod OWNS (Deployment + Service +
+///   optional Ingress/PVC/HPA/PDB). Selected by an absent role and by every
+///   workload-shaped role whose former CRD was the byte-identical Service schema
+///   (`service`, `llm`, `iam`, `kms`, `explorer`, `function`, `indexer`,
+///   `observability`, `queue`). For these the Kind was pure labeling — the
+///   reconcile is one function, not nine.
+/// - [`Role::Delegated`] — a role that carries its own child-resource logic
+///   (`datastore`/`sql`/`kv`/`s3`/`docdb`/`managedDatabase`, `gateway`, `ingress`,
+///   `dns`, `static`, `spa`, `base`, `mpc`, and the Lux `chain`/`network`/
+///   `nodeFleet`/`luxRuntime`/`validator`/`agentDeployment` fleet). hanzod
+///   recognizes it and stands aside (`status.phase=Delegated`) so the specialized
+///   reconciler owns it during the transition — fail-SAFE: no child objects, no
+///   prune, and no reject on its role-specific fields. Graduating a role to
+///   hanzod = adding its builder + moving one arm of [`Role::classify`].
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum Role {
+    Generic,
+    Delegated,
+}
+
+impl Role {
+    /// Classify a `spec.role` string. Absent/empty ⇒ [`Role::Generic`].
+    pub fn classify(role: Option<&str>) -> Role {
+        match role.map(str::trim).unwrap_or("") {
+            "" | "generic" | "service" | "llm" | "iam" | "kms" | "explorer" | "function"
+            | "indexer" | "observability" | "queue" => Role::Generic,
+            _ => Role::Delegated,
+        }
+    }
+    pub fn is_generic(self) -> bool {
+        matches!(self, Role::Generic)
+    }
+    pub fn is_delegated(self) -> bool {
+        matches!(self, Role::Delegated)
+    }
+}
+
+impl App {
+    /// The reconcile profile this App selects — the ONE dispatch key.
+    pub fn role(&self) -> Role {
+        Role::classify(self.spec.role.as_deref())
+    }
 }
