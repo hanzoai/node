@@ -27,6 +27,7 @@ members = [
   "hanzo-libs/hanzo-compute",
   "hanzo-libs/hanzo-ai-format",
   "hanzo-libs/hanzo-model-discovery",
+  "hanzo-libs/hanzo-gpu-fleet",
   "hanzo-libs/hanzo-models",
   "hanzo-libs/hanzo-pqc",
   "hanzo-libs/hanzo-runner",
@@ -79,6 +80,7 @@ hanzo-consensus = { path = "./hanzo-libs/hanzo-consensus", version = "1.1.19" }
 hanzo-compute = { path = "./hanzo-libs/hanzo-compute", version = "1.1.19" }
 hanzo-ai-format = { path = "./hanzo-libs/hanzo-ai-format", version = "1.1.19" }
 hanzo-model-discovery = { path = "./hanzo-libs/hanzo-model-discovery", version = "1.1.12" }
+hanzo-gpu-fleet = { path = "./hanzo-libs/hanzo-gpu-fleet", version = "1.1.20" }
 hanzo-models = { path = "./hanzo-libs/hanzo-models", version = "1.1.12" }
 hanzo-pqc = { path = "./hanzo-libs/hanzo-pqc", version = "1.1.12" }
 hanzo-runner = { path = "./hanzo-libs/hanzo-runner", version = "1.1.12" }
