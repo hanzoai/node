@@ -13,14 +13,14 @@ This document outlines the performance optimizations implemented during the CTO 
 - **GPU Acceleration**: Optional CUDA support for 10x speedup
 
 ### Benchmark Results
-```
-Operation         | CPU (M2 Pro)  | GPU (H100)    | Improvement
-------------------|---------------|---------------|-------------
-Insert (vec/s)    | 50,000       | 500,000      | 10x
-Search 1M (ms)    | 10           | 1            | 10x
-Search 1B (ms)    | 100          | 10           | 10x
-Batch Load (GB/s) | 2            | 20           | 10x
-```
+
+None yet. This section carried a table of CPU-versus-GPU figures that was not
+measured: every row improved by exactly 10x and every value was round, which is
+what invention looks like and what measurement almost never does. No harness
+produced it and no raw data backed it.
+
+When these numbers exist they belong here with the machine named, the build
+named, and the command that produces them, so a reader can disagree with us.
 
 ## 2. WASM Runtime Optimizations
 
