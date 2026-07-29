@@ -1,6 +1,6 @@
 module github.com/hanzoai/node
 
-go 1.26.1
+go 1.26.5
 
 require (
 	github.com/luxfi/node v1.24.29

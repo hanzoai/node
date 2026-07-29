@@ -1,0 +1,42 @@
+# SPDX-License-Identifier: Apache-2.0
+#
+# hanzo-gpu-fleet: the light, open BYO-GPU claim loop.
+#
+# A GPU owner runs Hanzo Desktop, which manages hanzod + hanzo-engine. When the
+# owner turns "Share GPU" on, this loop registers the machine in the org's cloud
+# fleet, heartbeats, and claims studio.render jobs — forwarding each to a local
+# ComfyUI (studio) and uploading the finished images to the org gallery with the
+# owner's own session token. NO secrets ever touch the box: the session token
+# (held only in memory, passed in by the desktop) is the sole credential.
+#
+# One implementation, two mount points:
+#   1. the `hanzo-fleet-worker` bin (spawned as a desktop-managed child, and the
+#      isolated end-to-end proof target — `cargo run -p hanzo-gpu-fleet`), and
+#   2. a background task inside hanzod (via `run(..)`), gated on the desktop
+#      passing a session token + "share on".
+# Every dependency is already a hanzod workspace dep — this adds no new weight.
+[package]
+name = "hanzo-gpu-fleet"
+version = { workspace = true }
+edition = { workspace = true }
+license = "Apache-2.0"
+description = "Light, open BYO-GPU claim loop for the Hanzo cloud fleet (studio.render + engine advertise)."
+
+[lib]
+name = "hanzo_gpu_fleet"
+path = "src/lib.rs"
+
+[[bin]]
+name = "hanzo-fleet-worker"
+path = "src/main.rs"
+
+[dependencies]
+reqwest = { workspace = true, features = ["json", "multipart", "stream"] }
+tokio = { workspace = true, features = ["rt", "rt-multi-thread", "macros", "process", "signal", "time"] }
+tokio-util = { workspace = true }
+serde = { workspace = true, features = ["derive"] }
+serde_json = { workspace = true }
+chrono = { workspace = true }
+anyhow = { workspace = true }
+log = { workspace = true }
+env_logger = { workspace = true }
