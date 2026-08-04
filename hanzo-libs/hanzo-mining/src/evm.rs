@@ -99,7 +99,7 @@ impl ChainConfig {
     pub fn lux_mainnet() -> Self {
         Self {
             chain_id: LUX_MAINNET_CHAIN_ID,
-            rpc_url: "https://api.lux.network/ext/bc/C/rpc".to_string(),
+            rpc_url: "https://api.lux.network/v1/bc/C/rpc".to_string(),
             mining_contract: contracts::LUX_MAINNET_MINING.to_string(),
             token_symbol: "LUX".to_string(),
             token_decimals: 18,
@@ -110,7 +110,7 @@ impl ChainConfig {
     pub fn lux_testnet() -> Self {
         Self {
             chain_id: LUX_TESTNET_CHAIN_ID,
-            rpc_url: "https://api.lux-test.network/ext/bc/C/rpc".to_string(),
+            rpc_url: "https://api.lux-test.network/v1/bc/C/rpc".to_string(),
             mining_contract: contracts::LUX_TESTNET_MINING.to_string(),
             token_symbol: "LUX".to_string(),
             token_decimals: 18,
@@ -236,7 +236,7 @@ impl TeleportDestination {
 
     pub fn rpc_url(&self) -> &str {
         match self {
-            Self::LuxCChain => "https://api.lux.network/ext/bc/C/rpc",
+            Self::LuxCChain => "https://api.lux.network/v1/bc/C/rpc",
             Self::ZooEvm => "https://rpc.zoo.network",
             Self::HanzoEvm => "https://rpc.hanzo.network",
         }

@@ -380,7 +380,7 @@ impl Network {
     pub fn rpc_endpoint(&self) -> Option<&'static str> {
         match self {
             Network::Hanzo => Some("https://rpc.hanzo.network"),
-            Network::Lux => Some("https://api.lux.network/ext/bc/C/rpc"),
+            Network::Lux => Some("https://api.lux.network/v1/bc/C/rpc"),
             Network::Ethereum => Some("https://eth.llamarpc.com"),
             Network::Sepolia => Some("https://rpc.sepolia.org"),
             Network::Base => Some("https://mainnet.base.org"),
@@ -388,7 +388,7 @@ impl Network {
             Network::Polygon => Some("https://polygon-rpc.com"),
             Network::Arbitrum => Some("https://arb1.arbitrum.io/rpc"),
             Network::Optimism => Some("https://mainnet.optimism.io"),
-            Network::LuxFuji => Some("https://api.lux-test.network/ext/bc/C/rpc"),
+            Network::LuxFuji => Some("https://api.lux-test.network/v1/bc/C/rpc"),
             _ => None,
         }
     }
