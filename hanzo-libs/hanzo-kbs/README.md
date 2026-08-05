@@ -304,4 +304,4 @@ Apache 2.0 - See [LICENSE](../../LICENSE) for details.
 
 - Documentation: https://docs.hanzo.ai/kbs
 - Issues: https://github.com/hanzoai/hanzo-node/issues
-- Discord: https://discord.gg/hanzo
+- Discord: https://discord.gg/CJCyAsm9Vr
