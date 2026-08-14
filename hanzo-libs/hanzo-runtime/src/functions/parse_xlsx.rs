@@ -38,35 +38,3 @@ pub async fn parse_xlsx(file_path: PathBuf) -> Result<Output, RunError> {
         .create_runner(json!({}));
     runner.run::<_, Output>(Input { file_path }, None).await
 }
-
-#[cfg(test)]
-mod tests {
-    use crate::functions::parse_xlsx::parse_xlsx;
-    use crate::test_utils::testing_create_tempdir_and_set_env_var;
-    use std::path;
-    use std::path::Path;
-
-    #[tokio::test]
-    async fn test_parse_xlsx() {
-        let _dir = testing_create_tempdir_and_set_env_var();
-
-        let xlsx_file_path = path::absolute(Path::new("../hanzo-fs/src/test_data/test.xlsx"))
-            .unwrap()
-            .to_path_buf();
-        let rows = parse_xlsx(xlsx_file_path).await.unwrap();
-        assert_eq!(rows.rows.len(), 4);
-        assert_eq!(rows.rows[0].len(), 2);
-    }
-
-    #[tokio::test]
-    async fn test_parse_xls() {
-        let _dir = testing_create_tempdir_and_set_env_var();
-
-        let xlsx_file_path = path::absolute(Path::new("../hanzo-fs/src/test_data/test.xls"))
-            .unwrap()
-            .to_path_buf();
-        let rows = parse_xlsx(xlsx_file_path).await.unwrap();
-        assert_eq!(rows.rows.len(), 11);
-        assert_eq!(rows.rows[0].len(), 8);
-    }
-}

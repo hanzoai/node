@@ -9,7 +9,6 @@ use serde_json::Value;
 use hanzo_mcp::mcp_methods::{run_tool_via_command, run_tool_via_http, run_tool_via_sse};
 use hanzo_messages::schemas::mcp_server::{MCPServer, MCPServerType};
 use hanzo_messages::schemas::tool_router_key::ToolRouterKey;
-use hanzo_tools_runner::tools::run_result::RunResult;
 use std::collections::HashMap;
 
 #[derive(Debug, Clone, PartialEq, serde::Serialize, serde::Deserialize)]
@@ -91,7 +90,7 @@ impl MCPServerTool {
         mcp_server: MCPServer,
         parameters: serde_json::Map<String, serde_json::Value>,
         extra_config: Vec<ToolConfig>,
-    ) -> Result<RunResult, ToolError> {
+    ) -> Result<Value, ToolError> {
         let mut env: HashMap<String, String> = MCPServerTool::tool_config_to_env_vars(self.config.clone());
 
         // Merge extra_config into the config hashmap
@@ -114,9 +113,7 @@ impl MCPServerTool {
         let data = value.content.first().ok_or(ToolError::ExecutionError(
             "no content returned from MCP server".to_string(),
         ))?;
-        Ok(RunResult {
-            data: serde_json::to_value(data).map_err(|_e| ToolError::FailedJSONParsing)?,
-        })
+        serde_json::to_value(data).map_err(|_e| ToolError::FailedJSONParsing)
     }
 
     pub async fn run_tool(

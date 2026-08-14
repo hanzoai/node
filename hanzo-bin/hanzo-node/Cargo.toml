@@ -6,9 +6,6 @@ authors = { workspace = true }
 description = "hanzod — Hanzo AI Network node (L2 on Lux, reth EVM, AI mining)"
 default-run = "hanzod"
 
-[build-dependencies]
-hanzo-tools-runner = { workspace = true, features = ["built-in-tools"] }
-
 # Features
 [features]
 default = []
@@ -84,7 +81,6 @@ cron-parser = "0.8.1"
 dashmap = { workspace = true }
 async-lock = "2.4.0"
 governor = "0.6.3"
-hanzo-tools-runner = { workspace = true, features = ["built-in-tools"] }
 console-subscriber = { version = "0.1", optional = true }
 downcast-rs = "1.2.1"
 bigdecimal = "0.2.2"

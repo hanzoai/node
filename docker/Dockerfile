@@ -55,7 +55,6 @@ RUN --mount=type=cache,target=/usr/local/cargo/registry \
     --mount=type=cache,target=/build/target \
     cargo build --locked --bin hanzo-node $([ "$BUILD_TYPE" = "release" ] && echo "--release") && \
     cp target/${BUILD_TYPE}/hanzo-node /build/hanzo-node && \
-    cp -r target/${BUILD_TYPE}/hanzo-tools-runner-resources /build/hanzo-tools-runner-resources || true
 
 # ============================================================================
 # Stage 2: Runtime
@@ -96,7 +95,6 @@ COPY docker/run_node.sh /app/
 
 # Copy built binaries and resources from builder
 COPY --from=builder /build/hanzo-node /app/
-COPY --from=builder /build/hanzo-tools-runner-resources /app/hanzo-tools-runner-resources
 
 # Make script executable
 RUN chmod +x /app/run_node.sh /app/hanzo-node

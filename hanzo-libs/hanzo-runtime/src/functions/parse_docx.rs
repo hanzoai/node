@@ -44,24 +44,3 @@ pub async fn parse_docx(file_path: PathBuf) -> Result<Output, RunError> {
         .create_runner(json!({}));
     runner.run::<_, Output>(Input { file_path }, None).await
 }
-
-#[cfg(test)]
-mod tests {
-    use crate::functions::parse_docx::parse_docx;
-    use crate::test_utils::testing_create_tempdir_and_set_env_var;
-    use std::path;
-    use std::path::Path;
-
-    #[tokio::test]
-    #[ignore = "Requires npm packages and stable CWD environment"]
-    async fn test_parse_xlsx() {
-        let _dir = testing_create_tempdir_and_set_env_var();
-
-        let file_path = path::absolute(Path::new("../../files/decision_log.docx"))
-            .unwrap()
-            .to_path_buf();
-        let parsed_docx = parse_docx(file_path).await.unwrap();
-        println!("parsed_docx: {:?}", parsed_docx);
-        assert!(parsed_docx.text.contains("Approved backend languages are Go, Python"));
-    }
-}

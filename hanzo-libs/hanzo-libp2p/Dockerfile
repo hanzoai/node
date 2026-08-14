@@ -31,27 +31,13 @@ RUN apt-get update && apt-get install -y \
     unzip \
     && rm -rf /var/lib/apt/lists/*
 
-# Install Deno
-RUN curl -fsSL https://deno.land/install.sh | sh && \
-    mv /root/.deno/bin/deno /usr/local/bin/deno && \
-    chmod +x /usr/local/bin/deno
-
 # Create a non-root user for security
 RUN useradd -r -s /bin/false -m -d /app hanzo
 
 # Create necessary directories and set permissions for both root and hanzo user
-RUN mkdir -p /app/storage /app/internal_tools_storage /app/.cache/deno && \
+RUN mkdir -p /app/storage && \
     chown -R hanzo:hanzo /app && \
     chmod -R 755 /app
-
-# Pre-cache ethers dependency to avoid runtime network issues
-RUN echo 'import { ethers } from "npm:ethers@6.14.1"; console.log("Cached ethers");' > /tmp/cache_ethers.ts && \
-    /usr/local/bin/deno run --allow-net --allow-read --allow-write --allow-env /tmp/cache_ethers.ts || true && \
-    rm /tmp/cache_ethers.ts
-
-# Copy the cache to the hanzo user's directory
-RUN cp -r /root/.cache/deno /app/.cache/ && \
-    chown -R hanzo:hanzo /app/.cache
 
 # Copy only the necessary binary from builder
 WORKDIR /app
@@ -71,9 +57,7 @@ ENV NODE_NAME=""
 ENV RPC_URL="https://sepolia.base.org"
 ENV CONTRACT_ADDRESS="0x425fb20ba3874e887336aaa7f3fab32d08135ba9"
 ENV MAX_CONNECTIONS=20
-ENV HANZO_TOOLS_RUNNER_DENO_BINARY_PATH="/usr/local/bin/deno"
 ENV NODE_STORAGE_PATH="/app/storage"
-ENV DENO_DIR="/app/.cache/deno"
 
 # Expose the port
 EXPOSE ${PORT}

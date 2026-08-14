@@ -1,24 +1,19 @@
 use crate::llm_provider::job_manager::JobManager;
 use crate::managers::IdentityManager;
-use crate::tools::tool_definitions::definition_generation::generate_tool_definitions;
 use crate::tools::tool_execution::execute_agent_dynamic::execute_agent_tool;
 use crate::tools::tool_execution::execute_mcp_server_dynamic::execute_mcp_server_dynamic;
 use crate::tools::tool_execution::execution_custom::try_to_execute_rust_tool;
-use crate::tools::tool_execution::execution_deno_dynamic::{check_deno_tool, execute_deno_tool};
 use crate::tools::tool_execution::execution_header_generator::{check_tool, generate_execution_environment};
-use crate::tools::tool_execution::execution_python_dynamic::execute_python_tool;
+use crate::tools::tool_execution::no_local_runtime;
 use crate::utils::environment::fetch_node_environment;
 use base64::{engine::general_purpose::URL_SAFE_NO_PAD, Engine};
 use chrono::Utc;
 use ed25519_dalek::SigningKey;
-use regex::Regex;
 use reqwest::Client;
-use serde_json::json;
 use serde_json::{Map, Value};
 use sha2::{Digest, Sha256};
 use hanzo_messages::schemas::llm_providers::agent::Agent;
 use hanzo_messages::schemas::hanzo_name::HanzoName;
-use hanzo_messages::schemas::hanzo_tools::CodeLanguage;
 use hanzo_messages::schemas::hanzo_tools::DynamicToolType;
 use hanzo_messages::schemas::tool_router_key::ToolRouterKey;
 use hanzo_db_sqlite::oauth_manager::OAuthToken;
@@ -336,10 +331,7 @@ pub async fn execute_tool_cmd(
                 .get_mcp_server(mcp_server_ref)
                 .map_err(|e| ToolError::ExecutionError(format!("Failed to get MCP server: {}", e)))?;
             if let Some(mcp_server) = mcp_server {
-                mcp_server_tool
-                    .run(mcp_server, parameters, extra_config)
-                    .await
-                    .map(|result| json!(result.data))
+                mcp_server_tool.run(mcp_server, parameters, extra_config).await
             } else {
                 Err(ToolError::ExecutionError("MCP server not found".to_string()))
             }
@@ -385,124 +377,8 @@ pub async fn execute_tool_cmd(
             )
             .await
         }
-        HanzoTool::Python(python_tool, _) => {
-            let env = generate_execution_environment(
-                db.clone(),
-                llm_provider.clone(),
-                app_id.clone(),
-                tool_id.clone(),
-                agent_id.clone(),
-                tool_router_key.clone(),
-                "".to_string(), // TODO Pass data from the API
-                &python_tool.oauth,
-            )
-            .await?;
-
-            check_tool(
-                tool_router_key.clone(),
-                python_tool.config.clone(),
-                parameters.clone(),
-                python_tool.input_args.clone(),
-                &python_tool.oauth,
-            )?;
-
-            let node_env = fetch_node_environment();
-            let node_storage_path = node_env
-                .node_storage_path
-                .clone()
-                .ok_or_else(|| ToolError::ExecutionError("Node storage path is not set".to_string()))?;
-            let tools: Vec<ToolRouterKey> = db
-                .clone()
-                .get_all_tool_headers()
-                .map_err(|_| ToolError::ExecutionError("Failed to get tool headers".to_string()))?
-                .into_iter()
-                .filter_map(|tool| match ToolRouterKey::from_string(&tool.tool_router_key) {
-                    Ok(tool_router_key) => Some(tool_router_key),
-                    Err(_) => None,
-                })
-                .collect();
-
-            let support_files = generate_tool_definitions(tools, CodeLanguage::Python, db, false)
-                .await
-                .map_err(|_| ToolError::ExecutionError("Failed to generate tool definitions".to_string()))?;
-            python_tool
-                .run(
-                    env,
-                    node_env.api_listen_address.ip().to_string(),
-                    node_env.api_listen_address.port(),
-                    support_files,
-                    parameters,
-                    extra_config,
-                    node_storage_path,
-                    app_id.clone(),
-                    tool_id.clone(),
-                    node_name,
-                    true,
-                    Some(tool_router_key),
-                    mounts,
-                )
-                .await
-                .map(|result| json!(result.data))
-        }
-        HanzoTool::Deno(deno_tool, _) => {
-            let env = generate_execution_environment(
-                db.clone(),
-                llm_provider.clone(),
-                app_id.clone(),
-                tool_id.clone(),
-                agent_id.clone(),
-                tool_router_key.clone(),
-                "".to_string(), // TODO Pass data from the API
-                &deno_tool.oauth,
-            )
-            .await?;
-
-            check_tool(
-                tool_router_key.clone(),
-                deno_tool.config.clone(),
-                parameters.clone(),
-                deno_tool.input_args.clone(),
-                &deno_tool.oauth,
-            )?;
-            let node_env = fetch_node_environment();
-            let node_storage_path = node_env
-                .node_storage_path
-                .clone()
-                .ok_or_else(|| ToolError::ExecutionError("Node storage path is not set".to_string()))?;
-            let tools: Vec<ToolRouterKey> = db
-                .clone()
-                .get_all_tool_headers()
-                .map_err(|_| ToolError::ExecutionError("Failed to get tool headers".to_string()))?
-                .into_iter()
-                .filter_map(|tool| match ToolRouterKey::from_string(&tool.tool_router_key) {
-                    Ok(tool_router_key) => Some(tool_router_key),
-                    Err(_) => None,
-                })
-                .collect();
-
-            let support_files = generate_tool_definitions(tools, CodeLanguage::Typescript, db, false)
-                .await
-                .map_err(|_| ToolError::ExecutionError("Failed to generate tool definitions".to_string()))?;
-            deno_tool
-                .run(
-                    env,
-                    node_env.api_listen_address.ip().to_string(),
-                    node_env.api_listen_address.port(),
-                    support_files,
-                    parameters,
-                    extra_config,
-                    node_storage_path,
-                    app_id.clone(),
-                    tool_id.clone(),
-                    node_name,
-                    true,
-                    Some(tool_router_key),
-                    mounts,
-                )
-                .await
-                .map(|result| json!(result.data))
-                .map_err(|e| ToolError::ExecutionError(e.to_string()))
-        }
+        HanzoTool::Python(..) => Err(no_local_runtime("Python")),
+        HanzoTool::Deno(..) => Err(no_local_runtime("Deno")),
         _ => Err(ToolError::ExecutionError(format!("Unsupported tool type: {:?}", tool))),
     }
 }
@@ -633,52 +509,8 @@ pub async fn execute_code(
         .collect();
 
     match tool_type {
-        DynamicToolType::DenoDynamic => {
-            let support_files = generate_tool_definitions(tools, CodeLanguage::Typescript, db.clone(), false)
-                .await
-                .map_err(|_| ToolError::ExecutionError("Failed to generate tool definitions".to_string()))?;
-            execute_deno_tool(
-                bearer.clone(),
-                db.clone(),
-                node_name,
-                parameters,
-                extra_config,
-                oauth.clone(),
-                tool_id,
-                app_id,
-                agent_id,
-                llm_provider,
-                support_files,
-                code,
-                mounts,
-                runner,
-                operating_system,
-            )
-            .await
-        }
-        DynamicToolType::PythonDynamic => {
-            let support_files = generate_tool_definitions(tools, CodeLanguage::Python, db.clone(), false)
-                .await
-                .map_err(|_| ToolError::ExecutionError("Failed to generate tool definitions".to_string()))?;
-            execute_python_tool(
-                bearer.clone(),
-                db.clone(),
-                node_name,
-                parameters,
-                extra_config,
-                oauth.clone(),
-                tool_id,
-                app_id,
-                agent_id,
-                llm_provider,
-                support_files,
-                code,
-                mounts,
-                runner,
-                operating_system,
-            )
-            .await
-        }
+        DynamicToolType::DenoDynamic => Err(no_local_runtime("Deno")),
+        DynamicToolType::PythonDynamic => Err(no_local_runtime("Python")),
         DynamicToolType::AgentDynamic => {
             execute_agent_tool(
                 bearer,
@@ -699,57 +531,18 @@ pub async fn execute_code(
 
 pub async fn check_code(
     tool_type: DynamicToolType,
-    unfiltered_code: String,
-    tool_id: String,
-    app_id: String,
+    _unfiltered_code: String,
+    _tool_id: String,
+    _app_id: String,
     _tools: Vec<ToolRouterKey>,
-    sqlite_manager: Arc<SqliteManager>,
+    _sqlite_manager: Arc<SqliteManager>,
 ) -> Result<Vec<String>, ToolError> {
-    eprintln!("[check_code] tool_type: {}", tool_type);
-
-    // Use the new function to extract fenced code blocks
-    let code_blocks = extract_fenced_code_blocks(&unfiltered_code);
-    let code_extracted = if !code_blocks.is_empty() {
-        code_blocks.join("\n\n")
-    } else {
-        unfiltered_code
-    };
-
-    eprintln!("[check_code] code_extracted: {}", code_extracted);
-    let tools: Vec<ToolRouterKey> = sqlite_manager
-        .clone()
-        .get_all_tool_headers()
-        .map_err(|_| ToolError::ExecutionError("Failed to get tool headers".to_string()))?
-        .into_iter()
-        .filter_map(|tool| match ToolRouterKey::from_string(&tool.tool_router_key) {
-            Ok(tool_router_key) => Some(tool_router_key),
-            Err(_) => None,
-        })
-        .collect();
-
     match tool_type {
-        DynamicToolType::DenoDynamic => {
-            let support_files = generate_tool_definitions(tools, CodeLanguage::Typescript, sqlite_manager, false)
-                .await
-                .map_err(|_| ToolError::ExecutionError("Failed to generate tool definitions".to_string()))?;
-            // Since `check_deno_tool` is synchronous, run it in a blocking task
-            check_deno_tool(tool_id, app_id, support_files, code_extracted).await
-        }
-        DynamicToolType::PythonDynamic => Err(ToolError::ExecutionError("NYI Python".to_string())),
+        DynamicToolType::DenoDynamic => Err(no_local_runtime("Deno")),
+        DynamicToolType::PythonDynamic => Err(no_local_runtime("Python")),
         DynamicToolType::AgentDynamic => Err(ToolError::ExecutionError("NYI Agent".to_string())),
         DynamicToolType::McpServerDynamic => Err(ToolError::ExecutionError("NYI MCP".to_string())),
     }
-}
-
-fn extract_fenced_code_blocks(unfiltered_code: &str) -> Vec<String> {
-    // Updated pattern to handle both formats in the regex
-    let re = Regex::new(r"```(?:\w+(?:\\n|\n))?([\s\S]*?)```").unwrap();
-    let matches: Vec<String> = re
-        .captures_iter(unfiltered_code)
-        .map(|cap| cap[1].to_string())
-        .collect();
-
-    matches
 }
 
 #[cfg(test)]
@@ -757,87 +550,6 @@ mod tests {
     use hanzo_messages::hanzo_utils::job_scope::MinimalJobScope;
 
     use super::*;
-
-    #[test]
-    fn test_extract_fenced_code_blocks() {
-        let input = r#"
-          Based on the provided documentation and code, I will implement a tool that downloads a website into markdown. This involves using the `deno` library to make an HTTP request to the website and then parsing the HTML response to extract relevant information.\n\nFirst, let's import the necessary libraries and define our function signature:\n```typescript\ntype CONFIG = {};\ntype INPUTS = {\n  url: string;\n};\ntype OUTPUT = {};\n\nexport async function run(config: CONFIG, inputs: INPUTS): Promise<OUTPUT> {\n  const { url } = inputs;\n\n  // ...\n}\n```\nNext, we can use the `deno` library to make an HTTP request to the website:\n```typescript\nimport { fetch } from 'deno';\n\nconst response = await fetch(url);\nconst html = await response.text();\n```\nThen, we can parse the HTML response using a markdown parser. For this example, let's use the `marked` library, which is available on npm:\n```typescript\nimport { marked } from 'npm:marked';\n\nconst markdown = marked(html);\n```\nFinally, we can return the markdown as our output:\n```typescript\nreturn {\n  markdown,\n};\n}\n```\nPutting it all together, our `run` function would look like this:\n```typescript\nimport { fetch } from 'deno';\nimport { marked } from 'npm:marked';\n\ntype CONFIG = {};\ntype INPUTS = {\n  url: string;\n};\ntype OUTPUT = {};\n\nexport async function run(config: CONFIG, inputs: INPUTS): Promise<OUTPUT> {\n  const { url } = inputs;\n\n  const response = await fetch(url);\n  const html = await response.text();\n  const markdown = marked(html);\n\n  return {\n    markdown,\n  };\n}\n```\nThis tool can be used to download a website into markdown by calling the `run` function with the URL of the website as an argument.\n\nHere is the complete code:\n\n```typescript\nimport { fetch } from 'deno';\nimport { marked } from 'npm:marked';\n\ntype CONFIG = {};\ntype INPUTS = {\n  url: string;\n};\ntype OUTPUT = {};\n\nexport async function run(config: CONFIG, inputs: INPUTS): Promise<OUTPUT> {\n  const { url } = inputs;\n\n  const response = await fetch(url);\n  const html = await response.text();\n  const markdown = marked(html);\n\n  return {\n    markdown,\n  };\n}\n```\n\nPlease note that this code is a simple example and might not cover all edge cases. Depending on the complexity of the website, you might need to adjust the parsing logic accordingly.
-        "#;
-
-        let result = extract_fenced_code_blocks(input);
-        let expected = vec![
-            "type CONFIG = {};\\ntype INPUTS = {\\n  url: string;\\n};\\ntype OUTPUT = {};\\n\\nexport async function run(config: CONFIG, inputs: INPUTS): Promise<OUTPUT> {\\n  const { url } = inputs;\\n\\n  // ...\\n}\\n".to_string(),
-            "import { fetch } from 'deno';\\n\\nconst response = await fetch(url);\\nconst html = await response.text();\\n".to_string(),
-            "import { marked } from 'npm:marked';\\n\\nconst markdown = marked(html);\\n".to_string(),
-            "return {\\n  markdown,\\n};\\n}\\n".to_string(),
-            "import { fetch } from 'deno';\\nimport { marked } from 'npm:marked';\\n\\ntype CONFIG = {};\\ntype INPUTS = {\\n  url: string;\\n};\\ntype OUTPUT = {};\\n\\nexport async function run(config: CONFIG, inputs: INPUTS): Promise<OUTPUT> {\\n  const { url } = inputs;\\n\\n  const response = await fetch(url);\\n  const html = await response.text();\\n  const markdown = marked(html);\\n\\n  return {\\n    markdown,\\n  };\\n}\\n".to_string(),
-            "import { fetch } from 'deno';\\nimport { marked } from 'npm:marked';\\n\\ntype CONFIG = {};\\ntype INPUTS = {\\n  url: string;\\n};\\ntype OUTPUT = {};\\n\\nexport async function run(config: CONFIG, inputs: INPUTS): Promise<OUTPUT> {\\n  const { url } = inputs;\\n\\n  const response = await fetch(url);\\n  const html = await response.text();\\n  const markdown = marked(html);\\n\\n  return {\\n    markdown,\\n  };\\n}\\n".to_string(),
-        ];
-
-        assert_eq!(result, expected);
-    }
-
-    #[test]
-    fn test_extract_fenced_code_blocks_with_typescript() {
-        let input = r#"Based on the provided documentation, we will implement a tool that downloads the webpage at `https://jhftss.github.io/` and converts it to plain text.
-
-```typescript
-import { getHomePath } from './hanzo-local-support.ts';
-
-type CONFIG = {};
-type INPUTS = {};
-type OUTPUT = {};
-
-export async function run(config: CONFIG, inputs: INPUTS): Promise<OUTPUT> {
-  const url = 'https://jhftss.github.io/';
-  try {
-    const response = await fetch(url);
-    if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
-    }
-    const text = await response.text();
-    const fileContent = text.replace(/<[^>]*>|[\n\r]/g, '');
-    const filePath = `${getHomePath()}/downloaded_text.txt`;
-    Deno.writeTextFileSync(filePath, fileContent);
-  } catch (error) {
-    console.error(error.message);
-    return { error: 'Failed to download and convert webpage' };
-  }
-  return {};
-}
-
-```"#;
-
-        let expected = vec![r#"import { getHomePath } from './hanzo-local-support.ts';
-
-type CONFIG = {};
-type INPUTS = {};
-type OUTPUT = {};
-
-export async function run(config: CONFIG, inputs: INPUTS): Promise<OUTPUT> {
-  const url = 'https://jhftss.github.io/';
-  try {
-    const response = await fetch(url);
-    if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
-    }
-    const text = await response.text();
-    const fileContent = text.replace(/<[^>]*>|[\n\r]/g, '');
-    const filePath = `${getHomePath()}/downloaded_text.txt`;
-    Deno.writeTextFileSync(filePath, fileContent);
-  } catch (error) {
-    console.error(error.message);
-    return { error: 'Failed to download and convert webpage' };
-  }
-  return {};
-}
-
-"#
-        .to_string()];
-
-        let result = extract_fenced_code_blocks(input);
-        assert_eq!(result, expected);
-    }
 
     #[test]
     fn test_override_tool_config_no_overrides() {

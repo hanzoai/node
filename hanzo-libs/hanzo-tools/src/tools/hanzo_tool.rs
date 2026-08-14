@@ -634,7 +634,6 @@ mod tests {
     use crate::tools::tool_types::{OperatingSystem, RunnerType, ToolResult};
     use serde_json::json;
     use hanzo_messages::schemas::tool_router_key::ToolRouterKey;
-    use hanzo_tools_runner::tools::tool_definition::ToolDefinition;
 
     #[test]
     fn test_gen_router_key() {
@@ -694,39 +693,19 @@ mod tests {
 
     #[test]
     fn test_set_playground_tool() {
-        let tool_definition = ToolDefinition {
-            id: "hanzo-tool-download-website".to_string(),
-            name: "Download Website".to_string(),
-            description: "Downloads a website and converts its content into Markdown.".to_string(),
-            configurations: json!({
-                "type": "object",
-                "properties": {},
-                "required": []
-            }),
-            parameters: json!({
-                "type": "object",
-                "properties": {
-                    "url": {
-                        "type": "string",
-                        "description": "The URL to fetch"
-                    }
-                },
-                "required": ["url"]
-            }),
-            result: json!({
-                "type": "object",
-                "properties": {},
-                "required": []
-            }),
-            author: "@@my_local_ai.sep-hanzo".to_string(),
-            keywords: vec![
-                "Deno".to_string(),
-                "Markdown".to_string(),
-                "HTML to Markdown".to_string(),
-            ],
-            code: Some("import { getHomePath } from './hanzo-local-support.ts';\n\n...".to_string()), /* Truncated for brevity */
-            embedding_metadata: None,
-        };
+        let description = "Downloads a website and converts its content into Markdown.".to_string();
+        let author = "@@my_local_ai.sep-hanzo".to_string();
+        let keywords = vec![
+            "Deno".to_string(),
+            "Markdown".to_string(),
+            "HTML to Markdown".to_string(),
+        ];
+        let code = "import { getHomePath } from './hanzo-local-support.ts';\n\n...".to_string();
+        let result = json!({
+            "type": "object",
+            "properties": {},
+            "required": []
+        });
 
         let input_args = Parameters::with_single_property(
             "url",
@@ -738,7 +717,7 @@ mod tests {
 
         let tool_router_key = ToolRouterKey::new(
             "local".to_string(),
-            tool_definition.author.clone(),
+            author.clone(),
             "hanzo__download_website".to_string(),
             None,
         );
@@ -749,23 +728,19 @@ mod tests {
             homepage: Some("http://127.0.0.1/index.html".to_string()),
             version: "1.0.0".to_string(),
             mcp_enabled: Some(false),
-            description: tool_definition.description.clone(),
+            description: description.clone(),
             input_args: input_args.clone(),
             output_arg: ToolOutputArg {
-                json: tool_definition.result.to_string(),
+                json: result.to_string(),
             },
             config: vec![],
-            author: tool_definition.author.clone(),
-            js_code: tool_definition.code.clone().unwrap_or_default(),
+            author: author.clone(),
+            js_code: code.clone(),
             tools: vec![],
-            keywords: tool_definition.keywords.clone(),
+            keywords: keywords.clone(),
             activated: false,
             embedding: None,
-            result: ToolResult::new(
-                "object".to_string(),
-                tool_definition.result["properties"].clone(),
-                vec![],
-            ),
+            result: ToolResult::new("object".to_string(), result["properties"].clone(), vec![]),
             sql_tables: None,
             sql_queries: None,
             file_inbox: None,

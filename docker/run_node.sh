@@ -17,9 +17,6 @@ export NODE_HTTPS_PORT=${NODE_HTTPS_PORT:-3693}
 # Path Configuration
 export INSTALL_FOLDER_PATH=${INSTALL_FOLDER_PATH:-/app/pre-install}
 export NODE_STORAGE_PATH=${NODE_STORAGE_PATH:-hanzo-storage}
-export HANZO_TOOLS_RUNNER_DENO_BINARY_PATH=${HANZO_TOOLS_RUNNER_DENO_BINARY_PATH:-/app/hanzo-tools-runner-resources/deno}
-export HANZO_TOOLS_RUNNER_UV_BINARY_PATH=${HANZO_TOOLS_RUNNER_UV_BINARY_PATH:-/app/hanzo-tools-runner-resources/uv}
-export PATH="/app/hanzo-tools-runner-resources:/root/.local/bin:$PATH"
 
 # Node Identity and Security
 export IDENTITY_SECRET_KEY=${IDENTITY_SECRET_KEY:-}

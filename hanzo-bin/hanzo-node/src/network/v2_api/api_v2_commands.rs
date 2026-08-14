@@ -3246,16 +3246,15 @@ impl Node {
     }
 
     pub async fn v2_api_docker_status(res: Sender<Result<serde_json::Value, APIError>>) -> Result<(), NodeError> {
-        let docker_status = match hanzo_tools_runner::tools::container_utils::is_docker_available() {
-            hanzo_tools_runner::tools::container_utils::DockerStatus::NotInstalled => "not-installed",
-            hanzo_tools_runner::tools::container_utils::DockerStatus::NotRunning => "not-running",
-            hanzo_tools_runner::tools::container_utils::DockerStatus::Running => "running",
-        };
-
+        // The probe answered one question: can a tool run in a container here. This
+        // node runs no tools locally, so it has nothing to report.
         let _ = res
-            .send(Ok(serde_json::json!({
-                "docker_status": docker_status,
-            })))
+            .send(Err(APIError {
+                code: 500,
+                error: "Docker Status Unavailable".to_string(),
+                message: "This node does not detect Docker. Tools run in the sandbox, which places its own containers."
+                    .to_string(),
+            }))
             .await;
         Ok(())
     }
