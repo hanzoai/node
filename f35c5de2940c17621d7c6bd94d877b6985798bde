@@ -1,0 +1,4 @@
+The duties this fork owes are Apache-2.0 sections 4(a), 4(b) and 4(c).
+Section 4(d) does not apply: upstream ships no NOTICE, so there is
+nothing for it to propagate. The 4(b) statement was added to NOTICE in
+a9491de98.
