@@ -1,10 +1,11 @@
 [package]
 name = "hanzo-libp2p-relayer"
 description = "Hanzo AI - Libp2P Relayer Library"
-license = "MIT"
+license = "Apache-2.0"
 version = "1.1.12"
 edition = { workspace = true }
 authors = { workspace = true }
+publish = false
 
 [dependencies]
 tokio = { workspace = true, features = ["full"] }

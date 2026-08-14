@@ -1,7 +1,7 @@
 [package]
 name = "hanzo-sheet"
 description = "Hanzo AI - Sheet Library"
-license = "MIT"
+license = "Apache-2.0"
 version = "0.1.1"
 edition = { workspace = true }
 publish = false  # Not ready for crates.io

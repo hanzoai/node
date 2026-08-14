@@ -5,6 +5,7 @@ edition = { workspace = true }
 authors = { workspace = true }
 description = "hanzod — Hanzo AI Network node (L2 on Lux, reth EVM, AI mining)"
 default-run = "hanzod"
+license = "Apache-2.0"
 
 [build-dependencies]
 hanzo-tools-runner = { workspace = true, features = ["built-in-tools"] }

@@ -3,10 +3,11 @@ name = "hanzo-libp2p"
 version = "1.1.12"
 edition = "2021"
 authors = ["Hanzo AI Inc"]
-license = "MIT"
+license = "Apache-2.0"
 repository = "https://github.com/hanzoai/hanzo-node"
 homepage = "https://hanzo.ai"
 description = "Libp2P Relayer for Hanzo AI platform"
+publish = false
 
 [dependencies]
 tokio = { version = "1.36", features = ['rt', 'rt-multi-thread', 'macros', 'fs', 'io-util', 'net', 'sync', 'time'] }
