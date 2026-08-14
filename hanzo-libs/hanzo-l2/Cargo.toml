@@ -17,9 +17,6 @@ async-trait = { workspace = true }
 chrono = { workspace = true }
 hex = { workspace = true }
 
-# Consensus
-lux-consensus = { path = "../../../../lux/consensus/pkg/rust" }
-
 # PQC for cross-chain signatures
 hanzo-pqc = { workspace = true }
 
