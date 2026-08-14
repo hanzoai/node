@@ -1,0 +1,28 @@
+# Canonical CI/CD config for hanzoai/node — the one file both the hanzoai/ci
+# reusable (.hanzo/workflows/cicd.yml) and platform.hanzo.ai read.
+#
+# The repo ships one artifact: the hanzo-node binary, wrapped by docker/Dockerfile
+# and pulled as ghcr.io/hanzoai/node. Nothing else builds it, so it is declared
+# here and this is the only lane that publishes it.
+#
+# Crate publication to crates.io is a release action, not a gate, and lives in
+# .hanzo/workflows/crates.yml.
+
+images:
+  - name: node
+    context: .
+    dockerfile: docker/Dockerfile
+    repo: ghcr.io/hanzoai/node
+    # `cargo build --locked --bin hanzo-node` inside the Dockerfile is the
+    # compile proof for the artifact we actually deploy: it resolves the whole
+    # workspace and links the binary the entrypoint runs.
+    args:
+      BUILD_TYPE: release
+
+test:
+  # hanzo-messages is the foundation crate — every other crate in the workspace
+  # depends on its wire types, so a break here breaks everything downstream. It
+  # is also the one suite that needs no cluster, no wallet and no network, which
+  # is why the repo has always run it as the fast signal.
+  - name: cargo test
+    run: cargo test -p hanzo-messages

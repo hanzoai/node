@@ -1,0 +1,47 @@
+# Publish the hanzo-libs crates to crates.io.
+#
+# One lane, driven by scripts/check-and-publish.sh: it reads each crate's local
+# version, asks crates.io what is published, and publishes only what is ahead —
+# walking foundation → core → services → integration so a dependency is indexed
+# before its dependents. Version detection, dependency order and manual bulk
+# publish were three separate workflows that could each publish a different set;
+# the script already does all three, so it is the only caller here.
+#
+# Publishing needs CARGO_REGISTRY_TOKEN in the hanzoai org secrets. Without it
+# the script stops at the first crate that needs publishing rather than
+# reporting a green run that shipped nothing.
+name: Crates
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'Cargo.toml'
+      - 'hanzo-libs/*/Cargo.toml'
+      - 'scripts/check-and-publish.sh'
+  workflow_dispatch:
+
+jobs:
+  publish:
+    runs-on: hanzo-build-linux-amd64
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: dtolnay/rust-toolchain@stable
+
+      - name: Provision jq
+        # The runner image ships no jq, and the script parses the crates.io API
+        # with it. Static binary, no sudo — bare nodes have neither apt network
+        # nor passwordless sudo.
+        run: |
+          set -e
+          command -v jq >/dev/null 2>&1 && exit 0
+          mkdir -p "$HOME/.local/bin"
+          echo "$HOME/.local/bin" >> "$GITHUB_PATH"
+          curl -fsSL https://github.com/jqlang/jq/releases/download/jq-1.7.1/jq-linux-amd64 \
+            -o "$HOME/.local/bin/jq"
+          chmod +x "$HOME/.local/bin/jq"
+
+      - name: Publish
+        env:
+          CARGO_REGISTRY_TOKEN: ${{ secrets.CARGO_REGISTRY_TOKEN }}
+        run: ./scripts/check-and-publish.sh
