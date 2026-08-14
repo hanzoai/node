@@ -57,28 +57,3 @@ async def run(c: CONFIG, p: INPUTS) -> OUTPUT:
         .create_runner(json!({}));
     runner.run::<_, Output>(Input { file_path }, None).await
 }
-
-#[cfg(test)]
-mod tests {
-    use crate::test_utils::testing_create_tempdir_and_set_env_var;
-
-    use super::*;
-    use std::path;
-    use std::path::Path;
-
-    #[tokio::test]
-    async fn test_parse_pdf_file() {
-        let _dir = testing_create_tempdir_and_set_env_var();
-
-        let file_path = path::absolute(Path::new("../../files/Hanzo_Protocol_Whitepaper.pdf"))
-            .unwrap()
-            .to_path_buf();
-        let result = parse_pdf(file_path).await;
-        assert!(result.is_ok());
-        let parsed_pdf = result.unwrap();
-        assert!(parsed_pdf.pages.len() == 14);
-        assert!(parsed_pdf.pages[13]
-            .text
-            .contains("Essential for MAC\ncomputation, defined as"));
-    }
-}

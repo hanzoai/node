@@ -443,7 +443,6 @@ mod tests {
     #[tokio::test]
     async fn test_get_identity_record() {
         use std::env;
-        use std::path::PathBuf;
         use tempfile::tempdir;
 
         // Check if offline mode is enabled
@@ -454,22 +453,6 @@ mod tests {
 
         let dir = tempdir().unwrap();
         env::set_var("NODE_STORAGE_PATH", dir.path().to_string_lossy().to_string());
-
-        env::set_var(
-            "HANZO_TOOLS_RUNNER_DENO_BINARY_PATH",
-            PathBuf::from(env!("CARGO_MANIFEST_DIR"))
-                .join("../../target/debug/hanzo-tools-runner-resources/deno")
-                .to_string_lossy()
-                .to_string(),
-        );
-
-        env::set_var(
-            "HANZO_TOOLS_RUNNER_UV_BINARY_PATH",
-            PathBuf::from(env!("CARGO_MANIFEST_DIR"))
-                .join("../../target/debug/hanzo-tools-runner-resources/uv")
-                .to_string_lossy()
-                .to_string(),
-        );
 
         let registry = HanzoRegistry::new(
             "https://sepolia.base.org",

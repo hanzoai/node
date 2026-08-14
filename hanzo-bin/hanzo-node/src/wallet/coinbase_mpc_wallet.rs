@@ -9,7 +9,6 @@ use hanzo_runtime::functions::x402;
 use hanzo_db_sqlite::SqliteManager;
 use hanzo_tools::tools::hanzo_tool::HanzoTool;
 use hanzo_tools::tools::tool_config::ToolConfig;
-use std::collections::HashMap;
 use std::future::Future;
 use std::pin::Pin;
 use std::str::FromStr;
@@ -17,7 +16,7 @@ use std::sync::{Arc, Weak};
 
 use super::wallet_manager::WalletEnum;
 use super::wallet_traits::{CommonActions, IsWallet, PaymentWallet, ReceivingWallet, SendActions, TransactionHash};
-use crate::utils::environment::fetch_node_environment;
+use crate::tools::tool_execution::no_local_runtime;
 use crate::wallet::wallet_error::WalletError;
 use hanzo_messages::schemas::wallet_mixed::{
     Address, AddressBalanceList, Asset, AssetType, Balance, PublicAddress,
@@ -289,11 +288,11 @@ impl CoinbaseMPCWallet {
     }
 
     pub async fn call_function(
-        config: CoinbaseMPCWalletConfig,
+        _config: CoinbaseMPCWalletConfig,
         sqlite_manager: Weak<SqliteManager>,
         function_name: HanzoToolCoinbase,
-        params: serde_json::Map<String, Value>,
-        node_name: HanzoName,
+        _params: serde_json::Map<String, Value>,
+        _node_name: HanzoName,
     ) -> Result<Value, WalletError> {
         let sqlite_manager_strong = sqlite_manager
             .upgrade()
@@ -303,52 +302,11 @@ impl CoinbaseMPCWallet {
             .get_tool_by_key(tool_id)
             .map_err(|e| WalletError::SqliteManagerError(e.to_string()))?;
 
-        let mut function_config_value = serde_json::json!({});
-
-        // Overwrite function_config_value with values from config
-        function_config_value["name"] = Value::String(config.name);
-        function_config_value["privateKey"] = Value::String(config.private_key);
-        if let Some(use_server_signer) = config.use_server_signer {
-            function_config_value["useServerSigner"] = Value::String(use_server_signer);
-        }
-        if let Some(wallet_id) = config.wallet_id {
-            function_config_value["walletId"] = Value::String(wallet_id);
-        }
-
-        let tool_configs = ToolConfig::basic_config_from_value(&function_config_value);
-
-        if let HanzoTool::Deno(js_tool, _) = hanzo_tool {
-            let node_env = fetch_node_environment();
-            let node_storage_path = node_env
-                .node_storage_path
-                .clone()
-                .ok_or_else(|| WalletError::FunctionExecutionError("Node storage path is not set".to_string()))?;
-            let app_id = format!("coinbase_{}", uuid::Uuid::new_v4());
-            let tool_id = js_tool.name.clone();
-            let support_files = HashMap::new();
-            let result = js_tool
-                .run(
-                    HashMap::new(), // Note: we don't need envs for this function - as it doesn't call other tools
-                    node_env.api_listen_address.ip().to_string(),
-                    node_env.api_listen_address.port(),
-                    support_files,
-                    params,
-                    tool_configs,
-                    node_storage_path,
-                    app_id,
-                    tool_id,
-                    node_name,
-                    false,
-                    None,
-                    None,
-                )
-                .await
-                .map_err(|e| WalletError::FunctionExecutionError(e.to_string()))?;
-            let result_str =
-                serde_json::to_string(&result).map_err(|e| WalletError::FunctionExecutionError(e.to_string()))?;
-            return Ok(
-                serde_json::from_str(&result_str).map_err(|e| WalletError::FunctionExecutionError(e.to_string()))?
-            );
+        // The Coinbase wallet functions are Deno tools.
+        if let HanzoTool::Deno(..) = hanzo_tool {
+            return Err(WalletError::FunctionExecutionError(
+                no_local_runtime("Deno").to_string(),
+            ));
         }
 
         Err(WalletError::FunctionNotFound(tool_id.to_string()))

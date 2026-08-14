@@ -10,6 +10,7 @@ use crate::{
     tools::{
         tool_definitions::definition_generation::{generate_tool_definitions, get_all_tools},
         tool_execution::execution_coordinator::{execute_code, execute_mcp_tool_cmd, execute_tool_cmd},
+        tool_execution::no_local_runtime,
         tool_generation::v2_create_and_send_job_message,
         tool_prompts::{generate_code_prompt, tool_metadata_implementation_prompt},
     },
@@ -4365,129 +4366,28 @@ LANGUAGE={env_language}
     pub async fn check_tool(
         bearer: String,
         db: Arc<SqliteManager>,
-        code: String,
+        _code: String,
         language: CodeLanguage,
-        additional_headers: Option<HashMap<String, String>>,
+        _additional_headers: Option<HashMap<String, String>>,
         res: Sender<Result<Value, APIError>>,
     ) -> Result<(), NodeError> {
         if Self::validate_bearer_token(&bearer, db.clone(), &res).await.is_err() {
             return Ok(());
         }
 
-        let tools: Vec<ToolRouterKey> = db
-            .get_all_tool_headers()
-            .map_err(|_| ToolError::ExecutionError("Failed to get tool headers".to_string()))?
-            .iter()
-            .filter_map(|tool| match ToolRouterKey::from_string(&tool.tool_router_key) {
-                Ok(tool_router_key) => Some(tool_router_key),
-                Err(_) => None,
-            })
-            .collect();
-
-        let warnings = match language {
-            CodeLanguage::Typescript => {
-                let mut support_files = generate_tool_definitions(tools, CodeLanguage::Typescript, db.clone(), false)
-                    .await
-                    .map_err(|_| ToolError::ExecutionError("Failed to generate tool definitions".to_string()))?;
-                // External additional headers can override the default support files
-                match additional_headers {
-                    Some(headers) => {
-                        for (key, value) in headers {
-                            support_files.insert(key, value);
-                        }
-                    }
-                    None => (),
-                }
-                let tool = DenoTool::new(
-                    "".to_string(),
-                    None,
-                    "".to_string(),
-                    "".to_string(),
-                    Some(false),
-                    code.clone(),
-                    vec![],
-                    vec![],
-                    "".to_string(),
-                    vec![],
-                    Parameters::new(),
-                    ToolOutputArg { json: "".to_string() },
-                    true,
-                    None,
-                    ToolResult::new("object".to_string(), serde_json::Value::Null, vec![]),
-                    None,
-                    None,
-                    None,
-                    None,
-                    None,
-                    RunnerType::Any,
-                    vec![],
-                    None,
-                );
-                tool.check_code(code.clone(), support_files).await
-            }
-            CodeLanguage::Python => {
-                let mut support_files = generate_tool_definitions(tools, CodeLanguage::Python, db.clone(), false)
-                    .await
-                    .map_err(|_| ToolError::ExecutionError("Failed to generate tool definitions".to_string()))?;
-                // External additional headers can override the default support files
-                match additional_headers {
-                    Some(headers) => {
-                        for (key, value) in headers {
-                            support_files.insert(key, value);
-                        }
-                    }
-                    None => (),
-                }
-
-                let tool: PythonTool = PythonTool {
-                    version: "".to_string(),
-                    name: "".to_string(),
-                    tool_router_key: None,
-                    homepage: None,
-                    author: "".to_string(),
-                    mcp_enabled: Some(false),
-                    py_code: code.clone(),
-                    tools: vec![],
-                    config: vec![],
-                    description: "".to_string(),
-                    keywords: vec![],
-                    input_args: Parameters::new(),
-                    output_arg: ToolOutputArg { json: "".to_string() },
-                    activated: true,
-                    embedding: None,
-                    result: ToolResult::new("object".to_string(), serde_json::Value::Null, vec![]),
-                    sql_tables: None,
-                    sql_queries: None,
-                    file_inbox: None,
-                    oauth: None,
-                    assets: None,
-                    runner: RunnerType::Any,
-                    operating_system: vec![],
-                    tool_set: None,
-                };
-                tool.check_code(code.clone(), support_files).await
-            }
+        // Checking the code means compiling it, which needs the runtime that runs it.
+        let missing = match language {
+            CodeLanguage::Typescript => no_local_runtime("Deno"),
+            CodeLanguage::Python => no_local_runtime("Python"),
         };
 
-        match warnings {
-            Ok(warnings) => {
-                let _ = res
-                    .send(Ok(json!({
-                        "warnings": warnings,
-                        "success": true
-                    })))
-                    .await;
-            }
-            Err(e) => {
-                let _ = res
-                    .send(Err(APIError {
-                        code: 500,
-                        error: "Check Failed".to_string(),
-                        message: format!("Tool check failed: {}", e),
-                    }))
-                    .await;
-            }
-        }
+        let _ = res
+            .send(Err(APIError {
+                code: 500,
+                error: "Check Failed".to_string(),
+                message: format!("Tool check failed: {}", missing),
+            }))
+            .await;
 
         Ok(())
     }

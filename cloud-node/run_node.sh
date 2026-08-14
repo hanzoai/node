@@ -17,9 +17,6 @@ export NODE_WS_PORT=${NODE_WS_PORT:-$DEFAULT_NODE_WS_PORT}
 export NODE_PORT=${NODE_PORT:-$DEFAULT_NODE_PORT}
 export NODE_HTTPS_PORT=${NODE_HTTPS_PORT:-$DEFAULT_NODE_HTTPS_PORT}
 export INSTALL_FOLDER_PATH=${INSTALL_FOLDER_PATH:-$DEFAULT_INSTALL_FOLDER_PATH}
-export HANZO_TOOLS_RUNNER_DENO_BINARY_PATH="/app/hanzo-tools-runner-resources/deno"
-export HANZO_TOOLS_RUNNER_UV_BINARY_PATH="/app/hanzo-tools-runner-resources/uv"
-export PATH="/app/hanzo-tools-runner-resources:/root/.local/bin:$PATH"
 
 echo "Hanzo node port definitions:"
 echo "NODE_API_IP: $NODE_API_IP"

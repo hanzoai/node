@@ -166,8 +166,6 @@ main() {
     FOUNDATION_CRATES=(
         hanzo-messages
         hanzo-embed
-        hanzo-runner
-        hanzo-tools-runner
         hanzo-models
         hanzo-model-discovery
     )

@@ -1,52 +1,6 @@
-use std::{collections::HashMap, env, path::PathBuf, time::Duration};
+use std::{path::PathBuf, time::Duration};
 
-use serde_json::Value;
-use hanzo_runner::tools::{
-    code_files::CodeFiles, deno_runner::DenoRunner, deno_runner_options::DenoRunnerOptions,
-    execution_context::ExecutionContext, python_runner::PythonRunner, python_runner_options::PythonRunnerOptions,
-    runner_type::RunnerType,
-};
 pub mod functions;
-mod test_utils;
-
-fn get_deno_binary_path() -> PathBuf {
-    PathBuf::from(
-        env::var("HANZO_TOOLS_RUNNER_DENO_BINARY_PATH")
-            .unwrap_or_else(|_| "./hanzo-tools-runner-resources/deno".to_string()),
-    )
-}
-
-fn get_uv_binary_path() -> PathBuf {
-    PathBuf::from(
-        env::var("HANZO_TOOLS_RUNNER_UV_BINARY_PATH")
-            .unwrap_or_else(|_| "./hanzo-tools-runner-resources/uv".to_string()),
-    )
-}
-
-fn get_runner_storage_path() -> PathBuf {
-    PathBuf::from(env::var("NODE_STORAGE_PATH").unwrap_or_else(|_| "./".to_string())).join("internal_tools_storage")
-}
-
-fn get_deno_runner(function_name: &str, code: String, configurations: Value, mount_files: Vec<PathBuf>) -> DenoRunner {
-    DenoRunner::new(
-        CodeFiles {
-            files: HashMap::from([("main.ts".to_string(), code)]),
-            entrypoint: "main.ts".to_string(),
-        },
-        configurations,
-        Some(DenoRunnerOptions {
-            deno_binary_path: get_deno_binary_path(),
-            context: ExecutionContext {
-                storage: get_runner_storage_path(),
-                context_id: function_name.to_string(),
-                mount_files,
-                ..Default::default()
-            },
-            force_runner_type: Some(RunnerType::Host),
-            ..Default::default()
-        }),
-    )
-}
 
 #[derive(Debug, Clone, Copy)]
 pub enum NonRustRuntime {
@@ -54,51 +8,28 @@ pub enum NonRustRuntime {
     Python,
 }
 
-fn _get_python_binary_path() -> PathBuf {
-    PathBuf::from(env::var("HANZO_TOOLS_RUNNER_PYTHON_BINARY_PATH").unwrap_or_else(|_| "python3".to_string()))
-}
-
-fn get_python_runner(
-    function_name: &str,
-    code: String,
-    configurations: Value,
-    mount_files: Vec<PathBuf>,
-) -> PythonRunner {
-    PythonRunner::new(
-        CodeFiles {
-            files: HashMap::from([("main.py".to_string(), code)]),
-            entrypoint: "main.py".to_string(),
-        },
-        configurations,
-        Some(PythonRunnerOptions {
-            uv_binary_path: get_uv_binary_path(),
-            context: ExecutionContext {
-                storage: get_runner_storage_path(),
-                context_id: function_name.to_string(),
-                mount_files,
-                ..Default::default()
-            },
-            force_runner_type: Some(RunnerType::Host),
-            ..Default::default()
-        }),
-    )
+impl std::fmt::Display for NonRustRuntime {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            NonRustRuntime::Deno => write!(f, "deno"),
+            NonRustRuntime::Python => write!(f, "python"),
+        }
+    }
 }
 
 #[derive(Debug)]
 pub enum RunError {
-    CodeExecutionError(String),
-    SerializeConfigurationsError(String),
-    SerializeParamsError(String),
-    ParseOutputError(String),
+    NoRuntime { function: String, runtime: NonRustRuntime },
 }
 
 impl std::fmt::Display for RunError {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
-            RunError::CodeExecutionError(err) => write!(f, "code execution error: {}", err),
-            RunError::SerializeConfigurationsError(err) => write!(f, "failed to serialize configurations: {}", err),
-            RunError::SerializeParamsError(err) => write!(f, "failed to serialize parameters: {}", err),
-            RunError::ParseOutputError(err) => write!(f, "failed to parse output: {}", err),
+            RunError::NoRuntime { function, runtime } => write!(
+                f,
+                "{} needs a {} runtime; this node has none. Non-Rust code runs in the sandbox.",
+                function, runtime
+            ),
         }
     }
 }
@@ -139,6 +70,9 @@ impl NonRustCodeRunnerFactory {
     }
 }
 
+/// One unit of non-Rust work: the source, its configuration, and the files it may read.
+/// The fields describe the job; the sandbox is what executes it.
+#[allow(dead_code)]
 pub struct NonRustCodeRunner<C> {
     function_name: String,
     code: String,
@@ -151,79 +85,14 @@ impl<C> NonRustCodeRunner<C>
 where
     C: serde::Serialize,
 {
-    pub async fn run<P, T>(&self, params: P, timeout: Option<Duration>) -> Result<T, RunError>
+    pub async fn run<P, T>(&self, _params: P, _timeout: Option<Duration>) -> Result<T, RunError>
     where
         P: serde::Serialize,
         T: serde::de::DeserializeOwned,
     {
-        let configurations_value = serde_json::to_value(&self.configurations)
-            .map_err(|e| RunError::SerializeConfigurationsError(e.to_string()))?;
-        let params_value = serde_json::to_value(params).map_err(|e| RunError::SerializeParamsError(e.to_string()))?;
-        let result = match self.runtime {
-            NonRustRuntime::Deno => {
-                let deno_runner = get_deno_runner(
-                    &self.function_name,
-                    self.code.clone(),
-                    configurations_value,
-                    self.mount_files.clone(),
-                );
-                deno_runner
-                    .run(None, params_value, timeout)
-                    .await
-                    .map_err(|e| RunError::CodeExecutionError(e.to_string()))?
-            }
-            NonRustRuntime::Python => {
-                let python_runner = get_python_runner(
-                    &self.function_name,
-                    self.code.clone(),
-                    configurations_value,
-                    self.mount_files.clone(),
-                );
-                python_runner
-                    .run(None, params_value, timeout)
-                    .await
-                    .map_err(|e| RunError::CodeExecutionError(e.to_string()))?
-            }
-        };
-
-        serde_json::from_value(result.data).map_err(|e| RunError::ParseOutputError(e.to_string()))
-    }
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-    use serde::Deserialize;
-    use serde_json::json;
-
-    #[derive(Debug, Deserialize)]
-    struct TestOutput {
-        message: String,
-    }
-
-    #[tokio::test]
-    async fn test_non_rust_code_runner() {
-        let code = r#"
-            async function run(configurations, params) {
-                return {
-                    message: `Hello ${params.name}!`
-                };
-            }
-        "#
-        .to_string();
-
-        let runner = NonRustCodeRunnerFactory::new("test_function", code, vec![]).create_runner(json!({}));
-
-        let result = runner
-            .run::<_, TestOutput>(
-                json!({
-                    "name": "World"
-                }),
-                None,
-            )
-            .await
-            .unwrap();
-
-        assert_eq!(result.message, "Hello World!");
+        Err(RunError::NoRuntime {
+            function: self.function_name.clone(),
+            runtime: self.runtime,
+        })
     }
 }

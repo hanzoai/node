@@ -78,10 +78,7 @@ run_local_ai.sh
 subscriber.key
 hanzo-bin/hanzo-node/lance_db_tests
 storage_debug_serve_mode
-hanzo-tools-runner-resources
-hanzo-tools-runner-execution-storage
 hanzo-bin/hanzo-node/hanzo_db_tests
-hanzo-tools-runner-resources
 storage_debug_agent_provider
 agent_provider
 image_0.txt
@@ -117,7 +114,6 @@ hanzo-libs/hanzo-tcp-relayer/internal_tools_storage
 pre-install/
 hanzo-libs/hanzo-non-rust-code/internal_tools_storage
 hanzo-bin/hanzo-node/storage_test_node
-hanzo-bin/hanzo-node/shinkai-tools-runner-resources/deno
 storage_debug_node2_test
 storage_debug_node1_test
 storage_debug_nico_testnet1

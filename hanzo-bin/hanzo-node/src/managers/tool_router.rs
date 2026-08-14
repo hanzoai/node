@@ -8,12 +8,10 @@ use crate::network::zip_export_import::zip_export_import::{
     get_agent_from_zip, get_tool_from_zip, import_agent, import_tool,
 };
 use crate::network::Node;
-use crate::tools::tool_definitions::definition_generation::{generate_tool_definitions, get_rust_tools};
+use crate::tools::tool_definitions::definition_generation::get_rust_tools;
 use crate::tools::tool_execution::{
-    execute_agent_dynamic::execute_agent_tool,
-    execution_coordinator::override_tool_config,
-    execution_custom::try_to_execute_rust_tool,
-    execution_header_generator::{check_tool, generate_execution_environment},
+    execute_agent_dynamic::execute_agent_tool, execution_coordinator::override_tool_config,
+    execution_custom::try_to_execute_rust_tool, execution_header_generator::check_tool, no_local_runtime,
 };
 use crate::utils::environment::{fetch_node_environment, NodeEnvironment};
 use ed25519_dalek::SigningKey;
@@ -22,7 +20,6 @@ use serde_json::Value;
 use hanzo_embed::embedding_generator::EmbeddingGenerator;
 use hanzo_fs::hanzo_file_manager::HanzoFileManager;
 use hanzo_messages::schemas::llm_providers::agent::Agent;
-use hanzo_messages::schemas::hanzo_tools::CodeLanguage;
 use hanzo_messages::schemas::wallet_mixed::AddressBalanceList;
 use hanzo_messages::schemas::x402_types::Network;
 use hanzo_messages::schemas::{
@@ -909,81 +906,7 @@ impl ToolRouter {
                     ));
                 }
             }
-            HanzoTool::Python(python_tool, _is_enabled) => {
-                let node_env = fetch_node_environment();
-                let node_storage_path = node_env
-                    .node_storage_path
-                    .clone()
-                    .ok_or_else(|| ToolError::ExecutionError("Node storage path is not set".to_string()))?;
-
-                // Get app_id from Cron UI if present, otherwise use job_id
-                let app_id = match context.full_job().associated_ui().as_ref() {
-                    Some(AssociatedUI::Cron(cron_id)) => cron_id.clone(),
-                    _ => context.full_job().job_id().to_string(),
-                };
-
-                let tool_id = hanzo_tool.tool_router_key().to_string_without_version().clone();
-                let tools: Vec<ToolRouterKey> = context
-                    .db()
-                    .clone()
-                    .get_all_tool_headers()?
-                    .into_iter()
-                    .filter_map(|tool| match ToolRouterKey::from_string(&tool.tool_router_key) {
-                        Ok(tool_router_key) => Some(tool_router_key),
-                        Err(_) => None,
-                    })
-                    .collect();
-                let support_files =
-                    generate_tool_definitions(tools, CodeLanguage::Python, self.sqlite_manager.clone(), false)
-                        .await
-                        .map_err(|e| {
-                            ToolError::ExecutionError(format!("Failed to generate tool definitions: {:?}", e))
-                        })?;
-
-                let envs = generate_execution_environment(
-                    context.db(),
-                    context.agent().clone().get_id().to_string(),
-                    tool_id.clone(),
-                    app_id.clone(),
-                    agent_id,
-                    hanzo_tool.tool_router_key().to_string_without_version().clone(),
-                    app_id.clone(),
-                    &python_tool.oauth,
-                )
-                .await?;
-
-                check_tool(
-                    hanzo_tool.tool_router_key().to_string_without_version().clone(),
-                    python_tool.config.clone(),
-                    function_args.clone(),
-                    python_tool.input_args.clone(),
-                    &python_tool.oauth,
-                )?;
-
-                let result = python_tool
-                    .run(
-                        envs,
-                        node_env.api_listen_address.ip().to_string(),
-                        node_env.api_listen_address.port(),
-                        support_files,
-                        function_args,
-                        function_config_vec,
-                        node_storage_path,
-                        app_id.clone(),
-                        tool_id.clone(),
-                        node_name,
-                        false,
-                        Some(tool_id),
-                        Some(all_files),
-                    )
-                    .await?;
-                let result_str = serde_json::to_string(&result)
-                    .map_err(|e| LLMProviderError::FunctionExecutionError(e.to_string()))?;
-                return Ok(ToolCallFunctionResponse {
-                    response: result_str,
-                    function_call,
-                });
-            }
+            HanzoTool::Python(..) => Err(no_local_runtime("Python").into()),
             HanzoTool::Rust(rust_tool, _is_enabled) => {
                 // Get app_id from Cron UI if present, otherwise use job_id
                 let app_id = match context.full_job().associated_ui().as_ref() {
@@ -1089,82 +1012,7 @@ impl ToolRouter {
                     function_call,
                 });
             }
-            HanzoTool::Deno(deno_tool, _is_enabled) => {
-                let node_env = fetch_node_environment();
-                let node_storage_path = node_env
-                    .node_storage_path
-                    .clone()
-                    .ok_or_else(|| ToolError::ExecutionError("Node storage path is not set".to_string()))?;
-
-                // Get app_id from Cron UI if present, otherwise use job_id
-                let app_id = match context.full_job().associated_ui().as_ref() {
-                    Some(AssociatedUI::Cron(cron_id)) => cron_id.clone(),
-                    _ => context.full_job().job_id().to_string(),
-                };
-
-                let tool_id = hanzo_tool.tool_router_key().to_string_without_version().clone();
-                let tools: Vec<ToolRouterKey> = context
-                    .db()
-                    .clone()
-                    .get_all_tool_headers()?
-                    .into_iter()
-                    .filter_map(|tool| match ToolRouterKey::from_string(&tool.tool_router_key) {
-                        Ok(tool_router_key) => Some(tool_router_key),
-                        Err(_) => None,
-                    })
-                    .collect();
-                let support_files =
-                    generate_tool_definitions(tools, CodeLanguage::Typescript, self.sqlite_manager.clone(), false)
-                        .await
-                        .map_err(|e| {
-                            ToolError::ExecutionError(format!("Failed to generate tool definitions: {:?}", e))
-                        })?;
-
-                let envs = generate_execution_environment(
-                    context.db(),
-                    context.agent().clone().get_id().to_string(),
-                    app_id.clone(),
-                    tool_id.clone(),
-                    agent_id,
-                    hanzo_tool.tool_router_key().to_string_without_version().clone(),
-                    app_id.clone(),
-                    &deno_tool.oauth,
-                )
-                .await?;
-
-                check_tool(
-                    hanzo_tool.tool_router_key().to_string_without_version().clone(),
-                    deno_tool.config.clone(),
-                    function_args.clone(),
-                    deno_tool.input_args.clone(),
-                    &deno_tool.oauth,
-                )?;
-
-                let result = deno_tool
-                    .run(
-                        envs,
-                        node_env.api_listen_address.ip().to_string(),
-                        node_env.api_listen_address.port(),
-                        support_files,
-                        function_args,
-                        function_config_vec,
-                        node_storage_path,
-                        app_id,
-                        tool_id.clone(),
-                        node_name,
-                        false,
-                        Some(tool_id),
-                        Some(all_files),
-                    )
-                    .await?;
-
-                let result_str = serde_json::to_string(&result)
-                    .map_err(|e| LLMProviderError::FunctionExecutionError(e.to_string()))?;
-                return Ok(ToolCallFunctionResponse {
-                    response: result_str,
-                    function_call,
-                });
-            }
+            HanzoTool::Deno(..) => Err(no_local_runtime("Deno").into()),
             HanzoTool::Network(network_tool, _is_enabled) => {
                 eprintln!("network tool with name {:?}", network_tool.name);
 
@@ -1451,101 +1299,14 @@ impl ToolRouter {
         }
     }
 
-    /// This function is used to call a JS function directly
-    /// It's very handy for agent-to-agent communication
+    /// Runs a Deno tool by name. Used for agent-to-agent communication.
     pub async fn call_js_function(
         &self,
-        function_args: serde_json::Map<String, Value>,
-        requester_node_name: HanzoName,
-        js_tool_name: &str,
+        _function_args: serde_json::Map<String, Value>,
+        _requester_node_name: HanzoName,
+        _js_tool_name: &str,
     ) -> Result<String, LLMProviderError> {
-        let hanzo_tool = self.get_tool_by_name(js_tool_name).await?;
-
-        if hanzo_tool.is_none() {
-            return Err(LLMProviderError::FunctionNotFound(js_tool_name.to_string()));
-        }
-
-        let hanzo_tool = hanzo_tool.unwrap();
-        let function_config = hanzo_tool.get_config_from_env();
-        let function_config_vec: Vec<ToolConfig> = function_config.into_iter().collect();
-
-        let js_tool = match hanzo_tool.clone() {
-            HanzoTool::Deno(js_tool, _) => js_tool,
-            _ => return Err(LLMProviderError::FunctionNotFound(js_tool_name.to_string())),
-        };
-
-        let node_env = fetch_node_environment();
-        let node_storage_path = node_env
-            .node_storage_path
-            .clone()
-            .ok_or_else(|| ToolError::ExecutionError("Node storage path is not set".to_string()))?;
-        let tools: Vec<ToolRouterKey> = self
-            .sqlite_manager
-            .clone()
-            .get_all_tool_headers()?
-            .into_iter()
-            .filter_map(|tool| match ToolRouterKey::from_string(&tool.tool_router_key) {
-                Ok(tool_router_key) => Some(tool_router_key),
-                Err(_) => None,
-            })
-            .collect();
-        let app_id = format!("external_{}", uuid::Uuid::new_v4());
-        let tool_id = hanzo_tool.tool_router_key().clone().to_string_without_version();
-        let support_files =
-            generate_tool_definitions(tools, CodeLanguage::Typescript, self.sqlite_manager.clone(), false)
-                .await
-                .map_err(|e| ToolError::ExecutionError(format!("Failed to generate tool definitions: {:?}", e)))?;
-
-        let oauth = match hanzo_tool.clone() {
-            HanzoTool::Deno(deno_tool, _) => deno_tool.oauth.clone(),
-            HanzoTool::Python(python_tool, _) => python_tool.oauth.clone(),
-            _ => return Err(LLMProviderError::FunctionNotFound(js_tool_name.to_string())),
-        };
-
-        let env = generate_execution_environment(
-            self.sqlite_manager.clone(),
-            "".to_string(),
-            format!("xid-{}", app_id),
-            format!("xid-{}", tool_id),
-            None,
-            hanzo_tool.tool_router_key().clone().to_string_without_version(),
-            // TODO: Pass data from the API
-            "".to_string(),
-            &oauth,
-        )
-        .await
-        .map_err(|e| ToolError::ExecutionError(e.to_string()))?;
-
-        check_tool(
-            hanzo_tool.tool_router_key().clone().to_string_without_version(),
-            function_config_vec.clone(),
-            function_args.clone(),
-            hanzo_tool.input_args(),
-            &oauth,
-        )?;
-
-        let result = js_tool
-            .run(
-                env,
-                node_env.api_listen_address.ip().to_string(),
-                node_env.api_listen_address.port(),
-                support_files,
-                function_args,
-                function_config_vec,
-                node_storage_path,
-                app_id,
-                tool_id.clone(),
-                // TODO Is this correct?
-                requester_node_name,
-                true,
-                Some(tool_id),
-                None,
-            )
-            .await?;
-        let result_str =
-            serde_json::to_string(&result).map_err(|e| LLMProviderError::FunctionExecutionError(e.to_string()))?;
-
-        return Ok(result_str);
+        Err(no_local_runtime("Deno").into())
     }
 
     pub async fn combined_tool_search(

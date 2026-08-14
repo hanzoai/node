@@ -7,7 +7,6 @@ pub mod network_tool;
 pub mod parameters;
 pub mod python_tools;
 pub mod rust_tools;
-pub mod shared_execution;
 pub mod hanzo_tool;
 pub mod tool_config;
 pub mod tool_output_arg;

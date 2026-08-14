@@ -29,15 +29,9 @@ pub async fn execute_mcp_server_dynamic(
                 .ok_or_else(|| ToolError::ExecutionError("MCP server not found in database".to_string()))?;
 
             // Run the tool using the MCP server
-            let result = tool
-                .run(mcp_server, parameters, extra_config)
+            tool.run(mcp_server, parameters, extra_config)
                 .await
-                .map_err(|e| ToolError::ExecutionError(format!("Failed to run MCP server tool: {}", e)))?;
-
-            // Extract and return the data
-            let data = result.data;
-
-            Ok(data)
+                .map_err(|e| ToolError::ExecutionError(format!("Failed to run MCP server tool: {}", e)))
         }
         _ => return Err(ToolError::ExecutionError("Tool is not an MCP server".to_string())),
     }
