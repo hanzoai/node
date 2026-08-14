@@ -4,6 +4,7 @@ version = "0.1.1"
 description = "WASM runtime for Hanzo AI platform"
 license = "MIT"
 edition = "2021"
+publish = false
 
 [dependencies]
 wasmtime = "23.0"

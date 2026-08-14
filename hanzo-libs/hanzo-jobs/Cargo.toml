@@ -3,10 +3,11 @@ name = "hanzo-jobs"
 version = "1.1.12"
 edition = "2021"
 authors = ["Hanzo AI Inc"]
-license = "MIT"
+license = "Apache-2.0"
 repository = "https://github.com/hanzoai/hanzo-node"
 homepage = "https://hanzo.ai"
 description = "Job Queue Manager for Hanzo AI platform"
+publish = false
 
 [dependencies]
 serde = { version = "1.0", features = ["derive"] }

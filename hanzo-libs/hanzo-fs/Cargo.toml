@@ -1,12 +1,13 @@
 [package]
 name = "hanzo-fs"
 description = "Hanzo AI - Filesystem Library"
-license = "MIT"
+license = "Apache-2.0"
 version = { workspace = true }
 edition = { workspace = true }
 authors = { workspace = true }
 repository = "https://github.com/hanzoai/node"
 homepage = "https://hanzo.ai"
+publish = false
 
 [dependencies]
 hanzo-messages = { version = "1.1.12", path = "../hanzo-messages" }

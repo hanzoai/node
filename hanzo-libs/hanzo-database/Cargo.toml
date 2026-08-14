@@ -9,6 +9,7 @@ repository = "https://github.com/hanzoai/hanzo-node"
 homepage = "https://hanzo.ai"
 keywords = ["database", "vector", "multimodal", "lancedb", "duckdb"]
 categories = ["database", "science"]
+publish = false
 
 [dependencies]
 # Core LanceDB with latest version (currently disabled pending API migration)

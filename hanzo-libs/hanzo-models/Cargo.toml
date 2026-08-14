@@ -7,6 +7,7 @@ license = "MIT"
 repository = "https://github.com/hanzoai/hanzo-node"
 homepage = "https://hanzo.ai"
 description = "Model discovery for Hanzo AI platform"
+publish = false
 
 [dependencies]
 async-trait = "0.1"
