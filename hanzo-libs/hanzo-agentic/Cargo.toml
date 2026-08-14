@@ -3,6 +3,7 @@ name = "hanzo-agentic"
 version = "1.1.19"
 edition = "2021"
 description = "Agentic network integration for hanzo-node with PQ privacy"
+publish = false
 
 [dependencies]
 tokio = { version = "1.0", features = ["full"] }

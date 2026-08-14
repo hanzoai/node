@@ -3,10 +3,11 @@ name = "hanzo-messages"
 version = "1.1.12"
 edition = "2021"
 authors = ["Hanzo AI Inc"]
-license = "MIT"
+license = "Apache-2.0"
 repository = "https://github.com/hanzoai/hanzo-node"
 homepage = "https://hanzo.ai"
 description = "Message primitives for Hanzo AI platform"
+publish = false
 
 [dependencies]
 serde_json = "1.0.117"

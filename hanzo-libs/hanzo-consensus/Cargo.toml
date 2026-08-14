@@ -3,6 +3,7 @@ name = "hanzo-consensus"
 version = "1.1.19"
 edition = "2021"
 description = "Native Quasar consensus engine for Hanzo Network L2"
+publish = false
 
 [dependencies]
 # Lux consensus SDK (Quasar protocol)

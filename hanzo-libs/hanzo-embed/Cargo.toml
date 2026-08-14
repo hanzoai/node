@@ -3,10 +3,11 @@ name = "hanzo-embed"
 version = "1.1.12"
 edition = "2021"
 authors = ["Hanzo AI Inc"]
-license = "MIT"
+license = "Apache-2.0"
 repository = "https://github.com/hanzoai/hanzo-node"
 homepage = "https://hanzo.ai"
 description = "Embedding for Hanzo AI platform"
+publish = false
 
 [dependencies]
 bincode = "1.3.3"

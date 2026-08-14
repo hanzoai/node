@@ -4,6 +4,7 @@ version = "0.1.0"
 edition = "2021"
 description = "ZAP (Zero-copy Agent Protocol) wire protocol for Hanzo products"
 license = "MIT"
+publish = false
 
 [dependencies]
 tokio = { version = "1", features = ["io-util", "net", "rt", "sync", "macros"] }

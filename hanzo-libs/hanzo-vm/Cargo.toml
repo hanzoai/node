@@ -5,6 +5,7 @@ license = "MIT"
 version.workspace = true
 edition.workspace = true
 authors.workspace = true
+publish = false
 
 [features]
 default = []

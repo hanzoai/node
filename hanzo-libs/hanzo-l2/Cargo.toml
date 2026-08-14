@@ -3,6 +3,7 @@ name = "hanzo-l2"
 version = "1.1.19"
 edition = "2021"
 description = "Hanzo L2 bridge and sequencing on Lux Network"
+publish = false
 
 [dependencies]
 tokio = { workspace = true }

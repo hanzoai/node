@@ -7,6 +7,7 @@ edition = { workspace = true }
 authors = { workspace = true }
 repository = "https://github.com/hanzoai/node"
 homepage = "https://hanzo.ai"
+publish = false
 
 [dependencies]
 wasmtime = "23.0"
