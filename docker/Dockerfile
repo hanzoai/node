@@ -53,8 +53,8 @@ ENV CARGO_BUILD_JOBS=4
 # Then extract just the hanzo_node binary we need
 RUN --mount=type=cache,target=/usr/local/cargo/registry \
     --mount=type=cache,target=/build/target \
-    cargo build --locked --bin hanzo-node $([ "$BUILD_TYPE" = "release" ] && echo "--release") && \
-    cp target/${BUILD_TYPE}/hanzo-node /build/hanzo-node
+    cargo build --locked --bin hanzod $([ "$BUILD_TYPE" = "release" ] && echo "--release") && \
+    cp target/${BUILD_TYPE}/hanzod /build/hanzod
 
 # ============================================================================
 # Stage 2: Runtime
@@ -94,10 +94,10 @@ WORKDIR /app
 COPY docker/run_node.sh /app/
 
 # Copy built binaries and resources from builder
-COPY --from=builder /build/hanzo-node /app/
+COPY --from=builder /build/hanzod /app/
 
 # Make script executable
-RUN chmod +x /app/run_node.sh /app/hanzo-node
+RUN chmod +x /app/run_node.sh /app/hanzod
 
 # Set ownership
 RUN chown -R hanzo:hanzo /app
