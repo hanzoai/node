@@ -25,4 +25,13 @@ test:
   # is also the one suite that needs no cluster, no wallet and no network, which
   # is why the repo has always run it as the fast signal.
   - name: cargo test
-    run: cargo test -p hanzo-messages
+    run: |
+      set -e
+      # .cargo/config.toml pins clang + lld on both Linux targets, because the
+      # default linker runs the arm64 builds out of memory. The runner image
+      # carries neither, so cargo dies on the first build script — proc-macro2 —
+      # long before any test runs.
+      command -v clang >/dev/null && command -v ld.lld >/dev/null || {
+        sudo apt-get update && sudo apt-get install -y clang lld
+      }
+      cargo test -p hanzo-messages
