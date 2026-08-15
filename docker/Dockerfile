@@ -54,7 +54,7 @@ ENV CARGO_BUILD_JOBS=4
 RUN --mount=type=cache,target=/usr/local/cargo/registry \
     --mount=type=cache,target=/build/target \
     cargo build --locked --bin hanzo-node $([ "$BUILD_TYPE" = "release" ] && echo "--release") && \
-    cp target/${BUILD_TYPE}/hanzo-node /build/hanzo-node && \
+    cp target/${BUILD_TYPE}/hanzo-node /build/hanzo-node
 
 # ============================================================================
 # Stage 2: Runtime
