@@ -122,7 +122,7 @@ services:
       - OPENAI_API_KEY=${OPENAI_API_KEY}
       - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY}
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:3690/v2/health"]
+      test: ["CMD", "curl", "-f", "http://localhost:3690/v1/node/health"]
       interval: 30s
       timeout: 10s
       retries: 3
@@ -297,13 +297,13 @@ spec:
             cpu: "4"
         livenessProbe:
           httpGet:
-            path: /v2/health
+            path: /v1/node/health
             port: 3690
           initialDelaySeconds: 30
           periodSeconds: 30
         readinessProbe:
           httpGet:
-            path: /v2/health
+            path: /v1/node/health
             port: 3690
           initialDelaySeconds: 10
           periodSeconds: 10
@@ -579,7 +579,7 @@ server {
     ssl_ciphers HIGH:!aNULL:!MD5;
 
     # API endpoints
-    location /v2/ {
+    location /v1/node/ {
         proxy_pass http://hanzo_api;
         proxy_set_header Host $host;
         proxy_set_header X-Real-IP $remote_addr;
@@ -606,7 +606,7 @@ server {
     }
 
     # SSE endpoint
-    location /v2/stream/ {
+    location /v1/node/stream/ {
         proxy_pass http://hanzo_api;
         proxy_set_header Host $host;
         proxy_set_header X-Real-IP $remote_addr;
@@ -686,7 +686,7 @@ sudo systemctl reload nginx
         }
       },
       "healthCheck": {
-        "command": ["CMD-SHELL", "curl -f http://localhost:3690/v2/health || exit 1"],
+        "command": ["CMD-SHELL", "curl -f http://localhost:3690/v1/node/health || exit 1"],
         "interval": 30,
         "timeout": 5,
         "retries": 3,
@@ -737,7 +737,7 @@ spec:
             memory: "16Gi"
         startupProbe:
           httpGet:
-            path: /v2/health
+            path: /v1/node/health
           initialDelaySeconds: 10
           periodSeconds: 10
           failureThreshold: 3
@@ -1200,7 +1200,7 @@ sqlite3 /data/db.sqlite "PRAGMA integrity_check"
 sudo systemctl start hanzo-node
 
 # Verify service health
-curl http://localhost:3690/v2/health
+curl http://localhost:3690/v1/node/health
 ```
 
 ## Scaling Strategies
@@ -1228,7 +1228,7 @@ frontend hanzo_frontend
     
 backend hanzo_backend
     balance leastconn
-    option httpchk GET /v2/health
+    option httpchk GET /v1/node/health
     
     server node1 10.0.1.10:3690 check
     server node2 10.0.1.11:3690 check
@@ -1293,7 +1293,7 @@ sqlite3 /data/db.sqlite "VACUUM;"
 ss -tulpn | grep hanzo
 
 # Test connectivity
-curl -v http://localhost:3690/v2/health
+curl -v http://localhost:3690/v1/node/health
 
 # Check firewall rules
 sudo iptables -L -n -v
@@ -1332,7 +1332,7 @@ echo "/tmp/core-%e-%p-%t" > /proc/sys/kernel/core_pattern
 #!/bin/bash
 # /opt/hanzo/scripts/health_check.sh
 
-API_URL="http://localhost:3690/v2/health"
+API_URL="http://localhost:3690/v1/node/health"
 MAX_RETRIES=3
 RETRY_DELAY=5
 

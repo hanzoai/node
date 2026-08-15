@@ -9,7 +9,7 @@ info:
     name: ''
   version: 0.8.4
 paths:
-  /v2/available_shared_items:
+  /v1/node/available_shared_items:
     post:
       tags:
       - crate
@@ -38,7 +38,7 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/APIError'
-  /v2/available_shared_items_open:
+  /v1/node/available_shared_items_open:
     post:
       tags:
       - crate
@@ -67,7 +67,7 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/APIError'
-  /v2/create_shareable_folder:
+  /v1/node/create_shareable_folder:
     post:
       tags:
       - crate
@@ -97,7 +97,7 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/APIError'
-  /v2/http_free_subscription_links:
+  /v1/node/http_free_subscription_links:
     post:
       tags:
       - crate
@@ -126,7 +126,7 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/APIError'
-  /v2/last_notifications:
+  /v1/node/last_notifications:
     post:
       tags:
       - crate
@@ -155,7 +155,7 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/APIError'
-  /v2/my_subscribers:
+  /v1/node/my_subscribers:
     post:
       tags:
       - crate
@@ -189,7 +189,7 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/APIError'
-  /v2/my_subscriptions:
+  /v1/node/my_subscriptions:
     post:
       tags:
       - crate
@@ -212,7 +212,7 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/APIError'
-  /v2/notifications_before_timestamp:
+  /v1/node/notifications_before_timestamp:
     post:
       tags:
       - crate
@@ -241,7 +241,7 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/APIError'
-  /v2/subscribe_to_shared_folder:
+  /v1/node/subscribe_to_shared_folder:
     post:
       tags:
       - crate
@@ -271,7 +271,7 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/APIError'
-  /v2/unshare_folder:
+  /v1/node/unshare_folder:
     post:
       tags:
       - crate
@@ -301,7 +301,7 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/APIError'
-  /v2/unsubscribe:
+  /v1/node/unsubscribe:
     post:
       tags:
       - crate
@@ -331,7 +331,7 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/APIError'
-  /v2/update_shareable_folder:
+  /v1/node/update_shareable_folder:
     post:
       tags:
       - crate

@@ -44,7 +44,7 @@ Hanzo. If a tool is disabled, it also sets is `mcp_enabled` flag as `false`.
 The `curl` command to enable a tool for MCP is as follows:
 
 ```sh
-curl --location 'http://localhost:9950/v2/set_tool_mcp_enabled' \
+curl --location 'http://localhost:9950/v1/node/set_tool_mcp_enabled' \
 --header 'Authorization: Bearer $TOKEN' \
 --header 'Content-Type: application/json' \
 --data '{

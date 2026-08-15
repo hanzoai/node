@@ -69,7 +69,7 @@ DELAY_MS=${DELAY_MS:-100}  # Default delay of 100ms between requests
 # Function to create a job and add messages
 create_job_and_add_messages() {
     # Create job
-    response=$(curl -s -X "POST" "$API_BASE_URL/v2/create_job" \
+    response=$(curl -s -X "POST" "$API_BASE_URL/v1/node/create_job" \
         -H "Authorization: Bearer $AUTH_TOKEN" \
         -H 'Content-Type: application/json; charset=utf-8' \
         -d '{
@@ -100,7 +100,7 @@ create_job_and_add_messages() {
     sleep $(echo "scale=3; $DELAY_MS/1000" | bc)
 
     # Add messages to the job
-    curl -s -X "POST" "$API_BASE_URL/v2/add_messages_god_mode" \
+    curl -s -X "POST" "$API_BASE_URL/v1/node/add_messages_god_mode" \
         -H "Authorization: Bearer $AUTH_TOKEN" \
         -H 'Content-Type: application/json; charset=utf-8' \
         -d "{

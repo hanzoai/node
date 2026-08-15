@@ -94,7 +94,7 @@ services:
 
     # Health check
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:3690/v2/health_check"]
+      test: ["CMD", "curl", "-f", "http://localhost:3690/v1/node/health_check"]
       interval: 30s
       timeout: 10s
       retries: 3

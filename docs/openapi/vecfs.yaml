@@ -9,7 +9,7 @@ info:
     name: ''
   version: 0.8.4
 paths:
-  /v2/convert_files_and_save:
+  /v1/node/convert_files_and_save:
     post:
       tags:
       - crate
@@ -40,7 +40,7 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/APIError'
-  /v2/copy_folder:
+  /v1/node/copy_folder:
     post:
       tags:
       - crate
@@ -70,7 +70,7 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/APIError'
-  /v2/copy_item:
+  /v1/node/copy_item:
     post:
       tags:
       - crate
@@ -100,7 +100,7 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/APIError'
-  /v2/create_folder:
+  /v1/node/create_folder:
     post:
       tags:
       - crate
@@ -130,7 +130,7 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/APIError'
-  /v2/delete_folder:
+  /v1/node/delete_folder:
     post:
       tags:
       - crate
@@ -160,7 +160,7 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/APIError'
-  /v2/delete_item:
+  /v1/node/delete_item:
     post:
       tags:
       - crate
@@ -190,7 +190,7 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/APIError'
-  /v2/move_folder:
+  /v1/node/move_folder:
     post:
       tags:
       - crate
@@ -220,7 +220,7 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/APIError'
-  /v2/move_item:
+  /v1/node/move_item:
     post:
       tags:
       - crate
@@ -250,7 +250,7 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/APIError'
-  /v2/retrieve_path_simplified:
+  /v1/node/retrieve_path_simplified:
     post:
       tags:
       - crate
@@ -279,7 +279,7 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/APIError'
-  /v2/retrieve_vector_resource:
+  /v1/node/retrieve_vector_resource:
     get:
       tags:
       - crate
@@ -302,7 +302,7 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/APIError'
-  /v2/search_items:
+  /v1/node/search_items:
     post:
       tags:
       - crate
@@ -334,7 +334,7 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/APIError'
-  /v2/upload_file_to_folder:
+  /v1/node/upload_file_to_folder:
     post:
       tags:
       - crate

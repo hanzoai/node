@@ -52,7 +52,7 @@ The result will be placed in the folder `docs/openapi`.
 ### Swagger UI
 
 ```
-http://{NODE_IP}:{NODE_API_PORT}/v2/swagger-ui/
+http://{NODE_IP}:{NODE_API_PORT}/v1/node/swagger-ui/
 ```
 
 The Swagger UI assets are not built by default to avoid network downloads during

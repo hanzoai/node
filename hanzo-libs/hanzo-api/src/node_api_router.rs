@@ -144,7 +144,7 @@ pub async fn run_api(
             "ngrok-skip-browser-warning",
         ]);
 
-    let v2_routes = warp::path("v2").and(
+    let v2_routes = warp::path("v1").and(warp::path("node")).and(
         api_v2::api_v2_router::v2_routes(node_commands_sender.clone(), node_name.clone())
             .recover(handle_rejection)
             .with(log)

@@ -9,7 +9,7 @@ info:
     name: ''
   version: 0.8.4
 paths:
-  /v2/get_all_tool_offerings:
+  /v1/node/get_all_tool_offerings:
     get:
       tags:
       - crate
@@ -29,7 +29,7 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/APIError'
-  /v2/get_tools_with_offerings:
+  /v1/node/get_tools_with_offerings:
     get:
       tags:
       - crate
@@ -48,7 +48,7 @@ paths:
           content:
             application/json:
               schema:
-  /v2/get_agent_network_offering:
+  /v1/node/get_agent_network_offering:
     post:
       tags:
       - crate
@@ -80,7 +80,7 @@ paths:
                 $ref: #/components/schemas/APIError
 
                 $ref: '#/components/schemas/APIError'
-  /v2/get_tool_offering:
+  /v1/node/get_tool_offering:
     post:
       tags:
       - crate
@@ -116,7 +116,7 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/APIError'
-  /v2/remove_tool_offering:
+  /v1/node/remove_tool_offering:
     post:
       tags:
       - crate
@@ -151,7 +151,7 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/APIError'
-  /v2/set_tool_offering:
+  /v1/node/set_tool_offering:
     post:
       tags:
       - crate

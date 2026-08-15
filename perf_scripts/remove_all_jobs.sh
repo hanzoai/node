@@ -10,7 +10,7 @@ fi
 BASE_PATH=${BASE_PATH:-"http://127.0.0.1:9950"}
 
 echo "Fetching all inboxes..."
-inboxes_response=$(curl "$BASE_PATH/v2/all_inboxes" \
+inboxes_response=$(curl "$BASE_PATH/v1/node/all_inboxes" \
      -H "Authorization: Bearer $BEARER" \
      -H 'Content-Type: application/json; charset=utf-8')
 
@@ -23,7 +23,7 @@ removed_count=0
 # Remove each job
 for job_id in $job_ids; do
     echo "Removing job: $job_id"
-    remove_response=$(curl "$BASE_PATH/v2/remove_job" \
+    remove_response=$(curl "$BASE_PATH/v1/node/remove_job" \
          -X POST \
          -H "Authorization: Bearer $BEARER" \
          -H 'Content-Type: application/json' \

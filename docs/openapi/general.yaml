@@ -9,7 +9,7 @@ info:
     name: ''
   version: 0.8.4
 paths:
-  /v2/add_llm_provider:
+  /v1/node/add_llm_provider:
     post:
       tags:
       - crate
@@ -33,7 +33,7 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/APIError'
-  /v2/add_ollama_models:
+  /v1/node/add_ollama_models:
     post:
       tags:
       - crate
@@ -57,7 +57,7 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/APIError'
-  /v2/change_node_name:
+  /v1/node/change_node_name:
     post:
       tags:
       - crate
@@ -81,7 +81,7 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/APIError'
-  /v2/default_embedding_model:
+  /v1/node/default_embedding_model:
     get:
       tags:
       - crate
@@ -122,7 +122,7 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/APIError'
-  /v2/download_file_from_inbox/{inbox_name}/{filename}:
+  /v1/node/download_file_from_inbox/{inbox_name}/{filename}:
     get:
       tags:
       - crate
@@ -141,7 +141,7 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/APIError'
-  /v2/health_check:
+  /v1/node/health_check:
     get:
       tags:
       - crate
@@ -158,7 +158,7 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/APIError'
-  /v2/initial_registration:
+  /v1/node/initial_registration:
     post:
       tags:
       - crate
@@ -188,7 +188,7 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/APIError'
-  /v2/is_pristine:
+  /v1/node/is_pristine:
     get:
       tags:
       - crate
@@ -206,7 +206,7 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/APIError'
-  /v2/list_files_in_inbox/{inbox_name}:
+  /v1/node/list_files_in_inbox/{inbox_name}:
     get:
       tags:
       - crate
@@ -226,7 +226,7 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/APIError'
-  /v2/local_processing_preference:
+  /v1/node/local_processing_preference:
     get:
       tags:
       - crate
@@ -267,7 +267,7 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/APIError'
-  /v2/modify_llm_provider:
+  /v1/node/modify_llm_provider:
     post:
       tags:
       - crate
@@ -291,7 +291,7 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/APIError'
-  /v2/public_keys:
+  /v1/node/public_keys:
     get:
       tags:
       - crate
@@ -309,7 +309,7 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/APIError'
-  /v2/remove_llm_provider:
+  /v1/node/remove_llm_provider:
     post:
       tags:
       - crate
@@ -333,7 +333,7 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/APIError'
-  /v2/scan_ollama_models:
+  /v1/node/scan_ollama_models:
     get:
       tags:
       - crate
@@ -352,7 +352,7 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/APIError'
-  /v2/stop_llm:
+  /v1/node/stop_llm:
     post:
       tags:
       - crate
@@ -376,7 +376,7 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/APIError'
-  /v2/supported_embedding_models:
+  /v1/node/supported_embedding_models:
     get:
       tags:
       - crate

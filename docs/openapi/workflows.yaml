@@ -9,7 +9,7 @@ info:
     name: ''
   version: 0.8.4
 paths:
-  /v2/add_hanzo_tool:
+  /v1/node/add_hanzo_tool:
     post:
       tags:
       - crate
@@ -38,7 +38,7 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/APIError'
-  /v2/get_hanzo_tool:
+  /v1/node/get_hanzo_tool:
     get:
       tags:
       - crate
@@ -68,7 +68,7 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/APIError'
-  /v2/list_all_hanzo_tools:
+  /v1/node/list_all_hanzo_tools:
     get:
       tags:
       - crate
@@ -91,7 +91,7 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/APIError'
-  /v2/search_hanzo_tool:
+  /v1/node/search_hanzo_tool:
     get:
       tags:
       - crate
@@ -122,7 +122,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/APIError'
 
-  /v2/set_hanzo_tool:
+  /v1/node/set_hanzo_tool:
     post:
       tags:
       - crate

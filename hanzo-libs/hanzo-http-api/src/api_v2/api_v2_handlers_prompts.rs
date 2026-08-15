@@ -71,7 +71,7 @@ pub struct SearchCustomPromptsRequest {
 
 #[utoipa::path(
     post,
-    path = "/v2/add_custom_prompt",
+    path = "/v1/node/add_custom_prompt",
     request_body = CustomPrompt,
     responses(
         (status = 200, description = "Successfully added custom prompt", body = CustomPrompt),
@@ -104,7 +104,7 @@ pub async fn add_custom_prompt_handler(
 
 #[utoipa::path(
     post,
-    path = "/v2/delete_custom_prompt",
+    path = "/v1/node/delete_custom_prompt",
     request_body = GetCustomPromptRequest,
     responses(
         (status = 200, description = "Successfully deleted custom prompt", body = CustomPrompt),
@@ -137,7 +137,7 @@ pub async fn delete_custom_prompt_handler(
 
 #[utoipa::path(
     get,
-    path = "/v2/get_all_custom_prompts",
+    path = "/v1/node/get_all_custom_prompts",
     responses(
         (status = 200, description = "Successfully retrieved all custom prompts", body = Vec<CustomPrompt>),
         (status = 500, description = "Internal server error", body = APIError)
@@ -167,7 +167,7 @@ pub async fn get_all_custom_prompts_handler(
 
 #[utoipa::path(
     get,
-    path = "/v2/get_custom_prompt",
+    path = "/v1/node/get_custom_prompt",
     params(
         ("prompt_name" = String, Query, description = "Name of the custom prompt to retrieve")
     ),
@@ -202,7 +202,7 @@ pub async fn get_custom_prompt_handler(
 
 #[utoipa::path(
     get,
-    path = "/v2/search_custom_prompts",
+    path = "/v1/node/search_custom_prompts",
     params(
         ("query" = String, Query, description = "Search query for custom prompts")
     ),
@@ -237,7 +237,7 @@ pub async fn search_custom_prompts_handler(
 
 #[utoipa::path(
     post,
-    path = "/v2/update_custom_prompt",
+    path = "/v1/node/update_custom_prompt",
     request_body = CustomPrompt,
     responses(
         (status = 200, description = "Successfully updated custom prompt", body = CustomPrompt),
