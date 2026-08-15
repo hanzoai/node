@@ -356,7 +356,7 @@ pub struct ChangeNodeNameRequest {
 
 #[utoipa::path(
     get,
-    path = "/v2/public_keys",
+    path = "/v1/node/public_keys",
     responses(
         (status = 200, description = "Successfully retrieved public keys", body = GetPublicKeysResponse),
         (status = 500, description = "Internal server error", body = APIError)
@@ -379,7 +379,7 @@ pub async fn get_public_keys(sender: Sender<NodeCommand>) -> Result<impl warp::R
 
 #[utoipa::path(
     get,
-    path = "/v2/health_check",
+    path = "/v1/node/health_check",
     responses(
         (status = 200, description = "Health check successful", body = Value),
         (status = 500, description = "Internal server error", body = APIError)
@@ -415,7 +415,7 @@ pub async fn health_check(sender: Sender<NodeCommand>, node_name: String) -> Res
 
 #[utoipa::path(
     post,
-    path = "/v2/initial_registration",
+    path = "/v1/node/initial_registration",
     request_body = HanzoMessage,
     responses(
         (status = 200, description = "Successfully used registration code", body = APIUseRegistrationCodeSuccessResponse),
@@ -452,7 +452,7 @@ pub async fn initial_registration_handler(
 
 #[utoipa::path(
     get,
-    path = "/v2/storage_location",
+    path = "/v1/node/storage_location",
     responses(
         (status = 200, description = "Successfully retrieved storage location", body = String),
         (status = 500, description = "Internal server error", body = APIError),
@@ -482,7 +482,7 @@ pub async fn get_storage_location_handler(
 
 #[utoipa::path(
     get,
-    path = "/v2/default_embedding_model",
+    path = "/v1/node/default_embedding_model",
     responses(
         (status = 200, description = "Successfully retrieved default embedding model", body = String),
         (status = 500, description = "Internal server error", body = APIError)
@@ -512,7 +512,7 @@ pub async fn get_default_embedding_model_handler(
 
 #[utoipa::path(
     get,
-    path = "/v2/supported_embedding_models",
+    path = "/v1/node/supported_embedding_models",
     responses(
         (status = 200, description = "Successfully retrieved supported embedding models", body = Vec<String>),
         (status = 500, description = "Internal server error", body = APIError)
@@ -542,7 +542,7 @@ pub async fn get_supported_embedding_models_handler(
 
 #[utoipa::path(
     post,
-    path = "/v2/default_embedding_model",
+    path = "/v1/node/default_embedding_model",
     request_body = String,
     responses(
         (status = 200, description = "Successfully updated default embedding model", body = String),
@@ -575,7 +575,7 @@ pub async fn update_default_embedding_model_handler(
 
 #[utoipa::path(
     post,
-    path = "/v2/supported_embedding_models",
+    path = "/v1/node/supported_embedding_models",
     request_body = Vec<String>,
     responses(
         (status = 200, description = "Successfully updated supported embedding models", body = String),
@@ -608,7 +608,7 @@ pub async fn update_supported_embedding_models_handler(
 
 #[utoipa::path(
     post,
-    path = "/v2/add_llm_provider",
+    path = "/v1/node/add_llm_provider",
     request_body = SerializedLLMProvider,
     responses(
         (status = 200, description = "Successfully added LLM provider", body = String),
@@ -641,7 +641,7 @@ pub async fn add_llm_provider_handler(
 
 #[utoipa::path(
     post,
-    path = "/v2/remove_llm_provider",
+    path = "/v1/node/remove_llm_provider",
     request_body = HashMap<String, String>,
     responses(
         (status = 200, description = "Successfully removed LLM provider", body = String),
@@ -675,7 +675,7 @@ pub async fn remove_llm_provider_handler(
 
 #[utoipa::path(
     post,
-    path = "/v2/modify_llm_provider",
+    path = "/v1/node/modify_llm_provider",
     request_body = SerializedLLMProvider,
     responses(
         (status = 200, description = "Successfully modified LLM provider", body = String),
@@ -708,7 +708,7 @@ pub async fn modify_llm_provider_handler(
 
 #[utoipa::path(
     post,
-    path = "/v2/change_node_name",
+    path = "/v1/node/change_node_name",
     request_body = ChangeNodeNameRequest,
     responses(
         (status = 200, description = "Successfully changed node name", body = String),
@@ -741,7 +741,7 @@ pub async fn change_node_name_handler(
 
 #[utoipa::path(
     get,
-    path = "/v2/hanzo_backend_quota",
+    path = "/v1/node/hanzo_backend_quota",
     responses(
         (status = 200, description = "Successfully checked Hanzo backend quota", body = QuotaResponse),
         (status = 500, description = "Internal server error", body = APIError)
@@ -773,7 +773,7 @@ pub async fn hanzo_backend_quota_handler(
 
 #[utoipa::path(
     get,
-    path = "/v2/is_pristine",
+    path = "/v1/node/is_pristine",
     responses(
         (status = 200, description = "Successfully checked pristine state", body = bool),
         (status = 500, description = "Internal server error", body = APIError)
@@ -803,7 +803,7 @@ pub async fn is_pristine_handler(
 
 #[utoipa::path(
     get,
-    path = "/v2/scan_ollama_models",
+    path = "/v1/node/scan_ollama_models",
     responses(
         (status = 200, description = "Successfully scanned Ollama models", body = Vec<serde_json::Value>),
         (status = 500, description = "Internal server error", body = APIError)
@@ -833,7 +833,7 @@ pub async fn scan_ollama_models_handler(
 
 #[utoipa::path(
     post,
-    path = "/v2/embedding_migration",
+    path = "/v1/node/embedding_migration",
     request_body = EmbeddingMigrationRequest,
     responses(
         (status = 200, description = "Successfully triggered embedding migration", body = serde_json::Value),
@@ -869,7 +869,7 @@ pub async fn trigger_embedding_migration_handler(
 
 #[utoipa::path(
     get,
-    path = "/v2/embedding_migration",
+    path = "/v1/node/embedding_migration",
     responses(
         (status = 200, description = "Successfully retrieved migration status", body = serde_json::Value),
         (status = 401, description = "Unauthorized", body = APIError),
@@ -900,7 +900,7 @@ pub async fn get_migration_status_handler(
 
 #[utoipa::path(
     post,
-    path = "/v2/add_ollama_models",
+    path = "/v1/node/add_ollama_models",
     request_body = APIAddOllamaModels,
     responses(
         (status = 200, description = "Successfully added Ollama models", body = String),
@@ -938,7 +938,7 @@ pub struct StopLLMRequest {
 
 #[utoipa::path(
     post,
-    path = "/v2/stop_llm",
+    path = "/v1/node/stop_llm",
     request_body = StopLLMRequest,
     responses(
         (status = 200, description = "Successfully stopped LLM", body = String),
@@ -971,7 +971,7 @@ pub async fn stop_llm_handler(
 
 #[utoipa::path(
     post,
-    path = "/v2/add_agent",
+    path = "/v1/node/add_agent",
     request_body = Agent,
     responses(
         (status = 200, description = "Successfully added agent", body = String),
@@ -1004,7 +1004,7 @@ pub async fn add_agent_handler(
 
 #[utoipa::path(
     post,
-    path = "/v2/remove_agent",
+    path = "/v1/node/remove_agent",
     request_body = HashMap<String, String>,
     responses(
         (status = 200, description = "Successfully removed agent", body = String),
@@ -1038,7 +1038,7 @@ pub async fn remove_agent_handler(
 
 #[utoipa::path(
     post,
-    path = "/v2/update_agent",
+    path = "/v1/node/update_agent",
     request_body = serde_json::Value,
     responses(
         (status = 200, description = "Successfully updated agent", body = Agent),
@@ -1071,7 +1071,7 @@ pub async fn update_agent_handler(
 
 #[utoipa::path(
     get,
-    path = "/v2/get_agent/{agent_id}",
+    path = "/v1/node/get_agent/{agent_id}",
     responses(
         (status = 200, description = "Successfully retrieved agent", body = Agent),
         (status = 404, description = "Agent not found", body = APIError),
@@ -1104,7 +1104,7 @@ pub async fn get_agent_handler(
 
 #[utoipa::path(
     get,
-    path = "/v2/get_all_agents",
+    path = "/v1/node/get_all_agents",
     params(
         ("filter" = Option<String>, Query, description = "Optional filter for agents, e.g., 'recently_used' to only return recently used agents.")
     ),
@@ -1140,7 +1140,7 @@ pub async fn get_all_agents_handler(
 
 #[utoipa::path(
     get,
-    path = "/v2/export_agent",
+    path = "/v1/node/export_agent",
     params(
         ("agent_id" = String, Query, description = "Agent identifier")
     ),
@@ -1202,7 +1202,7 @@ pub async fn export_agent_handler(
 
 #[utoipa::path(
     get,
-    path = "/v2/publish_agent",
+    path = "/v1/node/publish_agent",
     params(
         ("agent_id" = String, Query, description = "Agent identifier"),
     ),
@@ -1256,7 +1256,7 @@ pub async fn publish_agent_handler(
 
 #[utoipa::path(
     post,
-    path = "/v2/import_agent",
+    path = "/v1/node/import_agent",
     request_body = HashMap<String, String>,
     responses(
         (status = 200, description = "Successfully imported agent", body = Value),
@@ -1292,7 +1292,7 @@ pub async fn import_agent_handler(
 
 #[utoipa::path(
     post,
-    path = "/v2/import_agent_zip",
+    path = "/v1/node/import_agent_zip",
     responses(
         (status = 200, description = "Successfully imported agent from zip", body = Value),
         (status = 400, description = "Bad request", body = APIError),
@@ -1410,7 +1410,7 @@ pub async fn import_agent_zip_handler(
 
 #[utoipa::path(
     post,
-    path = "/v2/test_llm_provider",
+    path = "/v1/node/test_llm_provider",
     request_body = SerializedLLMProvider,
     responses(
         (status = 200, description = "Successfully tested LLM provider", body = String),
@@ -1452,7 +1452,7 @@ pub struct AddRegexPatternRequest {
 
 #[utoipa::path(
     post,
-    path = "/v2/add_regex_pattern",
+    path = "/v1/node/add_regex_pattern",
     request_body = AddRegexPatternRequest,
     responses(
         (status = 200, description = "Successfully added regex pattern", body = i64),
@@ -1489,7 +1489,7 @@ pub async fn add_regex_pattern_handler(
 
 #[utoipa::path(
     post,
-    path = "/v2/compute_quests_status",
+    path = "/v1/node/compute_quests_status",
     responses(
         (status = 200, description = "Successfully computed quests status", body = HashMap<QuestType, QuestProgress>),
         (status = 500, description = "Internal server error", body = APIError)
@@ -1519,7 +1519,7 @@ pub async fn compute_quests_status_handler(
 
 #[utoipa::path(
     post,
-    path = "/v2/compute_and_send_quests_status",
+    path = "/v1/node/compute_and_send_quests_status",
     responses(
         (status = 200, description = "Successfully computed and sent quests status", body = HashMap<QuestType, QuestProgress>),
         (status = 500, description = "Internal server error", body = APIError)
@@ -1549,7 +1549,7 @@ pub async fn compute_and_send_quests_status_handler(
 
 #[utoipa::path(
     post,
-    path = "/v2/set_preferences",
+    path = "/v1/node/set_preferences",
     request_body = inline(HashMap<String, serde_json::Value>),
     responses(
         (status = 200, description = "Preferences set successfully", body = String),
@@ -1584,7 +1584,7 @@ pub async fn set_preferences_handler(
 
 #[utoipa::path(
     get,
-    path = "/v2/get_preferences",
+    path = "/v1/node/get_preferences",
     responses(
         (status = 200, description = "Preferences retrieved successfully", body = HashMap<String, Value>),
         (status = 401, description = "Unauthorized", body = APIError),
@@ -1619,7 +1619,7 @@ pub async fn get_preferences_handler(
 
 #[utoipa::path(
     get,
-    path = "/v2/check_default_tools_sync",
+    path = "/v1/node/check_default_tools_sync",
     responses(
         (status = 200, description = "Default tools sync status retrieved successfully", body = HashMap<String, Value>),
         (status = 401, description = "Unauthorized", body = APIError),
@@ -1661,7 +1661,7 @@ pub async fn check_default_tools_sync_handler(
 
 #[utoipa::path(
     get,
-    path = "/v2/docker_status",
+    path = "/v1/node/docker_status",
     responses(
         (status = 200, description = "Docker status retrieved successfully", body = HashMap<String, Value>),
         (status = 401, description = "Unauthorized", body = APIError),

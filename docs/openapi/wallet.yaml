@@ -9,7 +9,7 @@ info:
     name: ''
   version: 0.8.4
 paths:
-  /v2/create_local_wallet:
+  /v1/node/create_local_wallet:
     post:
       tags:
       - crate
@@ -33,7 +33,7 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/APIError'
-  /v2/pay_invoice:
+  /v1/node/pay_invoice:
     post:
       tags:
       - crate
@@ -56,7 +56,7 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/APIError'
-  /v2/reject_invoice:
+  /v1/node/reject_invoice:
     post:
       tags:
       - crate
@@ -79,7 +79,7 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/APIError'
-  /v2/restore_coinbase_mpc_wallet:
+  /v1/node/restore_coinbase_mpc_wallet:
     post:
       tags:
       - crate
@@ -102,7 +102,7 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/APIError'
-  /v2/restore_local_wallet:
+  /v1/node/restore_local_wallet:
     post:
       tags:
       - crate

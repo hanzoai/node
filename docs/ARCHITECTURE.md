@@ -224,7 +224,7 @@ impl VectorStore {
 
 **Route Organization:**
 ```
-/v2/
+/v1/node/
 ├── health/
 ├── autonomous_node/
 ├── jobs/

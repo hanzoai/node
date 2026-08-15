@@ -520,7 +520,7 @@ let metrics = NetworkMetrics {
 curl http://localhost:3690/health
 
 # Detailed status
-curl http://localhost:3690/v2/status
+curl http://localhost:3690/v1/node/status
 ```
 
 ### Development and Testing

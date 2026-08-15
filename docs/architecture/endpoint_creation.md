@@ -35,7 +35,7 @@ public_keys_route
 // 3. Define the handler function
 #[utoipa::path(
     post,
-    path = "/v2/my_new_endpoint",
+    path = "/v1/node/my_new_endpoint",
     request_body = MyNewEndpointRequest,  // Your request type
     responses(
         (status = 200, description = "Success response", body = MyNewEndpointResponse),
@@ -181,7 +181,7 @@ Here's a real example from the codebase showing how the get agent endpoint is im
 // 1. Handler (api_v2_handlers_general.rs)
 #[utoipa::path(
     get,
-    path = "/v2/get_agent/{agent_id}",
+    path = "/v1/node/get_agent/{agent_id}",
     responses(
         (status = 200, description = "Successfully retrieved agent", body = Agent),
         (status = 404, description = "Agent not found", body = APIError),

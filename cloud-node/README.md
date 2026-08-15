@@ -268,7 +268,7 @@ docker ps | grep hanzo-node
 
 4. Test API endpoint:
 ```bash
-curl -k https://your-domain.com/v2/health_check
+curl -k https://your-domain.com/v1/node/health_check
 ```
 
 5. Check Nginx configuration:

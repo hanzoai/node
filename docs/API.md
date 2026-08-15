@@ -11,9 +11,9 @@ Hanzo Node provides multiple API interfaces for interaction:
 
 ## Base URLs
 
-- **REST API**: `http://localhost:3690/v2`
+- **REST API**: `http://localhost:3690/v1/node`
 - **WebSocket**: `ws://localhost:3692`
-- **Swagger UI**: `http://localhost:3690/v2/swagger-ui/`
+- **Swagger UI**: `http://localhost:3690/v1/node/swagger-ui/`
 
 ## Authentication
 
@@ -41,7 +41,7 @@ let signature = keypair.sign(message.as_bytes());
 
 ### Health & Status
 
-#### GET /v2/health
+#### GET /v1/node/health
 Health check endpoint.
 
 **Response:**
@@ -53,7 +53,7 @@ Health check endpoint.
 }
 ```
 
-#### GET /v2/health/detailed
+#### GET /v1/node/health/detailed
 Detailed health status of all components.
 
 **Response:**
@@ -80,7 +80,7 @@ Detailed health status of all components.
 
 ### Job Management
 
-#### POST /v2/autonomous_node
+#### POST /v1/node/autonomous_node
 Create an autonomous job that executes with specified tools.
 
 **Request Body:**
@@ -105,7 +105,7 @@ Create an autonomous job that executes with specified tools.
 }
 ```
 
-#### GET /v2/job/{job_id}
+#### GET /v1/node/job/{job_id}
 Get job status and results.
 
 **Response:**
@@ -133,7 +133,7 @@ Get job status and results.
 }
 ```
 
-#### GET /v2/jobs
+#### GET /v1/node/jobs
 List all jobs with filtering options.
 
 **Query Parameters:**
@@ -159,7 +159,7 @@ List all jobs with filtering options.
 }
 ```
 
-#### DELETE /v2/job/{job_id}
+#### DELETE /v1/node/job/{job_id}
 Cancel a pending or running job.
 
 **Response:**
@@ -173,7 +173,7 @@ Cancel a pending or running job.
 
 ### Tool Management
 
-#### GET /v2/tools
+#### GET /v1/node/tools
 List all available tools.
 
 **Response:**
@@ -201,7 +201,7 @@ List all available tools.
 }
 ```
 
-#### POST /v2/tools/execute
+#### POST /v1/node/tools/execute
 Execute a tool directly.
 
 **Request Body:**
@@ -231,7 +231,7 @@ Execute a tool directly.
 }
 ```
 
-#### GET /v2/tools/{tool_name}
+#### GET /v1/node/tools/{tool_name}
 Get detailed information about a specific tool.
 
 **Response:**
@@ -275,7 +275,7 @@ Get detailed information about a specific tool.
 
 ### LLM Provider Management
 
-#### GET /v2/providers
+#### GET /v1/node/providers
 List available LLM providers and their status.
 
 **Response:**
@@ -307,7 +307,7 @@ List available LLM providers and their status.
 }
 ```
 
-#### POST /v2/inference
+#### POST /v1/node/inference
 Direct LLM inference request.
 
 **Request Body:**
@@ -352,7 +352,7 @@ Direct LLM inference request.
 
 ### Agent Management
 
-#### GET /v2/agents
+#### GET /v1/node/agents
 List configured agents.
 
 **Response:**
@@ -372,7 +372,7 @@ List configured agents.
 }
 ```
 
-#### POST /v2/agents
+#### POST /v1/node/agents
 Create a new agent configuration.
 
 **Request Body:**
@@ -402,7 +402,7 @@ Create a new agent configuration.
 
 ### Vector Operations
 
-#### POST /v2/embeddings/generate
+#### POST /v1/node/embeddings/generate
 Generate embeddings for text.
 
 **Request Body:**
@@ -423,7 +423,7 @@ Generate embeddings for text.
 }
 ```
 
-#### POST /v2/embeddings/search
+#### POST /v1/node/embeddings/search
 Search for similar vectors.
 
 **Request Body:**
@@ -612,11 +612,11 @@ ws.onerror = (error) => {
 
 ### Streaming Inference
 
-**Endpoint:** `GET /v2/stream/inference`
+**Endpoint:** `GET /v1/node/stream/inference`
 
 **Request:**
 ```http
-GET /v2/stream/inference?provider=openai&model=gpt-4
+GET /v1/node/stream/inference?provider=openai&model=gpt-4
 Accept: text/event-stream
 ```
 
@@ -637,7 +637,7 @@ data: {"finish_reason": "stop", "total_tokens": 150}
 
 ### Job Progress Stream
 
-**Endpoint:** `GET /v2/stream/job/{job_id}`
+**Endpoint:** `GET /v1/node/stream/job/{job_id}`
 
 **Response Stream:**
 ```
@@ -658,7 +658,7 @@ data: {"status": "completed", "results": {...}}
 
 ### Vector Search
 
-#### POST /v2/lancedb/search
+#### POST /v1/node/lancedb/search
 Execute vector similarity search.
 
 **Request Body:**
@@ -694,7 +694,7 @@ Execute vector similarity search.
 
 ### Hybrid Search
 
-#### POST /v2/lancedb/hybrid_search
+#### POST /v1/node/lancedb/hybrid_search
 Combine vector and keyword search.
 
 **Request Body:**
@@ -776,7 +776,7 @@ Response includes:
 ## API Versioning
 
 The API uses URL versioning:
-- Current: `/v2/`
+- Current: `/v1/node/`
 - Legacy: `/v1/` (deprecated)
 - Beta: `/v3-beta/` (experimental)
 
@@ -832,4 +832,4 @@ for await (const chunk of stream) {
 
 ---
 
-*For interactive API exploration, visit the Swagger UI at `http://localhost:3690/v2/swagger-ui/`*
+*For interactive API exploration, visit the Swagger UI at `http://localhost:3690/v1/node/swagger-ui/`*

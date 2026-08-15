@@ -131,7 +131,7 @@ EXPOSE 3690 3691 3692 3693
 
 # Health check
 HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
-    CMD curl -f http://localhost:${NODE_API_PORT}/v2/health_check || exit 1
+    CMD curl -f http://localhost:${NODE_API_PORT}/v1/node/health_check || exit 1
 
 # Volume for persistent storage
 VOLUME ["/app/hanzo-storage"]

@@ -9,7 +9,7 @@ info:
     name: ''
   version: 0.8.4
 paths:
-  /v2/add_file_to_inbox:
+  /v1/node/add_file_to_inbox:
     post:
       tags:
       - crate
@@ -39,7 +39,7 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/APIError'
-  /v2/all_inboxes:
+  /v1/node/all_inboxes:
     get:
       tags:
       - crate
@@ -65,7 +65,7 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/APIError'
-  /v2/available_llm_providers:
+  /v1/node/available_llm_providers:
     get:
       tags:
       - crate
@@ -91,7 +91,7 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/APIError'
-  /v2/change_job_llm_provider:
+  /v1/node/change_job_llm_provider:
     post:
       tags:
       - crate
@@ -120,7 +120,7 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/APIError'
-  /v2/create_files_inbox:
+  /v1/node/create_files_inbox:
     post:
       tags:
       - crate
@@ -144,7 +144,7 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/APIError'
-  /v2/create_job:
+  /v1/node/create_job:
     post:
       tags:
       - crate
@@ -173,7 +173,7 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/APIError'
-  /v2/get_job_config:
+  /v1/node/get_job_config:
     get:
       tags:
       - crate
@@ -204,7 +204,7 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/APIError'
-  /v2/get_job_scope:
+  /v1/node/get_job_scope:
     get:
       tags:
       - crate
@@ -235,7 +235,7 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/APIError'
-  /v2/job_message:
+  /v1/node/job_message:
     post:
       tags:
       - crate
@@ -265,7 +265,7 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/APIError'
-  /v2/last_messages:
+  /v1/node/last_messages:
     post:
       tags:
       - crate
@@ -297,7 +297,7 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/APIError'
-  /v2/last_messages_with_branches:
+  /v1/node/last_messages_with_branches:
     post:
       tags:
       - crate
@@ -331,7 +331,7 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/APIError'
-  /v2/retry_message:
+  /v1/node/retry_message:
     post:
       tags:
       - crate
@@ -360,7 +360,7 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/APIError'
-  /v2/update_job_config:
+  /v1/node/update_job_config:
     post:
       tags:
       - crate
@@ -389,7 +389,7 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/APIError'
-  /v2/update_job_scope:
+  /v1/node/update_job_scope:
     post:
       tags:
       - crate
@@ -418,7 +418,7 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/APIError'
-  /v2/update_smart_inbox_name:
+  /v1/node/update_smart_inbox_name:
     post:
       tags:
       - crate
