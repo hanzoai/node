@@ -175,8 +175,17 @@ pub async fn run_api(
             .with(cors.clone()),
     );
 
-    // Combine all routes (avoid applying gzip compression globally so SSE is not compressed)
-    let routes = v1_routes.or(v2_routes).or(mcp_routes).or(ws_routes).with(log).with(cors);
+    // Combine all routes (avoid applying gzip compression globally so SSE is not compressed).
+    //
+    // v2_routes is tried FIRST because it is the longer prefix of the same path.
+    // Both subtrees start at "v1", and v1_routes ends in `.recover(handle_rejection)`,
+    // which turns a miss inside it into a 404 RESPONSE rather than a rejection. `.or()`
+    // only advances on a rejection, so with v1_routes first nothing downstream of it can
+    // ever be reached for a /v1/* request, and every /v1/node/* endpoint answers 404.
+    // Ordering by descending prefix length is what keeps both surfaces reachable:
+    // v2_routes rejects on the "node" segment — outside its own recover — so /v1/models
+    // and /v1/messages still fall through to v1_routes.
+    let routes = v2_routes.or(v1_routes).or(mcp_routes).or(ws_routes).with(log).with(cors);
 
     // Wrap the HTTP server in an async block that returns a Result
     let http_server = async {
