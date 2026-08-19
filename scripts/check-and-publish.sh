@@ -39,8 +39,12 @@ get_local_version() {
 get_crates_io_version() {
     local crate_name="$1"
 
-    # Use jq to parse JSON response reliably
-    local version=$(curl -s "https://crates.io/api/v1/crates/$crate_name" | jq -r '.crate.max_version // ""')
+    # crates.io answers curl's default User-Agent with 403 — their data-access
+    # policy wants a real one. Without it every lookup here failed identically to
+    # "not published yet", which is the answer that makes this script publish,
+    # so an unnamed caller would have tried to push every crate in the workspace.
+    local version=$(curl -s -H 'User-Agent: hanzoai-ci-publish (ops@hanzo.ai)' \
+        "https://crates.io/api/v1/crates/$crate_name" | jq -r '.crate.max_version // ""')
 
     # Return empty string if null or not found
     if [ "$version" = "null" ] || [ -z "$version" ]; then
