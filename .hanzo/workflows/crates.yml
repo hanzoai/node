@@ -7,18 +7,27 @@
 # publish were three separate workflows that could each publish a different set;
 # the script already does all three, so it is the only caller here.
 #
-# Publishing needs CARGO_REGISTRY_TOKEN in the hanzoai org secrets. Without it
-# the script stops at the first crate that needs publishing rather than
-# reporting a green run that shipped nothing.
+# No `paths:` filter, deliberately. The script's own crates.io comparison is
+# what decides whether there's anything to do — a path gate would guess the
+# same thing from the shape of a diff and could miss a release that lands
+# alongside unrelated files.
+#
+# Publishing needs CARGO_REGISTRY_TOKEN, fetched from KMS at run time rather
+# than held as a raw forge secret. Without it the script stops at the first
+# crate that needs publishing rather than reporting a green run that shipped
+# nothing.
 name: Crates
 on:
   push:
     branches: [main]
-    paths:
-      - 'Cargo.toml'
-      - 'hanzo-libs/*/Cargo.toml'
-      - 'scripts/check-and-publish.sh'
   workflow_dispatch:
+
+# Serialized, newest wins. Two runs in flight both read crates.io before
+# either publishes, so both believe the same version is unpublished and the
+# slower one re-walks crates the faster one already shipped.
+concurrency:
+  group: publish
+  cancel-in-progress: true
 
 jobs:
   publish:
@@ -27,6 +36,25 @@ jobs:
       - uses: actions/checkout@v4
 
       - uses: dtolnay/rust-toolchain@stable
+
+      # hanzo-messages is the foundation crate — every other crate in the
+      # workspace depends on its wire types, so a break here breaks everything
+      # downstream. It is also the one suite that needs no cluster, no wallet
+      # and no network, which is why the repo has always run it as the fast
+      # signal. Runs on every push, not only a releasing one — a regression
+      # that only surfaces on release day surfaces on the day it's most
+      # expensive.
+      - name: cargo test -p hanzo-messages
+        run: |
+          set -e
+          # .cargo/config.toml pins clang + lld on both Linux targets, because the
+          # default linker runs the arm64 builds out of memory. The runner image
+          # carries neither, so cargo dies on the first build script — proc-macro2 —
+          # long before any test runs.
+          command -v clang >/dev/null && command -v ld.lld >/dev/null || {
+            sudo apt-get update && sudo apt-get install -y clang lld
+          }
+          cargo test -p hanzo-messages
 
       - name: Provision jq
         # The runner image ships no jq, and the script parses the crates.io API
@@ -41,7 +69,41 @@ jobs:
             -o "$HOME/.local/bin/jq"
           chmod +x "$HOME/.local/bin/jq"
 
-      - name: Publish
+      - name: Load the publish credential from KMS
         env:
-          CARGO_REGISTRY_TOKEN: ${{ secrets.CARGO_REGISTRY_TOKEN }}
+          KMS_CLIENT_ID: ${{ secrets.KMS_CLIENT_ID }}
+          KMS_CLIENT_SECRET: ${{ secrets.KMS_CLIENT_SECRET }}
+        run: |
+          # Only the KMS machine identity lives as a forge secret; a raw
+          # CARGO_REGISTRY_TOKEN beside it would be a second place to hold
+          # one thing — and the one that rots silently.
+          if [ -z "$KMS_CLIENT_ID" ] || [ -z "$KMS_CLIENT_SECRET" ]; then
+            echo "::error::KMS machine identity absent — cannot pull the crates.io credential. Seed KMS_CLIENT_ID/KMS_CLIENT_SECRET as git.hanzo.ai Actions secrets (org or repo scope)." >&2
+            exit 1
+          fi
+          KMS=https://kms.hanzo.ai; ENVN=prod
+          TOKEN=$(curl -sf "$KMS/v1/kms/auth/login" -H 'Content-Type: application/json' \
+            -d "{\"clientId\":\"$KMS_CLIENT_ID\",\"clientSecret\":\"$KMS_CLIENT_SECRET\"}" | jq -r .accessToken)
+          [ -n "$TOKEN" ] && [ "$TOKEN" != null ] || { echo "::error::KMS login failed"; exit 1; }
+          # The org is the token's owner claim, not a path segment, so the read
+          # names only the secret: /v1/kms/secrets/<name>?env=<env>.
+          URL="$KMS/v1/kms/secrets/CARGO_REGISTRY_TOKEN?env=$ENVN"
+          # No -f: under `bash -e -o pipefail` a `curl -sf` on a 404 exits 22
+          # and kills the step before any message of ours prints, which reads
+          # like a broken network. Capture the status and say it.
+          BODY=$(curl -s -w '\n%{http_code}' "$URL" -H "Authorization: Bearer $TOKEN") || true
+          CODE=$(printf '%s' "$BODY" | tail -1)
+          VAL=$(printf '%s' "$BODY" | sed '$d' | jq -r '.value // empty' 2>/dev/null || true)
+          if [ -z "$VAL" ]; then
+            echo "::error::KMS returned HTTP $CODE for $URL with no value — seed CARGO_REGISTRY_TOKEN there, not as a forge secret." >&2
+            exit 1
+          fi
+          echo "::add-mask::$VAL"
+          echo "CARGO_REGISTRY_TOKEN=$VAL" >> "$GITHUB_ENV"
+
+      - name: Publish
+        # check-and-publish.sh runs the same forward-only comparison per
+        # crate and is a no-op wherever the tree isn't ahead of crates.io, so
+        # there's no separate "anything to do" gate here — the token above is
+        # a cheap, harmless fetch even on a run that ends up publishing nothing.
         run: ./scripts/check-and-publish.sh
