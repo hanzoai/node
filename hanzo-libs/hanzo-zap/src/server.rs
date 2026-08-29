@@ -81,7 +81,14 @@ async fn handle_connection(
     let hs_data = read_frame(&mut stream).await?;
     let hs_msg = Message::parse(hs_data)
         .map_err(|e| std::io::Error::new(std::io::ErrorKind::InvalidData, e))?;
-    let peer_id = parse_handshake(&hs_msg);
+    // A frame Go refuses is not a peer. Drop the connection rather than serve
+    // a request loop to something that never identified itself.
+    let peer_id = parse_handshake(&hs_msg).ok_or_else(|| {
+        std::io::Error::new(
+            std::io::ErrorKind::InvalidData,
+            "ZAP handshake carries no usable node id",
+        )
+    })?;
     debug!("ZAP handshake from peer={}", peer_id);
 
     // Send our handshake
@@ -99,21 +106,16 @@ async fn handle_connection(
             Err(e) => return Err(e.into()),
         };
 
-        // Expect 8-byte Call correlation header + ZAP message
-        if data.len() < 8 {
-            warn!("ZAP frame too short: {} bytes", data.len());
+        // A request is a correlated frame carrying the request flag.
+        let Some((req_id, flag, payload)) = unwrap_correlated(&data) else {
+            warn!("ZAP frame is not correlated: {} bytes", data.len());
             continue;
-        }
-
-        let req_id_bytes = &data[0..4];
-        let flag = u32::from_le_bytes([data[4], data[5], data[6], data[7]]);
-
+        };
         if flag != REQ_FLAG_REQ {
             continue;
         }
 
-        // Parse the ZAP message (skip 8-byte Call header)
-        let msg = match Message::parse(data[8..].to_vec()) {
+        let msg = match Message::parse(payload.to_vec()) {
             Ok(m) => m,
             Err(e) => {
                 warn!("ZAP message parse error: {}", e);
@@ -137,15 +139,9 @@ async fn handle_connection(
             Err(e) => (500, Vec::new(), e),
         };
 
-        // Build ZAP response
+        // Answer under the caller's request id.
         let resp_msg = build_cloud_response(status, &resp_body, &resp_error);
-
-        // Wrap with 8-byte Call correlation header (same req_id, RESP flag)
-        let mut wrapped = Vec::with_capacity(8 + resp_msg.len());
-        wrapped.extend_from_slice(req_id_bytes);
-        wrapped.extend_from_slice(&REQ_FLAG_RESP.to_le_bytes());
-        wrapped.extend_from_slice(&resp_msg);
-
+        let wrapped = wrap_correlated(req_id, REQ_FLAG_RESP, &resp_msg);
         write_frame(&mut stream, &wrapped).await?;
     }
 
