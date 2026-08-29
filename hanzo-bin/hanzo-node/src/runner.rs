@@ -126,6 +126,10 @@ pub async fn initialize_node() -> Result<
     let secrets_file_path = get_secrets_file_path(secrets_file, node_storage_path.clone());
     let node_keys = generate_or_load_keys(&secrets_file_path);
 
+    // Quasar consensus node id: this node's ed25519 identity, 32 bytes. Captured
+    // here because node_keys is moved into the node before consensus starts.
+    let consensus_node_id: [u8; 32] = node_keys.identity_public_key.to_bytes();
+
     // Storage db filesystem
     let main_db_path = get_main_db_path(main_db, &node_keys.identity_public_key, node_storage_path.clone());
 
@@ -297,6 +301,38 @@ pub async fn initialize_node() -> Result<
     let zap_commands_sender = node_commands_sender_copy.clone();
     let zap_task = tokio::spawn(async move {
         start_zap_server(zap_listen_address, zap_commands_sender).await;
+    });
+
+    // Quasar consensus — the SAME post-quantum protocol luxfi/node runs in Go,
+    // here in pure Rust via lux-consensus. A Rust hanzod and a Go luxd are the
+    // same kind of participant in one network, which is the point of running it.
+    let _consensus_task = tokio::spawn(async move {
+        use hanzo_consensus::{HanzoConsensusConfig, HanzoConsensusEngine};
+        let config = HanzoConsensusConfig {
+            committee_size: 2,
+            threshold: 0.67,
+            finality_rounds: 8,
+            round_timeout_ms: 100,
+            pq_enabled: true,
+            fpc_enabled: true,
+            network: "hanzo".to_string(),
+        };
+        match HanzoConsensusEngine::new(config, consensus_node_id) {
+            Ok(mut engine) => match engine.start() {
+                Ok(()) => {
+                    // Report on stderr: the crate logs via `log`, which this
+                    // binary's tracing setup filters out.
+                    eprintln!(
+                        "[consensus] Quasar engine started (network=hanzo committee=2 pq=true fpc=true)"
+                    );
+                    // The inner Quasar engine drives its own rounds; hold it for
+                    // the node's lifetime.
+                    std::future::pending::<()>().await;
+                }
+                Err(e) => eprintln!("[consensus] start failed: {e}"),
+            },
+            Err(e) => eprintln!("[consensus] init failed: {e}"),
+        }
     });
 
     print_node_info(
