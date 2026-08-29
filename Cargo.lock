@@ -5906,28 +5906,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "hanzo-wasm"
-version = "0.1.1"
-dependencies = [
- "anyhow",
- "base64 0.22.1",
- "hanzo-tools",
- "hanzo-wasm-runtime",
- "md5",
- "rand 0.8.5",
- "serde",
- "serde_json",
- "tempfile",
- "tokio",
- "tracing",
- "tracing-subscriber",
- "uuid",
- "wasmtime",
- "wasmtime-wasi",
- "wat",
-]
-
-[[package]]
 name = "hanzo-wasm-runtime"
 version = "1.1.20"
 dependencies = [
@@ -8580,9 +8558,8 @@ name = "lux-consensus"
 version = "1.22.1"
 dependencies = [
  "blst",
- "cc",
  "hex",
- "libc",
+ "sha2",
 ]
 
 [[package]]

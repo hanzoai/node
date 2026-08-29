@@ -109,47 +109,6 @@ impl From<&HanzoVote> for lux_consensus::Vote {
     }
 }
 
-/// Finalization certificate with dual BLS + PQ signatures.
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct FinalizationCertificate {
-    /// Block that was finalized.
-    pub block_id: [u8; 32],
-    /// Height of the finalized block.
-    pub height: u64,
-    /// Aggregated BLS12-381 signature (48 bytes).
-    pub bls_aggregate_sig: Vec<u8>,
-    /// Individual post-quantum (Ringtail) signatures from each signer.
-    pub pq_signatures: Vec<Vec<u8>>,
-    /// Node IDs of validators who signed.
-    pub signers: Vec<[u8; 32]>,
-    /// Unix timestamp when the certificate was created (seconds).
-    pub timestamp: i64,
-}
-
-/// Convert a lux_consensus::Certificate into our FinalizationCertificate.
-impl From<&lux_consensus::Certificate> for FinalizationCertificate {
-    fn from(cert: &lux_consensus::Certificate) -> Self {
-        let signers = cert
-            .signers
-            .iter()
-            .map(|id| *id.as_bytes())
-            .collect();
-        let timestamp = cert
-            .timestamp
-            .duration_since(std::time::SystemTime::UNIX_EPOCH)
-            .map(|d| d.as_secs() as i64)
-            .unwrap_or(0);
-        FinalizationCertificate {
-            block_id: *cert.block_id.as_bytes(),
-            height: cert.height,
-            bls_aggregate_sig: cert.aggregated_sig.clone(),
-            pq_signatures: cert.quantum_sigs.clone(),
-            signers,
-            timestamp,
-        }
-    }
-}
-
 /// Consensus status for a block from the Hanzo perspective.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 pub enum ConsensusStatus {

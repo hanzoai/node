@@ -29,7 +29,4 @@ pub mod types;
 // Re-export key types at crate root for ergonomic imports.
 pub use config::HanzoConsensusConfig;
 pub use engine::HanzoConsensusEngine;
-pub use types::{
-    ConsensusError, ConsensusStatus, FinalizationCertificate, HanzoBlock, HanzoVote,
-    HanzoVoteType,
-};
+pub use types::{ConsensusError, ConsensusStatus, HanzoBlock, HanzoVote, HanzoVoteType};

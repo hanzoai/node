@@ -6,7 +6,7 @@ use lux_consensus::{Engine, QuasarEngine, ID, NodeID};
 
 use crate::config::HanzoConsensusConfig;
 use crate::types::{
-    ConsensusError, ConsensusStatus, FinalizationCertificate, HanzoBlock, HanzoVote,
+    ConsensusError, ConsensusStatus, HanzoBlock, HanzoVote,
 };
 
 /// Native Quasar consensus engine for the Hanzo L2 network.
@@ -123,33 +123,6 @@ impl HanzoConsensusEngine {
         let id = ID::from(*block_id);
         let lux_status = self.inner.get_status(&id);
         ConsensusStatus::from(lux_status)
-    }
-
-    /// Retrieve the finalization certificate for an accepted block, if available.
-    ///
-    /// Returns `None` if the block is not yet finalized or no certificate
-    /// has been generated.
-    pub fn get_certificate(&self, block_id: &[u8; 32]) -> Option<FinalizationCertificate> {
-        // The QuasarEngine does not directly expose certificates through the
-        // Engine trait. We check acceptance and synthesize a certificate stub.
-        // In production, certificate generation happens inside the Quasar
-        // consensus layer when quorum is reached.
-        let id = ID::from(*block_id);
-        if !self.inner.is_accepted(&id) {
-            return None;
-        }
-
-        // The engine accepted the block -- return a minimal certificate.
-        // Full BLS/Ringtail aggregate signatures are produced by the Quasar
-        // layer internally; here we expose the acceptance proof.
-        Some(FinalizationCertificate {
-            block_id: *block_id,
-            height: self.height,
-            bls_aggregate_sig: Vec::new(),
-            pq_signatures: Vec::new(),
-            signers: Vec::new(),
-            timestamp: chrono::Utc::now().timestamp(),
-        })
     }
 
     /// Add a validator to the consensus committee.
@@ -302,7 +275,6 @@ mod tests {
         engine.propose_block(&block).unwrap();
 
         assert!(!engine.is_finalized(&block.id));
-        assert!(engine.get_certificate(&block.id).is_none());
 
         engine.stop().unwrap();
     }
