@@ -9,11 +9,7 @@
 
 use async_channel::Sender;
 use hanzo_http_api::node_commands::NodeCommand;
-use hanzo_zap::{
-    ZapServer, cloud_handler,
-    build_cloud_request, parse_cloud_response, build_handshake,
-    Message, read_frame, write_frame, REQ_FLAG_REQ,
-};
+use hanzo_zap::{ZapServer, cloud_call, cloud_handler};
 use log::{info, error};
 use tokio::net::TcpStream;
 
@@ -24,43 +20,11 @@ async fn forward_via_zap(
     auth: &str,
     body: Vec<u8>,
 ) -> Result<(u32, Vec<u8>, String), String> {
-    // Connect to engine ZAP endpoint
     let mut stream = TcpStream::connect(engine_addr)
         .await
         .map_err(|e| format!("ZAP connect to {engine_addr}: {e}"))?;
     stream.set_nodelay(true).ok();
-
-    // Handshake
-    let hs = build_handshake("hanzo-node");
-    write_frame(&mut stream, &hs)
-        .await
-        .map_err(|e| format!("ZAP handshake write: {e}"))?;
-    let hs_resp = read_frame(&mut stream)
-        .await
-        .map_err(|e| format!("ZAP handshake read: {e}"))?;
-    let _ = Message::parse(hs_resp).map_err(|e| format!("ZAP handshake parse: {e}"))?;
-
-    // Build cloud request and wrap with Call correlation header
-    let msg = build_cloud_request(method, auth, &body);
-    let req_id: u32 = 1;
-    let mut wrapped = Vec::with_capacity(8 + msg.len());
-    wrapped.extend_from_slice(&req_id.to_le_bytes());
-    wrapped.extend_from_slice(&REQ_FLAG_REQ.to_le_bytes());
-    wrapped.extend_from_slice(&msg);
-    write_frame(&mut stream, &wrapped)
-        .await
-        .map_err(|e| format!("ZAP request write: {e}"))?;
-
-    // Read response, skip 8-byte Call header
-    let data = read_frame(&mut stream)
-        .await
-        .map_err(|e| format!("ZAP response read: {e}"))?;
-    if data.len() < 8 {
-        return Err("ZAP response too short".into());
-    }
-    let resp_msg = Message::parse(data[8..].to_vec())
-        .map_err(|e| format!("ZAP response parse: {e}"))?;
-    Ok(parse_cloud_response(&resp_msg))
+    cloud_call(&mut stream, "hanzo-node", 1, method, auth, &body).await
 }
 
 /// Forward a cloud request to the local HTTP API.
