@@ -1,5 +1,6 @@
 use hanzo_identity::{OnchainIdentity, HanzoRegistry};
 use hanzo_messages::hanzo_utils::hanzo_logging::{hanzo_log, HanzoLogLevel, HanzoLogOption};
+use hanzo_messages::schemas::hanzo_name::HanzoName;
 use std::{env, sync::Arc};
 use tokio::sync::Mutex;
 
@@ -35,21 +36,19 @@ impl IdentityNetworkManager {
         force_refresh: Option<bool>,
     ) -> Result<OnchainIdentity, &'static str> {
         let record = {
-            let identity = global_identity.trim_start_matches("@@");
             let registry = self.registry.lock().await;
-            match registry.get_identity_record(identity.to_string(), force_refresh).await {
+            match registry.get_identity_record(global_identity, force_refresh).await {
                 Ok(record) => record,
                 Err(_) => return Err("Unrecognized global identity"),
             }
         };
 
-        // Check if any of the address_or_proxy_nodes ends with .sepolia-hanzo
-        if record.address_or_proxy_nodes.iter().any(|node| {
-            let node_base = node.split(':').next().unwrap_or(node);
-            node_base.ends_with(".sepolia-hanzo")
-                || node_base.ends_with(".hanzo")
-                || node_base.ends_with(".sep-hanzo")
-        }) {
+        // An entry that names an identity rather than an address points at a proxy node
+        if record
+            .address_or_proxy_nodes
+            .iter()
+            .any(|node| HanzoName::validate_name(node).is_ok())
+        {
             // Call the proxy node to get the actual data
             let proxy_identity = record.address_or_proxy_nodes.clone();
             let proxy_record = {

@@ -51,7 +51,7 @@ mod tests {
         let json_data = json!({
             "name": "test_agent",
             "agent_id": "test123",
-            "full_identity_name": "test.agent",
+            "full_identity_name": "did:hanzo:test/agent",
             "llm_provider_id": "test_provider",
             "ui_description": "Test Agent",
             "knowledge": ["test knowledge"],
@@ -78,7 +78,7 @@ mod tests {
         let json_data = json!({
             "name": "test_agent",
             "agent_id": "test123",
-            "full_identity_name": "test.agent",
+            "full_identity_name": "did:hanzo:test/agent",
             "llm_provider_id": "test_provider",
             "ui_description": "Test Agent",
             "knowledge": ["test knowledge"],
@@ -99,7 +99,7 @@ mod tests {
         let json_data = json!({
             "name": "test_agent",
             "agent_id": "test123",
-            "full_identity_name": "test.agent",
+            "full_identity_name": "did:hanzo:test/agent",
             "llm_provider_id": "test_provider",
             "ui_description": "Test Agent",
             "knowledge": ["test knowledge"],
@@ -128,7 +128,7 @@ mod tests {
         let json_data = json!({
             "name": "test_agent",
             "agent_id": "test123",
-            "full_identity_name": "test.agent",
+            "full_identity_name": "did:hanzo:test/agent",
             "llm_provider_id": "test_provider",
             "ui_description": "Test Agent",
             "knowledge": ["test knowledge"],

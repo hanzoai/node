@@ -33,7 +33,7 @@ mod tests {
 
         let llm_provider_id = "agent_id1".to_string();
         let llm_provider_name =
-            HanzoName::new(format!("@@localhost.hanzo/main/agent/{}", llm_provider_id.clone()).to_string())
+            HanzoName::new(format!("did:hanzo:localhost/main/agent/{}", llm_provider_id.clone()).to_string())
                 .unwrap();
 
         let open_ai = OpenAI {
@@ -52,7 +52,7 @@ mod tests {
 
         let manager = ModelCapabilitiesManager {
             db: db_weak,
-            profile: HanzoName::new("@@localhost.hanzo/test_profile".to_string()).unwrap(),
+            profile: HanzoName::new("did:hanzo:localhost/test_profile".to_string()).unwrap(),
             llm_providers: vec![gpt_3_5_llm_provider.clone()],
         };
 
@@ -73,7 +73,7 @@ mod tests {
 
         let llm_provider_id = "agent_id2".to_string();
         let llm_provider_name =
-            HanzoName::new(format!("@@localhost.hanzo/main/agent/{}", llm_provider_id.clone()).to_string())
+            HanzoName::new(format!("did:hanzo:localhost/main/agent/{}", llm_provider_id.clone()).to_string())
                 .unwrap();
 
         let open_ai = OpenAI {
@@ -92,7 +92,7 @@ mod tests {
 
         let manager = ModelCapabilitiesManager {
             db: db_weak,
-            profile: HanzoName::new("@@localhost.hanzo/test_profile".to_string()).unwrap(),
+            profile: HanzoName::new("did:hanzo:localhost/test_profile".to_string()).unwrap(),
             llm_providers: vec![gpt_4_vision_llm_provider],
         };
 
@@ -109,7 +109,7 @@ mod tests {
 
         let agent_id = "agent_id3".to_string();
         let agent_name =
-            HanzoName::new(format!("@@localhost.hanzo/main/agent/{}", agent_id.clone()).to_string()).unwrap();
+            HanzoName::new(format!("did:hanzo:localhost/main/agent/{}", agent_id.clone()).to_string()).unwrap();
 
         let open_ai = OpenAI {
             model_type: "gpt-fake-model".to_string(),
@@ -127,7 +127,7 @@ mod tests {
 
         let manager = ModelCapabilitiesManager {
             db: db_weak,
-            profile: HanzoName::new("@@localhost.hanzo/test_profile".to_string()).unwrap(),
+            profile: HanzoName::new("did:hanzo:localhost/test_profile".to_string()).unwrap(),
             llm_providers: vec![fake_gpt_agent],
         };
 

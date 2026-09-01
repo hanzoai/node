@@ -161,7 +161,6 @@ impl Node {
         supported_embedding_models: Vec<EmbeddingModelType>,
         api_v2_key: Option<String>,
     ) -> Arc<Mutex<Node>> {
-        // if is_valid_node_identity_name_and_no_subidentities is false panic
         match HanzoName::new(node_name.to_string().clone()) {
             Ok(_) => (),
             Err(_) => panic!("Invalid node identity name: {}", node_name),

@@ -36,15 +36,16 @@ The Hanzo network uses LibP2P for decentralized peer-to-peer communication with 
 
 ### Identity Structure
 
-Hanzo identities follow a hierarchical naming convention:
+A Hanzo identity is the DID of the node's own signing key, optionally
+narrowed to a profile and a device or agent under it:
 ```
-@@node.domain/profile/device
+did:hanzo:<address>/profile/device
 ```
 
 Examples:
-- `@@alice.sep-hanzo` - Global node identity
-- `@@alice.sep-hanzo/main` - Profile identity
-- `@@alice.sep-hanzo/main/device1` - Device identity
+- `did:hanzo:c85950e4d9c2c24df9d44052c8f2298f69d4a9b82cb0266478f58f385ca2a679` - Node identity
+- `did:hanzo:c85950…/main` - Profile identity
+- `did:hanzo:c85950…/main/device/device1` - Device identity
 
 ### Identity Components
 
@@ -77,14 +78,14 @@ Identities are registered on the Hanzo Registry smart contract:
 1. Visit https://hanzo-contracts.pages.dev/
 2. Connect your wallet (must have Base Sepolia ETH for gas fees)
 3. Register your node identity with:
-   - Identity name (e.g., `@@my_node.sep-hanzo`)
+   - Identity name (e.g., `did:hanzo:my_node`)
    - Ed25519 public key (signature key)
    - X25519 public key (encryption key)
    - Network configuration (IP address OR relay identity)
 
 **Direct Mode Registration:**
 ```
-Identity: @@my_node.sep-hanzo
+Identity: did:hanzo:my_node
 Signature Key: <ed25519_public_key>
 Encryption Key: <x25519_public_key>
 Network Address: /ip4/203.0.113.42/tcp/3692
@@ -93,10 +94,10 @@ Use Proxy: false
 
 **Relay Mode Registration:**
 ```
-Identity: @@my_node.sep-hanzo
+Identity: did:hanzo:my_node
 Signature Key: <ed25519_public_key>
 Encryption Key: <x25519_public_key>
-Proxy Identity: @@my_relay.sep-hanzo
+Proxy Identity: did:hanzo:my_relay
 Use Proxy: true
 ```
 
@@ -161,7 +162,7 @@ Before configuring your node, ensure you complete these essential steps:
 #### Core Network Configuration
 ```bash
 # Node Identity
-GLOBAL_IDENTITY_NAME="@@node_name.sep-hanzo"
+GLOBAL_IDENTITY_NAME="did:hanzo:node_name"
 
 # Network Binding
 NODE_IP="0.0.0.0"              # LibP2P listen IP
@@ -192,7 +193,7 @@ unset PROXY_IDENTITY
 **Relay Mode:**
 ```bash
 # Set to relay server identity
-export PROXY_IDENTITY="@@relay_server.sep-hanzo"
+export PROXY_IDENTITY="did:hanzo:relay_server"
 ```
 
 ### Configuration Examples
@@ -208,7 +209,7 @@ export NODE_PORT="3692"
 export NODE_HTTPS_PORT="3693"
 export IDENTITY_SECRET_KEY="df3f619804a92fdb4057192dc43dd748ea778adc52bc498ce80524c014b81119"
 export ENCRYPTION_SECRET_KEY="d83f619804a92fdb4057192dc43dd748ea778adc52bc498ce80524c014b81159"
-export GLOBAL_IDENTITY_NAME="@@localhost.sep-hanzo"
+export GLOBAL_IDENTITY_NAME="did:hanzo:localhost"
 
 # Direct mode - no relay
 unset PROXY_IDENTITY
@@ -227,10 +228,10 @@ export NODE_PORT="3692"
 export NODE_HTTPS_PORT="3693"
 export IDENTITY_SECRET_KEY="9d662cf50299042d44a4ec7cbe040f96291bbac2d2375515db75bda4046716a9"
 export ENCRYPTION_SECRET_KEY="d01d4173c445b6c47000fd4131acbae35a71027d3303c223af013701333bcb54"
-export GLOBAL_IDENTITY_NAME="@@production_node.sep-hanzo"
+export GLOBAL_IDENTITY_NAME="did:hanzo:production_node"
 
 # Relay mode - connect through relay
-export PROXY_IDENTITY="@@public_relay.sep-hanzo"
+export PROXY_IDENTITY="did:hanzo:public_relay"
 
 cargo run --bin hanzo_node
 ```
@@ -247,8 +248,8 @@ ENV NODE_PORT=3692
 ENV NODE_HTTPS_PORT=3693
 ENV IDENTITY_SECRET_KEY=""
 ENV ENCRYPTION_SECRET_KEY=""
-ENV GLOBAL_IDENTITY_NAME="@@docker_node.sep-hanzo"
-ENV PROXY_IDENTITY="@@docker_relay.sep-hanzo"
+ENV GLOBAL_IDENTITY_NAME="did:hanzo:docker_node"
+ENV PROXY_IDENTITY="did:hanzo:docker_relay"
 
 EXPOSE 3690 3691 3692 3693
 
@@ -263,7 +264,7 @@ CMD ["hanzo_node"]
 ```bash
 hanzo_libp2p_relayer \
   --port 9901 \
-  --node-name "@@my_relay.sep-hanzo" \
+  --node-name "did:hanzo:my_relay" \
   --identity-secret-key "166a4545bf199c5980777764e8b65f2cb0ed06eec3ed7918a3bf1007aab7c3cc" \
   --encryption-secret-key "f88a6ada6990426a8f8de9f3cec879bc80b4bb4ba4d2441e412b892e40e5a16b" \
   --max-connections 50
@@ -274,7 +275,7 @@ hanzo_libp2p_relayer \
 export PORT=9901
 export IDENTITY_SECRET_KEY="166a4545bf199c5980777764e8b65f2cb0ed06eec3ed7918a3bf1007aab7c3cc"
 export ENCRYPTION_SECRET_KEY="f88a6ada6990426a8f8de9f3cec879bc80b4bb4ba4d2441e412b892e40e5a16b"
-export GLOBAL_IDENTITY_NAME="@@my_relay.sep-hanzo"
+export GLOBAL_IDENTITY_NAME="did:hanzo:my_relay"
 export MAX_CONNECTIONS=50
 
 cd hanzo-libs/hanzo-libp2p-relayer
@@ -310,7 +311,7 @@ docker run -d \
   --name hanzo-relay \
   --network="host" \
   -e PORT=9901 \
-  -e NODE_NAME="@@cloud_relay.sep-hanzo" \
+  -e NODE_NAME="did:hanzo:cloud_relay" \
   -e IDENTITY_SECRET_KEY="..." \
   -e ENCRYPTION_SECRET_KEY="..." \
   your-relay-image:latest
@@ -385,7 +386,7 @@ export NODE_PORT="9562"
 ```bash
 # Error: "Invalid proxy identity name"
 # Solution: Use proper identity format
-export PROXY_IDENTITY="@@valid_relay.sep-hanzo"
+export PROXY_IDENTITY="did:hanzo:valid_relay"
 ```
 
 #### Relay Connection Failures
@@ -414,7 +415,7 @@ cargo run --example test_connection -- "relay_ip:9901"
 
 # Check if identity is registered
 # Visit: https://hanzo-contracts.pages.dev/
-# Search for: @@your_node.sep-hanzo
+# Search for: did:hanzo:your_node
 
 # Verify public keys match your node configuration
 # - Ed25519 public key should derive from IDENTITY_SECRET_KEY
@@ -442,9 +443,9 @@ cargo run --example test_connection -- "relay_ip:9901"
 #### Relay Mode Logs
 ```
 🌐 Listening on /ip4/0.0.0.0/tcp/3692 (relay mode)
-🔗 Setting up LibP2P with relay: @@relay.sep-hanzo
+🔗 Setting up LibP2P with relay: did:hanzo:relay
 📡 Connecting to relay at: /ip4/x.x.x.x/tcp/9901
-🎉 Proxy configured: @@relay.sep-hanzo - using LibP2P relay
+🎉 Proxy configured: did:hanzo:relay - using LibP2P relay
 ```
 
 #### Error Logs
@@ -461,12 +462,12 @@ cargo run --example test_connection -- "relay_ip:9901"
 #### Multiple Relay Servers
 ```bash
 # Primary relay
-export PROXY_IDENTITY="@@primary_relay.sep-hanzo"
+export PROXY_IDENTITY="did:hanzo:primary_relay"
 
 # Fallback configuration (in code)
 let fallback_relays = vec![
-    "@@backup_relay1.sep-hanzo",
-    "@@backup_relay2.sep-hanzo",
+    "did:hanzo:backup_relay1",
+    "did:hanzo:backup_relay2",
 ];
 ```
 
@@ -531,14 +532,14 @@ curl http://localhost:3690/v1/node/status
 ./scripts/run_relay.sh
 
 # Terminal 2: Start first node (relay mode)
-export PROXY_IDENTITY="@@local_relay.sep-hanzo"
-export GLOBAL_IDENTITY_NAME="@@node1.sep-hanzo"
+export PROXY_IDENTITY="did:hanzo:local_relay"
+export GLOBAL_IDENTITY_NAME="did:hanzo:node1"
 export NODE_PORT="3692"
 ./scripts/run_node.sh
 
 # Terminal 3: Start second node (relay mode)
-export PROXY_IDENTITY="@@local_relay.sep-hanzo"
-export GLOBAL_IDENTITY_NAME="@@node2.sep-hanzo"
+export PROXY_IDENTITY="did:hanzo:local_relay"
+export GLOBAL_IDENTITY_NAME="did:hanzo:node2"
 export NODE_PORT="3693"
 ./scripts/run_node.sh
 ```

@@ -51,6 +51,7 @@ impl JobManager {
     ) -> Result<String, LLMProviderError> {
         let db = db.upgrade().ok_or("Failed to upgrade hanzo_db").unwrap();
         let job_id = job_message.job_message.job_id.clone();
+        let node_name = node_profile_name.node_name;
         hanzo_log(
             HanzoLogOption::JobExecution,
             HanzoLogLevel::Info,
@@ -61,7 +62,7 @@ impl JobManager {
         let fetch_data_result = JobManager::fetch_relevant_job_data(&job_message.job_message.job_id, db.clone()).await;
         let (full_job, llm_provider_found, _, user_profile) = match fetch_data_result {
             Ok(data) => data,
-            Err(e) => return Self::handle_error(&db, None, &job_id, &identity_secret_key, e, ws_manager).await,
+            Err(e) => return Self::handle_error(&db, &node_name, &job_id, &identity_secret_key, e, ws_manager).await,
         };
 
         // Ensure the user profile exists before proceeding with inference chain
@@ -70,7 +71,7 @@ impl JobManager {
             None => {
                 return Self::handle_error(
                     &db,
-                    None,
+                    &node_name,
                     &job_id,
                     &identity_secret_key,
                     LLMProviderError::NoUserProfileFound,
@@ -81,7 +82,7 @@ impl JobManager {
         };
 
         let user_profile = HanzoName::from_node_and_profile_names(
-            node_profile_name.node_name,
+            node_name.clone(),
             user_profile.profile_name.unwrap_or_default(),
         )
         .unwrap();
@@ -106,7 +107,7 @@ impl JobManager {
         .await;
 
         if let Err(e) = inference_chain_result {
-            return Self::handle_error(&db, Some(user_profile), &job_id, &identity_secret_key, e, ws_manager).await;
+            return Self::handle_error(&db, &node_name, &job_id, &identity_secret_key, e, ws_manager).await;
         }
 
         Ok(job_id)
@@ -115,7 +116,7 @@ impl JobManager {
     /// Handle errors by sending an error message to the job inbox
     async fn handle_error(
         db: &Arc<SqliteManager>,
-        user_profile: Option<HanzoName>,
+        node_name: &str,
         job_id: &str,
         identity_secret_key: &SigningKey,
         error: LLMProviderError,
@@ -126,10 +127,6 @@ impl JobManager {
             HanzoLogLevel::Error,
             &format!("Error processing job: {}", error),
         );
-
-        let node_name = user_profile
-            .unwrap_or_else(|| HanzoName::new("@@localhost.sep-hanzo".to_string()).unwrap())
-            .node_name;
 
         let error_json = error.to_error_message();
         let error_for_frontend = format!("{}", error_json);
@@ -142,8 +139,8 @@ impl JobManager {
             vec![],
             None,
             identity_secret_key_clone,
-            node_name.clone(),
-            node_name.clone(),
+            node_name.to_string(),
+            node_name.to_string(),
         )
         .expect("Failed to build error message");
 

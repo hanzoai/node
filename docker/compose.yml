@@ -49,7 +49,6 @@ services:
       # Identity and Security
       - IDENTITY_SECRET_KEY=${IDENTITY_SECRET_KEY}
       - ENCRYPTION_SECRET_KEY=${ENCRYPTION_SECRET_KEY}
-      - GLOBAL_IDENTITY_NAME=${GLOBAL_IDENTITY_NAME:-@@my_local_ai.sep-hanzo}
 
       # Node Behavior
       - PING_INTERVAL_SECS=${PING_INTERVAL_SECS:-0}
@@ -66,7 +65,7 @@ services:
 
       # AI Configuration
       - EMBEDDINGS_SERVER_URL=${EMBEDDINGS_SERVER_URL}
-      - PROXY_IDENTITY=${PROXY_IDENTITY:-@@relayer_pub_01.sep-hanzo}
+      - PROXY_IDENTITY=${PROXY_IDENTITY}
 
       # Multi-Provider AI Agents (comma-separated lists)
       - INITIAL_AGENT_NAMES=${INITIAL_AGENT_NAMES:-do_qwen32b}

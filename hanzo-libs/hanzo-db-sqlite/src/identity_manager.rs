@@ -609,7 +609,7 @@ mod tests {
         let (_, node1_encryption_pk) = unsafe_deterministic_encryption_keypair(0);
 
         let profile = StandardIdentity {
-            full_identity_name: HanzoName::new("@@node1.hanzo/main_profile_node1".to_string()).unwrap(),
+            full_identity_name: HanzoName::new("did:hanzo:node1/main_profile_node1".to_string()).unwrap(),
             addr: None,
             node_encryption_public_key: node1_encryption_pk,
             node_signature_public_key: node1_identity_pk,
@@ -637,7 +637,7 @@ mod tests {
         let (_, node1_encryption_pk) = unsafe_deterministic_encryption_keypair(0);
 
         let profile1 = StandardIdentity {
-            full_identity_name: HanzoName::new("@@node1.hanzo/main_profile_node1".to_string()).unwrap(),
+            full_identity_name: HanzoName::new("did:hanzo:node1/main_profile_node1".to_string()).unwrap(),
             addr: None,
             node_encryption_public_key: node1_encryption_pk,
             node_signature_public_key: node1_identity_pk,
@@ -651,7 +651,7 @@ mod tests {
         let (_, node2_encryption_pk) = unsafe_deterministic_encryption_keypair(1);
 
         let profile2 = StandardIdentity {
-            full_identity_name: HanzoName::new("@@node1.hanzo/main_profile_node2".to_string()).unwrap(),
+            full_identity_name: HanzoName::new("did:hanzo:node1/main_profile_node2".to_string()).unwrap(),
             addr: None,
             node_encryption_public_key: node1_encryption_pk,
             node_signature_public_key: node1_identity_pk,
@@ -665,7 +665,7 @@ mod tests {
         manager.insert_profile(profile2.clone()).unwrap();
 
         let profiles = manager
-            .get_all_profiles(HanzoName::new("@@node1.hanzo/main_profile_node1".to_string()).unwrap())
+            .get_all_profiles(HanzoName::new("did:hanzo:node1/main_profile_node1".to_string()).unwrap())
             .unwrap();
 
         assert_eq!(profiles.len(), 2);
@@ -680,11 +680,11 @@ mod tests {
         let (_, node1_identity_pk) = unsafe_deterministic_signature_keypair(0);
         let (_, node1_encryption_pk) = unsafe_deterministic_encryption_keypair(0);
 
-        let full_identity_name = HanzoName::new("@@node1.hanzo/main_profile_node1".to_string()).unwrap();
+        let full_identity_name = HanzoName::new("did:hanzo:node1/main_profile_node1".to_string()).unwrap();
         let profile_name = full_identity_name.get_profile_name_string().unwrap_or_default();
 
         let profile = StandardIdentity {
-            full_identity_name: HanzoName::new("@@node1.hanzo/main_profile_node1".to_string()).unwrap(),
+            full_identity_name: HanzoName::new("did:hanzo:node1/main_profile_node1".to_string()).unwrap(),
             addr: None,
             node_encryption_public_key: node1_encryption_pk,
             node_signature_public_key: node1_identity_pk,
@@ -721,7 +721,7 @@ mod tests {
         let (_, node1_encryption_pk) = unsafe_deterministic_encryption_keypair(0);
 
         let profile = StandardIdentity {
-            full_identity_name: HanzoName::new("@@node1.hanzo/main_profile_node1".to_string()).unwrap(),
+            full_identity_name: HanzoName::new("did:hanzo:node1/main_profile_node1".to_string()).unwrap(),
             addr: None,
             node_encryption_public_key: node1_encryption_pk,
             node_signature_public_key: node1_identity_pk,
@@ -737,7 +737,7 @@ mod tests {
         let (_, node2_encryption_pk) = unsafe_deterministic_encryption_keypair(1);
 
         let device = DeviceIdentity {
-            full_identity_name: HanzoName::new("@@node1.hanzo/main_profile_node1".to_string()).unwrap(),
+            full_identity_name: HanzoName::new("did:hanzo:node1/main_profile_node1".to_string()).unwrap(),
             node_encryption_public_key: node2_encryption_pk,
             node_signature_public_key: node2_identity_pk,
             profile_encryption_public_key: node1_encryption_pk,
@@ -762,7 +762,7 @@ mod tests {
         let (_, node1_encryption_pk) = unsafe_deterministic_encryption_keypair(0);
 
         let profile = StandardIdentity {
-            full_identity_name: HanzoName::new("@@node1.hanzo/main_profile_node1".to_string()).unwrap(),
+            full_identity_name: HanzoName::new("did:hanzo:node1/main_profile_node1".to_string()).unwrap(),
             addr: None,
             node_encryption_public_key: node1_encryption_pk,
             node_signature_public_key: node1_identity_pk,
@@ -778,7 +778,7 @@ mod tests {
         let (_, node2_encryption_pk) = unsafe_deterministic_encryption_keypair(1);
 
         let device = DeviceIdentity {
-            full_identity_name: HanzoName::new("@@node1.hanzo/main_profile_node1".to_string()).unwrap(),
+            full_identity_name: HanzoName::new("did:hanzo:node1/main_profile_node1".to_string()).unwrap(),
             node_encryption_public_key: node1_encryption_pk,
             node_signature_public_key: node1_identity_pk,
             profile_encryption_public_key: node1_encryption_pk,
@@ -791,7 +791,7 @@ mod tests {
         manager.add_device_to_profile(device.clone()).unwrap();
 
         let identities = manager
-            .get_all_profiles_and_devices(HanzoName::new("@@node1.hanzo/main_profile_node1".to_string()).unwrap())
+            .get_all_profiles_and_devices(HanzoName::new("did:hanzo:node1/main_profile_node1".to_string()).unwrap())
             .unwrap();
 
         assert_eq!(identities.len(), 2);

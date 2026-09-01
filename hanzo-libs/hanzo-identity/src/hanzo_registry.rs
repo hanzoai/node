@@ -8,6 +8,7 @@ use hanzo_messages::hanzo_utils::hanzo_logging::hanzo_log;
 use hanzo_messages::hanzo_utils::hanzo_logging::HanzoLogLevel;
 use hanzo_messages::hanzo_utils::hanzo_logging::HanzoLogOption;
 use hanzo_messages::hanzo_utils::signatures::string_to_signature_public_key;
+use hanzo_messages::schemas::hanzo_name::HanzoName;
 use hanzo_runtime::functions::get_identity_data::get_identity_data;
 use std::fmt;
 use std::fs;
@@ -254,12 +255,6 @@ impl HanzoRegistry {
         identity: String,
         force_refresh: Option<bool>,
     ) -> Result<OnchainIdentity, HanzoRegistryError> {
-        let identity = if identity.starts_with("@@") {
-            identity.trim_start_matches("@@").to_string()
-        } else {
-            identity
-        };
-
         let force_refresh = force_refresh.unwrap_or(false);
         let now = SystemTime::now();
 
@@ -374,13 +369,12 @@ impl HanzoRegistry {
             last_updated,
         };
 
-        // Check if any of the address_or_proxy_nodes ends with .sepolia-hanzo
-        if onchain_identity.address_or_proxy_nodes.iter().any(|node| {
-            let node_base = node.split(':').next().unwrap_or(node);
-            node_base.ends_with(".sepolia-hanzo")
-                || node_base.ends_with(".hanzo")
-                || node_base.ends_with(".sep-hanzo")
-        }) {
+        // An entry that names an identity rather than an address points at a proxy node
+        if onchain_identity
+            .address_or_proxy_nodes
+            .iter()
+            .any(|node| HanzoName::validate_name(node).is_ok())
+        {
             // Call the proxy node to get the actual data
             let proxy_identity = onchain_identity.address_or_proxy_nodes.clone();
 
@@ -462,13 +456,13 @@ mod tests {
         .await
         .unwrap();
 
-        let identity = "node1_test.sep-hanzo".to_string();
+        let identity = "did:hanzo:node1_test".to_string();
 
         // Test registry query - handle case where test identity may not exist on-chain
         match registry.get_identity_record(identity.clone(), None).await {
             Ok(record) => {
                 // Verify record structure if identity exists
-                assert_eq!(record.hanzo_identity, "node1_test.sep-hanzo");
+                assert_eq!(record.hanzo_identity, "did:hanzo:node1_test");
                 assert!(!record.encryption_key.is_empty(), "encryption_key should not be empty");
                 assert!(!record.signature_key.is_empty(), "signature_key should not be empty");
                 assert!(record.first_address().await.is_ok(), "should have valid address");

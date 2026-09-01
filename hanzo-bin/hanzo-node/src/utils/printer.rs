@@ -8,9 +8,6 @@ use hanzo_messages::hanzo_utils::{
 };
 
 fn print_generated_keys() {
-    let _node1_identity_name = "@@node1.hanzo";
-    let _node2_identity_name = "@@node2.hanzo";
-
     let (node1_identity_sk, node1_identity_pk) = unsafe_deterministic_signature_keypair(0);
     let (node1_encryption_sk, node1_encryption_pk) = unsafe_deterministic_encryption_keypair(0);
 

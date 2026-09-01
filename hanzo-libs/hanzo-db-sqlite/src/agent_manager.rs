@@ -288,7 +288,7 @@ mod tests {
         let agent = Agent {
             agent_id: "test_agent".to_string(),
             name: "Test Agent".to_string(),
-            full_identity_name: HanzoName::new("@@test_user.hanzo/main".to_string()).unwrap(),
+            full_identity_name: HanzoName::new("did:hanzo:test_user/main".to_string()).unwrap(),
             llm_provider_id: "test_llm_provider".to_string(),
             ui_description: "Test description".to_string(),
             knowledge: Default::default(),
@@ -301,7 +301,7 @@ mod tests {
             tools_config_override: None,
             edited: false,
         };
-        let profile = HanzoName::new("@@test_user.hanzo/main".to_string()).unwrap();
+        let profile = HanzoName::new("did:hanzo:test_user/main".to_string()).unwrap();
 
         let result = db.add_agent(agent.clone(), &profile);
         assert!(result.is_ok());
@@ -316,7 +316,7 @@ mod tests {
         let agent = Agent {
             agent_id: "test_agent".to_string(),
             name: "Test Agent".to_string(),
-            full_identity_name: HanzoName::new("@@test_user.hanzo/main".to_string()).unwrap(),
+            full_identity_name: HanzoName::new("did:hanzo:test_user/main".to_string()).unwrap(),
             llm_provider_id: "test_llm_provider".to_string(),
             ui_description: "Test description".to_string(),
             knowledge: Default::default(),
@@ -329,7 +329,7 @@ mod tests {
             tools_config_override: None,
             edited: false,
         };
-        let profile = HanzoName::new("@@test_user.hanzo/main".to_string()).unwrap();
+        let profile = HanzoName::new("did:hanzo:test_user/main".to_string()).unwrap();
 
         db.add_agent(agent.clone(), &profile).unwrap();
 
@@ -346,7 +346,7 @@ mod tests {
         let agent1 = Agent {
             agent_id: "test_agent1".to_string(),
             name: "Test Agent 1".to_string(),
-            full_identity_name: HanzoName::new("@@test_user.hanzo/main".to_string()).unwrap(),
+            full_identity_name: HanzoName::new("did:hanzo:test_user/main".to_string()).unwrap(),
             llm_provider_id: "test_llm_provider1".to_string(),
             ui_description: "Test description 1".to_string(),
             knowledge: Default::default(),
@@ -362,7 +362,7 @@ mod tests {
         let agent2 = Agent {
             agent_id: "test_agent2".to_string(),
             name: "Test Agent 2".to_string(),
-            full_identity_name: HanzoName::new("@@test_user.hanzo/main".to_string()).unwrap(),
+            full_identity_name: HanzoName::new("did:hanzo:test_user/main".to_string()).unwrap(),
             llm_provider_id: "test_llm_provider2".to_string(),
             ui_description: "Test description 2".to_string(),
             knowledge: Default::default(),
@@ -375,7 +375,7 @@ mod tests {
             tools_config_override: None,
             edited: false,
         };
-        let profile = HanzoName::new("@@test_user.hanzo/main".to_string()).unwrap();
+        let profile = HanzoName::new("did:hanzo:test_user/main".to_string()).unwrap();
 
         db.add_agent(agent1.clone(), &profile).unwrap();
         db.add_agent(agent2.clone(), &profile).unwrap();
@@ -392,7 +392,7 @@ mod tests {
         let expected_agent = Agent {
             agent_id: "test_agent".to_string(),
             name: "Test Agent".to_string(),
-            full_identity_name: HanzoName::new("@@test_user.hanzo/main".to_string()).unwrap(),
+            full_identity_name: HanzoName::new("did:hanzo:test_user/main".to_string()).unwrap(),
             llm_provider_id: "test_llm_provider".to_string(),
             ui_description: "Test description".to_string(),
             knowledge: Default::default(),
@@ -405,7 +405,7 @@ mod tests {
             tools_config_override: None,
             edited: false,
         };
-        let profile = HanzoName::new("@@test_user.hanzo/main".to_string()).unwrap();
+        let profile = HanzoName::new("did:hanzo:test_user/main".to_string()).unwrap();
 
         db.add_agent(expected_agent.clone(), &profile).unwrap();
 
@@ -432,7 +432,7 @@ mod tests {
         let agent = Agent {
             agent_id: "test_agent".to_string(),
             name: "Test Agent".to_string(),
-            full_identity_name: HanzoName::new("@@test_user.hanzo/main".to_string()).unwrap(),
+            full_identity_name: HanzoName::new("did:hanzo:test_user/main".to_string()).unwrap(),
             llm_provider_id: "test_llm_provider".to_string(),
             ui_description: "Test description".to_string(),
             knowledge: Default::default(),
@@ -445,14 +445,14 @@ mod tests {
             tools_config_override: None,
             edited: false,
         };
-        let profile = HanzoName::new("@@test_user.hanzo/main".to_string()).unwrap();
+        let profile = HanzoName::new("did:hanzo:test_user/main".to_string()).unwrap();
 
         db.add_agent(agent.clone(), &profile).unwrap();
 
         let updated_agent = Agent {
             agent_id: "test_agent".to_string(),
             name: "Updated Test Agent".to_string(),
-            full_identity_name: HanzoName::new("@@test_user.hanzo/main".to_string()).unwrap(),
+            full_identity_name: HanzoName::new("did:hanzo:test_user/main".to_string()).unwrap(),
             llm_provider_id: "updated_test_llm_provider".to_string(),
             ui_description: "Updated test description".to_string(),
             knowledge: Default::default(),
@@ -502,7 +502,7 @@ mod tests {
         let agent = Agent {
             agent_id: "test_agent_with_config".to_string(),
             name: "Test Agent With Config".to_string(),
-            full_identity_name: HanzoName::new("@@test_user.hanzo/main".to_string()).unwrap(),
+            full_identity_name: HanzoName::new("did:hanzo:test_user/main".to_string()).unwrap(),
             llm_provider_id: "test_llm_provider".to_string(),
             ui_description: "Test description".to_string(),
             knowledge: Default::default(),
@@ -515,7 +515,7 @@ mod tests {
             tools_config_override: Some(tool_config),
             edited: false,
         };
-        let profile = HanzoName::new("@@test_user.hanzo/main".to_string()).unwrap();
+        let profile = HanzoName::new("did:hanzo:test_user/main".to_string()).unwrap();
 
         // Add the agent
         db.add_agent(agent.clone(), &profile).unwrap();
@@ -558,7 +558,7 @@ mod tests {
         let agent = Agent {
             agent_id: "test_agent_with_config".to_string(),
             name: "Test Agent With Config".to_string(),
-            full_identity_name: HanzoName::new("@@test_user.hanzo/main".to_string()).unwrap(),
+            full_identity_name: HanzoName::new("did:hanzo:test_user/main".to_string()).unwrap(),
             llm_provider_id: "test_llm_provider".to_string(),
             ui_description: "Test description".to_string(),
             knowledge: Default::default(),
@@ -571,7 +571,7 @@ mod tests {
             tools_config_override: Some(tool_config),
             edited: true,
         };
-        let profile = HanzoName::new("@@test_user.hanzo/main".to_string()).unwrap();
+        let profile = HanzoName::new("did:hanzo:test_user/main".to_string()).unwrap();
 
         // Add the agent
         db.add_agent(agent.clone(), &profile).unwrap();

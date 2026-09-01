@@ -25,7 +25,7 @@ mod tests {
         std::env::set_var("SKIP_IMPORT_FROM_DIRECTORY", "true");
         std::env::set_var("IS_TESTING", "1");
         let e = rt.block_on(async {
-            let node1_identity_name = "@@node1_test.sep-hanzo";
+            let node1_identity_name = "did:hanzo:node1_test";
             let (node1_identity_sk, _) = unsafe_deterministic_signature_keypair(0);
             let (node1_encryption_sk, _node1_encryption_pk) = unsafe_deterministic_encryption_keypair(0);
 

@@ -78,7 +78,7 @@ impl SerializedLLMProvider {
             id: "mock_agent".to_string(),
             name: Some("Mock Agent".to_string()),
             description: Some("A mock agent for testing.".to_string()),
-            full_identity_name: HanzoName::new("@@test.hanzo/main/agent/mock_agent".to_string()).unwrap(),
+            full_identity_name: HanzoName::new("did:hanzo:test/main/agent/mock_agent".to_string()).unwrap(),
             external_url: Some("https://api.example.com".to_string()),
             api_key: Some("mockapikey".to_string()),
             model: LLMProviderInterface::OpenAI(OpenAI {
@@ -92,7 +92,7 @@ impl SerializedLLMProvider {
             id: "mock_agent_reasoning".to_string(),
             name: Some("Mock Agent Reasoning".to_string()),
             description: Some("A mock agent with reasoning for testing.".to_string()),
-            full_identity_name: HanzoName::new("@@test.hanzo/main/agent/mock_agent_reasoning".to_string()).unwrap(),
+            full_identity_name: HanzoName::new("did:hanzo:test/main/agent/mock_agent_reasoning".to_string()).unwrap(),
             external_url: Some("https://api.example.com".to_string()),
             api_key: Some("mockapikey".to_string()),
             model: LLMProviderInterface::OpenAI(OpenAI {

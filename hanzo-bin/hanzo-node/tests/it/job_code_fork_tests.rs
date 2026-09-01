@@ -201,7 +201,7 @@ fn test_job_code_fork() {
                         homepage: None,
                         version: "1.0.0".to_string(),
                         description: "A Hanzo Node running in the directory of its home path.".to_string(),
-                        author: "@@localhost.sep-hanzo".to_string(),
+                        author: "did:hanzo:localhost".to_string(),
                         keywords: vec![],
                         configurations: vec![],
                         parameters: Parameters {

@@ -23,7 +23,6 @@ services:
     container_name: hanzo-node
     restart: "always"
     environment:
-      - GLOBAL_IDENTITY_NAME=@@localhost.hanzo
       - FIRST_DEVICE_NEEDS_REGISTRATION_CODE=false
       - STARTING_NUM_QR_PROFILES=0
       - STARTING_NUM_QR_DEVICES=0

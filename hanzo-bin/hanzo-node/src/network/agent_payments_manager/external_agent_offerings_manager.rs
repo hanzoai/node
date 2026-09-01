@@ -657,15 +657,7 @@ impl ExtAgentOfferingsManager {
                     drop(identity_manager);
                     let receiver_public_key = standard_identity.node_encryption_public_key;
 
-                    let receiver_node_name = if invoice_request
-                        .requester_name
-                        .get_node_name_string()
-                        .starts_with("@@localhost.")
-                    {
-                        requester_node_name.to_string()
-                    } else {
-                        invoice_request.requester_name.to_string()
-                    };
+                    let receiver_node_name = invoice_request.requester_name.to_string();
 
                     let error_message = HanzoMessageBuilder::create_generic_invoice_message(
                         network_error.clone(),
@@ -711,15 +703,7 @@ impl ExtAgentOfferingsManager {
             drop(identity_manager);
 
             let receiver_public_key = standard_identity.node_encryption_public_key;
-            let receiver_node_name = if invoice_request
-                .requester_name
-                .get_node_name_string()
-                .starts_with("@@localhost.")
-            {
-                requester_node_name.to_string()
-            } else {
-                invoice_request.requester_name.to_string()
-            };
+            let receiver_node_name = invoice_request.requester_name.to_string();
 
             // Generate the message to request the invoice
             let message = HanzoMessageBuilder::create_generic_invoice_message(
@@ -993,15 +977,7 @@ impl ExtAgentOfferingsManager {
             drop(identity_manager);
             let receiver_public_key = standard_identity.node_encryption_public_key;
 
-            let receiver_node_name = if invoice
-                .requester_name
-                .get_node_name_string()
-                .starts_with("@@localhost.")
-            {
-                requester_node_name.to_string()
-            } else {
-                invoice.requester_name.to_string()
-            };
+            let receiver_node_name = invoice.requester_name.to_string();
 
             // Send result back to requester
             let message = HanzoMessageBuilder::create_generic_invoice_message(
@@ -1164,7 +1140,7 @@ mod tests {
             let (_, node1_encryption_pk) = unsafe_deterministic_encryption_keypair(0);
 
             let dummy_standard_identity = Identity::Standard(StandardIdentity {
-                full_identity_name: HanzoName::new("@@node1.hanzo/main_profile_node1".to_string()).unwrap(),
+                full_identity_name: HanzoName::new("did:hanzo:node1/main_profile_node1".to_string()).unwrap(),
                 addr: None,
                 node_encryption_public_key: node1_encryption_pk,
                 node_signature_public_key: node1_identity_pk,
@@ -1184,7 +1160,7 @@ mod tests {
     #[async_trait]
     impl IdentityManagerTrait for MockIdentityManager {
         fn find_by_identity_name(&self, _full_profile_name: HanzoName) -> Option<&Identity> {
-            if _full_profile_name.to_string() == "@@node1.hanzo/main" {
+            if _full_profile_name.to_string() == "did:hanzo:node1/main" {
                 Some(&self.dummy_standard_identity)
             } else {
                 None
@@ -1192,7 +1168,7 @@ mod tests {
         }
 
         async fn search_identity(&self, full_identity_name: &str) -> Option<Identity> {
-            if full_identity_name == "@@node1.hanzo/main" {
+            if full_identity_name == "did:hanzo:node1/main" {
                 Some(self.dummy_standard_identity.clone())
             } else {
                 None
@@ -1216,7 +1192,7 @@ mod tests {
             _full_profile_name: &str,
             _: Option<bool>,
         ) -> Result<(bool, Vec<String>), String> {
-            if _full_profile_name.to_string() == "@@node1.hanzo/main" {
+            if _full_profile_name.to_string() == "did:hanzo:node1/main" {
                 Ok((false, vec!["127.0.0.1:9552".to_string()]))
             } else {
                 Err("Identity not found".to_string())
@@ -1233,10 +1209,10 @@ mod tests {
     }
 
     fn default_test_profile() -> HanzoName {
-        HanzoName::new("@@localhost.sep-hanzo/main".to_string()).unwrap()
+        HanzoName::new("did:hanzo:localhost/main".to_string()).unwrap()
     }
 
     fn node_name() -> HanzoName {
-        HanzoName::new("@@localhost.sep-hanzo".to_string()).unwrap()
+        HanzoName::new("did:hanzo:localhost".to_string()).unwrap()
     }
 }

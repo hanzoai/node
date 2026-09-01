@@ -707,7 +707,7 @@ impl ToolRouter {
             }]));
 
             // Manually create NetworkTool
-            let provider = HanzoName::new("@@node1_test.sep-hanzo".to_string()).unwrap();
+            let provider = HanzoName::new("did:hanzo:node1_test".to_string()).unwrap();
             let tool_router_key = ToolRouterKey::new(
                 provider.to_string(),
                 "@@official.hanzo".to_string(),

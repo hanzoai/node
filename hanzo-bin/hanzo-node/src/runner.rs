@@ -144,6 +144,17 @@ pub async fn initialize_node() -> Result<
         .filter(|name| !name.is_empty())
         .unwrap_or_else(|| HanzoName::did(&node_keys.identity_public_key));
 
+    if let Err(e) = HanzoName::validate_name(&global_identity_name) {
+        return Err(Box::new(std::io::Error::new(
+            std::io::ErrorKind::InvalidData,
+            format!(
+                "GLOBAL_IDENTITY_NAME {global_identity_name:?} in {secrets_file_path} is not a Hanzo identity: {e} \
+                 This node's identity is {}. Delete the storage directory to start again under it.",
+                HanzoName::did(&node_keys.identity_public_key)
+            ),
+        )));
+    }
+
     // Every other reader of the node's name reaches it through the environment or
     // through node_env, both of which were read before the keys existed.
     env::set_var("GLOBAL_IDENTITY_NAME", &global_identity_name);
@@ -413,17 +424,7 @@ fn parse_secrets_file(secrets_file_path: &str) -> HashMap<String, String> {
 
     for line in contents.lines() {
         if let Some((key, value)) = line.split_once('=') {
-            // Handle migration of old identity format for GLOBAL_IDENTITY_NAME
-            if key == "GLOBAL_IDENTITY_NAME" {
-                let updated_value = if value.contains(".arb-sep-hanzo") {
-                    value.replace(".arb-sep-hanzo", ".sep-hanzo")
-                } else {
-                    value.to_string()
-                };
-                map.insert(key.to_string(), updated_value);
-            } else {
-                map.insert(key.to_string(), value.to_string());
-            }
+            map.insert(key.to_string(), value.to_string());
         }
     }
 

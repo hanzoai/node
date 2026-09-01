@@ -12,7 +12,7 @@ fn get_echo_tool_json_string() -> String {
             {
                 "activated": false,
                 "assets": [],
-                "author": "@@localhost.sep-hanzo",
+                "author": "did:hanzo:localhost",
                 "config": [],
                 "configFormData": {},
                 "configurations": { "properties": {}, "required": [], "type": "object" },

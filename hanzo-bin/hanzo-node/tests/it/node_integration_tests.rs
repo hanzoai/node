@@ -51,9 +51,9 @@ fn subidentity_registration() {
     let rt = Runtime::new().unwrap();
 
     let e = rt.block_on(async {
-        let node1_identity_name = "@@node1_with_libp2p_relayer.sep-hanzo";
-        let node2_identity_name = "@@node2_with_libp2p_relayer.sep-hanzo";
-        let relay_identity_name = Some("@@libp2p_relayer.sep-hanzo".to_string());
+        let node1_identity_name = "did:hanzo:node1_with_libp2p_relayer";
+        let node2_identity_name = "did:hanzo:node2_with_libp2p_relayer";
+        let relay_identity_name = Some("did:hanzo:libp2p_relayer".to_string());
         let node1_profile_name = "main";
         let node1_device_name = "node1_device";
         let node2_profile_name = "main";
@@ -695,9 +695,9 @@ fn test_relay_server_communication() {
     let rt = Runtime::new().unwrap();
 
     let e: Result<(), tokio::task::JoinError> = rt.block_on(async {
-        let node1_identity_name = "@@node1_with_libp2p_relayer.sep-hanzo";
-        let node2_identity_name = "@@node2_with_libp2p_relayer.sep-hanzo";
-        let relay_identity_name = Some("@@libp2p_relayer.sep-hanzo".to_string());
+        let node1_identity_name = "did:hanzo:node1_with_libp2p_relayer";
+        let node2_identity_name = "did:hanzo:node2_with_libp2p_relayer";
+        let relay_identity_name = Some("did:hanzo:libp2p_relayer".to_string());
 
         let (node1_identity_sk, node1_identity_pk) = unsafe_deterministic_signature_keypair(0);
         let (node1_encryption_sk, node1_encryption_pk) = unsafe_deterministic_encryption_keypair(0);
@@ -1103,9 +1103,9 @@ fn test_localhost_relay_server_communication() {
     let rt = Runtime::new().unwrap();
 
     let e: Result<(), tokio::task::JoinError> = rt.block_on(async {
-        let node1_identity_name = "@@node1_with_libp2p_relayer.sep-hanzo";
-        let node2_identity_name = "@@localhost.sep-hanzo";
-        let relay_identity_name = Some("@@libp2p_relayer.sep-hanzo".to_string());
+        let node1_identity_name = "did:hanzo:node1_with_libp2p_relayer";
+        let node2_identity_name = "did:hanzo:localhost";
+        let relay_identity_name = Some("did:hanzo:libp2p_relayer".to_string());
 
         let (node1_identity_sk, node1_identity_pk) = unsafe_deterministic_signature_keypair(0);
         let (node1_encryption_sk, node1_encryption_pk) = unsafe_deterministic_encryption_keypair(0);
@@ -1466,9 +1466,9 @@ fn test_send_message_to_localhost_node() {
     let rt = Runtime::new().unwrap();
 
     let e: Result<(), tokio::task::JoinError> = rt.block_on(async {
-        let node1_identity_name = "@@node1_with_libp2p_relayer.sep-hanzo";
-        let node2_identity_name = "@@localhost.sep-hanzo";
-        let relay_identity_name = Some("@@libp2p_relayer.sep-hanzo".to_string());
+        let node1_identity_name = "did:hanzo:node1_with_libp2p_relayer";
+        let node2_identity_name = "did:hanzo:localhost";
+        let relay_identity_name = Some("did:hanzo:libp2p_relayer".to_string());
 
         // Get relay's encryption public key from blockchain identity
         let relay_encryption_pk = {

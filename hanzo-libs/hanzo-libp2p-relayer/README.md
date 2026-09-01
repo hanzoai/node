@@ -48,7 +48,7 @@ docker run -d \
   --name hanzo-relay \
   --network="host" \
   -e RELAY_PORT=9090 \
-  -e NODE_NAME="@@my-relay.sep-hanzo" \
+  -e NODE_NAME="did:hanzo:my_relay" \
   your-relay-image:latest
 ```
 
@@ -66,7 +66,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     
     let mut relay_manager = RelayManager::new(
         9090, // Listen port
-        "@@my-relay.sep-hanzo".to_string(),
+        "did:hanzo:my_relay".to_string(),
         identity_secret_key,
     ).await?;
     

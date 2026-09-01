@@ -42,6 +42,12 @@ pub async fn main() {
 
     println!("Starting Hanzo Node...");
 
-    let result = initialize_node().await.unwrap();
+    let result = match initialize_node().await {
+        Ok(result) => result,
+        Err(e) => {
+            eprintln!("Hanzo Node did not start: {e}");
+            std::process::exit(1);
+        }
+    };
     let _ = run_node_tasks(result.1, result.2, result.3, result.4).await;
 }

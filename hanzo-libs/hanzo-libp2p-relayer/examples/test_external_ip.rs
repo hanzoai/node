@@ -26,7 +26,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     // Create the relay manager - this will automatically detect external IP
     let relay_manager = RelayManager::new(
         9999, // Test port
-        "@@test-relay.sep-hanzo".to_string(),
+        "did:hanzo:test_relay".to_string(),
         identity_secret_key,
         encryption_secret_key,
         registry,

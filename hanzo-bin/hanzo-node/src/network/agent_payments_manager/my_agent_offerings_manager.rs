@@ -927,7 +927,7 @@ mod tests {
             let (_, node1_encryption_pk) = unsafe_deterministic_encryption_keypair(0);
 
             let dummy_standard_identity = Identity::Standard(StandardIdentity {
-                full_identity_name: HanzoName::new("@@localhost.sep-hanzo/main".to_string()).unwrap(),
+                full_identity_name: HanzoName::new("did:hanzo:localhost/main".to_string()).unwrap(),
                 addr: None,
                 node_encryption_public_key: node1_encryption_pk,
                 node_signature_public_key: node1_identity_pk,
@@ -946,7 +946,7 @@ mod tests {
     #[async_trait]
     impl IdentityManagerTrait for MockIdentityManager {
         fn find_by_identity_name(&self, _full_profile_name: HanzoName) -> Option<&Identity> {
-            if _full_profile_name.to_string() == "@@localhost.sep-hanzo/main" {
+            if _full_profile_name.to_string() == "did:hanzo:localhost/main" {
                 Some(&self.dummy_standard_identity)
             } else {
                 None
@@ -954,7 +954,7 @@ mod tests {
         }
 
         async fn search_identity(&self, full_identity_name: &str) -> Option<Identity> {
-            if full_identity_name == "@@localhost.sep-hanzo/main" {
+            if full_identity_name == "did:hanzo:localhost/main" {
                 Some(self.dummy_standard_identity.clone())
             } else {
                 None
@@ -970,7 +970,7 @@ mod tests {
             full_profile_name: &str,
             _: Option<bool>,
         ) -> Result<StandardIdentity, String> {
-            if full_profile_name == "@@localhost.sep-hanzo" {
+            if full_profile_name == "did:hanzo:localhost" {
                 if let Identity::Standard(identity) = &self.dummy_standard_identity {
                     Ok(identity.clone())
                 } else {
@@ -986,7 +986,7 @@ mod tests {
             _full_profile_name: &str,
             _: Option<bool>,
         ) -> Result<(bool, Vec<String>), String> {
-            if _full_profile_name.to_string() == "@@node1.hanzo/main" {
+            if _full_profile_name.to_string() == "did:hanzo:node1/main" {
                 Ok((false, vec!["127.0.0.1:9552".to_string()]))
             } else {
                 Err("Identity not found".to_string())
@@ -1003,11 +1003,11 @@ mod tests {
     }
 
     fn default_test_profile() -> HanzoName {
-        HanzoName::new("@@localhost.sep-hanzo/main".to_string()).unwrap()
+        HanzoName::new("did:hanzo:localhost/main".to_string()).unwrap()
     }
 
     fn node_name() -> HanzoName {
-        HanzoName::new("@@localhost.sep-hanzo".to_string()).unwrap()
+        HanzoName::new("did:hanzo:localhost".to_string()).unwrap()
     }
 
     // async fn setup_default_vector_fs() -> VectorFS {
@@ -1046,7 +1046,7 @@ mod tests {
     //     ));
 
     //     let tool_router = Arc::new(ToolRouter::new(lance_db.clone()));
-    //     let node_name = HanzoName::new("@@localhost.sep-hanzo/main".to_string()).unwrap();
+    //     let node_name = HanzoName::new("did:hanzo:localhost/main".to_string()).unwrap();
 
     //     let (my_signature_secret_key, _) = unsafe_deterministic_signature_keypair(0);
     //     let (my_encryption_secret_key, _) = unsafe_deterministic_encryption_keypair(0);
@@ -1077,7 +1077,7 @@ mod tests {
     //         "hanzo_toolkit".to_string(),
     //         "A tool for testing".to_string(),
     //         "1.0".to_string(),
-    //         HanzoName::new("@@localhost.sep-hanzo".to_string()).unwrap(),
+    //         HanzoName::new("did:hanzo:localhost".to_string()).unwrap(),
     //         UsageType::PerUse(ToolPrice::DirectDelegation("0.01".to_string())),
     //         true,
     //         vec![],

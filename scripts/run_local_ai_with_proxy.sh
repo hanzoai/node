@@ -24,7 +24,6 @@ export SUBSCRIPTION_HTTP_UPLOAD_INTERVAL_MINUTES="1"
 export SUBSCRIPTION_UPDATE_CACHE_INTERVAL_MINUTES="1"
 export LOG_ALL="1"
 export DEBUG_VRKAI="1"
-# export PROXY_IDENTITY="@@kao_tcp_relayer.sep-hanzo"
-export PROXY_IDENTITY="@@relayer_pub_01.sep-hanzo"
+export PROXY_IDENTITY="${PROXY_IDENTITY:?the relay DID this node connects through}"
 
 cargo run --bin hanzo_node --package hanzo_node

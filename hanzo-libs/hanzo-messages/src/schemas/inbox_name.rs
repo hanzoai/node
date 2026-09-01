@@ -228,13 +228,13 @@ mod tests {
     #[test]
     fn valid_inbox_names() {
         let valid_names = vec![
-            "inbox::@@node.hanzo::true",
-            "inbox::@@node1.hanzo/subidentity::false",
-            "inbox::@@node.sep-hanzo/subidentity::true",
-            "inbox::@@alice.hanzo/profileName/agent/myChatGPTAgent::true",
-            "inbox::@@alice.hanzo/profileName/device/myPhone::true",
-            "inbox::@@node1.hanzo/subidentity::@@node2.hanzo/subidentity2::false",
-            "inbox::@@node1.hanzo/subidentity::@@node2.hanzo/subidentity::@@node3.hanzo/subidentity2::false",
+            "inbox::did:hanzo:node::true",
+            "inbox::did:hanzo:node1/subidentity::false",
+            "inbox::did:hanzo:node/subidentity::true",
+            "inbox::did:hanzo:alice/profileName/agent/myChatGPTAgent::true",
+            "inbox::did:hanzo:alice/profileName/device/myPhone::true",
+            "inbox::did:hanzo:node1/subidentity::did:hanzo:node2/subidentity2::false",
+            "inbox::did:hanzo:node1/subidentity::did:hanzo:node2/subidentity::did:hanzo:node3/subidentity2::false",
         ];
 
         for name in valid_names {
@@ -246,14 +246,14 @@ mod tests {
     #[test]
     fn invalid_inbox_names() {
         let invalid_names = vec![
-            "@@node1.hanzo::false",
-            "inbox::@@node1.hanzo::falsee",
-            "@@node1.hanzo",
-            "inbox::@@node1.hanzo",
+            "did:hanzo:node1::false",
+            "inbox::did:hanzo:node1::falsee",
+            "did:hanzo:node1",
+            "inbox::did:hanzo:node1",
             "inbox::node1::false",
             "inbox::node1.hanzo::false",
             "inbox::@@node1::false",
-            "inbox::@@node1.hanzo//subidentity::@@node2.hanzo::false",
+            "inbox::did:hanzo:node1//subidentity::did:hanzo:node2::false",
             "inbox::@@node1/subidentity::false",
         ];
 
@@ -305,7 +305,7 @@ mod tests {
     // Test creation of InboxNameManager instance from an inbox name
     #[test]
     fn test_from_inbox_name() {
-        let inbox_name = "inbox::@@node1.hanzo/subidentity::@@node2.hanzo/subidentity2::true".to_string();
+        let inbox_name = "inbox::did:hanzo:node1/subidentity::did:hanzo:node2/subidentity2::true".to_string();
         let manager = InboxName::new(inbox_name.clone()).unwrap();
 
         match &manager {
@@ -325,15 +325,15 @@ mod tests {
                 internal_metadata: InternalMetadata {
                     sender_subidentity: "".into(),
                     recipient_subidentity: "".into(),
-                    inbox: "inbox::@@node1.hanzo/subidentity::@@node2.hanzo/subidentity2::true".into(),
+                    inbox: "inbox::did:hanzo:node1/subidentity::did:hanzo:node2/subidentity2::true".into(),
                     signature: "".into(),
                     encryption: EncryptionMethod::None,
                     node_api_data: None,
                 },
             }),
             external_metadata: ExternalMetadata {
-                sender: "@@node2.hanzo".into(),
-                recipient: "@@node1.hanzo".into(),
+                sender: "did:hanzo:node2".into(),
+                recipient: "did:hanzo:node1".into(),
                 scheduled_time: "20230714T19363326163".into(),
                 signature: "3PLx2vZV8kccEEbwPepPQYv2D5zaiSFJXy3JtK57fLuKyh7TBJmcwqMkuCnzLgzAxoatAyKnUSf41smqijpiPBFJ"
                     .into(),
@@ -348,7 +348,7 @@ mod tests {
         match &manager {
             InboxName::RegularInbox { value, .. } => assert_eq!(
                 value,
-                "inbox::@@node1.hanzo/subidentity::@@node2.hanzo/subidentity2::true"
+                "inbox::did:hanzo:node1/subidentity::did:hanzo:node2/subidentity2::true"
             ),
             _ => panic!("Expected RegularInbox variant"),
         }
@@ -365,15 +365,15 @@ mod tests {
                 internal_metadata: InternalMetadata {
                     sender_subidentity: "".into(),
                     recipient_subidentity: "".into(),
-                    inbox: "1nb0x::@@node1.hanzo/subidentity::@@node2.hanzo/subidentity2::truee".into(),
+                    inbox: "1nb0x::did:hanzo:node1/subidentity::did:hanzo:node2/subidentity2::truee".into(),
                     signature: "".into(),
                     encryption: EncryptionMethod::None,
                     node_api_data: None,
                 },
             }),
             external_metadata: ExternalMetadata {
-                sender: "@@node2.hanzo".into(),
-                recipient: "@@node1.hanzo".into(),
+                sender: "did:hanzo:node2".into(),
+                recipient: "did:hanzo:node1".into(),
                 scheduled_time: "20230714T19363326163".into(),
                 signature: "3PLx2vZV8kccEEbwPepPQYv2D5zaiSFJXy3JtK57fLuKyh7TBJmcwqMkuCnzLgzAxoatAyKnUSf41smqijpiPBFJ"
                     .into(),
@@ -390,28 +390,9 @@ mod tests {
 
     #[test]
     fn test_get_inbox_name_from_params_valid() {
-        let sender = "@@sender.hanzo".to_string();
+        let sender = "did:hanzo:sender".to_string();
         let sender_subidentity = "subidentity".to_string();
-        let recipient = "@@recipient.hanzo".to_string();
-        let recipient_subidentity = "subidentity2".to_string();
-        let is_e2e = true;
-
-        let result = InboxName::get_regular_inbox_name_from_params(
-            sender,
-            sender_subidentity,
-            recipient,
-            recipient_subidentity,
-            is_e2e,
-        );
-
-        assert!(result.is_ok(), "Expected valid conversion");
-    }
-
-    #[test]
-    fn test_get_inbox_name_from_reparable_params() {
-        let sender = "sender.hanzo".to_string();
-        let sender_subidentity = "subidentity".to_string();
-        let recipient = "@@recipient".to_string();
+        let recipient = "did:hanzo:recipient".to_string();
         let recipient_subidentity = "subidentity2".to_string();
         let is_e2e = true;
 
@@ -430,7 +411,7 @@ mod tests {
     fn test_get_inbox_name_from_params_invalid() {
         let sender = "invald.sender".to_string(); // Invalid sender
         let sender_subidentity = "subidentity//1".to_string();
-        let recipient = "@@@recipient.hanzo".to_string();
+        let recipient = "recipient".to_string();
         let recipient_subidentity = "subidentity2".to_string();
         let is_e2e = true;
 
@@ -448,12 +429,12 @@ mod tests {
     #[test]
     fn test_has_creation_access() {
         let manager = InboxName::new(
-            "inbox::@@node1.hanzo/subidentity::@@node2.hanzo::@@node3.hanzo/subidentity3::true".to_string(),
+            "inbox::did:hanzo:node1/subidentity::did:hanzo:node2::did:hanzo:node3/subidentity3::true".to_string(),
         )
         .unwrap();
 
-        let identity_name = HanzoName::new("@@node1.hanzo/subidentity".to_string()).unwrap();
-        let identity_name_2 = HanzoName::new("@@node2.hanzo/subidentity".to_string()).unwrap();
+        let identity_name = HanzoName::new("did:hanzo:node1/subidentity".to_string()).unwrap();
+        let identity_name_2 = HanzoName::new("did:hanzo:node2/subidentity".to_string()).unwrap();
 
         match manager.has_creation_access(identity_name) {
             Ok(access) => assert!(access, "Expected identity to have creation access"),
@@ -477,7 +458,7 @@ mod tests {
                 internal_metadata: InternalMetadata {
                     sender_subidentity: "subidentity2".into(),
                     recipient_subidentity: "".into(),
-                    inbox: "inbox::@@node1.hanzo::@@node2.hanzo/subidentity2::true".into(),
+                    inbox: "inbox::did:hanzo:node1::did:hanzo:node2/subidentity2::true".into(),
                     signature: "".into(),
                     encryption: EncryptionMethod::None,
                     node_api_data: Some(NodeApiData {
@@ -488,8 +469,8 @@ mod tests {
                 },
             }),
             external_metadata: ExternalMetadata {
-                sender: "@@node2.hanzo".into(),
-                recipient: "@@node1.hanzo".into(),
+                sender: "did:hanzo:node2".into(),
+                recipient: "did:hanzo:node1".into(),
                 scheduled_time: "20230714T19363326163".into(),
                 signature: "3PLx2vZV8kccEEbwPepPQYv2D5zaiSFJXy3JtK57fLuKyh7TBJmcwqMkuCnzLgzAxoatAyKnUSf41smqijpiPBFJ"
                     .into(),
@@ -518,7 +499,7 @@ mod tests {
                 internal_metadata: InternalMetadata {
                     sender_subidentity: "subidentity3".into(),
                     recipient_subidentity: "".into(),
-                    inbox: "inbox::@@node1.hanzo::@@node2.hanzo::true".into(),
+                    inbox: "inbox::did:hanzo:node1::did:hanzo:node2::true".into(),
                     signature: "".into(),
                     encryption: EncryptionMethod::None,
                     node_api_data: Some(NodeApiData {
@@ -529,8 +510,8 @@ mod tests {
                 },
             }),
             external_metadata: ExternalMetadata {
-                sender: "@@node3.hanzo".into(),
-                recipient: "@@node1.hanzo".into(),
+                sender: "did:hanzo:node3".into(),
+                recipient: "did:hanzo:node1".into(),
                 scheduled_time: "20230714T19363326163".into(),
                 signature: "3PLx2vZV8kccEEbwPepPQYv2D5zaiSFJXy3JtK57fLuKyh7TBJmcwqMkuCnzLgzAxoatAyKnUSf41smqijpiPBFJ"
                     .into(),

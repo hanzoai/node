@@ -76,11 +76,11 @@ fn generate_message_with_text(
 }
 
 fn default_test_profile() -> HanzoName {
-    HanzoName::new("@@localhost.hanzo/profileName".to_string()).unwrap()
+    HanzoName::new("did:hanzo:localhost/profileName".to_string()).unwrap()
 }
 
 fn node_name() -> HanzoName {
-    HanzoName::new("@@localhost.hanzo".to_string()).unwrap()
+    HanzoName::new("did:hanzo:localhost".to_string()).unwrap()
 }
 
 #[tokio::test]
@@ -89,7 +89,7 @@ async fn test_process_job_queue_concurrency() {
     let db = utils::db_handlers::setup_test_db();
     let db = Arc::new(db);
     let (node_identity_sk, _) = unsafe_deterministic_signature_keypair(0);
-    let node_name = HanzoName::new("@@node1.hanzo".to_string()).unwrap();
+    let node_name = HanzoName::new("did:hanzo:node1".to_string()).unwrap();
 
     // Mock job processing function
     let mock_processing_fn = |job: JobForProcessing,
@@ -117,7 +117,7 @@ async fn test_process_job_queue_concurrency() {
                 clone_signature_secret_key(&node1_identity_sk),
                 node1_encryption_pk,
                 "".to_string(),
-                "@@node1.hanzo".to_string(),
+                "did:hanzo:node1".to_string(),
                 "2023-07-02T20:53:34.812Z".to_string(),
             );
 
@@ -195,7 +195,7 @@ async fn test_process_job_queue_concurrency() {
                 job_filenames: vec![],
                 tools: None,
             },
-            HanzoName::new("@@node1.hanzo/main".to_string()).unwrap(),
+            HanzoName::new("did:hanzo:node1/main".to_string()).unwrap(),
             None,
         );
         job_queue
@@ -233,7 +233,7 @@ async fn test_sequential_process_for_same_job_id() {
     let db = utils::db_handlers::setup_test_db();
     let db = Arc::new(db);
     let (node_identity_sk, _) = unsafe_deterministic_signature_keypair(0);
-    let node_name = HanzoName::new("@@node1.hanzo".to_string()).unwrap();
+    let node_name = HanzoName::new("did:hanzo:node1".to_string()).unwrap();
 
     // Mock job processing function
     let mock_processing_fn = |job: JobForProcessing,
@@ -261,7 +261,7 @@ async fn test_sequential_process_for_same_job_id() {
                 clone_signature_secret_key(&node1_identity_sk),
                 node1_encryption_pk,
                 "".to_string(),
-                "@@node1.hanzo".to_string(),
+                "did:hanzo:node1".to_string(),
                 "2023-07-02T20:53:34.812Z".to_string(),
             );
 
@@ -338,7 +338,7 @@ async fn test_sequential_process_for_same_job_id() {
                 job_filenames: vec![],
                 tools: None,
             },
-            HanzoName::new("@@node1.hanzo/main".to_string()).unwrap(),
+            HanzoName::new("did:hanzo:node1/main".to_string()).unwrap(),
             None,
         );
         job_queue.push("job_id::123::false", job).await.unwrap();

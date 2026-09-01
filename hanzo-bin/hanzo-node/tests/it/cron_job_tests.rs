@@ -55,7 +55,7 @@
 //     //     let db_weak = Arc::downgrade(&db);
 //     //     let (identity_secret_key, identity_public_key) = unsafe_deterministic_signature_keypair(0);
 //     //     let (_, encryption_public_key) = unsafe_deterministic_encryption_keypair(0);
-//     //     let node_profile_name = HanzoName::new("@@localhost.hanzo/main".to_string()).unwrap();
+//     //     let node_profile_name = HanzoName::new("did:hanzo:localhost/main".to_string()).unwrap();
 //     //     let agent_id = "agent_id1".to_string();
 //     //     let agent_name =
 //     //         HanzoName::new(format!("{}/agent/{}", node_profile_name.clone(), agent_id.clone()).to_string()).unwrap();

@@ -2120,7 +2120,7 @@ mod tests {
             "Input args should contain 'Hello, world!' message"
         );
 
-        let provider = HanzoName::new("@@agent_provider.sep-hanzo".to_string()).unwrap();
+        let provider = HanzoName::new("did:hanzo:agent_provider".to_string()).unwrap();
         let tool_router_key = ToolRouterKey::new(
             provider.to_string(),
             "Author 3".to_string(),

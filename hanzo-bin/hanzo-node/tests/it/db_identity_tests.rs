@@ -42,7 +42,7 @@ async fn create_local_node_profile(
 
 #[tokio::test]
 async fn test_generate_and_use_registration_code_for_specific_profile() {
-    let node_profile_name = "@@node1.hanzo";
+    let node_profile_name = "did:hanzo:node1";
     let (_, identity_pk) = unsafe_deterministic_signature_keypair(0);
     let (_, encryption_pk) = unsafe_deterministic_encryption_keypair(0);
     let db = setup_test_db();
@@ -82,7 +82,7 @@ async fn test_generate_and_use_registration_code_for_specific_profile() {
 
 #[tokio::test]
 async fn test_generate_and_use_registration_code_for_device() {
-    let node_profile_name = "@@node1.hanzo";
+    let node_profile_name = "did:hanzo:node1";
     let (_identity_sk, identity_pk) = unsafe_deterministic_signature_keypair(0);
     let (_encryption_sk, encryption_pk) = unsafe_deterministic_encryption_keypair(0);
     let db = setup_test_db();
@@ -155,7 +155,7 @@ async fn test_generate_and_use_registration_code_for_device() {
 
 #[tokio::test]
 async fn test_generate_and_use_registration_code_for_device_with_main_profile() {
-    let node_profile_name = "@@node1.hanzo";
+    let node_profile_name = "did:hanzo:node1";
     let (_identity_sk, identity_pk) = unsafe_deterministic_signature_keypair(0);
     let (_encryption_sk, encryption_pk) = unsafe_deterministic_encryption_keypair(0);
     let db = setup_test_db();
@@ -225,7 +225,7 @@ async fn test_generate_and_use_registration_code_for_device_with_main_profile() 
 
 #[tokio::test]
 async fn test_generate_and_use_registration_code_no_associated_profile() {
-    let node_profile_name = "@@node1.hanzo";
+    let node_profile_name = "did:hanzo:node1";
     let (_identity_sk, identity_pk) = unsafe_deterministic_signature_keypair(0);
     let (_encryption_sk, encryption_pk) = unsafe_deterministic_encryption_keypair(0);
     let db = setup_test_db();
@@ -270,7 +270,7 @@ async fn test_generate_and_use_registration_code_no_associated_profile() {
 
 #[tokio::test]
 async fn test_new_load_all_sub_identities() {
-    let node_profile_name = HanzoName::new("@@node1.hanzo".to_string()).unwrap();
+    let node_profile_name = HanzoName::new("did:hanzo:node1".to_string()).unwrap();
     let (_identity_sk, identity_pk) = unsafe_deterministic_signature_keypair(0);
     let (_encryption_sk, encryption_pk) = unsafe_deterministic_encryption_keypair(0);
     let db = setup_test_db();
@@ -341,7 +341,7 @@ async fn test_new_load_all_sub_identities() {
 
 #[tokio::test]
 async fn test_new_insert_profile() {
-    let node_profile_name = "@@node1.hanzo";
+    let node_profile_name = "did:hanzo:node1";
     let (_identity_sk, identity_pk) = unsafe_deterministic_signature_keypair(0);
     let (_encryption_sk, encryption_pk) = unsafe_deterministic_encryption_keypair(0);
     let db = setup_test_db();
@@ -380,7 +380,7 @@ async fn test_new_insert_profile() {
 
 #[tokio::test]
 async fn test_remove_profile() {
-    let node_profile_name = "@@node1.hanzo";
+    let node_profile_name = "did:hanzo:node1";
     let (_identity_sk, identity_pk) = unsafe_deterministic_signature_keypair(0);
     let (_encryption_sk, encryption_pk) = unsafe_deterministic_encryption_keypair(0);
     let db = setup_test_db();

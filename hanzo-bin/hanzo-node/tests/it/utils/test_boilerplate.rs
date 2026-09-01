@@ -84,7 +84,7 @@ where
     }
 
     let status = rt.block_on(async {
-        let node1_identity_name = "@@node1_test.sep-hanzo";
+        let node1_identity_name = "did:hanzo:node1_test";
         let node1_profile_name = "main";
         let node1_device_name = "node1_device";
         let node1_llm_provider = "node1_gpt_agent";

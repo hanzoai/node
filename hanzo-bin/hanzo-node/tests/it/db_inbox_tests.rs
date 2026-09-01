@@ -71,7 +71,7 @@ fn generate_message_with_text(
 
 #[tokio::test]
 async fn test_insert_single_message_and_retrieve() {
-    let node_identity_name = "@@node.hanzo";
+    let node_identity_name = "did:hanzo:node";
     let subidentity_name = "main";
     let (node_identity_sk, _) = unsafe_deterministic_signature_keypair(0);
     let (node_encryption_sk, node_encryption_pk) = unsafe_deterministic_encryption_keypair(0);
@@ -114,7 +114,7 @@ async fn test_insert_single_message_and_retrieve() {
 
 #[tokio::test]
 async fn test_insert_two_messages_and_check_order_and_parent() {
-    let node_identity_name = "@@node.hanzo";
+    let node_identity_name = "did:hanzo:node";
     let subidentity_name = "main_profile_node";
     let (node_identity_sk, _) = unsafe_deterministic_signature_keypair(0);
     let (node_encryption_sk, node_encryption_pk) = unsafe_deterministic_encryption_keypair(0);
@@ -221,7 +221,7 @@ async fn test_insert_two_messages_and_check_order_and_parent() {
 
 #[tokio::test]
 async fn test_insert_messages_with_simple_tree_structure() {
-    let node1_identity_name = "@@node1.hanzo";
+    let node1_identity_name = "did:hanzo:node1";
     let node1_subidentity_name = "main_profile_node1";
     let (node1_identity_sk, _) = unsafe_deterministic_signature_keypair(0);
     let (node1_encryption_sk, node1_encryption_pk) = unsafe_deterministic_encryption_keypair(0);
@@ -337,7 +337,7 @@ async fn test_insert_messages_with_simple_tree_structure() {
 
 #[tokio::test]
 async fn test_insert_messages_with_simple_tree_structure_and_root() {
-    let node1_identity_name = "@@node1.hanzo";
+    let node1_identity_name = "did:hanzo:node1";
     let node1_subidentity_name = "main_profile_node1";
     let (node1_identity_sk, _) = unsafe_deterministic_signature_keypair(0);
     let (node1_encryption_sk, node1_encryption_pk) = unsafe_deterministic_encryption_keypair(0);
@@ -534,7 +534,7 @@ async fn test_insert_messages_with_simple_tree_structure_and_root() {
 
 #[tokio::test]
 async fn test_insert_messages_with_tree_structure() {
-    let node1_identity_name = "@@node1.hanzo";
+    let node1_identity_name = "did:hanzo:node1";
     let node1_subidentity_name = "main_profile_node1";
     let (node1_identity_sk, _) = unsafe_deterministic_signature_keypair(0);
     let (node1_encryption_sk, _) = unsafe_deterministic_encryption_keypair(0);
@@ -762,7 +762,7 @@ async fn test_insert_messages_with_tree_structure() {
 
 #[tokio::test]
 async fn db_inbox() {
-    let node1_identity_name = "@@node1.hanzo";
+    let node1_identity_name = "did:hanzo:node1";
     let node1_subidentity_name = "main_profile_node1";
 
     let (node1_identity_sk, _node1_identity_pk) = unsafe_deterministic_signature_keypair(0);
@@ -806,7 +806,7 @@ async fn db_inbox() {
     println!("Inbox name: {}", inbox_name_value);
     assert_eq!(
         inbox_name_value,
-        "inbox::@@node1.hanzo::@@node1.hanzo/main_profile_node1::false".to_string()
+        "inbox::did:hanzo:node1::did:hanzo:node1/main_profile_node1::false".to_string()
     );
 
     println!("Inbox name: {}", inbox_name_value.to_string());

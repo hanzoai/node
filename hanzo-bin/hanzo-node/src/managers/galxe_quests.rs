@@ -310,12 +310,6 @@ pub async fn compute_create_identity_quest(
     encryption_public_key: EncryptionPublicKey,
     identity_public_key: VerifyingKey,
 ) -> Result<bool, String> {
-    // First check if the node name is localhost
-    if node_name.to_string() == "@@localhost.sep-hanzo" {
-        println!("Identity is localhost, quest not completed");
-        return Ok(false);
-    }
-
     // Get registry data
     let registry = HanzoRegistry::new(
         "https://sepolia.base.org",

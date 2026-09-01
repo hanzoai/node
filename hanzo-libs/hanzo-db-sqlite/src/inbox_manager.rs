@@ -971,7 +971,7 @@ mod tests {
     async fn test_insert_single_inbox_message() {
         let db = setup_test_db();
 
-        let node_identity_name = "@@node.hanzo";
+        let node_identity_name = "did:hanzo:node";
         let subidentity_name = "main";
         let (node_identity_sk, _) = unsafe_deterministic_signature_keypair(0);
         let (node_encryption_sk, node_encryption_pk) = unsafe_deterministic_encryption_keypair(0);
@@ -1009,7 +1009,7 @@ mod tests {
     async fn test_insert_two_messages_and_check_order_and_parent() {
         let db = setup_test_db();
 
-        let node_identity_name = "@@node.hanzo";
+        let node_identity_name = "did:hanzo:node";
         let subidentity_name = "main";
         let (node_identity_sk, _) = unsafe_deterministic_signature_keypair(0);
         let (node_encryption_sk, node_encryption_pk) = unsafe_deterministic_encryption_keypair(0);
@@ -1109,7 +1109,7 @@ mod tests {
     async fn test_insert_messages_with_tree_structure() {
         let db = setup_test_db();
 
-        let node1_identity_name = "@@node1.hanzo";
+        let node1_identity_name = "did:hanzo:node1";
         let node1_subidentity_name = "main_profile_node1";
         let (node1_identity_sk, _) = unsafe_deterministic_signature_keypair(0);
         let (node1_encryption_sk, _) = unsafe_deterministic_encryption_keypair(0);
@@ -1334,7 +1334,7 @@ mod tests {
     async fn db_inbox() {
         let db = setup_test_db();
 
-        let node1_identity_name = "@@node1.hanzo";
+        let node1_identity_name = "did:hanzo:node1";
         let node1_subidentity_name = "main_profile_node1";
         let (node1_identity_sk, node1_identity_pk) = unsafe_deterministic_signature_keypair(0);
         let (node1_encryption_sk, node1_encryption_pk) = unsafe_deterministic_encryption_keypair(0);
@@ -1373,7 +1373,7 @@ mod tests {
         println!("Inbox name: {}", inbox_name_value);
         assert_eq!(
             inbox_name_value,
-            "inbox::@@node1.hanzo::@@node1.hanzo/main_profile_node1::false".to_string()
+            "inbox::did:hanzo:node1::did:hanzo:node1/main_profile_node1::false".to_string()
         );
 
         println!("Inbox name: {}", inbox_name_value.to_string());
@@ -1526,7 +1526,7 @@ mod tests {
     async fn test_get_first_message_from_inbox() {
         let db = setup_test_db();
 
-        let node_identity_name = "@@node.hanzo";
+        let node_identity_name = "did:hanzo:node";
         let subidentity_name = "main";
         let (node_identity_sk, _) = unsafe_deterministic_signature_keypair(0);
         let (node_encryption_sk, _node_encryption_pk) = unsafe_deterministic_encryption_keypair(0);
@@ -1608,7 +1608,7 @@ mod tests {
     async fn benchmark_get_all_smart_inboxes_for_profile() {
         let db = setup_test_db();
 
-        let node_identity_name = "@@node.hanzo";
+        let node_identity_name = "did:hanzo:node";
         let subidentity_name = "main";
         let (node_identity_sk, node_identity_pk) = unsafe_deterministic_signature_keypair(0);
         let (node_encryption_sk, node_encryption_pk) = unsafe_deterministic_encryption_keypair(0);
@@ -1665,7 +1665,7 @@ mod tests {
     async fn test_smart_inboxes_pagination() {
         let db = setup_test_db();
 
-        let node_identity_name = "@@node.hanzo";
+        let node_identity_name = "did:hanzo:node";
         let subidentity_name = "main";
         let (node_identity_sk, node_identity_pk) = unsafe_deterministic_signature_keypair(0);
         let (node_encryption_sk, node_encryption_pk) = unsafe_deterministic_encryption_keypair(0);

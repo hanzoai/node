@@ -21,7 +21,6 @@ export NODE_STORAGE_PATH=${NODE_STORAGE_PATH:-hanzo-storage}
 # Node Identity and Security
 export IDENTITY_SECRET_KEY=${IDENTITY_SECRET_KEY:-}
 export ENCRYPTION_SECRET_KEY=${ENCRYPTION_SECRET_KEY:-}
-export GLOBAL_IDENTITY_NAME=${GLOBAL_IDENTITY_NAME:-@@my_local_ai.sep-hanzo}
 
 # Node Behavior
 export PING_INTERVAL_SECS=${PING_INTERVAL_SECS:-0}
@@ -38,7 +37,7 @@ export LOG_ALL=${LOG_ALL:-1}
 
 # AI Provider Configuration
 export EMBEDDINGS_SERVER_URL=${EMBEDDINGS_SERVER_URL:-}
-export PROXY_IDENTITY=${PROXY_IDENTITY:-@@relayer_pub_01.sep-hanzo}
+export PROXY_IDENTITY=${PROXY_IDENTITY:-}
 
 # Multi-Provider AI Agent Configuration
 # Format: comma-separated lists (must have same number of entries)
@@ -64,7 +63,6 @@ echo "  NODE_PORT:          $NODE_PORT"
 echo "  NODE_HTTPS_PORT:    $NODE_HTTPS_PORT"
 echo ""
 echo "Identity:"
-echo "  GLOBAL_IDENTITY_NAME: $GLOBAL_IDENTITY_NAME"
 echo "  PROXY_IDENTITY:       $PROXY_IDENTITY"
 echo ""
 echo "AI Providers:"

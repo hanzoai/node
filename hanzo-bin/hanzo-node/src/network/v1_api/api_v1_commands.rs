@@ -3085,21 +3085,6 @@ impl Node {
         res: Sender<Result<SendResponseBodyData, APIError>>,
     ) -> Result<(), NodeError> {
         // This command is used to send messages that are already signed and (potentially) encrypted
-        if potentially_encrypted_msg
-            .external_metadata
-            .recipient
-            .starts_with("@@localhost.")
-        {
-            let _ = res
-                .send(Err(APIError {
-                    code: StatusCode::BAD_REQUEST.as_u16(),
-                    error: "Bad Request".to_string(),
-                    message: "Invalid recipient node name: @@localhost".to_string(),
-                }))
-                .await;
-            return Ok(());
-        }
-
         let validation_result = Self::validate_message(
             encryption_secret_key.clone(),
             identity_manager.clone(),

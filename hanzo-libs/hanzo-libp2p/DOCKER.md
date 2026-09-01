@@ -26,7 +26,7 @@ docker run -d \
   -p 9901:9901 \
   -e IDENTITY_SECRET_KEY="your_identity_secret_key_hex" \
   -e ENCRYPTION_SECRET_KEY="your_encryption_secret_key_hex" \
-  -e NODE_NAME="@@your_relay_node.hanzo" \
+  -e NODE_NAME="did:hanzo:your_relay_node" \
   -e PORT=9901 \
   -e RPC_URL="https://sepolia.base.org" \
   -e CONTRACT_ADDRESS="0x425fb20ba3874e887336aaa7f3fab32d08135ba9" \
@@ -40,7 +40,7 @@ docker run -d \
 
 - `IDENTITY_SECRET_KEY`: Your relay node's identity secret key (hex format)
 - `ENCRYPTION_SECRET_KEY`: Your relay node's encryption secret key (hex format)  
-- `NODE_NAME`: Your relay node's name (format: `@@your_relay_node.hanzo`)
+- `NODE_NAME`: Your relay node's name (format: `did:hanzo:your_relay_node`)
 
 ### Optional Variables
 

@@ -1384,12 +1384,12 @@ mod tests {
     async fn test_tool_dependency_cycles() {
         let manager = setup_test_db().await;
         let db = Arc::new(manager);
-        let profile = HanzoName::new("@@test_user.hanzo/main".to_string()).unwrap();
+        let profile = HanzoName::new("did:hanzo:test_user/main".to_string()).unwrap();
 
         // Create three tools that form a cycle: A -> B -> C -> A
         let tool_a_name = "Tool A";
         let tool_a_version = "1.0.0";
-        let tool_a_author = "@@test.hanzo";
+        let tool_a_author = "did:hanzo:test";
         let mut tool_a = DenoTool {
             tool_router_key: Some(ToolRouterKey {
                 source: "local".to_string(),
@@ -1424,7 +1424,7 @@ mod tests {
 
         let tool_b_name = "Tool B";
         let tool_b_version = "1.0.0";
-        let tool_b_author = "@@test.hanzo";
+        let tool_b_author = "did:hanzo:test";
         let mut tool_b = DenoTool {
             tool_router_key: Some(ToolRouterKey {
                 source: "local".to_string(),
@@ -1459,7 +1459,7 @@ mod tests {
 
         let tool_c_name = "Tool C";
         let tool_c_version = "1.0.0";
-        let tool_c_author = "@@test.hanzo";
+        let tool_c_author = "did:hanzo:test";
         let mut tool_c = DenoTool {
             tool_router_key: Some(ToolRouterKey {
                 source: "local".to_string(),
@@ -1542,7 +1542,7 @@ mod tests {
     async fn test_tool_dependency_cycles_agent() {
         let manager = setup_test_db().await;
         let db = Arc::new(manager);
-        let profile: HanzoName = HanzoName::new("@@test_user.hanzo/main".to_string()).unwrap();
+        let profile: HanzoName = HanzoName::new("did:hanzo:test_user/main".to_string()).unwrap();
 
         let agent = Agent {
             name: "test_agent".to_string(),
@@ -1574,7 +1574,7 @@ mod tests {
         // Create a tool that depends on an agent
         let tool_a_name = "Tool A";
         let tool_a_version = "1.0.0";
-        let tool_a_author = "@@test.hanzo";
+        let tool_a_author = "did:hanzo:test";
         let mut tool_a = DenoTool {
             tool_router_key: Some(ToolRouterKey {
                 source: "local".to_string(),
@@ -1609,7 +1609,7 @@ mod tests {
 
         let tool_b_name = "Tool B";
         let tool_b_version = "1.0.0";
-        let tool_b_author = "@@test.hanzo";
+        let tool_b_author = "did:hanzo:test";
         let tool_b = DenoTool {
             tool_router_key: Some(ToolRouterKey {
                 source: "local".to_string(),
@@ -1684,12 +1684,12 @@ mod tests {
     async fn test_agent_tool_dependencies() {
         let manager = setup_test_db().await;
         let db = Arc::new(manager);
-        let profile = HanzoName::new("@@test_user.hanzo/main".to_string()).unwrap();
+        let profile = HanzoName::new("did:hanzo:test_user/main".to_string()).unwrap();
 
         // Create two tools that will be dependencies of the agent
         let tool_a_name = "Tool A";
         let tool_a_version = "1.0.0";
-        let tool_a_author = "@@test.hanzo";
+        let tool_a_author = "did:hanzo:test";
         let tool_a = DenoTool {
             tool_router_key: Some(ToolRouterKey {
                 source: "local".to_string(),
@@ -1724,7 +1724,7 @@ mod tests {
 
         let tool_b_name = "Tool B";
         let tool_b_version = "1.0.0";
-        let tool_b_author = "@@test.hanzo";
+        let tool_b_author = "did:hanzo:test";
         let mut tool_b = DenoTool {
             tool_router_key: Some(ToolRouterKey {
                 source: "local".to_string(),

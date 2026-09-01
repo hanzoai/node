@@ -596,7 +596,7 @@ impl RelayManager {
         *self.swarm.local_peer_id()
     }
 
-    /// Request tool offerings from all connected non-localhost peers
+    /// Request tool offerings from every connected peer the registry named
     async fn request_tool_offerings_from_all_peers(&mut self) {
         let connected_peers: Vec<PeerId> = self
             .peer_identities
@@ -605,8 +605,7 @@ impl RelayManager {
                 let peer_id = *entry.key();
                 // Only include peers that are:
                 // 1. Still connected
-                // 2. Not localhost peers
-                if self.swarm.is_connected(&peer_id) && !self.is_localhost_peer(&peer_id) {
+                if self.swarm.is_connected(&peer_id) && !self.is_unverified_peer(&peer_id) {
                     Some(peer_id)
                 } else {
                     None
@@ -615,12 +614,12 @@ impl RelayManager {
             .collect();
 
         if connected_peers.is_empty() {
-            println!("🔧 No connected non-localhost peers to request tool offerings from");
+            println!("🔧 No connected named peers to request tool offerings from");
             return;
         }
 
         println!(
-            "🔧 Requesting tool offerings from {} connected non-localhost peers",
+            "🔧 Requesting tool offerings from {} connected named peers",
             connected_peers.len()
         );
 
@@ -840,10 +839,10 @@ impl RelayManager {
         &mut self,
         mut identity: String,
         new_peer_id: PeerId,
-        is_localhost: bool,
+        unverified: bool,
     ) {
-        // If the identity is localhost, we need to check if the peer is localhost
-        if is_localhost {
+        // An unverified peer answers to its PeerId, which it cannot forge
+        if unverified {
             identity = new_peer_id.to_string();
         }
 
@@ -930,12 +929,10 @@ impl RelayManager {
         self.peer_identities.get(peer_id).map(|entry| entry.value().clone())
     }
 
-    /// Check if a peer is a localhost peer based on its identity
-    pub fn is_localhost_peer(&self, peer_id: &PeerId) -> bool {
+    /// A peer the registry could not verify is registered under its own PeerId
+    pub fn is_unverified_peer(&self, peer_id: &PeerId) -> bool {
         if let Some(identity) = self.find_identity_by_peer(peer_id) {
-            // Localhost peers either have identities starting with "@@localhost."
-            // or use their peer_id as identity (for unregistered localhost nodes)
-            identity.starts_with("@@localhost.") || identity == peer_id.to_string()
+            identity == peer_id.to_string()
         } else {
             false
         }
@@ -949,15 +946,7 @@ impl RelayManager {
         agent_version: String,
     ) -> Option<String> {
         // Extract the identity from the agent version
-        let identity = if agent_version.contains("hanzo") || agent_version.contains("node") {
-            if let Some(identity_part) = agent_version.split("@@").nth(1) {
-                Some(format!("@@{}", identity_part))
-            } else {
-                None
-            }
-        } else {
-            None
-        };
+        let identity = agent_version.strip_prefix("hanzo-node-").map(str::to_string);
 
         // Check if we have an identity to verify
         let identity_string = match identity {
@@ -1126,28 +1115,20 @@ impl RelayManager {
 
                             // Post node status update after successful identification
                             let health = self.connection_health.get(&peer_id).map(|h| h.clone());
-                            if !self.is_localhost_peer(&peer_id) {
+                            if !self.is_unverified_peer(&peer_id) {
                                 self.post_node_status(peer_id, true, health);
 
-                                // Request tool offerings from the newly identified non-localhost node
+                                // Request tool offerings from the newly named node
                                 self.request_tool_offerings(peer_id).await;
                             }
                         } else {
-                            let possible_identity = if info.agent_version.ends_with("hanzo") {
-                                if let Some(identity_part) = info.agent_version.split("@@").nth(1) {
-                                    Some(format!("@@{}", identity_part))
-                                } else {
-                                    None
-                                }
-                            } else {
-                                None
-                            };
+                            let possible_identity = info.agent_version.strip_prefix("hanzo-node-").map(str::to_string);
 
                             if let Some(identity) = possible_identity {
                                 println!("🔑 Verification failed, registering peer {} with identity: {}, using peer id as identity.", peer_id, identity);
                                 self.handle_identity_registration(identity, peer_id, true).await;
 
-                                // Note: No status update or tool offerings request for localhost peers
+                                // Note: No status update or tool offerings request for unverified peers
                             } else {
                                 println!("❌ Could not parse identity from agent version: {}", info.agent_version);
                             }
@@ -1179,7 +1160,7 @@ impl RelayManager {
                             // Post updated health status
                             let health_clone = health.clone();
                             drop(health); // Release the mutable reference
-                            if !self.is_localhost_peer(&peer) {
+                            if !self.is_unverified_peer(&peer) {
                                 self.post_node_status(peer, true, Some(health_clone));
                             }
                         }
@@ -1201,7 +1182,7 @@ impl RelayManager {
                             drop(health);
 
                             // Post updated health status
-                            if !self.is_localhost_peer(&peer) {
+                            if !self.is_unverified_peer(&peer) {
                                 self.post_node_status(peer, !is_unhealthy, Some(health_clone));
                             }
 
@@ -1284,19 +1265,22 @@ impl RelayManager {
                                         request.external_metadata.intra_sender
                                     );
                                     let peer_id = request.external_metadata.intra_sender.parse::<PeerId>().unwrap();
+                                    let Some(recipient) = self.find_identity_by_peer(&peer_id) else {
+                                        println!("❌ Relay: Attached peer {} has no identity", peer_id);
+                                        return Ok(());
+                                    };
                                     request.external_metadata.intra_sender = request.external_metadata.sender.clone();
                                     request.external_metadata.sender = self.config.relay_node_name.clone();
-                                    request.external_metadata.recipient = "@@localhost.sep-hanzo".to_string();
+                                    request.external_metadata.recipient = recipient;
 
-                                    // Re-encrypt message for localhost recipient
-                                    self.relay_message_encryption(&mut request, &"@@localhost.sep-hanzo".to_string())
-                                        .await;
+                                    // Re-encrypt for the attached node with the key it sent alongside
+                                    self.relay_message_encryption(&mut request).await;
 
                                     // Re-sign outer layer with the relay identity key
                                     if let Ok(resigned) = request.sign_outer_layer(&self.config.identity_secret_key) {
                                         request = resigned;
                                     } else {
-                                        println!("❌ Failed to re-sign message from localhost");
+                                        println!("❌ Failed to re-sign the relayed message");
                                     }
 
                                     let outbound_id = self
@@ -1308,8 +1292,8 @@ impl RelayManager {
                                     return Ok(());
                                 }
 
-                                if request.external_metadata.sender.starts_with("@@localhost.") {
-                                    println!("🔑 Relay: We need to re-sign the outer layer of the message from localhost to {}", target_node);
+                                if self.is_unverified_peer(&peer) {
+                                    println!("🔑 Relay: Re-signing the outer layer of the message on its way to {}", target_node);
 
                                     // Tell the recipient that the message was relayed by the relay node
                                     request.external_metadata.sender = self.config.relay_node_name.clone();
@@ -1319,7 +1303,7 @@ impl RelayManager {
                                     if let Ok(resigned) = request.sign_outer_layer(&self.config.identity_secret_key) {
                                         request = resigned;
                                     } else {
-                                        println!("❌ Failed to re-sign message from localhost");
+                                        println!("❌ Failed to re-sign the relayed message");
                                     }
                                 }
 
@@ -1379,8 +1363,8 @@ impl RelayManager {
                                     }
                                 }
 
-                                if response.external_metadata.sender.starts_with("@@localhost.") {
-                                    println!("🔑 Relay: We need to re-sign the outer layer of the message from localhost to {}", response.external_metadata.recipient);
+                                if self.is_unverified_peer(&peer) {
+                                    println!("🔑 Relay: Re-signing the outer layer of the response on its way to {}", response.external_metadata.recipient);
 
                                     // Tell the recipient that the message was relayed by the relay node
                                     response.external_metadata.sender = self.config.relay_node_name.clone();
@@ -1390,7 +1374,7 @@ impl RelayManager {
                                     if let Ok(resigned) = response.sign_outer_layer(&self.config.identity_secret_key) {
                                         response = resigned;
                                     } else {
-                                        println!("❌ Failed to re-sign message from localhost");
+                                        println!("❌ Failed to re-sign the relayed message");
                                     }
                                 }
 
@@ -1546,9 +1530,8 @@ impl RelayManager {
             return None;
         };
 
-        // Get sender's encryption key from registry or use other field for localhost
-        let sender_enc_key = if sender_identity.contains("localhost") {
-            println!("🔑 Relay: Using other field for localhost sender");
+        let sender_enc_key = if self.is_unverified_peer(&sender_peer) {
+            println!("🔑 Relay: Taking the sender's encryption key off the message");
             match hanzo_messages::hanzo_utils::encryption::string_to_encryption_public_key(
                 &request.external_metadata.other,
             ) {
@@ -1690,8 +1673,8 @@ impl RelayManager {
             != hanzo_messages::hanzo_utils::encryption::EncryptionMethod::None
         {
             // Get sender's encryption key for decryption
-            let sender_enc_key = if sender_identity.contains("localhost") {
-                println!("🔑 Relay: Using other field for localhost sender");
+            let sender_enc_key = if self.is_unverified_peer(&sender_peer) {
+                println!("🔑 Relay: Taking the sender's encryption key off the message");
                 match hanzo_messages::hanzo_utils::encryption::string_to_encryption_public_key(
                     &response.external_metadata.other,
                 ) {
@@ -1775,56 +1758,14 @@ impl RelayManager {
         println!("✅ Relay: Finished processing response from peer {}", sender_peer);
     }
 
-    async fn relay_message_encryption(&mut self, request: &mut HanzoMessage, target_node: &String) {
-        // Parse recipient name
-        let recipient_name =
-            match hanzo_messages::schemas::hanzo_name::HanzoName::new(target_node.clone()) {
-                Ok(name) => name,
-                Err(_) => {
-                    println!("❌ Relay: Failed to parse recipient name");
-                    return;
-                }
-            };
-
-        // Get recipient's identity from registry
-
-        // For localhost nodes (unregistered), use deterministic key generation
-        let recipient_enc_key = if target_node.contains("localhost") {
-            println!("🔑 Relay: Using other field for localhost node");
-            // Parse recipient's encryption key
-            match hanzo_messages::hanzo_utils::encryption::string_to_encryption_public_key(
-                &request.external_metadata.other,
-            ) {
-                Ok(key) => key,
-                Err(_) => {
-                    println!("❌ Relay: Failed to parse recipient's encryption key");
-                    return;
-                }
-            }
-        } else {
-            // For registered nodes, try to get from blockchain registry
-            let recipient_node_name = recipient_name.get_node_name_string();
-            let recipient_identity = match self
-                .registry
-                .get_identity_record(recipient_node_name.clone(), None)
-                .await
-            {
-                Ok(identity) => identity,
-                Err(e) => {
-                    println!("❌ Relay: Failed to get recipient's identity from registry: {}", e);
-                    return;
-                }
-            };
-
-            // Parse recipient's encryption key
-            match hanzo_messages::hanzo_utils::encryption::string_to_encryption_public_key(
-                &recipient_identity.encryption_key,
-            ) {
-                Ok(key) => key,
-                Err(_) => {
-                    println!("❌ Relay: Failed to parse recipient's encryption key");
-                    return;
-                }
+    async fn relay_message_encryption(&mut self, request: &mut HanzoMessage) {
+        let recipient_enc_key = match hanzo_messages::hanzo_utils::encryption::string_to_encryption_public_key(
+            &request.external_metadata.other,
+        ) {
+            Ok(key) => key,
+            Err(_) => {
+                println!("❌ Relay: Failed to parse recipient's encryption key");
+                return;
             }
         };
 

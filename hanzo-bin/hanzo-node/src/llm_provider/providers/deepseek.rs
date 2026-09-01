@@ -174,7 +174,7 @@ mod tests {
             id: "test-id".to_string(),
             name: None,
             description: None,
-            full_identity_name: HanzoName::new("@@test.hanzo/main/agent/deepseek_test".to_string()).unwrap(),
+            full_identity_name: HanzoName::new("did:hanzo:test/main/agent/deepseek_test".to_string()).unwrap(),
             model: LLMProviderInterface::DeepSeek(DeepSeek {
                 model_type: "deepseek-chat".to_string(),
             }),

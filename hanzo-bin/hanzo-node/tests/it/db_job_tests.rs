@@ -177,7 +177,7 @@ mod tests {
         let job_id = "job3".to_string();
         let agent_id = "agent3".to_string();
         // let inbox_name =
-        //     InboxName::new("inbox::@@node1.hanzo/subidentity::@@node2.hanzo/subidentity2::true".to_string())
+        //     InboxName::new("inbox::did:hanzo:node1/subidentity::did:hanzo:node2/subidentity2::true".to_string())
         //         .unwrap();
         let scope = MinimalJobScope::default();
         let db = setup_test_db();
@@ -251,7 +251,7 @@ mod tests {
         for i in 1..=5 {
             let job_id = format!("job{}", i);
             // let inbox_name =
-            //     InboxName::new("inbox::@@node1.hanzo/subidentity::@@node2.hanzo/subidentity2::true".to_string())
+            //     InboxName::new("inbox::did:hanzo:node1/subidentity::did:hanzo:node2/subidentity2::true".to_string())
             //         .unwrap();
             // let inbox_names = vec![inbox_name];
             // let documents = vec!["document1".to_string(), "document2".to_string()];
@@ -293,8 +293,8 @@ mod tests {
             vec![],
             None,
             placeholder_signature_sk,
-            "@@node1.hanzo".to_string(),
-            "@@node1.hanzo".to_string(),
+            "did:hanzo:node1".to_string(),
+            "did:hanzo:node1".to_string(),
         )
         .unwrap();
 
@@ -338,8 +338,8 @@ mod tests {
                 vec![],
                 None,
                 placeholder_signature_sk.clone(),
-                "@@node1.hanzo".to_string(),
-                "@@node1.hanzo".to_string(),
+                "did:hanzo:node1".to_string(),
+                "did:hanzo:node1".to_string(),
             )
             .unwrap();
 
@@ -406,7 +406,7 @@ mod tests {
 
     #[tokio::test]
     async fn test_insert_steps_with_simple_tree_structure() {
-        let node1_identity_name = "@@node1.hanzo";
+        let node1_identity_name = "did:hanzo:node1";
         let node1_subidentity_name = "main_profile_node1";
         let (node1_identity_sk, _) = unsafe_deterministic_signature_keypair(0);
         let (node1_encryption_sk, node1_encryption_pk) = unsafe_deterministic_encryption_keypair(0);
@@ -536,8 +536,8 @@ mod tests {
                 vec![],
                 None,
                 placeholder_signature_sk.clone(),
-                "@@node1.hanzo".to_string(),
-                "@@node1.hanzo".to_string(),
+                "did:hanzo:node1".to_string(),
+                "did:hanzo:node1".to_string(),
             )
             .unwrap();
             messages.push(hanzo_message);
@@ -628,8 +628,8 @@ mod tests {
                 vec![],
                 None,
                 placeholder_signature_sk.clone(),
-                "@@node1.hanzo".to_string(),
-                "@@node1.hanzo".to_string(),
+                "did:hanzo:node1".to_string(),
+                "did:hanzo:node1".to_string(),
             )
             .unwrap();
 
@@ -721,7 +721,7 @@ mod tests {
         let _ = create_new_job(&hanzo_db, job2_id.clone(), agent_id.clone(), scope).await;
 
         // Check smart_inboxes
-        let node1_identity_name = "@@node1.hanzo";
+        let node1_identity_name = "did:hanzo:node1";
         let node1_subidentity_name = "main_profile_node1";
         let (_, node1_identity_pk) = unsafe_deterministic_signature_keypair(0);
         let (_, node1_encryption_pk) = unsafe_deterministic_encryption_keypair(0);

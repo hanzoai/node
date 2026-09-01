@@ -4,7 +4,6 @@ use crate::{
     hanzo_utils::signatures::hash_signature_public_key,
 };
 use ed25519_dalek::VerifyingKey;
-use regex::Regex;
 use serde::{Deserialize, Deserializer, Serialize, Serializer};
 use std::hash::Hash;
 use std::{fmt, hash::Hasher};
@@ -34,116 +33,41 @@ impl fmt::Display for HanzoSubidentityType {
     }
 }
 
+/// Alphanumeric or underscore, and never empty.
+fn is_word(part: &str) -> bool {
+    !part.is_empty() && part.bytes().all(|b| b.is_ascii_alphanumeric() || b == b'_')
+}
+
 // Valid Examples
-// @@alice.hanzo
-// @@alice.hanzo/profileName
-// @@alice.hanzo/profileName/agent/myChatGPTAgent
-// @@alice.hanzo/profileName/device/myPhone
-// @@alice.sep-hanzo
-// @@alice.sep-hanzo/profileName
-// did:hanzo:mainnet
-// did:hanzo:sepolia
-// did:hanzo:local:node1
+// did:hanzo:c85950e4d9c2c24df9d44052c8f2298f69d4a9b82cb0266478f58f385ca2a679
+// did:hanzo:c85950…/profileName
+// did:hanzo:c85950…/profileName/agent/myChatGPTAgent
+// did:hanzo:c85950…/profileName/device/myPhone
 
 // Not valid examples
-// @@alice.hanzo/profileName/myPhone
-// @@al!ce.hanzo
-// @@alice.hanzo//
-// @@node1.hanzo/profile_1.hanzo
-// @@alice.sepolia--hanzo
+// did:hanzo:c85950…/profileName/myPhone
+// did:hanzo:c859!50…
+// did:hanzo:c85950…//
+// alice
 
 impl HanzoName {
-    // Define a list of valid endings for legacy @@ format
-    const VALID_ENDINGS: [&'static str; 4] = [".hanzo", ".sepolia-hanzo", ".arb-sep-hanzo", ".sep-hanzo"];
-    
-    /// Check if name is in DID format (did:hanzo:* or did:lux:*)
-    fn is_did_format(name: &str) -> bool {
-        let base = name.split('/').next().unwrap_or(name);
-        base.starts_with("did:hanzo:") || base.starts_with("did:lux:")
-    }
+    const PREFIX: &'static str = "did:hanzo:";
 
-    /// Validate DID format names
-    /// Valid formats:
-    /// - did:hanzo:mainnet
-    /// - did:hanzo:sepolia
-    /// - did:hanzo:local:node1
-    /// - did:lux:mainnet
-    /// - did:hanzo:mainnet/profile
-    /// - did:hanzo:mainnet/profile/agent/myagent
-    fn validate_did_name(raw_name: &str) -> Result<(), &'static str> {
-        let parts: Vec<&str> = raw_name.split('/').collect();
-
-        if parts.is_empty() || parts.len() > 4 {
-            return Err("DID name should have one to four parts: node, profile, type (device or agent), and name.");
-        }
-
-        let did_part = parts[0];
-        
-        // Validate DID structure: did:method:network[:optional]
-        let did_segments: Vec<&str> = did_part.split(':').collect();
-        if did_segments.len() < 3 {
-            return Err("Invalid DID format. Expected did:hanzo:network or did:lux:network.");
-        }
-
-        if did_segments[0] != "did" {
-            return Err("DID must start with 'did:'.");
-        }
-
-        if did_segments[1] != "hanzo" && did_segments[1] != "lux" {
-            return Err("DID method must be 'hanzo' or 'lux'.");
-        }
-
-        // Validate network identifier (alphanumeric)
-        let network_regex = Regex::new(r"^[a-zA-Z0-9_]+$").unwrap();
-        if !network_regex.is_match(did_segments[2]) {
-            return Err("DID network identifier must be alphanumeric.");
-        }
-
-        // Validate profile/subidentity parts if present
-        let re = Regex::new(r"^[a-zA-Z0-9_]*$").unwrap();
-        for (index, part) in parts.iter().enumerate().skip(1) {
-            if index == 2 {
-                if *part != "agent" && *part != "device" {
-                    return Err("The third part should either be 'agent' or 'device'.");
-                }
-            } else if !re.is_match(part) {
-                return Err("Name parts should be alphanumeric or underscore.");
-            }
-        }
-
-        if parts.len() == 3 && (parts[2] == "agent" || parts[2] == "device") {
-            return Err("If type is 'agent' or 'device', a fourth part is expected.");
-        }
-
-        Ok(())
-    }
-
-    /// The name a node answers to when nothing else names it: the DID of its own
-    /// signing key, addressed by the same hash that names its database.
+    /// The name a node answers to: the DID of its own signing key, addressed by
+    /// the same hash that names its database.
     pub fn did(public_key: &VerifyingKey) -> String {
-        format!("did:hanzo:{}", hash_signature_public_key(public_key))
+        format!("{}{}", Self::PREFIX, hash_signature_public_key(public_key))
     }
 
     pub fn new(raw_name: String) -> Result<Self, &'static str> {
-        let raw_name = Self::correct_node_name(raw_name);
         Self::validate_name(&raw_name)?;
 
         let parts: Vec<&str> = raw_name.split('/').collect();
         let node_name = parts[0].to_string();
         let profile_name = parts.get(1).map(|s| s.to_string());
-        let subidentity_type = parts.get(2).map(|s| {
-            if *s == "agent" {
-                HanzoSubidentityType::Agent
-            } else if *s == "device" {
-                HanzoSubidentityType::Device
-            } else {
-                hanzo_log(
-                    HanzoLogOption::Identity,
-                    HanzoLogLevel::Error,
-                    &format!("Invalid subidentity type: {}", s),
-                );
-                panic!("Invalid subidentity type");
-            }
+        let subidentity_type = parts.get(2).map(|s| match *s {
+            "agent" => HanzoSubidentityType::Agent,
+            _ => HanzoSubidentityType::Device,
         });
         let subidentity_name = parts.get(3).map(|s| s.to_string());
 
@@ -171,112 +95,34 @@ impl HanzoName {
     }
 
     pub fn validate_name(raw_name: &str) -> Result<(), &'static str> {
-        // Handle DID format: did:hanzo:mainnet, did:hanzo:sepolia, did:lux:mainnet, etc.
-        if Self::is_did_format(raw_name) {
-            return Self::validate_did_name(raw_name);
-        }
-
         let parts: Vec<&str> = raw_name.split('/').collect();
-
-        if !(!parts.is_empty() && parts.len() <= 4) {
-            hanzo_log(
-                HanzoLogOption::Identity,
-                HanzoLogLevel::Info,
-                &format!(
-                    "Name should have one to four parts: node, profile, type (device or agent), and name: {}",
-                    raw_name
-                ),
-            );
+        if parts.len() > 4 {
             return Err("Name should have one to four parts: node, profile, type (device or agent), and name.");
         }
 
-        if !parts[0].starts_with("@@") || !Self::VALID_ENDINGS.iter().any(|&ending| parts[0].ends_with(ending)) {
-            hanzo_log(
-                HanzoLogOption::Identity,
-                HanzoLogLevel::Info,
-                &format!("Validation error: {}", raw_name),
-            );
-            return Err("Node part of the name should start with '@@' and end with a valid ending ('.hanzo', '.arb-sep-hanzo', '.sep-hanzo', etc.) or be a valid DID (did:hanzo:*, did:lux:*).");
+        let address = parts[0]
+            .strip_prefix(Self::PREFIX)
+            .ok_or("Node name should be a DID: did:hanzo:<address>.")?;
+        if !is_word(address) {
+            return Err("The DID address should be alphanumeric or underscore.");
         }
 
-        let node_name_regex = r"^@@[a-zA-Z0-9\_\.]+(\.hanzo|\.arb-sep-hanzo|\.sepolia-hanzo|\.sep-hanzo)$";
-        if !Regex::new(node_name_regex).unwrap().is_match(parts[0]) {
-            hanzo_log(
-                HanzoLogOption::Identity,
-                HanzoLogLevel::Info,
-                &format!("Node part of the name contains invalid characters: {}", raw_name),
-            );
-            return Err("Node part of the name contains invalid characters.");
-        }
-
-        let re = Regex::new(r"^[a-zA-Z0-9_]*$").unwrap();
-
-        for (index, part) in parts.iter().enumerate() {
-            if index == 0 {
-                if part.contains('/') {
-                    hanzo_log(
-                        HanzoLogOption::Identity,
-                        HanzoLogLevel::Info,
-                        &format!("Root node name cannot contain '/': {}", raw_name),
-                    );
-                    return Err("Root node name cannot contain '/'.");
-                }
-                continue;
-            }
-
-            if index == 2
-                && !(part == &HanzoSubidentityType::Agent.to_string()
-                    || part == &HanzoSubidentityType::Device.to_string())
-            {
-                hanzo_log(
-                    HanzoLogOption::Identity,
-                    HanzoLogLevel::Info,
-                    &format!("The third part should either be 'agent' or 'device': {}", raw_name),
-                );
-                return Err("The third part should either be 'agent' or 'device'.");
-            }
-
-            if index == 3 && !re.is_match(part) {
-                hanzo_log(
-                    HanzoLogOption::Identity,
-                    HanzoLogLevel::Info,
-                    &format!(
-                        "The fourth part (name after 'agent' or 'device') should be alphanumeric or underscore: {}",
-                        raw_name
-                    ),
-                );
-                return Err("The fourth part (name after 'agent' or 'device') should be alphanumeric or underscore.");
-            }
-
-            if index != 0 && index != 2 && (!re.is_match(part) || part.contains(".hanzo")) {
-                hanzo_log(
-                    HanzoLogOption::Identity,
-                    HanzoLogLevel::Info,
-                    &format!(
-                        "Name parts should be alphanumeric or underscore and not contain '.hanzo': {}",
-                        raw_name
-                    ),
-                );
-                return Err("Name parts should be alphanumeric or underscore and not contain '.hanzo'.");
+        if let Some(profile) = parts.get(1) {
+            if !is_word(profile) {
+                return Err("The profile name should be alphanumeric or underscore.");
             }
         }
 
-        if parts.len() == 3
-            && (parts[2] == &HanzoSubidentityType::Agent.to_string()
-                || parts[2] == &HanzoSubidentityType::Device.to_string())
-        {
-            hanzo_log(
-                HanzoLogOption::Identity,
-                HanzoLogLevel::Info,
-                &format!(
-                    "If type is 'agent' or 'device', a fourth part is expected: {}",
-                    raw_name
-                ),
-            );
-            return Err("If type is 'agent' or 'device', a fourth part is expected.");
+        match parts.len() {
+            3 => Err("If type is 'agent' or 'device', a fourth part is expected."),
+            4 if !matches!(parts[2], "agent" | "device") => {
+                Err("The third part should either be 'agent' or 'device'.")
+            }
+            4 if !is_word(parts[3]) => {
+                Err("The fourth part (name after 'agent' or 'device') should be alphanumeric or underscore.")
+            }
+            _ => Ok(()),
         }
-
-        Ok(())
     }
 
     #[allow(dead_code)]
@@ -294,14 +140,7 @@ impl HanzoName {
     }
 
     pub fn from_node_and_profile_names(node_name: String, profile_name: String) -> Result<Self, &'static str> {
-        // Validate and format the node_name
-        let node_name = Self::correct_node_name(node_name);
-
-        // Construct the full_identity_name
-        let full_identity_name = format!("{}/{}", node_name.to_lowercase(), profile_name.to_lowercase());
-
-        // Create a new HanzoName
-        Self::new(full_identity_name)
+        Self::new(format!("{}/{}", node_name.to_lowercase(), profile_name.to_lowercase()))
     }
 
     #[allow(dead_code)]
@@ -311,22 +150,13 @@ impl HanzoName {
         hanzo_type: HanzoSubidentityType,
         name: String,
     ) -> Result<Self, &'static str> {
-        // Validate and format the node_name
-        let node_name = Self::correct_node_name(node_name);
-
-        let hanzo_type_str = hanzo_type.to_string();
-
-        // Construct the full_identity_name
-        let full_identity_name = format!(
+        Self::new(format!(
             "{}/{}/{}/{}",
             node_name.to_lowercase(),
             profile_name.to_lowercase(),
-            hanzo_type_str,
+            hanzo_type,
             name.to_lowercase()
-        );
-
-        // Create a new HanzoName
-        Self::new(full_identity_name)
+        ))
     }
 
     #[allow(dead_code)]
@@ -416,20 +246,6 @@ impl HanzoName {
                 node, recipient_subidentity
             ))),
         }
-    }
-
-    // This method checks if a name is a valid node identity name and doesn't contain subidentities
-    #[allow(dead_code)]
-    fn is_valid_node_identity_name_and_no_subidentities(name: &String) -> bool {
-        // A node name is valid if:
-        // 1. Legacy format: starts with '@@', ends with a valid ending, and doesn't contain '/'
-        // 2. DID format: starts with did:hanzo: or did:lux: and doesn't contain '/'
-        if Self::is_did_format(name) {
-            return !name.contains('/');
-        }
-        name.starts_with("@@")
-            && !name.contains('/')
-            && Self::VALID_ENDINGS.iter().any(|&ending| name.ends_with(ending))
     }
 
     pub fn contains(&self, other: &HanzoName) -> bool {
@@ -527,40 +343,6 @@ impl HanzoName {
             subidentity_type: None,
             subidentity_name: None,
         }
-    }
-
-    fn correct_node_name(raw_name: String) -> String {
-        // Don't modify DID format names
-        if Self::is_did_format(&raw_name) {
-            return raw_name;
-        }
-
-        let parts: Vec<&str> = raw_name.splitn(2, '/').collect();
-
-        let mut node_name = parts[0].to_string();
-
-        // Prepend with "@@" if the node doesn't already start with "@@"
-        if !node_name.starts_with("@@") {
-            node_name = format!("@@{}", node_name);
-        }
-
-        // Check if the node_name ends with any of the valid endings, append ".hanzo" if not
-        if !Self::VALID_ENDINGS.iter().any(|&ending| node_name.ends_with(ending)) {
-            node_name = format!("{}.hanzo", node_name);
-        }
-
-        // Reconstruct the name
-
-        if parts.len() > 1 {
-            format!("{}/{}", node_name, parts[1])
-        } else {
-            node_name
-        }
-    }
-
-    pub fn default_testnet_localhost() -> Self {
-        HanzoName::new("@@localhost.sep-hanzo/main".to_string())
-            .expect("Failed to create default testnet localhost HanzoName")
     }
 }
 

@@ -349,7 +349,7 @@ impl IdentityManagerTrait for IdentityManager {
                 hanzo_log(
                     HanzoLogOption::Identity,
                     HanzoLogLevel::Error,
-                    "external_profile_to_global_identity > is_valid_node_identity_name_and_no_subidentities: false",
+                    "external_profile_to_global_identity > not a Hanzo identity",
                 );
                 return Err(format!(
                     "Failed to convert profile name to HanzoName: {}",

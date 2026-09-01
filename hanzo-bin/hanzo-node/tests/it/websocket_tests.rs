@@ -57,7 +57,7 @@ impl MockIdentityManager {
         let (_, node1_encryption_pk) = unsafe_deterministic_encryption_keypair(0);
 
         let dummy_standard_identity = Identity::Standard(StandardIdentity {
-            full_identity_name: HanzoName::new("@@node1.hanzo/main_profile_node1".to_string()).unwrap(),
+            full_identity_name: HanzoName::new("did:hanzo:node1/main_profile_node1".to_string()).unwrap(),
             addr: None,
             node_encryption_public_key: node1_encryption_pk,
             node_signature_public_key: node1_identity_pk,
@@ -77,7 +77,7 @@ impl MockIdentityManager {
 #[async_trait]
 impl IdentityManagerTrait for MockIdentityManager {
     fn find_by_identity_name(&self, _full_profile_name: HanzoName) -> Option<&Identity> {
-        if _full_profile_name.to_string() == "@@node1.hanzo/main" {
+        if _full_profile_name.to_string() == "did:hanzo:node1/main" {
             Some(&self.dummy_standard_identity)
         } else {
             None
@@ -85,7 +85,7 @@ impl IdentityManagerTrait for MockIdentityManager {
     }
 
     async fn get_routing_info(&self, _full_profile_name: &str, _: Option<bool>) -> Result<(bool, Vec<String>), String> {
-        if _full_profile_name.to_string() == "@@node1.hanzo/main" {
+        if _full_profile_name.to_string() == "did:hanzo:node1/main" {
             Ok((false, vec!["127.0.0.1:9552".to_string()]))
         } else {
             Err("Identity not found".to_string())
@@ -93,7 +93,7 @@ impl IdentityManagerTrait for MockIdentityManager {
     }
 
     async fn search_identity(&self, _full_identity_name: &str) -> Option<Identity> {
-        if _full_identity_name == "@@node1.hanzo/main" {
+        if _full_identity_name == "did:hanzo:node1/main" {
             Some(self.dummy_standard_identity.clone())
         } else {
             None
@@ -191,7 +191,7 @@ async fn test_websocket() {
     let hanzo_db = Arc::new(db);
     let hanzo_db_weak = Arc::downgrade(&hanzo_db);
 
-    let node1_identity_name = "@@node1.hanzo";
+    let node1_identity_name = "did:hanzo:node1";
     let node1_subidentity_name = "main";
     let (node1_identity_sk, _) = unsafe_deterministic_signature_keypair(0);
     let (node1_encryption_sk, node1_encryption_pk) = unsafe_deterministic_encryption_keypair(0);
@@ -487,7 +487,7 @@ async fn test_websocket_smart_inbox() {
     let hanzo_db = Arc::new(db);
     let hanzo_db_weak = Arc::downgrade(&hanzo_db);
 
-    let node1_identity_name = "@@node1.hanzo";
+    let node1_identity_name = "did:hanzo:node1";
     let node1_subidentity_name = "main";
     let (node1_identity_sk, _) = unsafe_deterministic_signature_keypair(0);
     let (node1_encryption_sk, node1_encryption_pk) = unsafe_deterministic_encryption_keypair(0);

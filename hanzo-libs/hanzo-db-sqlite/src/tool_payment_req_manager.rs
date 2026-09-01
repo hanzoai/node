@@ -381,8 +381,8 @@ mod tests {
         let invoice = Invoice {
             invoice_id: "test_invoice_id".to_string(),
             parent_message_id: Some("test_parent_id".to_string()),
-            provider_name: HanzoName::new("@@provider.hanzo".to_string()).unwrap(),
-            requester_name: HanzoName::new("@@requester.hanzo".to_string()).unwrap(),
+            provider_name: HanzoName::new("did:hanzo:provider".to_string()).unwrap(),
+            requester_name: HanzoName::new("did:hanzo:requester".to_string()).unwrap(),
             hanzo_offering: tool_offering.clone(),
             expiration_time: Utc::now() + chrono::Duration::hours(12),
             status: InvoiceStatusEnum::Pending,

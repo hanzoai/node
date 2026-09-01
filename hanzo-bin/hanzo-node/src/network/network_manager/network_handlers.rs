@@ -428,27 +428,25 @@ pub async fn handle_network_message_cases(
 
     let mut message = message.clone();
 
-    // Check if the message is coming from a relay proxy and update it
-    // ONLY if our identity is localhost (tradeoff for not having an identity)
-    if my_node_full_name.starts_with("@@localhost.") {
-        let proxy_connection = proxy_connection_info.lock().await;
-        if let Some(proxy_info) = &*proxy_connection {
-            if message.external_metadata.sender == proxy_info.proxy_identity.get_node_name_string() {
-                match HanzoName::new(message.external_metadata.intra_sender.clone()) {
-                    Ok(origin_identity) => {
-                        message.external_metadata.sender = origin_identity.get_node_name_string();
-                        if let MessageBody::Unencrypted(ref mut body) = message.body {
-                            body.internal_metadata.sender_subidentity =
-                                origin_identity.get_profile_name_string().unwrap_or("".to_string());
-                        }
+    // A message forwarded by our relay carries the origin in intra_sender
+    let proxy_connection = proxy_connection_info.lock().await;
+    if let Some(proxy_info) = &*proxy_connection {
+        if message.external_metadata.sender == proxy_info.proxy_identity.get_node_name_string() {
+            match HanzoName::new(message.external_metadata.intra_sender.clone()) {
+                Ok(origin_identity) => {
+                    message.external_metadata.sender = origin_identity.get_node_name_string();
+                    if let MessageBody::Unencrypted(ref mut body) = message.body {
+                        body.internal_metadata.sender_subidentity =
+                            origin_identity.get_profile_name_string().unwrap_or("".to_string());
                     }
-                    Err(e) => {
-                        eprintln!("Error creating HanzoName: {}", e);
-                    }
+                }
+                Err(e) => {
+                    eprintln!("Error creating HanzoName: {}", e);
                 }
             }
         }
     }
+    drop(proxy_connection);
 
     // Logic to handle if messages needs to be saved to disk
     let schema_result = message.get_message_content_schema();

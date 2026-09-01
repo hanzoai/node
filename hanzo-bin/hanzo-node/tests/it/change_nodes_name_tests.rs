@@ -37,8 +37,8 @@ fn change_nodes_name_test() {
     }
     let rt = Runtime::new().unwrap();
     let e = rt.block_on(async {
-        let new_node_name = "@@change_node_test.sep-hanzo";
-        let node1_identity_name = "@@node1_test.sep-hanzo";
+        let new_node_name = "did:hanzo:change_node_test";
+        let node1_identity_name = "did:hanzo:node1_test";
         let node1_profile_name = "main";
         let node1_device_name = "node1_device";
 
@@ -155,7 +155,7 @@ fn change_nodes_name_test() {
 
     let rt = Runtime::new().unwrap();
     let e = rt.block_on(async {
-        let new_node_name = "@@change_node_test.sep-hanzo";
+        let new_node_name = "did:hanzo:change_node_test";
 
         let (node1_identity_sk, node1_identity_pk) = unsafe_deterministic_signature_keypair(0);
         let (node1_encryption_sk, _node1_encryption_pk) = unsafe_deterministic_encryption_keypair(0);

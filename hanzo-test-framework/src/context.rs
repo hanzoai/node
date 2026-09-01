@@ -94,7 +94,7 @@ where
     }
 
     let status: anyhow::Result<()> = rt.block_on(async {
-        let identity_name = "@@node1_test.sep-hanzo";
+        let identity_name = "did:hanzo:node1_test";
         let profile_name = "main";
         let device_name = "node1_device";
 

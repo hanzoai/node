@@ -694,7 +694,7 @@ mod tests {
     #[test]
     fn test_set_playground_tool() {
         let description = "Downloads a website and converts its content into Markdown.".to_string();
-        let author = "@@my_local_ai.sep-hanzo".to_string();
+        let author = "did:hanzo:my_local_ai".to_string();
         let keywords = vec![
             "Deno".to_string(),
             "Markdown".to_string(),
@@ -850,7 +850,7 @@ mod tests {
         let agent_wrapper = AgentToolWrapper {
             name: "new pirate".to_string(),
             agent_id: "new_pirate".to_string(),
-            author: "@@my_local_ai.sep-hanzo".to_string(),
+            author: "did:hanzo:my_local_ai".to_string(),
             description: "".to_string(),
             input_args: Parameters {
                 schema_type: "object".to_string(),
@@ -895,7 +895,7 @@ mod tests {
             HanzoTool::Agent(agent, enabled) => {
                 assert_eq!(agent.name, "new pirate");
                 assert_eq!(agent.agent_id, "new_pirate");
-                assert_eq!(agent.author, "@@my_local_ai.sep-hanzo");
+                assert_eq!(agent.author, "did:hanzo:my_local_ai");
                 assert_eq!(agent.description, "");
                 assert!(enabled);
 

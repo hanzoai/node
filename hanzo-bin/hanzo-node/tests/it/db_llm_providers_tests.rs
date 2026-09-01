@@ -30,7 +30,7 @@ mod tests {
         let open_ai = OpenAI {
             model_type: "gpt-3.5-turbo".to_string(),
         };
-        let identity = HanzoName::new("@@alice.hanzo/profileName/agent/myChatGPTAgent".to_string()).unwrap();
+        let identity = HanzoName::new("did:hanzo:alice/profileName/agent/myChatGPTAgent".to_string()).unwrap();
         let profile = identity.extract_profile().unwrap();
 
         // Create an instance of SerializedLLMProvider
@@ -97,7 +97,7 @@ mod tests {
         let open_ai = OpenAI {
             model_type: "gpt-3.5-turbo-1106".to_string(),
         };
-        let identity = HanzoName::new("@@alice.hanzo/profileName/agent/test_name".to_string()).unwrap();
+        let identity = HanzoName::new("did:hanzo:alice/profileName/agent/test_name".to_string()).unwrap();
         let profile = identity.extract_profile().unwrap();
 
         let test_agent = SerializedLLMProvider {

@@ -176,8 +176,8 @@ impl ToolRouterKey {
     }
 
     /// Converts a normal tool router key to a network router key
-    /// Example: "local:::guillevalin:::echo_function" with node_name "@@guillevalin.sep-hanzo"
-    /// becomes "__guillevalin_sep_hanzo:::guillevalin:::echo_function"
+    /// Example: "local:::guillevalin:::echo_function" with node_name "did:hanzo:guillevalin"
+    /// becomes "did_hanzo_guillevalin:::guillevalin:::echo_function"
     pub fn to_network_router_key(key_str: &str, node_name: &str) -> Result<String, String> {
         let key = Self::from_string(key_str)?;
 
@@ -265,7 +265,7 @@ mod tests {
         // Create a ToolRouterKey instance
         let tool_router_key = ToolRouterKey::new(
             "local".to_string(),
-            "@@system.hanzo".to_string(),
+            "did:hanzo:system".to_string(),
             "hanzo: download pages".to_string(),
             None,
         );
@@ -274,7 +274,7 @@ mod tests {
         let router_key_string = tool_router_key.to_string_without_version();
 
         // Expected key format
-        let expected_key = "local:::__system_hanzo:::hanzo__download_pages";
+        let expected_key = "local:::did_hanzo_system:::hanzo__download_pages";
 
         // Assert that the generated key matches the expected pattern
         assert_eq!(router_key_string, expected_key);
@@ -284,14 +284,14 @@ mod tests {
     fn test_tool_router_key_no_spaces_in_to_string() {
         let key = ToolRouterKey::new(
             "local".to_string(),
-            "@@system.hanzo".to_string(),
+            "did:hanzo:system".to_string(),
             "versioned_tool".to_string(),
             Some("2.0".to_string()),
         );
         let key_string = key.to_string_without_version();
         eprintln!("key_string: {:?}", key_string);
         assert!(!key_string.contains(' '), "Key string should not contain spaces");
-        assert_eq!(key_string, "local:::__system_hanzo:::versioned_tool");
+        assert_eq!(key_string, "local:::did_hanzo_system:::versioned_tool");
     }
 
     #[test]
@@ -311,34 +311,30 @@ mod tests {
     #[test]
     fn test_to_network_router_key() {
         let original_key = "local:::guillevalin:::echo_function";
-        let node_name = "@@guillevalin.sep-hanzo";
+        let node_name = "did:hanzo:guillevalin";
         let network_key = ToolRouterKey::to_network_router_key(original_key, node_name).unwrap();
-        assert_eq!(network_key, "__guillevalin_sep_hanzo:::guillevalin:::echo_function");
+        assert_eq!(network_key, "did_hanzo_guillevalin:::guillevalin:::echo_function");
     }
 
     #[test]
     fn test_to_network_router_key_with_version() {
         let original_key = "local:::guillevalin:::echo_function:::1.0";
-        let node_name = "@@guillevalin.sep-hanzo";
+        let node_name = "did:hanzo:guillevalin";
         let network_key = ToolRouterKey::to_network_router_key(original_key, node_name).unwrap();
         assert_eq!(
             network_key,
-            "__guillevalin_sep_hanzo:::guillevalin:::echo_function:::1.0"
+            "did_hanzo_guillevalin:::guillevalin:::echo_function:::1.0"
         );
     }
 
     #[test]
-    fn test_to_network_router_key_different_domains() {
+    fn test_to_network_router_key_different_nodes() {
         let original_key = "local:::alice:::test_tool";
 
-        // Test with .hanzo domain
-        let node_name1 = "@@alice.sep-hanzo";
-        let network_key1 = ToolRouterKey::to_network_router_key(original_key, node_name1).unwrap();
-        assert_eq!(network_key1, "__alice_sep_hanzo:::alice:::test_tool");
+        let network_key1 = ToolRouterKey::to_network_router_key(original_key, "did:hanzo:alice").unwrap();
+        assert_eq!(network_key1, "did_hanzo_alice:::alice:::test_tool");
 
-        // Test with .arb-sep-hanzo domain
-        let node_name2 = "@@alice.sep-hanzo";
-        let network_key2 = ToolRouterKey::to_network_router_key(original_key, node_name2).unwrap();
-        assert_eq!(network_key2, "__alice_sep_hanzo:::alice:::test_tool");
+        let network_key2 = ToolRouterKey::to_network_router_key(original_key, "did:hanzo:bob").unwrap();
+        assert_eq!(network_key2, "did_hanzo_bob:::alice:::test_tool");
     }
 }

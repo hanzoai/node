@@ -18,7 +18,6 @@ export NODE_PORT="3691"
 export NODE_API_IP="0.0.0.0"
 export NODE_API_PORT="3690"
 export PING_INTERVAL_SECS="0"
-export GLOBAL_IDENTITY_NAME="@@localhost.sep-hanzo"
 export RUST_LOG=debug,error,info
 export STARTING_NUM_QR_PROFILES="1"
 export STARTING_NUM_QR_DEVICES="1"

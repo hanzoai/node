@@ -114,7 +114,6 @@ ENV BUILD_TYPE=${BUILD_TYPE} \
     NODE_WS_PORT=3691 \
     NODE_PORT=3692 \
     NODE_HTTPS_PORT=3693 \
-    GLOBAL_IDENTITY_NAME=@@my_local_ai.sep-hanzo \
     RUST_LOG=debug,error,info \
     LOG_SIMPLE=true \
     NO_SECRET_FILE=true \

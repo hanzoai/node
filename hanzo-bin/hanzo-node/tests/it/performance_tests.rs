@@ -46,8 +46,8 @@ fn create_message(
 
 // #[test]
 fn test_big_file_performance() {
-    let node1_identity_name = "@@node1.hanzo";
-    let _node2_identity_name = "@@node2.hanzo";
+    let node1_identity_name = "did:hanzo:node1";
+    let _node2_identity_name = "did:hanzo:node2";
 
     let (node1_identity_sk, _node1_identity_pk) = unsafe_deterministic_signature_keypair(0);
     let (node1_encryption_sk, node1_encryption_pk) = unsafe_deterministic_encryption_keypair(0);

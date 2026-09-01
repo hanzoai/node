@@ -651,7 +651,7 @@ impl Default for MockInferenceChainContext {
             original_user_message_string: "".to_string(),
             elements: vec![],
         };
-        let user_profile = HanzoName::default_testnet_localhost();
+        let user_profile = HanzoName::new("did:hanzo:mock/main".to_string()).unwrap();
         Self {
             user_message,
             image_files: HashMap::new(),

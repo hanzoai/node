@@ -143,7 +143,7 @@ fn tool_duplicate_tests() {
             {
                 let tool_router_key = ToolRouterKey::new(
                     "local".to_string(),
-                    "@@node1_test.sep-hanzo".to_string(),
+                    "did:hanzo:node1_test".to_string(),
                     "demo_tool".to_string(),
                     None,
                 );
@@ -153,7 +153,7 @@ fn tool_duplicate_tests() {
                     name: "demo_tool".to_string(),
                     tool_router_key: Some(tool_router_key.clone()),
                     homepage: Some("http://127.0.0.1/index.html".to_string()),
-                    author: "@@node1_test.sep-hanzo".to_string(),
+                    author: "did:hanzo:node1_test".to_string(),
                     version: "1.0.0".to_string(),
                     mcp_enabled: Some(false),
                     js_code: "console.log('Hello, Deno 1!');".to_string(),
@@ -289,7 +289,7 @@ fn tool_duplicate_tests() {
                 eprintln!("Get tool offering result: {:?}", result);
                 assert!(result.is_ok(), "Tool fork failed");
                 let fork_result = result.unwrap();
-                // Get tool offering result: Ok(Object {"assets": Null, "code": String("console.log('Hello, Deno 1!');"), "job_id": String("jobid_9b3a96e9-7cf3-43b6-9306-f5acb56ca27c"), "job_id_history": Array [String("")], "language": String("typescript"), "metadata": Object {"author": String("@@node1_test.sep-hanzo"), "configurations": Object {"properties": Object {"a": Object {"description": String("c"), "type": String("string")}}, "required": Array [String("a")], "type": String("object")}, "description": String("A Deno tool for testing 1"), "homepage": String("http://127.0.0.1/index.html"), "keywords": Array [String("deno"), String("test")], "name": String("demo_tool_20250331_164114"), "oauth": Null, "operating_system": Array [String("windows")], "parameters": Object {"properties": Object {"prompt": Object {"description": String("The prompt to process"), "type": String("string")}}, "required": Array [String("prompt")], "type": String("object")}, "result": Object {"properties": Null, "required": Array [], "type": String("object")}, "runner": String("only_host"), "sqlQueries": Array [], "sqlTables": Array [], "tool_set": Null, "tools": Array [String("local:::__official_hanzo:::hanzo_llm_prompt_processor")], "version": String("1.0.0")}, "tool_router_key": String("local:::__node1_test_sep_hanzo:::demo_tool_20250331_164114")})
+                // Get tool offering result: Ok(Object {"assets": Null, "code": String("console.log('Hello, Deno 1!');"), "job_id": String("jobid_9b3a96e9-7cf3-43b6-9306-f5acb56ca27c"), "job_id_history": Array [String("")], "language": String("typescript"), "metadata": Object {"author": String("did:hanzo:node1_test"), "configurations": Object {"properties": Object {"a": Object {"description": String("c"), "type": String("string")}}, "required": Array [String("a")], "type": String("object")}, "description": String("A Deno tool for testing 1"), "homepage": String("http://127.0.0.1/index.html"), "keywords": Array [String("deno"), String("test")], "name": String("demo_tool_20250331_164114"), "oauth": Null, "operating_system": Array [String("windows")], "parameters": Object {"properties": Object {"prompt": Object {"description": String("The prompt to process"), "type": String("string")}}, "required": Array [String("prompt")], "type": String("object")}, "result": Object {"properties": Null, "required": Array [], "type": String("object")}, "runner": String("only_host"), "sqlQueries": Array [], "sqlTables": Array [], "tool_set": Null, "tools": Array [String("local:::__official_hanzo:::hanzo_llm_prompt_processor")], "version": String("1.0.0")}, "tool_router_key": String("local:::__node1_test_sep_hanzo:::demo_tool_20250331_164114")})
 
                 let language = fork_result.get("language").unwrap().as_str().unwrap();
                 eprintln!("Language: {:?}", language);
@@ -298,7 +298,7 @@ fn tool_duplicate_tests() {
                 let metadata = fork_result.get("metadata").unwrap().as_object().unwrap();
                 eprintln!("Metadata: {:?}", metadata);
                 // Metadata: {
-                //     "author": String("@@node1_test.sep-hanzo"),
+                //     "author": String("did:hanzo:node1_test"),
                 //     "configurations": Object {
                 //         "properties": Object {
                 //             "a": Object {"description": String("c"), "type": String("string")}},
@@ -321,7 +321,7 @@ fn tool_duplicate_tests() {
                 // [String("local:::__official_hanzo:::hanzo_llm_prompt_processor")], "version": String("1.0.0")}
                 let author = metadata.get("author").unwrap().as_str().unwrap();
                 eprintln!("Author: {:?}", author);
-                assert_eq!(author, "@@node1_test.sep-hanzo");
+                assert_eq!(author, "did:hanzo:node1_test");
 
                 let configurations = metadata.get("configurations").unwrap().as_object().unwrap();
                 eprintln!("Configurations: {:?}", configurations);
