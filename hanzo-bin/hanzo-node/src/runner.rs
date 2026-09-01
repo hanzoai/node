@@ -18,6 +18,7 @@ use hanzo_messages::hanzo_utils::signatures::{
     clone_signature_secret_key, hash_signature_public_key, signature_public_key_to_string,
     signature_secret_key_to_string,
 };
+use hanzo_messages::schemas::hanzo_name::HanzoName;
 use std::collections::HashMap;
 use std::error::Error as StdError;
 use std::fmt;
@@ -70,7 +71,7 @@ pub async fn initialize_node() -> Result<
 
     // Fetch Env vars/args
     let args = parse_args();
-    let node_env = fetch_node_environment();
+    let mut node_env = fetch_node_environment();
 
     // Check if required ports are available
     let api_port = node_env.api_listen_address.port();
@@ -139,13 +140,14 @@ pub async fn initialize_node() -> Result<
     let global_identity_name = secrets
         .get("GLOBAL_IDENTITY_NAME")
         .cloned()
-        .unwrap_or_else(|| env::var("GLOBAL_IDENTITY_NAME").unwrap_or("@@localhost.sep-hanzo".to_string()));
+        .or_else(|| env::var("GLOBAL_IDENTITY_NAME").ok())
+        .filter(|name| !name.is_empty())
+        .unwrap_or_else(|| HanzoName::did(&node_keys.identity_public_key));
 
-    let global_identity_name = if global_identity_name.is_empty() {
-        "@@localhost.sep-hanzo".to_string()
-    } else {
-        global_identity_name
-    };
+    // Every other reader of the node's name reaches it through the environment or
+    // through node_env, both of which were read before the keys existed.
+    env::set_var("GLOBAL_IDENTITY_NAME", &global_identity_name);
+    node_env.global_identity_name = global_identity_name.clone();
 
     // Initialization, creating Tokio runtime and fetching needed startup data
     let initial_llm_providers = fetch_llm_provider_env(global_identity_name.clone());

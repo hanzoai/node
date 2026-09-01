@@ -1,7 +1,9 @@
 use crate::{
     hanzo_message::hanzo_message::{MessageBody, HanzoMessage},
     hanzo_utils::hanzo_logging::{hanzo_log, HanzoLogLevel, HanzoLogOption},
+    hanzo_utils::signatures::hash_signature_public_key,
 };
+use ed25519_dalek::VerifyingKey;
 use regex::Regex;
 use serde::{Deserialize, Deserializer, Serialize, Serializer};
 use std::hash::Hash;
@@ -114,6 +116,12 @@ impl HanzoName {
         }
 
         Ok(())
+    }
+
+    /// The name a node answers to when nothing else names it: the DID of its own
+    /// signing key, addressed by the same hash that names its database.
+    pub fn did(public_key: &VerifyingKey) -> String {
+        format!("did:hanzo:{}", hash_signature_public_key(public_key))
     }
 
     pub fn new(raw_name: String) -> Result<Self, &'static str> {

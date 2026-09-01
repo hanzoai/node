@@ -1,6 +1,7 @@
 #[cfg(test)]
 mod tests {
 
+    use hanzo_messages::hanzo_utils::signatures::unsafe_deterministic_signature_keypair;
     use hanzo_messages::schemas::hanzo_name::HanzoName;
 
     #[test]
@@ -191,5 +192,25 @@ mod tests {
             hanzo_name4.get_fullname_string_without_node_name(),
             Some("profilename/device/myphone".to_string())
         );
+    }
+
+    #[test]
+    fn test_did_from_key() {
+        let (_, public_key) = unsafe_deterministic_signature_keypair(0);
+        let did = HanzoName::did(&public_key);
+
+        // Pinned: the derivation names every fresh node and its database directory,
+        // so a change here renames both.
+        assert_eq!(
+            did,
+            "did:hanzo:c85950e4d9c2c24df9d44052c8f2298f69d4a9b82cb0266478f58f385ca2a679"
+        );
+        assert_eq!(HanzoName::new(did.clone()).unwrap().full_name, did);
+
+        // The shapes the node builds on top of its own name.
+        for suffix in ["/main", "/main/agent/myagent", "/main/device/myphone"] {
+            let name = format!("{}{}", did, suffix);
+            assert!(HanzoName::new(name.clone()).is_ok(), "expected {} to be valid", name);
+        }
     }
 }

@@ -100,15 +100,8 @@ pub fn fetch_llm_provider_env(global_identity: String) -> Vec<SerializedLLMProvi
 }
 
 pub fn fetch_node_environment() -> NodeEnvironment {
-    let global_identity_name = env::var("GLOBAL_IDENTITY_NAME")
-        .map(|val| {
-            if val.is_empty() {
-                "@@localhost.sep-hanzo".to_string()
-            } else {
-                val
-            }
-        })
-        .unwrap_or("@@localhost.sep-hanzo".to_string());
+    // Settled by initialize_node once the keys are loaded, and published here.
+    let global_identity_name = env::var("GLOBAL_IDENTITY_NAME").unwrap_or_default();
 
     // Fetch the environment variables for the IP and port, or use default values
     let ip: IpAddr = env::var("NODE_IP")
