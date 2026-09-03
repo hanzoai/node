@@ -100,10 +100,12 @@ impl From<lux_consensus::VoteType> for HanzoVoteType {
 /// Convert a HanzoVote into lux_consensus::Vote.
 impl From<&HanzoVote> for lux_consensus::Vote {
     fn from(hv: &HanzoVote) -> Self {
+        let mut nid = [0u8; 20];
+        nid.copy_from_slice(&hv.voter[..20]);
         lux_consensus::Vote::new(
             lux_consensus::ID::from(hv.block_id),
             hv.vote_type.into(),
-            lux_consensus::NodeID::from(hv.voter),
+            lux_consensus::NodeID::from(nid),
         )
         .with_signature(hv.signature.clone())
     }

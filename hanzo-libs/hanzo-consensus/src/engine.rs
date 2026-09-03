@@ -127,7 +127,9 @@ impl HanzoConsensusEngine {
 
     /// Add a validator to the consensus committee.
     pub fn add_validator(&mut self, node_id: [u8; 32], stake: u64) -> Result<(), ConsensusError> {
-        self.inner.add_validator(NodeID::from(node_id), stake);
+        let mut nid = [0u8; 20];
+        nid.copy_from_slice(&node_id[..20]);
+        self.inner.add_validator(NodeID::from(nid), stake);
         debug!(
             "added validator node={} stake={}",
             hex_short(&node_id),
