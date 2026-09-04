@@ -126,8 +126,8 @@ impl LocalEthersWallet {
         match network {
             Network::BaseSepolia => "https://sepolia.base.org".to_string(),
             Network::Base => "https://mainnet.base.org".to_string(),
-            Network::AvalancheFuji => "https://api.avax-test.network/ext/bc/C/rpc".to_string(),
-            Network::Avalanche => "https://api.avax.network/ext/bc/C/rpc".to_string(),
+            Network::AvalancheFuji => "https://api.avax-test.network/v1/chain/c".to_string(),
+            Network::Avalanche => "https://api.avax.network/v1/chain/c".to_string(),
         }
     }
 }
