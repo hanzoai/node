@@ -143,8 +143,8 @@ mod tests {
         assert!(err.contains("network 9"), "{err}");
 
         // And the network is right, in both shapes it is written.
-        assert!(check(r#"{"networkID":36962,"cChainGenesis":{"config":{"chainId":36962}}}"#, &TESTNET).is_ok());
-        assert!(check(r#"{"networkID":36964,"cChainGenesis":"{\"config\":{\"chainId\":36964}}"}"#, &DEVNET).is_ok());
+        assert!(check(r#"{"networkID":2,"cChainGenesis":{"config":{"chainId":36962}}}"#, &TESTNET).is_ok());
+        assert!(check(r#"{"networkID":3,"cChainGenesis":"{\"config\":{\"chainId\":36964}}"}"#, &DEVNET).is_ok());
     }
 
     #[test]
