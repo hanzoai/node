@@ -1,0 +1,104 @@
+Hanzo Ecosystem License
+Version 1.2, December 2025
+
+Copyright (c) 2026 Hanzo AI, Inc.
+All rights reserved.
+
+TECHNOLOGY PORTFOLIO - PATENT APPLICATIONS PLANNED
+Contact: licensing@hanzo.ai
+
+================================================================================
+                          TERMS AND CONDITIONS
+================================================================================
+
+1. DEFINITIONS
+
+   "Hanzo Primary Network" means the official Hanzo blockchain with Network ID
+   and EVM Chain ID = 36963.
+
+   "Authorized Network" means the Hanzo Primary Network, its official testnets
+   and devnets, and any L1/L2/L3 chain descending from the Hanzo Primary
+   Network.
+
+   "Descending Chain" means an L1/L2/L3 chain built on, anchored to, or deriving
+   security from the Hanzo Primary Network or its authorized testnets.
+
+   "Research Use" means non-commercial academic research, education, personal
+   study, or evaluation purposes.
+
+   "Commercial Use" means any use in connection with a product or service
+   offered for sale or fee, internal use by a for-profit entity, or any use
+   to generate revenue.
+
+2. GRANT OF LICENSE
+
+   Subject to these terms, Hanzo AI, Inc. grants you a non-exclusive,
+   royalty-free license to:
+
+   (a) Use for Research Use without restriction;
+
+   (b) Operate on the Hanzo Primary Network;
+
+   (c) Operate on official Hanzo testnets and devnets;
+
+   (d) Operate L1/L2/L3 chains descending from the Hanzo Primary Network;
+
+   (e) Build applications within the Hanzo ecosystem;
+
+   (f) Contribute improvements back to the original repositories.
+
+3. RESTRICTIONS
+
+   Without a commercial license from Hanzo AI, Inc., you may NOT:
+
+   (a) Fork the Hanzo Network or any Hanzo software;
+
+   (b) Create competing networks not descending from the Hanzo Primary Network;
+
+   (c) Use for Commercial Use outside the Hanzo ecosystem;
+
+   (d) Sublicense or transfer rights outside the Hanzo ecosystem;
+
+   (e) Use to create competing blockchain networks, exchanges, custody
+       services, or cryptographic systems outside the Hanzo ecosystem.
+
+4. RIGHTS RESERVATION
+
+   All rights not explicitly granted are reserved by Hanzo AI, Inc.
+
+   We plan to apply for patent protection for the technology in this
+   repository. Any implementation outside the Hanzo ecosystem may require
+   a separate commercial license.
+
+5. DISCLAIMER OF WARRANTY
+
+   THIS SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
+   EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+   MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
+
+6. LIMITATION OF LIABILITY
+
+   IN NO EVENT SHALL HANZO AI, INC. BE LIABLE FOR ANY CLAIM, DAMAGES
+   OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE,
+   ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE.
+
+7. TERMINATION
+
+   This license terminates immediately upon any breach, including but not
+   limited to deployment on unauthorized networks or creation of forks.
+
+8. GOVERNING LAW
+
+   This License shall be governed by the laws of the State of Delaware.
+
+9. COMMERCIAL LICENSING
+
+   For commercial use outside the Hanzo ecosystem:
+
+   Hanzo AI, Inc.
+   Email: licensing@hanzo.ai
+   Subject: Commercial License Request
+
+================================================================================
+
+Third-party components are listed in NOTICE and remain under their own terms.

@@ -1,0 +1,6 @@
+/target
+
+# One document file. These are the names other tools look for, linked to it.
+/AGENTS.md
+/CLAUDE.md
+/GEMINI.md

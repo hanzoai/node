@@ -1,0 +1,32 @@
+[package]
+name = "hanzod"
+version = "0.1.0"
+edition = "2021"
+description = "The Hanzo network node"
+authors = ["Hanzo AI, Inc."]
+repository = "https://github.com/hanzoai/node"
+license-file = "LICENSE"
+readme = "README.md"
+
+[[bin]]
+name = "hanzod"
+path = "src/main.rs"
+
+[dependencies]
+# The consensus standard this network decides under, from crates.io. The
+# identity a validator proves, the admission rule a committee is built by, and
+# the thresholds a round is measured against all come from here, so that what
+# this node calls a quorum is what every other implementation calls one.
+lux-consensus = "1.23.0"
+
+# The signature a validator makes. Same version the consensus crate verifies
+# under: a second BLS in one process is a second network.
+blst = "0.3"
+
+# A genesis document is JSON, and a hand-written parser at a boundary is a
+# vulnerability with a schedule.
+serde_json = "1"
+
+[profile.release]
+lto = true
+strip = true
