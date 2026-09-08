@@ -5,20 +5,27 @@ This product builds on the following third-party components, which remain
 under their own terms.
 
 --------------------------------------------------------------------------------
-lux-consensus — https://crates.io/crates/lux-consensus
-Copyright (c) 2019-2025 Lux Industries Inc.
+lux-node — https://github.com/lux-rs/node
+Copyright (c) 2019-2026 Lux Industries Inc.
 Licensed under the Lux Ecosystem License, Version 1.2, which grants operation
-on chains descending from its primary network. The proof of possession a
-validator publishes, the admission rule a committee is built by, and the
-thresholds a round is measured against are read from this package rather than
-restated here.
+on chains descending from its primary network. The validator identity and its
+post-quantum handshake, the mesh a validator joins, the engine that carries a
+block from built to accepted, the interpreter that executes it, and the
+JSON-RPC server are read from this package rather than restated here.
 
 --------------------------------------------------------------------------------
-blst — https://github.com/supranational/blst
-Copyright (c) 2020 Supranational LLC
-Licensed under the Apache License, Version 2.0.
+lux-consensus — https://crates.io/crates/lux-consensus
+Copyright (c) 2019-2025 Lux Industries Inc.
+Licensed under the Lux Ecosystem License, Version 1.2. The proof of possession
+a validator publishes, the admission rule a committee is built by, and the
+thresholds a certificate is measured against are read from this package.
 
 --------------------------------------------------------------------------------
 serde_json — https://github.com/serde-rs/json
 Copyright (c) 2014 Erick Tryzelaar, David Tolnay
+Licensed under the MIT License or the Apache License, Version 2.0.
+
+--------------------------------------------------------------------------------
+libc — https://github.com/rust-lang/libc
+Copyright (c) 2014-2020 The Rust Project Developers
 Licensed under the MIT License or the Apache License, Version 2.0.

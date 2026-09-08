@@ -1,55 +1,53 @@
 // Copyright (C) 2026, Hanzo AI, Inc. All rights reserved.
 // SPDX-License-Identifier: BSD-3-Clause-Eco
 
-//! Reading a genesis document, and holding it to the network it claims to be.
+//! The genesis this node starts its chain from, and holding a supplied one to
+//! the network it claims to be.
 //!
-//! A genesis is data, and this is the one place it becomes a value this node
-//! will act on. What is refused matters more than what is read: a field that is
-//! present and unreadable is an error, never a default. A document that fell
-//! back to zero for a number it could not parse would agree with nothing and
-//! look like it had been checked.
+//! Each network's document is compiled in, so a node pointed at a network by
+//! name starts from the same state every other node on it does. A document read
+//! off disk is checked against that network before it is used: a genesis is
+//! data, and data from outside is checked, not trusted.
+//!
+//! WHAT IS CHECKED IS THE TWO NUMBERS. The chain id must be this network's
+//! chain, because it is what every transaction is signed against. The network
+//! id, when the document states one, must be this network, because a chain
+//! document carried inside another network's genesis belongs to that network.
+//! A field that is present and unreadable is an error, never a default: a
+//! document that fell back to zero for a number it could not parse would agree
+//! with nothing and look like it had been checked.
 
 use serde_json::Value;
 
-use crate::network::Network;
+use crate::network::{Network, DEVNET, MAINNET, TESTNET};
 
 /// How deep a `cChainGenesis` chain is followed before it is called a loop.
 /// A document that wraps itself would otherwise recurse until the stack ends.
 const MAX_NESTING: u8 = 8;
 
-/// What a genesis document says about which network it is for.
-pub struct Genesis {
-    /// The number the document states — its EVM chain id, and for a sovereign
-    /// network its network id too.
-    pub id: u64,
-    /// How many accounts it allocates.
-    pub accounts: usize,
-}
-
-impl Genesis {
-    /// Refuse this document if it is not this network's.
-    pub fn agrees_with(&self, net: &Network) -> Result<(), String> {
-        match self.id == net.id {
-            true => Ok(()),
-            false => Err(format!(
-                "this genesis is network {}, not {} ({})",
-                self.id, net.name, net.id
-            )),
-        }
+/// The document `net` starts from.
+pub fn document(net: &Network) -> &'static str {
+    match net.name {
+        n if n == MAINNET.name => include_str!("../genesis/mainnet.json"),
+        n if n == TESTNET.name => include_str!("../genesis/testnet.json"),
+        n if n == DEVNET.name => include_str!("../genesis/devnet.json"),
+        // Unreachable by construction: a `Network` value only exists for the
+        // three above. Stated rather than unwrapped so adding a fourth without
+        // its document is a compile-time-shaped failure and not a panic.
+        other => panic!("no genesis is compiled in for {other}"),
     }
 }
 
-/// Read a genesis document.
-///
-/// Both shapes on disk are accepted, because both are what is written: the
-/// chain's own document, or a whole-network document carrying it under
-/// `cChainGenesis` — as an object, or as a string holding the document.
-pub fn read(raw: &str) -> Result<Genesis, String> {
+/// Refuse `raw` if it is not this network's genesis.
+pub fn check(raw: &str, net: &Network) -> Result<(), String> {
     let doc: Value = serde_json::from_str(raw).map_err(|e| format!("not JSON: {e}"))?;
     if !doc.is_object() {
         return Err("not a genesis document".into());
     }
 
+    // A whole-network document carries the chain's own inside it, and it is
+    // written either as an object or as a string holding the document. Both
+    // shapes are read, because both are what is on disk.
     let mut held;
     let mut chain = &doc;
     let mut depth = 0;
@@ -73,24 +71,34 @@ pub fn read(raw: &str) -> Result<Genesis, String> {
 
     let config = chain.get("config").filter(|c| c.is_object()).ok_or("no config")?;
     let id = number(config, "chainId")?;
-
-    // A whole-network document states the number twice. Both must be the same
-    // number: a document whose two halves name different networks is one half
-    // of two genesis files, and whichever this node believed would be wrong
-    // somewhere else.
-    if doc.get("networkID").is_some() {
-        let network = number(&doc, "networkID")?;
-        if network != id {
-            return Err(format!("it is network {network} carrying chain {id}"));
-        }
+    if id != net.chain {
+        return Err(format!(
+            "this genesis is chain {id}, not {}'s chain {}",
+            net.name, net.chain
+        ));
     }
 
-    let accounts = match chain.get("alloc") {
-        None => 0,
-        Some(Value::Object(entries)) => entries.len(),
-        Some(_) => return Err("alloc is not a set of accounts".into()),
-    };
-    Ok(Genesis { id, accounts })
+    // The network the document names, when it names one. A chain document
+    // carried inside another network's genesis is that network's, whatever its
+    // chain id says.
+    if doc.get("networkID").is_some() {
+        let stated = number(&doc, "networkID")?;
+        if stated != net.id as u64 {
+            return Err(format!(
+                "this genesis is network {stated}, not {} ({})",
+                net.name, net.id
+            ));
+        }
+    }
+    Ok(())
+}
+
+/// How many accounts a document allocates.
+pub fn accounts(raw: &str) -> usize {
+    serde_json::from_str::<Value>(raw)
+        .ok()
+        .and_then(|doc| doc.get("alloc").and_then(|a| a.as_object()).map(|a| a.len()))
+        .unwrap_or(0)
 }
 
 /// Read a number that must be a number. A quoted or absent value is an error
@@ -105,65 +113,67 @@ fn number(at: &Value, field: &str) -> Result<u64, String> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::network::{DEVNET, MAINNET, TESTNET};
+    use crate::network::ALL;
 
-    fn accepted(raw: &str, net: &Network) -> bool {
-        read(raw).and_then(|g| g.agrees_with(net)).is_ok()
+    #[test]
+    fn every_network_starts_from_its_own_chain() {
+        for net in ALL {
+            let raw = document(&net);
+            check(raw, &net).unwrap_or_else(|e| panic!("{}: {e}", net.name));
+            assert!(accounts(raw) > 0, "{} allocates nothing", net.name);
+        }
     }
 
     #[test]
-    fn a_genesis_stating_this_network_is_accepted() {
-        let raw = r#"{"config":{"chainId":36963},
-            "alloc":{"0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266":{"balance":"0x1"}}}"#;
-        assert!(accepted(raw, &MAINNET));
-        assert_eq!(read(raw).unwrap().accounts, 1);
+    fn one_networks_genesis_is_not_anothers() {
+        for (i, a) in ALL.iter().enumerate() {
+            for b in &ALL[i + 1..] {
+                assert!(check(document(a), b).is_err(), "{}'s genesis passed for {}", a.name, b.name);
+                assert!(check(document(b), a).is_err(), "{}'s genesis passed for {}", b.name, a.name);
+            }
+        }
     }
 
     #[test]
-    fn a_genesis_for_another_network_is_refused() {
-        let raw = r#"{"config":{"chainId":36963}}"#;
-        assert!(!accepted(raw, &TESTNET));
-        assert!(!accepted(r#"{"config":{"chainId":96369}}"#, &MAINNET));
+    fn a_document_naming_another_network_is_refused() {
+        // The chain is right and the network is not: the document belongs to
+        // whichever network's genesis carries it.
+        let raw = r#"{"networkID":9,"cChainGenesis":{"config":{"chainId":36963}}}"#;
+        let err = check(raw, &MAINNET).expect_err("network 9 is not mainnet");
+        assert!(err.contains("network 9"), "{err}");
+
+        // And the network is right, in both shapes it is written.
+        assert!(check(r#"{"networkID":2,"cChainGenesis":{"config":{"chainId":36962}}}"#, &TESTNET).is_ok());
+        assert!(check(r#"{"networkID":3,"cChainGenesis":"{\"config\":{\"chainId\":36964}}"}"#, &DEVNET).is_ok());
     }
 
     #[test]
-    fn a_whole_network_document_is_read_in_both_shapes() {
-        assert!(accepted(
-            r#"{"networkID":36962,"cChainGenesis":{"config":{"chainId":36962}}}"#,
-            &TESTNET
-        ));
-        assert!(accepted(
-            r#"{"networkID":36964,"cChainGenesis":"{\"config\":{\"chainId\":36964}}"}"#,
-            &DEVNET
-        ));
-    }
-
-    #[test]
-    fn a_document_naming_two_networks_is_refused() {
-        assert!(read(r#"{"networkID":36963,"cChainGenesis":{"config":{"chainId":36962}}}"#).is_err());
+    fn a_document_that_names_no_network_is_read_as_a_chain() {
+        // The common shape: the chain's own document, with no network around it.
+        assert!(check(r#"{"config":{"chainId":36963}}"#, &MAINNET).is_ok());
     }
 
     #[test]
     fn nothing_unreadable_becomes_a_default() {
-        assert!(read("").is_err(), "an empty file");
-        assert!(read(r#"{"config":{"chainId":36963"#).is_err(), "truncated JSON");
-        assert!(read("[1,2,3]").is_err(), "not an object");
-        assert!(read(r#"{"alloc":{}}"#).is_err(), "no config");
-        assert!(read(r#"{"config":{}}"#).is_err(), "no chain id");
-        assert!(read(r#"{"config":{"chainId":"36963"}}"#).is_err(), "a quoted chain id");
-        assert!(read(r#"{"config":{"chainId":-1}}"#).is_err(), "a negative chain id");
+        assert!(check("", &MAINNET).is_err(), "an empty file");
+        assert!(check(r#"{"config":{"chainId":36963"#, &MAINNET).is_err(), "truncated JSON");
+        assert!(check("[1,2,3]", &MAINNET).is_err(), "not an object");
+        assert!(check(r#"{"alloc":{}}"#, &MAINNET).is_err(), "no config");
+        assert!(check(r#"{"config":{}}"#, &MAINNET).is_err(), "no chain id");
+        assert!(check(r#"{"config":{"chainId":"36963"}}"#, &MAINNET).is_err(), "a quoted chain id");
+        assert!(check(r#"{"config":{"chainId":-1}}"#, &MAINNET).is_err(), "a negative chain id");
         assert!(
-            read(r#"{"config":{"chainId":36963},"alloc":[]}"#).is_err(),
-            "an allocation that is not a set of accounts"
+            check(r#"{"networkID":"1","cChainGenesis":{"config":{"chainId":36963}}}"#, &MAINNET).is_err(),
+            "a quoted network id"
         );
     }
 
     #[test]
     fn a_document_nested_past_the_limit_is_refused() {
-        let mut loop_ = r#"{"config":{"chainId":36963}}"#.to_string();
+        let mut wrapped = r#"{"config":{"chainId":36963}}"#.to_string();
         for _ in 0..12 {
-            loop_ = format!(r#"{{"cChainGenesis":{loop_}}}"#);
+            wrapped = format!(r#"{{"cChainGenesis":{wrapped}}}"#);
         }
-        assert!(read(&loop_).is_err());
+        assert!(check(&wrapped, &MAINNET).is_err());
     }
 }

@@ -1,6 +1,6 @@
 [package]
 name = "hanzod"
-version = "0.1.0"
+version = "0.2.0"
 edition = "2021"
 description = "The Hanzo network node"
 authors = ["Hanzo AI, Inc."]
@@ -13,19 +13,25 @@ name = "hanzod"
 path = "src/main.rs"
 
 [dependencies]
-# The consensus standard this network decides under, from crates.io. The
-# identity a validator proves, the admission rule a committee is built by, and
-# the thresholds a round is measured against all come from here, so that what
-# this node calls a quorum is what every other implementation calls one.
-lux-consensus = "1.23.0"
+# The node this one is. Identity, the validator mesh and its post-quantum
+# handshake, the block engine, the EVM and the JSON-RPC server all come from
+# here, at a tag: two nodes on one network resolve the same tag or they do not
+# agree about what a block means. A second copy of any of it in this repository
+# would be a second implementation of the thing every peer has to match.
+lux-node = { git = "ssh://git@github.com/lux-rs/node.git", tag = "v0.2.0" }
 
-# The signature a validator makes. Same version the consensus crate verifies
-# under: a second BLS in one process is a second network.
-blst = "0.3"
+# The consensus standard the committee decides under. The thresholds this node
+# reports are read from here rather than restated, so what it calls a quorum is
+# what every other implementation calls one.
+lux-consensus = "1.23.0"
 
 # A genesis document is JSON, and a hand-written parser at a boundary is a
 # vulnerability with a schedule.
 serde_json = "1"
+
+# Signals. SIGTERM has to reach a flag the loops can read, and the standard
+# library does not expose one — this is the only thing libc is used for.
+libc = "0.2"
 
 [profile.release]
 lto = true

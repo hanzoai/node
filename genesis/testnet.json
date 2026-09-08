@@ -1,0 +1,70 @@
+{
+  "config": {
+    "chainId": 36962,
+    "homesteadBlock": 0,
+    "eip150Block": 0,
+    "eip155Block": 0,
+    "eip158Block": 0,
+    "byzantiumBlock": 0,
+    "constantinopleBlock": 0,
+    "petersburgBlock": 0,
+    "istanbulBlock": 0,
+    "muirGlacierBlock": 0,
+    "berlinBlock": 0,
+    "londonBlock": 0,
+    "arrowGlacierBlock": 0,
+    "grayGlacierBlock": 0,
+    "mergeNetsplitBlock": 0,
+    "terminalTotalDifficulty": 0,
+    "shanghaiTime": 0,
+    "cancunTime": 0,
+    "evmTimestamp": 0,
+    "blobSchedule": {
+      "cancun": {
+        "baseFeeUpdateFraction": 3338477,
+        "max": 6,
+        "target": 3
+      }
+    },
+    "feeConfig": {
+      "gasLimit": 12000000,
+      "targetBlockRate": 2,
+      "minBaseFee": 25000000000,
+      "targetGas": 500000000,
+      "baseFeeChangeDenominator": 36,
+      "minBlockGasCost": 0,
+      "maxBlockGasCost": 1000000,
+      "blockGasCostStep": 200000
+    },
+    "warpConfig": {
+      "blockTimestamp": 0,
+      "quorumNumerator": 67,
+      "requirePrimaryNetworkSigners": false
+    }
+  },
+  "nonce": "0x0",
+  "timestamp": "0x0",
+  "extraData": "0x",
+  "gasLimit": "0xb71b00",
+  "difficulty": "0x0",
+  "mixHash": "0x0000000000000000000000000000000000000000000000000000000000000000",
+  "coinbase": "0x0000000000000000000000000000000000000000",
+  "alloc": {
+    "0200000000000000000000000000000000000005": {
+      "balance": "0x0",
+      "code": "0x01",
+      "nonce": "0x1"
+    },
+    "0xf09ff0239c29d3875094d4c47c659bae8c5c8de1": {
+      "balance": "0xd3c21bcecceda1000000"
+    },
+    "0x073cc13e4e8848daf04926cae01b9ac5e4c01d1a": {
+      "balance": "0x52b7d2dcc80cd2e4000000"
+    }
+  },
+  "baseFeePerGas": "0x5d21dba00",
+  "number": "0x0",
+  "gasUsed": "0x0",
+  "parentHash": "0x0000000000000000000000000000000000000000000000000000000000000000",
+  "skipPostMergeFields": true
+}
