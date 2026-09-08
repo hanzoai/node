@@ -3,13 +3,20 @@
 
 //! The networks this node runs, and the two numbers each one is.
 //!
-//! TWO NUMBERS, BECAUSE THERE ARE TWO QUESTIONS. A validator joins a NETWORK,
-//! and the network id is what peers greet each other under: it is the same
-//! number for every chain the network's validator set carries. A transaction is
-//! signed against a CHAIN, and the chain id is what an EVM signature is bound
-//! to. Collapsing them into one number would make a wallet and a validator
-//! disagree about what they are on, and the disagreement is only visible after
-//! a transaction has been signed for the wrong thing.
+//! ONE NUMBER PER NETWORK PER ENVIRONMENT, because Hanzo is a sovereign L1.
+//!
+//! A validator joins a NETWORK and a transaction is signed against a CHAIN, and
+//! on a network that carries many chains those are two questions with two
+//! answers. Hanzo's primary network carries one: its EVM. So the two numbers
+//! were free to differ, and differing is what went wrong — mainnet greeted
+//! under id 1, which is what LUX mainnet greets under, and so does Zoo's. Three
+//! sovereign networks introducing themselves by the same number is the
+//! ambiguity a wallet cannot see through and a staking-key derivation path
+//! cannot be unique under.
+//!
+//! So the primary network id IS the EVM chain id. One number per environment,
+//! globally unique, and a peer that greets under 36963 is on Hanzo mainnet and
+//! nowhere else.
 //!
 //! These three are the whole set. A network that is not here is not one this
 //! binary can be pointed at by name — which is the point of compiling them in
@@ -29,11 +36,11 @@ pub struct Network {
 }
 
 /// The settlement network.
-pub const MAINNET: Network = Network { name: "mainnet", id: 1, chain: 36963 };
+pub const MAINNET: Network = Network { name: "mainnet", id: 36963, chain: 36963 };
 /// The network that carries release candidates.
-pub const TESTNET: Network = Network { name: "testnet", id: 2, chain: 36962 };
+pub const TESTNET: Network = Network { name: "testnet", id: 36962, chain: 36962 };
 /// The network the protocol itself is developed against.
-pub const DEVNET: Network = Network { name: "devnet", id: 3, chain: 36964 };
+pub const DEVNET: Network = Network { name: "devnet", id: 36964, chain: 36964 };
 
 /// Every network this binary knows, in the order it lists them.
 pub const ALL: [Network; 3] = [MAINNET, TESTNET, DEVNET];
@@ -86,10 +93,13 @@ mod tests {
     }
 
     #[test]
-    fn a_network_id_is_not_a_chain_id() {
-        // The mistake this table exists to prevent: one number doing both jobs.
+    fn a_network_greets_under_its_chain_id() {
+        // Hanzo's primary network carries one chain, so it introduces itself by
+        // that chain's number. The mistake this replaces: mainnet greeting under
+        // 1, which Lux mainnet and Zoo mainnet also greet under — three networks,
+        // one number, and a wallet with no way to tell which it reached.
         for n in ALL {
-            assert_ne!(n.id as u64, n.chain, "{} names itself twice", n.name);
+            assert_eq!(n.id as u64, n.chain, "{} greets under a number that is not its chain", n.name);
         }
     }
 }
