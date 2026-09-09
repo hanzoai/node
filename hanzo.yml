@@ -1,0 +1,42 @@
+# Hanzo CI/CD — hanzod. All real config is here; .github/workflows/cicd.yml is
+# triggers and an import of hanzoai/ci.
+
+test:
+  # Locked, so the gate resolves the same tree the Dockerfile does.
+  - name: build
+    run: |
+      set -e
+      cargo build --release --locked
+      test -s target/release/hanzod
+
+  # A validator that cannot state its own identity cannot join a committee, so
+  # the smoke is: publish a line, then answer for the chain it was issued.
+  - name: smoke
+    run: |
+      set -e
+      d=$(mktemp -d)
+      ./target/release/hanzod --data "$d" --publish > "$d/committee"
+      test -s "$d/committee"
+      ./target/release/hanzod --network mainnet --data "$d" \
+        --committee "$d/committee" --peers 127.0.0.1:9631 \
+        --rpc 127.0.0.1:9630 --mesh 127.0.0.1:9631 &
+      pid=$!
+      trap 'kill $pid 2>/dev/null || true' EXIT
+      for i in $(seq 1 30); do
+        got=$(curl -fsS --max-time 2 -X POST http://127.0.0.1:9630/v1/chain/c/rpc \
+              -H 'content-type: application/json' \
+              -d '{"jsonrpc":"2.0","id":1,"method":"eth_chainId","params":[]}' 2>/dev/null || true)
+        case "$got" in *0x9063*) echo "hanzod answers for chain 36963"; exit 0;; esac
+        sleep 1
+      done
+      echo "hanzod never answered for its chain" >&2
+      exit 1
+
+images:
+  - name: hanzod
+    context: .
+    dockerfile: Dockerfile
+    repo: ghcr.io/hanzoai/node
+    # Both, because the fleet runs both and a single-arch image deploys on half
+    # of it. Each is built on a runner of its own architecture.
+    platforms: [linux/amd64, linux/arm64]

@@ -1,0 +1,23 @@
+name: CI/CD
+
+# The caller, and deliberately nothing else: triggers plus the import. All real
+# config is the repo-root hanzo.yml, which platform.hanzo.ai reads too.
+#
+# A queued job here reaches the GitHub App, which mints a runner for exactly
+# that job on our own fleet. No job runs on a builder we do not own.
+
+on:
+  push:
+    branches: [main]
+    tags: ['v*']
+  pull_request:
+  workflow_dispatch:
+
+concurrency:
+  group: cicd-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  cicd:
+    uses: hanzoai/ci/.github/workflows/build.yml@v2
+    secrets: inherit
