@@ -13,9 +13,23 @@ COPY genesis genesis
 
 # Locked, and the lockfile ships: a resolver left free to drift builds a tree
 # nobody ran.
-RUN cargo build --release --locked \
+#
+# lux-node is a git dependency on a private repository, named by an ssh:// URL
+# that Cargo.lock records, so the credential arrives here and the URL is
+# rewritten rather than edited — editing it would invalidate the lock. The
+# secret is readable only by this command and lands in no layer. Without it
+# cargo stops at "failed to authenticate when downloading repository".
+# The config is WRITTEN, not set with `git config`: this base image has no git
+# binary. Cargo does not need one either — it fetches with libgit2, which reads
+# the same url.*.insteadOf rules from this file.
+RUN --mount=type=secret,id=gh_token \
+    export GIT_CONFIG_GLOBAL=/tmp/gitcred && \
+    tok=$(cat /run/secrets/gh_token) && \
+    printf '[url "https://x-access-token:%s@github.com/"]\n\tinsteadOf = https://github.com/\n\tinsteadOf = ssh://git@github.com/\n' "$tok" > "$GIT_CONFIG_GLOBAL" && \
+    cargo build --release --locked \
  && strip target/release/hanzod \
- && test -s target/release/hanzod
+ && test -s target/release/hanzod \
+ && rm -f /tmp/gitcred
 
 # cc, not static: hanzod links libc and libgcc and nothing else, so the image is
 # the binary plus the two libraries it names.
