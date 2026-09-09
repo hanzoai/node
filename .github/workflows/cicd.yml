@@ -21,3 +21,10 @@ jobs:
   cicd:
     uses: hanzoai/ci/.github/workflows/build.yml@v2
     secrets: inherit
+    # hanzod ships for both architectures and neither is emulated. A runner
+    # builds only what it is, so asking one for both is a refusal, correctly:
+    # the emulated half is slow enough to be why a queue forms on the one node
+    # that can serve it. delegate hands the build to the door on api.hanzo.ai,
+    # which schedules one per architecture on a node of that architecture.
+    with:
+      mode: delegate
