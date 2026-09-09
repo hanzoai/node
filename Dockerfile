@@ -6,6 +6,15 @@
 FROM rust:1-slim-bookworm AS build
 WORKDIR /src
 
+# git, because cargo needs it here. lux-node is a private git dependency and
+# cargo's built-in fetcher resolved neither the URL rewrite nor the tag it is
+# locked to — it authenticated and then reported the revision missing. Handing
+# the fetch to git itself resolves both, and this base ships no git binary.
+RUN apt-get update \
+ && apt-get install --no-install-recommends -y git ca-certificates \
+ && rm -rf /var/lib/apt/lists/*
+ENV CARGO_NET_GIT_FETCH_WITH_CLI=true
+
 # Manifests first, so a source edit re-runs the compile and not the resolve.
 COPY Cargo.toml Cargo.lock ./
 COPY src src
@@ -19,9 +28,6 @@ COPY genesis genesis
 # rewritten rather than edited — editing it would invalidate the lock. The
 # secret is readable only by this command and lands in no layer. Without it
 # cargo stops at "failed to authenticate when downloading repository".
-# The config is WRITTEN, not set with `git config`: this base image has no git
-# binary. Cargo does not need one either — it fetches with libgit2, which reads
-# the same url.*.insteadOf rules from this file.
 RUN --mount=type=secret,id=gh_token \
     export GIT_CONFIG_GLOBAL=/tmp/gitcred && \
     tok=$(cat /run/secrets/gh_token) && \
