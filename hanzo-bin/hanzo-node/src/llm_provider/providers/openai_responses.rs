@@ -201,9 +201,16 @@ async fn handle_non_streaming_response_responses(
                 return Err(LLMProviderError::APIError(format!("AI Provider API Error: {}", msg)));
             }
         }
-        return Err(LLMProviderError::APIError(
-            "AI Provider API Error: Unknown error occurred".to_string(),
-        ));
+        // The engine answers a rejected body with a top-level {"message": ...} and
+        // a deserialize failure with a bare string; neither sits under "error", so
+        // report what arrived rather than a sentence naming nothing.
+        if let Some(msg) = error_json.get("message").and_then(|m| m.as_str()) {
+            return Err(LLMProviderError::APIError(format!("AI Provider API Error: {}", msg)));
+        }
+        return Err(LLMProviderError::APIError(format!(
+            "AI Provider API Error: {}",
+            error_json
+        )));
     }
 
     let response_json: serde_json::Value = res.json().await?;
@@ -365,10 +372,14 @@ async fn handle_streaming_response_responses(
                     return Err(LLMProviderError::APIError(format!("AI Provider API Error: {}", msg)));
                 }
             }
+            if let Some(msg) = v.get("message").and_then(|m| m.as_str()) {
+                return Err(LLMProviderError::APIError(format!("AI Provider API Error: {}", msg)));
+            }
         }
-        return Err(LLMProviderError::APIError(
-            "AI Provider API Error: Unknown error occurred".to_string(),
-        ));
+        return Err(LLMProviderError::APIError(format!(
+            "AI Provider API Error: {}",
+            text
+        )));
     }
 
     let mut stream = res.bytes_stream();
@@ -1174,6 +1185,16 @@ fn transform_input_messages_for_responses(messages_json: serde_json::Value) -> s
 
             if content_blocks.is_empty() {
                 continue;
+            }
+
+            // The Responses API accepts input-side content only. An assistant turn
+            // carries "output_text", which the engine rejects with "data did not
+            // match any variant of OpenResponsesInput" — so every turn after the
+            // first 4xxs. Normalise it so multi-turn history deserializes.
+            for block in content_blocks.iter_mut() {
+                if block.get("type").and_then(|t| t.as_str()) == Some("output_text") {
+                    block["type"] = json!("input_text");
+                }
             }
 
             let mut new_msg = serde_json::Map::new();
