@@ -24,6 +24,7 @@
 //! that died between recording a vote and sending it has to be able to come
 //! back and send it.
 
+mod blocks;
 mod chain;
 mod committee;
 mod genesis;
@@ -163,7 +164,7 @@ fn run(args: &[String]) -> Result<(), String> {
         format!("this validator ({}) is not in {path}; add the line --publish prints", hex(&me))
     })?;
 
-    let served: Arc<dyn Vm> = Arc::new(Chain::new(Evm::new(start), version()));
+    let served: Arc<dyn Vm> = Arc::new(Chain::open(Evm::new(start), version(), &data.join("blocks"))?);
     let engine = Engine::new(me, keys.consensus.clone(), &committee, 1, chain_name)?;
     let host = Host::bind(Config { identity: Arc::new(keys.identity), bind: mesh_at })
         .map_err(|e| format!("cannot bind the validator mesh at {mesh_at}: {e}"))?;
