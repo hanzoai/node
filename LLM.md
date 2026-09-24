@@ -19,15 +19,12 @@ the host already states.
 
 ## Layout
 
-    src/network.rs     the three networks, and the two numbers each one is
-    src/genesis.rs     the compiled-in documents, and whether a supplied one is ours
-    src/committee.rs   the rule a committee decides under, read from the standard
-    src/chain.rs       the chain, under the name this node answers to
-    src/main.rs        the flags, the wiring, and the loop
+    src/main.rs        Hanzo's spec — name, client, three networks — and one call
     genesis/*.json     one chain genesis per network
 
-Each answers one question. `network` knows nothing about genesis documents;
-`committee` states no rule of its own; `chain` executes nothing itself.
+Everything else — flags, keys, committee, mesh, the chain on disk, catch-up and
+JSON-RPC — is `lux_node::run`. The chain answers at `/v1/chain/hanzo` and
+`/v1/chain/hanzo/rpc`; the C-Chain name belongs to Lux alone.
 
 ## Two numbers, not one
 
@@ -43,7 +40,8 @@ The chain ids are LP-018's canonical map for this brand. The network ids are the
 network whose validator set carries the chain: an operator running `hanzod`
 holds a seat in that set and serves this chain on it.
 
-Ports are 9630 (RPC) and 9631 (mesh). The data directory is `~/.hanzod`.
+The SDK's default ports are 9650 (RPC) and 9651 (mesh); a deployment passes
+`--rpc` and `--mesh`. The data directory is `~/.hanzod`.
 
 ## The rule comes from the standard
 
@@ -51,8 +49,7 @@ The consensus package named in `Cargo.toml` is what decides anything. The proof
 of possession a validator publishes, the admission rule a committee is built by,
 and the thresholds a certificate is measured against are read from it, so what
 this node calls a quorum is what every other implementation calls one. Nothing
-here restates a threshold — `committee.rs` has a test asserting that the number
-it prints is the number the engine holds a round to.
+here restates a threshold.
 
 A certificate needs a supermajority of the SEATS, strictly more than two thirds:
 three of four, four of five, five of seven. And it needs at least four seats at
@@ -77,11 +74,8 @@ node one seed is one validator wearing several hats.
 
 ## The name this node answers to
 
-`chain.rs` wraps the host's interpreter and answers `web3_clientVersion` and
-every version surface with this node's name. Execution is untouched — a second
-interpreter is a second answer to what a transaction did — but a wallet that
-asked what it was talking to and got the name of a library would have been told
-about the wrong thing.
+`web3_clientVersion` and every version surface name this node — `hanzod/v…` —
+and the chain is served under `hanzo`. Execution is the SDK's, untouched.
 
 ## What is refused
 

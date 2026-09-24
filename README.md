@@ -70,7 +70,7 @@ committee   5 validators carrying 5
 quorum      4 of 5
 stake       more than 3 of 5
 mesh        127.0.0.1:19631
-rpc         http://127.0.0.1:19630/v1/chain/c
+rpc         http://127.0.0.1:19630/v1/chain/hanzo
 peers       4 of 4
 ```
 
@@ -93,7 +93,7 @@ an account the genesis funds:
 ```
 curl -sS -X POST -H 'content-type: application/json' \
   --data '{"jsonrpc":"2.0","id":1,"method":"eth_sendRawTransaction","params":["0x02f87082906480843b9aca008506fc23ac00830186a094f7edc8fa1ecc32967f827c9043fcae6ba73afa5c8203e880c001a0d27635386b0ac521147cd869df5e9bf06ddfbfb830f70ffe4b47c2b9ffd3db4da001fc71001704e5ef976182bfdc3988d27cd9ab8db7cc847dcd968d8b969e8b6c"]}' \
-  http://127.0.0.1:19630/v1/chain/c
+  http://127.0.0.1:19630/v1/chain/hanzo
 ```
 
 ```
@@ -113,7 +113,7 @@ accepted  height 1  state 012a8b224669c814a5f0d9150d87ecd3cc53f32435dd9d0d88d25e
 ```
 curl -sS -X POST -H 'content-type: application/json' \
   --data '{"jsonrpc":"2.0","id":1,"method":"eth_chainId","params":[]}' \
-  http://127.0.0.1:19630/v1/chain/c
+  http://127.0.0.1:19630/v1/chain/hanzo
 ```
 
 ```
@@ -123,7 +123,7 @@ curl -sS -X POST -H 'content-type: application/json' \
 ```
 $ curl -sS http://127.0.0.1:19630/v1/health
 {"healthy":true}
-$ curl -sS http://127.0.0.1:19630/v1/chain/c/health
+$ curl -sS http://127.0.0.1:19630/v1/chain/hanzo/health
 {"chain":"C","healthy":true}
 ```
 
