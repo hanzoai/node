@@ -1578,12 +1578,9 @@ dependencies = [
 
 [[package]]
 name = "hanzod"
-version = "0.2.2"
+version = "0.2.3"
 dependencies = [
- "libc",
- "lux-consensus",
  "lux-node",
- "serde_json",
 ]
 
 [[package]]
@@ -1928,9 +1925,9 @@ checksum = "f9f8bd3e56ce4dfc153cf470fffbfa98c7620958b312ca5c3a4b8d5181fd13c6"
 
 [[package]]
 name = "lux-consensus"
-version = "1.23.0"
+version = "1.23.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "563f65e6081655f66494dda62993bbb847e703feed929437d521a261da9bc740"
+checksum = "4c227829c14967a4157369224378776d9593db4a7e18fa07e321fefea5bd4eee"
 dependencies = [
  "blst",
  "hex",
@@ -1940,7 +1937,7 @@ dependencies = [
 [[package]]
 name = "lux-evm"
 version = "0.1.0"
-source = "git+ssh://git@github.com/lux-rs/evm.git?tag=v0.1.0#ff3f1a78b316bcf70d5de87a609a06a1545372c0"
+source = "git+ssh://git@github.com/lux-rs/evm.git?tag=v0.1.0#8c5b00e40f42e3bee9a526d233c816d9120ab793"
 dependencies = [
  "alloy-consensus",
  "alloy-eips 2.4.2",
@@ -1952,8 +1949,8 @@ dependencies = [
 
 [[package]]
 name = "lux-node"
-version = "0.1.0"
-source = "git+ssh://git@github.com/lux-rs/node.git?tag=v0.2.0#e6ffde5b3ac8c94b7d62de32bc5bf39f6b21ca03"
+version = "0.2.1"
+source = "git+ssh://git@github.com/lux-rs/node.git?tag=v0.2.1#a1e19a3f995b9b17ca6e8bed74f3a9630679b14f"
 dependencies = [
  "alloy-consensus",
  "alloy-eips 2.4.2",

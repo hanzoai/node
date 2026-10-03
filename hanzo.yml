@@ -23,7 +23,7 @@ test:
       pid=$!
       trap 'kill $pid 2>/dev/null || true' EXIT
       for i in $(seq 1 30); do
-        got=$(curl -fsS --max-time 2 -X POST http://127.0.0.1:9630/v1/chain/c/rpc \
+        got=$(curl -fsS --max-time 2 -X POST http://127.0.0.1:9630/v1/chain/hanzo/rpc \
               -H 'content-type: application/json' \
               -d '{"jsonrpc":"2.0","id":1,"method":"eth_chainId","params":[]}' 2>/dev/null || true)
         case "$got" in *0x9063*) echo "hanzod answers for chain 36963"; exit 0;; esac
