@@ -1,6 +1,6 @@
 [package]
 name = "hanzod"
-version = "0.2.3"
+version = "0.2.4"
 edition = "2021"
 description = "The Hanzo network node"
 authors = ["Hanzo AI, Inc."]
@@ -16,7 +16,7 @@ path = "src/main.rs"
 # The node this one is: keys, the validator mesh, the EVM, the chain on disk,
 # catch-up and JSON-RPC, at a tag. Two validators on one network resolve the same
 # tag or they do not agree about what a block means.
-lux-node = { git = "ssh://git@github.com/lux-rs/node.git", tag = "v0.2.1" }
+lux-node = { git = "ssh://git@github.com/lux-rs/node.git", tag = "v0.2.2" }
 
 [profile.release]
 lto = true

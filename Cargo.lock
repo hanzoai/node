@@ -1578,7 +1578,7 @@ dependencies = [
 
 [[package]]
 name = "hanzod"
-version = "0.2.3"
+version = "0.2.4"
 dependencies = [
  "lux-node",
 ]
@@ -1936,8 +1936,8 @@ dependencies = [
 
 [[package]]
 name = "lux-evm"
-version = "0.1.0"
-source = "git+ssh://git@github.com/lux-rs/evm.git?tag=v0.1.0#8c5b00e40f42e3bee9a526d233c816d9120ab793"
+version = "0.1.2"
+source = "git+ssh://git@github.com/lux-rs/evm.git?tag=v0.1.2#1f54eeec53b24887c349c89d73347c8e4ab59cad"
 dependencies = [
  "alloy-consensus",
  "alloy-eips 2.4.2",
@@ -1949,8 +1949,8 @@ dependencies = [
 
 [[package]]
 name = "lux-node"
-version = "0.2.1"
-source = "git+ssh://git@github.com/lux-rs/node.git?tag=v0.2.1#a1e19a3f995b9b17ca6e8bed74f3a9630679b14f"
+version = "0.2.2"
+source = "git+ssh://git@github.com/lux-rs/node.git?tag=v0.2.2#c1e764b91a322caf09edd9cf5515244725150376"
 dependencies = [
  "alloy-consensus",
  "alloy-eips 2.4.2",
