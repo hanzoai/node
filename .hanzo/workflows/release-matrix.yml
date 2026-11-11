@@ -1,0 +1,153 @@
+name: Release Matrix (hanzod)
+
+# Runs on git.hanzo.ai ([linux-amd64] runner pool) and publishes checksummed
+# native binaries to GitHub Releases so `curl -fsSL https://hanzo.sh | sh` can
+# install `hanzod` (`hanzo-node`) without building from source.
+
+on:
+  workflow_dispatch:
+  push:
+    tags: ['v[0-9]+.[0-9]+.[0-9]+']
+
+permissions:
+  contents: write
+
+env:
+  ZIG_VERSION: '0.13.0'
+  ZIG_SHA256: 'd45312e61ebcc48032b77bc4cf7fd6915c11fa16e4aad116b66c9468211230ea'
+  ZIGBUILD_VERSION: '0.23.0'
+  MACOS_SDK_URL: 'https://github.com/phracker/MacOSX-SDKs/releases/download/11.3/MacOSX11.3.sdk.tar.xz'
+  MACOS_SDK_SHA256: 'cd4f08a75577145b8f05245a2975f7c81401d75e9535dcffbb879ee1deefcbf4'
+  CARGO_NET_GIT_FETCH_WITH_CLI: 'true'
+
+jobs:
+  build:
+    name: ${{ matrix.target.id }}
+    runs-on: [linux-amd64]
+    strategy:
+      fail-fast: false
+      max-parallel: 1
+      matrix:
+        target:
+          - { id: linux-amd64,  rust: x86_64-unknown-linux-gnu,  zig: x86_64-unknown-linux-gnu.2.17 }
+          - { id: linux-arm64,  rust: aarch64-unknown-linux-gnu, zig: aarch64-unknown-linux-gnu.2.17 }
+          - { id: darwin-amd64, rust: x86_64-apple-darwin,       zig: x86_64-apple-darwin,  apple: true }
+          - { id: darwin-arm64, rust: aarch64-apple-darwin,      zig: aarch64-apple-darwin, apple: true }
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Tag matches the crate
+        run: |
+          set -euo pipefail
+          v="$(grep -m1 '^version' Cargo.toml | sed -E 's/.*"(.*)".*/\1/')"
+          [ "v$v" = "${{ github.ref_name }}" ] || {
+            echo "tag ${{ github.ref_name }} but Cargo.toml is $v — the release would be mislabeled"
+            exit 1
+          }
+
+      - name: Toolchain deps
+        run: |
+          set -euo pipefail
+          missing=""
+          for t in cc cmake curl git jq tar xz; do command -v "$t" >/dev/null || missing="$missing $t"; done
+          [ -n "$missing" ] || exit 0
+          apt=apt-get; [ "$(id -u)" = 0 ] || apt="sudo apt-get"
+          $apt update
+          $apt install -y --no-install-recommends build-essential cmake curl git jq tar xz-utils ca-certificates
+
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          toolchain: stable
+          targets: ${{ matrix.target.rust }}
+
+      - name: Zig (the cross-linker)
+        run: |
+          set -euo pipefail
+          curl -fsSL "https://ziglang.org/download/${ZIG_VERSION}/zig-linux-x86_64-${ZIG_VERSION}.tar.xz" -o zig.tar.xz
+          echo "${ZIG_SHA256}  zig.tar.xz" | sha256sum -c -
+          mkdir -p "$HOME/zig"
+          tar -xf zig.tar.xz -C "$HOME/zig" --strip-components=1
+          echo "$HOME/zig" >> "$GITHUB_PATH"
+
+      - name: cargo-zigbuild
+        run: cargo install cargo-zigbuild --version "${ZIGBUILD_VERSION}" --locked
+
+      - name: Vendor macOS SDK
+        if: matrix.target.apple
+        run: |
+          set -euo pipefail
+          curl -fsSL "${MACOS_SDK_URL}" -o macsdk.tar.xz
+          echo "${MACOS_SDK_SHA256}  macsdk.tar.xz" | sha256sum -c -
+          tar -xf macsdk.tar.xz -C "$HOME"
+          echo "SDKROOT=$HOME/MacOSX11.3.sdk" >> "$GITHUB_ENV"
+
+      - name: Build
+        env:
+          FORGE_TOK: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          export GIT_CONFIG_COUNT=1
+          export GIT_CONFIG_KEY_0="url.https://x:${FORGE_TOK}@git.hanzo.ai/lux-rs/.insteadOf"
+          export GIT_CONFIG_VALUE_0="ssh://git@github.com/lux-rs/"
+          cargo zigbuild --release --bin hanzod --locked --target ${{ matrix.target.zig }}
+
+      - name: Package
+        run: |
+          set -euo pipefail
+          out="target/${{ matrix.target.rust }}/release/hanzod"
+          test -f "$out"
+          asset="hanzod-${{ matrix.target.id }}.tar.gz"
+          tar -czf "$asset" -C "$(dirname "$out")" hanzod
+          sha256sum "$asset" > "$asset.sha256"
+
+      - name: Publish
+        env:
+          TOKEN: ${{ secrets.GH_PAT }}
+          TAG: ${{ github.ref_name }}
+          REPO: ${{ github.repository }}
+        run: |
+          set -euo pipefail
+          api="https://api.github.com/repos/$REPO"
+          uploads="https://uploads.github.com/repos/$REPO"
+          auth=(-H "Authorization: Bearer $TOKEN" -H "Accept: application/vnd.github+json")
+          release_id() {
+            curl -s "${auth[@]}" "$api/releases?per_page=100" \
+              | jq -r --arg t "$TAG" 'first(.[] | select(.tag_name == $t) | .id) // empty'
+          }
+          id="$(release_id)"
+          if [ -z "$id" ]; then
+            id="$(curl -s -X POST "${auth[@]}" \
+              -d "$(jq -nc --arg t "$TAG" '{tag_name:$t,name:$t,draft:true,generate_release_notes:true}')" \
+              "$api/releases" | jq -r '.id // empty')"
+          fi
+          [ -n "$id" ] || id="$(release_id)"
+          [ -n "$id" ] || { echo "could not create or find release $TAG"; exit 1; }
+          for f in "hanzod-${{ matrix.target.id }}.tar.gz" "hanzod-${{ matrix.target.id }}.tar.gz.sha256"; do
+            old="$(curl -s "${auth[@]}" "$api/releases/$id/assets" | jq -r --arg n "$f" '.[] | select(.name==$n) | .id')"
+            [ -n "$old" ] && curl -s -X DELETE "${auth[@]}" "$api/releases/assets/$old" >/dev/null
+            code="$(curl -s -o /tmp/up.json -w '%{http_code}' -X POST "${auth[@]}" \
+              -H "Content-Type: application/octet-stream" \
+              --data-binary @"$f" "$uploads/releases/$id/assets?name=$f")"
+            [ "$code" = "201" ] || { echo "upload $f failed ($code)"; cat /tmp/up.json; exit 1; }
+          done
+
+  release:
+    name: release
+    needs: build
+    if: startsWith(github.ref, 'refs/tags/v')
+    runs-on: [linux-amd64]
+    steps:
+      - name: Publish the draft
+        env:
+          TOKEN: ${{ secrets.GH_PAT }}
+          TAG: ${{ github.ref_name }}
+          REPO: ${{ github.repository }}
+        run: |
+          set -euo pipefail
+          api="https://api.github.com/repos/$REPO"
+          auth=(-H "Authorization: Bearer $TOKEN" -H "Accept: application/vnd.github+json")
+          id="$(curl -s "${auth[@]}" "$api/releases?per_page=100" \
+            | jq -r --arg t "$TAG" 'first(.[] | select(.tag_name == $t) | .id) // empty')"
+          [ -n "$id" ] || { echo "::error::no release for $TAG"; exit 1; }
+          curl -fsS -X PATCH "${auth[@]}" -d '{"draft":false}' "$api/releases/$id" \
+            | jq -r '"published \(.tag_name): \(.html_url)"'
