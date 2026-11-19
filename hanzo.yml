@@ -3,10 +3,20 @@
 
 test:
   # Locked, so the gate resolves the same tree the Dockerfile does.
+  # lux-node is locked via ssh://git@github.com/lux-rs/node.git; hand the fetch
+  # to git CLI and add the ssh:// -> https:// rewrite alongside hanzoai/ci's
+  # https:// rewrite, matching Dockerfile without mutating Cargo.lock.
   - name: build
     run: |
       set -e
-      cargo build --release --locked
+      if [ -n "${GIT_TOKEN:-}" ]; then
+        cfg="${RUNNER_TEMP:-/tmp}/gitconfig-cargo"
+        [ -n "${GIT_CONFIG_GLOBAL:-}" ] && [ -f "$GIT_CONFIG_GLOBAL" ] && cp "$GIT_CONFIG_GLOBAL" "$cfg" || : > "$cfg"
+        GIT_CONFIG_GLOBAL="$cfg" git config --global --add \
+          url."https://x-access-token:${GIT_TOKEN}@github.com/".insteadOf "ssh://git@github.com/"
+        export GIT_CONFIG_GLOBAL="$cfg" GIT_CONFIG_NOSYSTEM=1
+      fi
+      CARGO_NET_GIT_FETCH_WITH_CLI=true cargo build --release --locked
       test -s target/release/hanzod
 
   # A validator that cannot state its own identity cannot join a committee, so
