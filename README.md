@@ -1,5 +1,7 @@
 # node
 
+[![Open in Hanzo](https://hanzo.app/badges/open-in-hanzo.svg)](https://hanzo.app/dev/open?repo=github.com/hanzoai/node&ref=main&action=open) [![Edit with Hanzo](https://hanzo.app/badges/edit-with-hanzo.svg)](https://hanzo.app/dev/open?repo=github.com/hanzoai/node&ref=main&action=edit) [![Deploy with Hanzo](https://hanzo.app/badges/deploy-with-hanzo.svg)](https://hanzo.app/dev/open?repo=github.com/hanzoai/node&ref=main&action=deploy)
+
 `hanzo-chain` — the Hanzo network validator. `hanzod` is the per-machine daemon (`daemon/`, HIP-1330); the validator lives in `chain/` and runs as its child on opt-in.
 
 It holds this validator's keys, joins the network's validator mesh over a
