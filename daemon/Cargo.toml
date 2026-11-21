@@ -1,6 +1,6 @@
 [package]
 name = "hanzod"
-version = "0.2.6"
+version = "0.2.7"
 edition.workspace = true
 description = "The Hanzo daemon: one per machine"
 authors.workspace = true
@@ -28,6 +28,9 @@ dirs = "5"
 toml = "0.8"
 jsonwebtoken = "9"
 ureq = "2"
+# The outbound WebTransport session to the cloud relay; aws-lc-rs carries the X25519MLKEM768 key exchange the edge pins.
+wtransport = { version = "0.7", default-features = false, features = ["aws-lc-rs"] }
 
 [dev-dependencies]
 tempfile = "3"
+wtransport = { version = "0.7", default-features = false, features = ["aws-lc-rs", "self-signed", "dangerous-configuration"] }

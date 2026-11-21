@@ -17,11 +17,13 @@ use tokio::io::{AsyncReadExt, AsyncWriteExt};
 use tokio::net::unix::OwnedWriteHalf;
 use tokio::net::UnixStream;
 use tokio::process::{Child, Command};
-use tokio::sync::mpsc;
+use tokio::sync::{mpsc, watch};
 
 pub const KIND_DATA: u8 = 0;
 pub const KIND_OPEN: u8 = 1;
 pub const KIND_CLOSE: u8 = 2;
+/// The session id the worker uses to speak to hanzod itself: `{"link": "<zap address>"}`.
+pub const CONTROL: u32 = 0;
 /// The descriptor number a worker finds its end of the pair on.
 pub const WORKER_FD: RawFd = 3;
 const MAX_RECORD: u32 = 33 << 20;
@@ -38,12 +40,24 @@ pub struct Spec {
 pub struct Worker {
     pub child: Child,
     pub mux: Arc<Mux>,
+    /// The outbound session to the cloud for this worker's source; it ends with the worker.
+    pub link: Option<tokio::task::JoinHandle<()>>,
+}
+
+impl Drop for Worker {
+    fn drop(&mut self) {
+        if let Some(link) = self.link.take() {
+            link.abort();
+        }
+    }
 }
 
 pub struct Mux {
     write: tokio::sync::Mutex<OwnedWriteHalf>,
     sessions: Mutex<HashMap<u32, mpsc::Sender<Vec<u8>>>>,
     next: AtomicU32,
+    /// The address the worker last asked hanzod to serve its source at.
+    announced: watch::Sender<Option<String>>,
 }
 
 pub fn spawn(spec: &Spec) -> io::Result<Worker> {
@@ -89,7 +103,7 @@ pub fn spawn(spec: &Spec) -> io::Result<Worker> {
     std_stream.set_nonblocking(true)?;
     let stream = UnixStream::from_std(std_stream)?;
     let (mut read, write) = stream.into_split();
-    let mux = Arc::new(Mux { write: tokio::sync::Mutex::new(write), sessions: Mutex::new(HashMap::new()), next: AtomicU32::new(1) });
+    let mux = Arc::new(Mux { write: tokio::sync::Mutex::new(write), sessions: Mutex::new(HashMap::new()), next: AtomicU32::new(1), announced: watch::channel(None).0 });
 
     if let (Some(bytes), Some(mut stdin)) = (spec.stdin.clone(), child.stdin.take()) {
         tokio::spawn(async move {
@@ -115,6 +129,21 @@ pub fn spawn(spec: &Spec) -> io::Result<Worker> {
             if read.read_exact(&mut buf).await.is_err() {
                 break;
             }
+            if sid == CONTROL {
+                if kind == KIND_DATA {
+                    let link = serde_json::from_slice::<serde_json::Value>(&buf).ok().and_then(|v| v.get("link")?.as_str().map(str::to_owned));
+                    if let Some(url) = link.filter(|u| crate::link::permitted(u)) {
+                        m.announced.send_if_modified(|current| {
+                            let changed = current.as_deref() != Some(url.as_str());
+                            if changed {
+                                *current = Some(url);
+                            }
+                            changed
+                        });
+                    }
+                }
+                continue;
+            }
             let tx = m.sessions.lock().unwrap().get(&sid).cloned();
             match (kind, tx) {
                 (KIND_DATA, Some(tx)) => {
@@ -131,10 +160,15 @@ pub fn spawn(spec: &Spec) -> io::Result<Worker> {
         // The worker is gone: every session ends.
         m.sessions.lock().unwrap().clear();
     });
-    Ok(Worker { child, mux })
+    Ok(Worker { child, mux, link: None })
 }
 
 impl Mux {
+    /// Follows the address the worker announces for its source.
+    pub fn announcements(&self) -> watch::Receiver<Option<String>> {
+        self.announced.subscribe()
+    }
+
     async fn record(&self, sid: u32, kind: u8, payload: &[u8]) -> io::Result<()> {
         let mut w = self.write.lock().await;
         let mut head = [0u8; 9];

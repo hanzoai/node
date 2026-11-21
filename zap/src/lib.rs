@@ -293,6 +293,10 @@ pub fn router_cap(f: &[u8]) -> io::Result<&[u8]> {
 }
 
 fn valid_router(f: &[u8]) -> io::Result<usize> {
+    valid_router_object(f, 28)
+}
+
+fn valid_router_object(f: &[u8], object: usize) -> io::Result<usize> {
     if f.len() < HEADER || &f[0..4] != MAGIC {
         return Err(bad("not a ZAP frame"));
     }
@@ -301,10 +305,59 @@ fn valid_router(f: &[u8]) -> io::Result<usize> {
     }
     let root = u32::from_le_bytes(f[8..12].try_into().unwrap()) as usize;
     let size = u32::from_le_bytes(f[12..16].try_into().unwrap()) as usize;
-    if size < HEADER || size > f.len() || root < HEADER || root + 28 > size {
+    if size < HEADER || size > f.len() || root < HEADER || root + object > size {
         return Err(bad("envelope geometry"));
     }
     Ok(size)
+}
+
+/// A router request envelope, byte for byte what `@zap-proto/zap` and the Go router
+/// build: method, promise and target, then the `cap` and `payload` slots.
+pub fn router_request(method: u32, promise: u32, cap: &[u8], payload: &[u8]) -> Vec<u8> {
+    let mut f = Vec::with_capacity(HEADER + 28 + cap.len() + payload.len());
+    f.extend_from_slice(MAGIC);
+    f.extend_from_slice(&2u16.to_le_bytes());
+    f.extend_from_slice(&(FRAME_ROUTER << 8).to_le_bytes());
+    f.extend_from_slice(&(HEADER as u32).to_le_bytes());
+    f.extend_from_slice(&0u32.to_le_bytes());
+    f.extend_from_slice(&method.to_le_bytes());
+    f.extend_from_slice(&promise.to_le_bytes());
+    f.extend_from_slice(&0u32.to_le_bytes());
+    f.resize(HEADER + 28, 0);
+    put_var(&mut f, HEADER + 12, cap);
+    put_var(&mut f, HEADER + 20, payload);
+    finish(f)
+}
+
+/// `(method, promise, cap, payload)` of a router request envelope.
+pub fn router_request_parts(f: &[u8]) -> io::Result<(u32, u32, &[u8], &[u8])> {
+    let size = valid_router(f)?;
+    let root = u32::from_le_bytes(f[8..12].try_into().unwrap()) as usize;
+    let word = |at: usize| u32::from_le_bytes(f[root + at..root + at + 4].try_into().unwrap());
+    Ok((word(0), word(4), read_var(f, size, root + 12)?, read_var(f, size, root + 20)?))
+}
+
+/// A router response envelope: status, the promise it answers, and a body.
+pub fn router_response(status: u32, promise: u32, body: &[u8]) -> Vec<u8> {
+    let mut f = Vec::with_capacity(HEADER + 20 + body.len());
+    f.extend_from_slice(MAGIC);
+    f.extend_from_slice(&2u16.to_le_bytes());
+    f.extend_from_slice(&(FRAME_ROUTER << 8).to_le_bytes());
+    f.extend_from_slice(&(HEADER as u32).to_le_bytes());
+    f.extend_from_slice(&0u32.to_le_bytes());
+    f.extend_from_slice(&status.to_le_bytes());
+    f.extend_from_slice(&promise.to_le_bytes());
+    f.resize(HEADER + 20, 0);
+    put_var(&mut f, HEADER + 12, body);
+    finish(f)
+}
+
+/// `(status, promise, body)` of a router response envelope.
+pub fn router_response_parts(f: &[u8]) -> io::Result<(u32, u32, &[u8])> {
+    let size = valid_router_object(f, 20)?;
+    let root = u32::from_le_bytes(f[8..12].try_into().unwrap()) as usize;
+    let word = |at: usize| u32::from_le_bytes(f[root + at..root + at + 4].try_into().unwrap());
+    Ok((word(0), word(4), read_var(f, size, root + 12)?))
 }
 
 /// An unauthorized router response (`status` 401), for a session refused before
@@ -332,6 +385,19 @@ mod router_tests {
 
     fn unhex(s: &str) -> Vec<u8> {
         (0..s.len()).step_by(2).map(|i| u8::from_str_radix(&s[i..i + 2], 16).unwrap()).collect()
+    }
+
+    /// Built by the Go router (`rpc.BuildRequest` / `rpc.BuildResponse`).
+    const REQ_FROM_GO: &str = "5a415000020000c810000000340000000100ffff090000000000000010000000060000000e00000002000000746f6b2e656e6869";
+    const RESP_FROM_GO: &str = "5a415000020000c81000000029000000c800000009000000000000000800000005000000626f647921";
+
+    #[test]
+    fn envelopes_match_the_go_routers_bytes() {
+        assert_eq!(router_request(0xFFFF0001, 9, b"tok.en", b"hi"), unhex(REQ_FROM_GO));
+        assert_eq!(router_response(200, 9, b"body!"), unhex(RESP_FROM_GO));
+        assert_eq!(router_request_parts(&unhex(REQ_FROM_GO)).unwrap(), (0xFFFF0001, 9, &b"tok.en"[..], &b"hi"[..]));
+        assert_eq!(router_response_parts(&unhex(RESP_FROM_GO)).unwrap(), (200, 9, &b"body!"[..]));
+        assert_eq!(router_response_parts(&router_response(409, 1, b"")).unwrap(), (409, 1, &b""[..]));
     }
 
     #[test]

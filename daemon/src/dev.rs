@@ -83,7 +83,8 @@ impl Dev {
             env,
             stdin: reg.bootstrap.map(|b| b.to_string().into_bytes()),
         };
-        let fresh = worker::spawn(&spec)?;
+        let mut fresh = worker::spawn(&spec)?;
+        fresh.link = Some(tokio::spawn(crate::link::serve(fresh.mux.clone(), fresh.mux.announcements())));
         let id = self.ledger.record("hanzod", "spawn", &format!("dev worker pid {}", fresh.child.id().unwrap_or(0)));
         let mux = fresh.mux.clone();
         *w = Some(fresh);

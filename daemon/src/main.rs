@@ -18,6 +18,7 @@ mod dev;
 mod engine;
 mod http;
 mod ledger;
+mod link;
 mod me;
 mod paths;
 mod pins;
