@@ -1,6 +1,6 @@
 [package]
 name = "hanzod"
-version = "0.3.0"
+version = "0.2.6"
 edition.workspace = true
 description = "The Hanzo daemon: one per machine"
 authors.workspace = true

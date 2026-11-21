@@ -1,6 +1,6 @@
 [package]
 name = "hanzo-chain"
-version = "0.2.5"
+version = "0.2.6"
 edition.workspace = true
 description = "The Hanzo network validator"
 authors.workspace = true
