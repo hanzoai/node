@@ -1,4 +1,4 @@
-name: Release Matrix (hanzod)
+name: Release Matrix (hanzod, hanzo-chain)
 
 # Runs on git.hanzo.ai ([linux-amd64] runner pool) and publishes checksummed
 # native binaries to GitHub Releases so `curl -fsSL https://hanzo.sh | sh` can
@@ -89,16 +89,18 @@ jobs:
           export GIT_CONFIG_COUNT=1
           export GIT_CONFIG_KEY_0="url.https://x:${FORGE_TOK}@git.hanzo.ai/lux-rs/.insteadOf"
           export GIT_CONFIG_VALUE_0="ssh://git@github.com/lux-rs/"
-          cargo zigbuild --release --bin hanzod --locked --target ${{ matrix.target.zig }}
+          cargo zigbuild --release --bin hanzod --bin hanzo-chain --locked --target ${{ matrix.target.zig }}
 
       - name: Package
         run: |
           set -euo pipefail
-          out="target/${{ matrix.target.rust }}/release/hanzod"
-          test -f "$out"
-          asset="hanzod-${{ matrix.target.id }}.tar.gz"
-          tar -czf "$asset" -C "$(dirname "$out")" hanzod
-          sha256sum "$asset" > "$asset.sha256"
+          for bin in hanzod hanzo-chain; do
+            out="target/${{ matrix.target.rust }}/release/$bin"
+            test -f "$out"
+            asset="$bin-${{ matrix.target.id }}.tar.gz"
+            tar -czf "$asset" -C "$(dirname "$out")" "$bin"
+            sha256sum "$asset" > "$asset.sha256"
+          done
 
       - name: Publish
         env:
@@ -122,7 +124,7 @@ jobs:
           fi
           [ -n "$id" ] || id="$(release_id)"
           [ -n "$id" ] || { echo "could not create or find release $TAG"; exit 1; }
-          for f in "hanzod-${{ matrix.target.id }}.tar.gz" "hanzod-${{ matrix.target.id }}.tar.gz.sha256"; do
+          for f in "hanzod-${{ matrix.target.id }}.tar.gz" "hanzod-${{ matrix.target.id }}.tar.gz.sha256" "hanzo-chain-${{ matrix.target.id }}.tar.gz" "hanzo-chain-${{ matrix.target.id }}.tar.gz.sha256"; do
             old="$(curl -s "${auth[@]}" "$api/releases/$id/assets" | jq -r --arg n "$f" '.[] | select(.name==$n) | .id')"
             [ -n "$old" ] && curl -s -X DELETE "${auth[@]}" "$api/releases/assets/$old" >/dev/null
             code="$(curl -s -o /tmp/up.json -w '%{http_code}' -X POST "${auth[@]}" \

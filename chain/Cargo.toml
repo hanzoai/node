@@ -1,0 +1,19 @@
+[package]
+name = "hanzo-chain"
+version = "0.2.5"
+edition.workspace = true
+description = "The Hanzo network validator"
+authors.workspace = true
+repository.workspace = true
+license-file = "../LICENSE"
+readme = "../README.md"
+
+[[bin]]
+name = "hanzo-chain"
+path = "src/main.rs"
+
+[dependencies]
+# The node this one is: keys, the validator mesh, the EVM, the chain on disk,
+# catch-up and JSON-RPC, at a tag. Two validators on one network resolve the same
+# tag or they do not agree about what a block means.
+lux-node = { git = "ssh://git@github.com/lux-rs/node.git", tag = "v0.2.2" }

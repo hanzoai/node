@@ -1,6 +1,6 @@
 # node
 
-`hanzod` — the Hanzo network node.
+`hanzo-chain` — the Hanzo network validator. `hanzod` is the per-machine daemon (`daemon/`, HIP-1330); the validator lives in `chain/` and runs as its child on opt-in.
 
 It holds this validator's keys, joins the network's validator mesh over a
 post-quantum handshake, decides blocks under the committee that network
@@ -29,7 +29,7 @@ not one of the three is an error, never a default.
 cargo build --release
 ```
 
-The binary is `target/release/hanzod`.
+The binary is `target/release/hanzo-chain`.
 
 ## Run
 
@@ -39,7 +39,7 @@ by their owner. A committee is the list of what its validators published, so
 bringing a network up takes two steps:
 
 ```
-for n in 0 1 2 3 4; do hanzod --data n$n --publish >> committee.txt; done
+for n in 0 1 2 3 4; do hanzo-chain --data n$n --publish >> committee.txt; done
 ```
 
 Each line is an ML-DSA-65 identity of 1952 bytes, the BLS key of 48 bytes that
@@ -58,7 +58,7 @@ committee and the handshake proves them, so an address that turns out to belong
 to someone else is refused rather than believed.
 
 ```
-hanzod 0.2.0
+hanzo-chain 0.2.0
 network     devnet
 network id  3
 chain id    36964
@@ -133,16 +133,16 @@ A name that is not a network, because a default would join the wrong network on
 a typo and look like it had started correctly:
 
 ```
-$ hanzod --network mainet --data n0 --committee committee.txt
-hanzod: mainet is not a network; try mainnet | testnet | devnet
+$ hanzo-chain --network mainet --data n0 --committee committee.txt
+hanzo-chain: mainet is not a network; try mainnet | testnet | devnet
 ```
 
 A genesis is checked, not trusted. It must be this network's chain, and when it
 names a network it must name this one:
 
 ```
-$ hanzod --network devnet --data n0 --genesis genesis.json --committee committee.txt
-hanzod: genesis.json: this genesis is chain 36963, not devnet's chain 36964
+$ hanzo-chain --network devnet --data n0 --genesis genesis.json --committee committee.txt
+hanzo-chain: genesis.json: this genesis is chain 36963, not devnet's chain 36964
 ```
 
 A committee is admitted whole or not at all, so a file with one bad line never
@@ -150,23 +150,23 @@ leaves the node running against a set that is missing a member it believes is
 there:
 
 ```
-$ hanzod --network devnet --data n0 --committee forged.txt
-hanzod: forged.txt: PopInvalid
+$ hanzo-chain --network devnet --data n0 --committee forged.txt
+hanzo-chain: forged.txt: PopInvalid
 ```
 
 A validator that is not in the committee it was handed, said plainly, because it
 is the difference between a validator and a spectator:
 
 ```
-$ hanzod --network devnet --data n5 --committee committee.txt
-hanzod: this validator (50b9ed61715c94734d2aa9c54f66412917f0d794) is not in committee.txt; add the line --publish prints
+$ hanzo-chain --network devnet --data n5 --committee committee.txt
+hanzo-chain: this validator (50b9ed61715c94734d2aa9c54f66412917f0d794) is not in committee.txt; add the line --publish prints
 ```
 
 Two things on one address, before either binds:
 
 ```
-$ hanzod --network devnet --data n0 --committee committee.txt --rpc 127.0.0.1:19700 --mesh 127.0.0.1:19700
-hanzod: --rpc and --mesh cannot be one address
+$ hanzo-chain --network devnet --data n0 --committee committee.txt --rpc 127.0.0.1:19700 --mesh 127.0.0.1:19700
+hanzo-chain: --rpc and --mesh cannot be one address
 ```
 
 ## Flags

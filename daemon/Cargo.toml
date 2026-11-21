@@ -1,0 +1,12 @@
+[package]
+name = "hanzod"
+version = "0.3.0"
+edition.workspace = true
+description = "The Hanzo daemon: one per machine"
+authors.workspace = true
+repository.workspace = true
+license-file = "../LICENSE"
+
+[[bin]]
+name = "hanzod"
+path = "src/main.rs"

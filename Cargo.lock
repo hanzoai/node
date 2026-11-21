@@ -1577,11 +1577,15 @@ dependencies = [
 ]
 
 [[package]]
-name = "hanzod"
+name = "hanzo-chain"
 version = "0.2.5"
 dependencies = [
  "lux-node",
 ]
+
+[[package]]
+name = "hanzod"
+version = "0.3.0"
 
 [[package]]
 name = "hashbrown"
