@@ -1,6 +1,6 @@
 [workspace]
 resolver = "2"
-members = ["chain", "daemon"]
+members = ["chain", "chain/steward", "daemon"]
 
 [workspace.package]
 edition = "2021"

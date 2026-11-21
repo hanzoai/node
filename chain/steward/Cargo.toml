@@ -1,0 +1,19 @@
+[package]
+name = "steward"
+version = "0.1.0"
+edition.workspace = true
+description = "Opt-in custody of hanzo-chain for hanzod: fetch, verify, run, stop"
+authors.workspace = true
+repository.workspace = true
+license-file = "../../LICENSE"
+
+[dependencies]
+serde_json = "1"
+sha2 = "0.10"
+flate2 = "1"
+tar = "0.4"
+ureq = { version = "2", features = ["json"] }
+libc = "0.2"
+
+[dev-dependencies]
+tempfile = "3"
