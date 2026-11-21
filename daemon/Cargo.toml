@@ -10,3 +10,24 @@ license-file = "../LICENSE"
 [[bin]]
 name = "hanzod"
 path = "src/main.rs"
+
+[dependencies]
+# Who the machine is: the CLI's identity store, shared by crate, not by copy.
+hanzo-identity = { git = "https://github.com/hanzoai/cli", rev = "f6de3eca99465615030356cf8568aa965749df46" }
+# The /v1/chain route, opt-in custody of hanzo-chain.
+steward = { path = "../chain/steward" }
+# ZAP-HTTP frames and the router envelope.
+zaphttp = { path = "../zap" }
+tokio = { version = "1", default-features = false, features = ["rt", "net", "io-util", "process", "signal", "time", "sync", "macros"] }
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+libc = "0.2"
+sha2 = "0.10"
+base64 = "0.22"
+dirs = "5"
+toml = "0.8"
+jsonwebtoken = "9"
+ureq = "2"
+
+[dev-dependencies]
+tempfile = "3"

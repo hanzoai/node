@@ -20,6 +20,7 @@ COPY Cargo.toml Cargo.lock ./
 COPY LICENSE README.md ./
 COPY chain chain
 COPY daemon daemon
+COPY zap zap
 
 # Locked, and the lockfile ships: a resolver left free to drift builds a tree
 # nobody ran.

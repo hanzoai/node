@@ -1,0 +1,15 @@
+[package]
+name = "zaphttp"
+version = "0.1.0"
+edition.workspace = true
+description = "ZAP-HTTP frames and the router envelope, as hanzod and its clients speak them"
+authors.workspace = true
+repository.workspace = true
+license-file = "../LICENSE"
+
+[dependencies]
+tokio = { version = "1", default-features = false, features = ["io-util"] }
+serde_json = "1"
+
+[dev-dependencies]
+tokio = { version = "1", default-features = false, features = ["io-util", "macros", "rt"] }
