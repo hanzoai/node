@@ -3,5 +3,9 @@
   "lux_node": "v0.2.2",
   "targets": {},
   "networks": {},
-  "programs": {}
+  "programs": {
+    "hanzo-engine": {
+      "darwin-arm64": "2a4c93d2fd0626cd139b6ea130642c9bd0521a3913cfb48a2dde3a73d436c6dc"
+    }
+  }
 }

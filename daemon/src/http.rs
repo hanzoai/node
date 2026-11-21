@@ -122,9 +122,11 @@ async fn connection(mut c: TcpStream, d: Arc<Daemon>) -> io::Result<()> {
     // A streamed upstream (the engine) is proxied byte for byte, once the same
     // checks have passed.
     let path = head.target.split('?').next().unwrap_or("");
-    if path == "/v1/engine" || path.starts_with("/v1/engine/") {
-        let probe = Request { method: head.method.clone(), target: head.target.clone(), headers: vec![], body: vec![] };
-        let (reply, busy) = d.handle(Via::Http, Request { body: vec![], ..probe }).await;
+    if crate::engine::proxied(path) {
+        // The probe only admits the caller and starts the engine; the caller's own request is the
+        // one proxied below, so the probe is a harmless GET, never a bodiless copy of a POST.
+        let probe = Request { method: "GET".into(), target: "/v1/engine/health".into(), headers: vec![], body: vec![] };
+        let (reply, busy) = d.handle(Via::Http, probe).await;
         // handle() has started the engine; route again for its port.
         let _hold = busy;
         if let Reply::Whole(r) = &reply {
@@ -190,7 +192,7 @@ async fn collect(rx: &mut tokio::sync::mpsc::Receiver<Vec<u8>>) -> Response {
 /// the checks made on the first.
 async fn proxy(mut c: TcpStream, head: Head, port: u16) -> io::Result<()> {
     let mut up = TcpStream::connect(("127.0.0.1", port)).await?;
-    let mut out = format!("{} {} HTTP/1.1\r\nConnection: close\r\n", head.method, head.target);
+    let mut out = format!("{} {} HTTP/1.1\r\nConnection: close\r\n", head.method, crate::engine::upstream(&head.target));
     for (k, v) in &head.headers {
         if !k.eq_ignore_ascii_case("connection") && !k.eq_ignore_ascii_case("authorization") && !k.eq_ignore_ascii_case("origin") {
             out.push_str(&format!("{k}: {v}\r\n"));

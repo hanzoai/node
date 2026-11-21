@@ -1,14 +1,22 @@
 //! `/v1/engine/*`: Hanzo Engine, the default local inference engine, with an
 //! OpenAI-compatible surface (`/v1/engine/models`, `/chat/completions`,
-//! `/embeddings`). It is a child process on a private loopback port that hanzod
-//! picks, started on the first request and stopped when idle, so there is no
-//! `:36900` listener. The engine's own program is pinned by digest.
+//! `/embeddings`; the engine's own paths are `/v1/...`). It is a child process on
+//! a private loopback port that hanzod picks, started on the first request and
+//! stopped when idle, so there is no `:36900` listener. The engine's own program,
+//! `hanzo-engine`, is pinned by digest.
+//!
+//! The engine runs Metal on a Mac and nothing leaves the machine: it binds
+//! loopback only, does not advertise itself on the network, serves no web UI,
+//! and runs with the Hugging Face hub offline, so it loads only weights already
+//! in the cache (`catalog` puts them there).
 //!
 //! Other engines (Ollama, LM Studio, any OpenAI-compatible server) are not
 //! routed here: callers use them as endpoints.
 //!
-//! Which model it serves is `engine.args` in `<data>/hanzo/hanzod.json`.
+//! Which model it serves is `engine.model` in `<data>/hanzo/hanzod.json`, a
+//! catalog id; unset, it is the best installed model the memory suits.
 
+use crate::catalog::{self, Entry};
 use crate::paths;
 use crate::pins::Pins;
 use crate::proc;
@@ -22,8 +30,6 @@ use tokio::io::{AsyncReadExt, AsyncWriteExt};
 use tokio::net::TcpStream;
 use tokio::process::{Child, Command};
 use tokio::sync::Mutex;
-
-const DEFAULT_ARGS: [&str; 5] = ["gguf", "-m", "zenlm/zen-eco-4b-agent-gguf", "-f", "zen-eco-3b-agent-q4_k_m.gguf"];
 
 pub struct Engine {
     pins: Arc<Pins>,
@@ -42,13 +48,66 @@ impl Engine {
     }
 }
 
-fn args() -> Vec<String> {
-    let cfg = std::fs::read(paths::data().join("hanzod.json")).ok().and_then(|b| serde_json::from_slice::<serde_json::Value>(&b).ok());
-    cfg.and_then(|c| {
-        c.get("engine")?.get("args")?.as_array().map(|a| a.iter().filter_map(|v| v.as_str().map(str::to_owned)).collect::<Vec<_>>())
-    })
-    .filter(|a| !a.is_empty())
-    .unwrap_or_else(|| DEFAULT_ARGS.iter().map(|s| s.to_string()).collect())
+fn config() -> serde_json::Value {
+    std::fs::read(paths::data().join("hanzod.json")).ok().and_then(|b| serde_json::from_slice(&b).ok()).unwrap_or_default()
+}
+
+/// The `hanzo-engine` arguments that serve `e` from the cache on `port`.
+fn args(e: &Entry, port: u16) -> Vec<String> {
+    let mut a: Vec<String> = ["--token-source", "none", "serve", "--host", "127.0.0.1", "--no-ui", "--no-advertise", "--port"].map(String::from).into();
+    a.push(port.to_string());
+    for s in ["--served-model-name", e.id, "--format", "gguf", "-m", e.repo, "-f", e.file] {
+        a.push(s.to_string());
+    }
+    a
+}
+
+/// A request to `/v1/engine/<rest>` is the engine's `/v1/<rest>`.
+pub fn upstream(target: &str) -> String {
+    match target.strip_prefix("/v1/engine") {
+        Some(rest) => format!("/v1{rest}"),
+        None => target.to_string(),
+    }
+}
+
+/// Whether `path` is the engine itself, as opposed to hanzod's own catalog.
+pub fn proxied(path: &str) -> bool {
+    (path == "/v1/engine" || path.starts_with("/v1/engine/")) && !(path == "/v1/engine/catalog" || path.starts_with("/v1/engine/catalog/"))
+}
+
+impl Engine {
+    /// The model to serve: the one chosen, else the best installed that the
+    /// memory suits, else the smallest installed.
+    pub fn model(&self) -> Option<&'static Entry> {
+        let hub = catalog::hub();
+        let on_disk = |e: &&Entry| catalog::installed(&hub, e).is_some();
+        config()
+            .get("engine")
+            .and_then(|c| c.get("model")?.as_str().and_then(catalog::find))
+            .filter(on_disk)
+            .or_else(|| {
+                let mem = catalog::memory();
+                catalog::MODELS.iter().rev().filter(on_disk).find(|m| mem >= m.memory << 30).or_else(|| catalog::MODELS.iter().find(on_disk))
+            })
+    }
+
+    /// Choose `id`, persist it, and move a running engine onto it.
+    pub async fn select(&self, id: &str) -> io::Result<()> {
+        let path = paths::data().join("hanzod.json");
+        let mut cfg = config();
+        if !cfg.is_object() {
+            cfg = serde_json::json!({});
+        }
+        cfg["engine"] = serde_json::json!({ "model": id });
+        let tmp = path.with_extension("json.tmp");
+        std::fs::create_dir_all(paths::data())?;
+        std::fs::write(&tmp, serde_json::to_vec_pretty(&cfg).map_err(io::Error::other)?)?;
+        std::fs::rename(&tmp, &path)?;
+        if self.port().is_some() {
+            self.start().await?;
+        }
+        Ok(())
+    }
 }
 
 impl Subsystem for Engine {
@@ -67,17 +126,19 @@ impl Subsystem for Engine {
             if let Some(mut old) = slot.take() {
                 proc::terminate(&mut old, Duration::from_secs(5)).await;
             }
-            let bin = proc::find("hanzo-server").ok_or_else(|| io::Error::new(io::ErrorKind::NotFound, "hanzo-server (Hanzo Engine) is not installed"))?;
+            let bin = proc::find("hanzo-engine").ok_or_else(|| io::Error::new(io::ErrorKind::NotFound, "hanzo-engine (Hanzo Engine) is not installed"))?;
             proc::owned_by_us_alone(&bin)?;
             self.pins.verify("hanzo-engine", &bin).map_err(proc::refuse)?;
+            let model = self.model().ok_or_else(|| io::Error::new(io::ErrorKind::NotFound, "no local model is installed; POST /v1/engine/catalog/pull {\"id\"} first"))?;
             let port = proc::free_port()?;
+            *self.port.lock().unwrap() = None;
             let child = Command::new(&bin)
-                .arg("--port")
-                .arg(port.to_string())
-                .args(args())
+                .args(args(model, port))
                 .env_clear()
                 .env("PATH", "/usr/bin:/bin")
                 .env("HOME", dirs::home_dir().unwrap_or_default())
+                .env("HF_HUB_OFFLINE", "1")
+                .envs(["HF_HOME", "HF_HUB_CACHE"].iter().filter_map(|k| std::env::var_os(k).map(|v| (*k, v))))
                 .stdin(Stdio::null())
                 .stdout(Stdio::null())
                 .stderr(Stdio::null())
@@ -85,7 +146,7 @@ impl Subsystem for Engine {
                 .spawn()?;
             *slot = Some(child);
             // Up means the listener answers; the model loads in the background.
-            let up = proc::until(Duration::from_secs(60), || async {
+            let up = proc::until(Duration::from_secs(180), || async {
                 matches!(fetch(([127, 0, 0, 1], port).into(), &Request { method: "GET".into(), target: "/health".into(), headers: vec![], body: vec![] }).await, Ok(r) if r.status == 200)
             })
             .await;
@@ -102,6 +163,7 @@ impl Subsystem for Engine {
     fn frame<'a>(&'a self, _who: &'a str, req: Request) -> Fut<'a, io::Result<Reply>> {
         Box::pin(async move {
             let port = self.port().ok_or_else(|| io::Error::other("the engine is not running"))?;
+            let req = Request { target: upstream(&req.target), ..req };
             Ok(Reply::Whole(fetch(([127, 0, 0, 1], port).into(), &req).await?))
         })
     }

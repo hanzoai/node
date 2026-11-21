@@ -11,6 +11,7 @@
 //! listeners and nothing else.
 
 mod auth;
+mod catalog;
 mod chain;
 mod cloud;
 mod daemon;
@@ -66,12 +67,14 @@ async fn run() -> std::io::Result<()> {
     let chain_pins = steward::Pins::parse(pins::COMPILED).map_err(std::io::Error::other)?;
     let steward = Arc::new(steward::Steward::new(home.join(".hanzod"), paths::bin(), CHAIN_RELEASES.into(), chain_pins));
 
+    let engine = Arc::new(engine::Engine::new(pins.clone()));
     let subs: Vec<Arc<dyn table::Subsystem>> = vec![
         Arc::new(routes::Hanzod { table: table_cell.clone(), upstream: upstream.clone(), ledger: ledger.clone() }),
         Arc::new(routes::Identity),
         Arc::new(cloud::Cloud::new(pins.clone(), upstream)),
         Arc::new(dev::Dev::new(ledger.clone())),
-        Arc::new(engine::Engine::new(pins.clone())),
+        engine.clone(),
+        Arc::new(catalog::Catalog::new(engine.clone(), ledger.clone())),
         Arc::new(chain::Chain { steward: steward.clone(), ledger: ledger.clone() }),
     ];
     let table = Arc::new(table::Table::new(subs));
@@ -85,12 +88,14 @@ async fn run() -> std::io::Result<()> {
     let pidfile = paths::data().join("hanzod.pid");
     std::fs::write(&pidfile, std::process::id().to_string())?;
     tokio::spawn(socket::serve(sock, d.clone()));
-    match TcpListener::bind(paths::HTTP_ADDR).await {
+    // `http_addr` in `hanzod.json` moves the loopback view when :3690 is taken (a second daemon, a second user).
+    let http = config().get("http_addr").and_then(|v| v.as_str()).map(str::to_owned).unwrap_or_else(|| paths::HTTP_ADDR.into());
+    match TcpListener::bind(&http).await {
         Ok(l) => {
             tokio::spawn(http::serve(l, d.clone()));
         }
         // :3690 held by something else is reported, not fought over: the socket still serves.
-        Err(e) => eprintln!("hanzod: {}: {e}; serving the socket only", paths::HTTP_ADDR),
+        Err(e) => eprintln!("hanzod: {http}: {e}; serving the socket only"),
     }
     // Bring the chain back if the user had turned it on; a no-op otherwise.
     tokio::task::spawn_blocking({
