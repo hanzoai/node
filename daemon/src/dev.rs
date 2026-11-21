@@ -3,6 +3,7 @@
 //! module at a time (HIP-1330 phases 2-5) and the worker shrinks with it.
 //!
 //!   POST /v1/dev/session   register how to run the worker and start it
+//!   DELETE /v1/dev/session   the app is done: stop the worker, forget the spec
 //!   (router sessions)      a ZAP session, bearer in the first envelope, is
 //!                          carried to the worker over the socketpair
 //!
@@ -108,6 +109,15 @@ impl Subsystem for Dev {
     }
     fn frame<'a>(&'a self, who: &'a str, req: Request) -> Fut<'a, io::Result<Reply>> {
         Box::pin(async move {
+            if req.method == "DELETE" && req.path() == "/v1/dev/session" {
+                // The app is done with its worker; forget the spec so nothing restarts it.
+                self.ledger.record(who, "withdraw", "dev worker");
+                *self.spec.lock().await = None;
+                if let Some(mut w) = self.worker.lock().await.take() {
+                    proc::terminate(&mut w.child, Duration::from_secs(10)).await;
+                }
+                return Ok(Reply::Whole(Response::json(200, &json!({ "running": false }))));
+            }
             if req.method != "POST" || req.path() != "/v1/dev/session" {
                 return Ok(Reply::Whole(Response::error(404, "POST /v1/dev/session registers and starts the Dev worker")));
             }

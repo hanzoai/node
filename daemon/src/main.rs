@@ -32,6 +32,10 @@ use zaphttp as zap;
 use tokio::net::TcpListener;
 use tokio::signal::unix::{signal, SignalKind};
 
+/// Where sign-in lives. Discovery at `<origin>/.well-known/openid-configuration`
+/// names the issuer and keys; `signin_origin` in `hanzod.json` overrides this.
+const SIGNIN_ORIGIN: &str = "https://hanzo.ai";
+
 /// Where `hanzo-chain` releases are published; the steward pins what it fetches.
 const CHAIN_RELEASES: &str = "https://github.com/hanzoai/node/releases/download";
 
@@ -56,14 +60,15 @@ async fn run() -> std::io::Result<()> {
     let ledger = Arc::new(ledger::Ledger::open(paths::data().join("ledger")));
     let table_cell: Arc<OnceLock<Arc<table::Table>>> = Arc::new(OnceLock::new());
 
+    let upstream: cloud::Upstream = Arc::new(std::sync::Mutex::new(None));
     let home = dirs::home_dir().unwrap_or_default();
     let chain_pins = steward::Pins::parse(pins::COMPILED).map_err(std::io::Error::other)?;
     let steward = Arc::new(steward::Steward::new(home.join(".hanzod"), paths::bin(), CHAIN_RELEASES.into(), chain_pins));
 
     let subs: Vec<Arc<dyn table::Subsystem>> = vec![
-        Arc::new(routes::Hanzod { table: table_cell.clone() }),
+        Arc::new(routes::Hanzod { table: table_cell.clone(), upstream: upstream.clone(), ledger: ledger.clone() }),
         Arc::new(routes::Identity),
-        Arc::new(cloud::Cloud::new(pins.clone())),
+        Arc::new(cloud::Cloud::new(pins.clone(), upstream)),
         Arc::new(dev::Dev::new(ledger.clone())),
         Arc::new(engine::Engine::new(pins.clone())),
         Arc::new(chain::Chain { steward: steward.clone(), ledger: ledger.clone() }),
@@ -71,10 +76,13 @@ async fn run() -> std::io::Result<()> {
     let table = Arc::new(table::Table::new(subs));
     let _ = table_cell.set(table.clone());
 
-    let configured = config().get("signin_origin").and_then(|v| v.as_str()).map(str::to_owned);
-    let d = Arc::new(daemon::Daemon { table: table.clone(), verifier: Arc::new(auth::Verifier::new(configured)) });
+    let origin = config().get("signin_origin").and_then(|v| v.as_str()).map(str::to_owned).unwrap_or_else(|| SIGNIN_ORIGIN.into());
+    let d = Arc::new(daemon::Daemon { table: table.clone(), verifier: Arc::new(auth::Verifier::new(origin)) });
 
     let sock = socket::bind().await?;
+    // Clients stop the daemon by this pid; it is removed on a clean exit.
+    let pidfile = paths::data().join("hanzod.pid");
+    std::fs::write(&pidfile, std::process::id().to_string())?;
     tokio::spawn(socket::serve(sock, d.clone()));
     match TcpListener::bind(paths::HTTP_ADDR).await {
         Ok(l) => {
@@ -97,5 +105,6 @@ async fn run() -> std::io::Result<()> {
     }
     table.stop_all().await;
     let _ = std::fs::remove_file(paths::socket());
+    let _ = std::fs::remove_file(pidfile);
     Ok(())
 }

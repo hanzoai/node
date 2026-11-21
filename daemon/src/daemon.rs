@@ -41,10 +41,9 @@ impl Daemon {
         let v = self.verifier.clone();
         let bearer = bearer.to_string();
         let r = tokio::task::spawn_blocking(move || {
-            let active = me::tokens();
-            let principal = v.verify(&bearer, active.as_ref().map(|(_, t)| t.access_token.as_str()))?;
-            match active {
-                Some((id, _)) if me::label(&id) != principal => Err(format!("{principal} is not the person signed in on this machine")),
+            let principal = v.verify(&bearer)?;
+            match me::active() {
+                Some(id) if me::label(&id) != principal => Err(format!("{principal} is not the person signed in on this machine")),
                 Some(_) => Ok(principal),
                 None => Err("nobody is signed in on this machine".to_string()),
             }
@@ -68,8 +67,8 @@ impl Daemon {
             None if via == Via::Http && !local_inference => return refuse(401, "a bearer is required"),
             None => me::active().map(|id| me::label(&id)).unwrap_or_default(),
         };
-        if via == Via::Http && path == "/v1/identity/token" {
-            return refuse(403, "the access token is served on the socket only");
+        if via == Via::Http && (path == "/v1/identity/token" || path == "/v1/hanzod/upstream") {
+            return refuse(403, "this route is served on the socket only");
         }
         let (sub, busy) = match self.table.route(&path).await {
             Ok(r) => r,

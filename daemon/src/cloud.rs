@@ -24,14 +24,23 @@ use tokio::sync::{mpsc, Mutex};
 
 const MASTER_ENV: &str = "CLOUD_KMS_MASTER_KEY_REF";
 
+/// Where a cloud that hanzod did not start is served, when something
+/// registered one (`hanzo up`'s k3s VM). Loopback only.
+pub type Upstream = Arc<std::sync::Mutex<Option<std::net::SocketAddr>>>;
+
 pub struct Cloud {
     pub pins: Arc<Pins>,
+    upstream: Upstream,
     child: Mutex<Option<Child>>,
 }
 
 impl Cloud {
-    pub fn new(pins: Arc<Pins>) -> Cloud {
-        Cloud { pins, child: Mutex::new(None) }
+    async fn running_child(&self) -> bool {
+        matches!(self.child.lock().await.as_mut().map(|c| c.try_wait()), Some(Ok(None)))
+    }
+
+    pub fn new(pins: Arc<Pins>, upstream: Upstream) -> Cloud {
+        Cloud { pins, upstream, child: Mutex::new(None) }
     }
 }
 
@@ -81,6 +90,10 @@ impl Subsystem for Cloud {
     }
     fn start(&self) -> Fut<'_, io::Result<()>> {
         Box::pin(async move {
+            // A registered upstream is the cloud: there is nothing to start.
+            if self.upstream.lock().unwrap().is_some() {
+                return Ok(());
+            }
             let mut slot = self.child.lock().await;
             if let Some(mut old) = slot.take() {
                 proc::terminate(&mut old, Duration::from_secs(5)).await;
@@ -95,7 +108,7 @@ impl Subsystem for Cloud {
             let (http, health) = (proc::free_port()?, proc::free_port()?);
             let log = std::fs::File::create(state.join("host.log"))?;
             let child = Command::new(&bin)
-                .arg("-addr")
+                .arg("-listen")
                 .arg(format!("127.0.0.1:{http}"))
                 .arg("-zap")
                 .arg(&sock)
@@ -131,7 +144,24 @@ impl Subsystem for Cloud {
         })
     }
     fn frame<'a>(&'a self, _who: &'a str, req: Request) -> Fut<'a, io::Result<Reply>> {
-        Box::pin(async move { Ok(Reply::Frames(exchange(&req).await?)) })
+        Box::pin(async move {
+            let upstream = *self.upstream.lock().unwrap();
+            if let Some(addr) = upstream {
+                return match crate::engine::fetch(addr, &req).await {
+                    Ok(r) => Ok(Reply::Whole(r)),
+                    Err(e) => {
+                        // The registered cloud is gone (`hanzo down`): forget it, and
+                        // the next request starts hanzod's own host instead.
+                        *self.upstream.lock().unwrap() = None;
+                        Err(e)
+                    }
+                };
+            }
+            if !self.running_child().await {
+                self.start().await?;
+            }
+            Ok(Reply::Frames(exchange(&req).await?))
+        })
     }
     fn stop(&self) -> Fut<'_, ()> {
         Box::pin(async move {

@@ -86,7 +86,7 @@ impl Subsystem for Engine {
             *slot = Some(child);
             // Up means the listener answers; the model loads in the background.
             let up = proc::until(Duration::from_secs(60), || async {
-                matches!(fetch(port, &Request { method: "GET".into(), target: "/health".into(), headers: vec![], body: vec![] }).await, Ok(r) if r.status == 200)
+                matches!(fetch(([127, 0, 0, 1], port).into(), &Request { method: "GET".into(), target: "/health".into(), headers: vec![], body: vec![] }).await, Ok(r) if r.status == 200)
             })
             .await;
             if !up {
@@ -102,7 +102,7 @@ impl Subsystem for Engine {
     fn frame<'a>(&'a self, _who: &'a str, req: Request) -> Fut<'a, io::Result<Reply>> {
         Box::pin(async move {
             let port = self.port().ok_or_else(|| io::Error::other("the engine is not running"))?;
-            Ok(Reply::Whole(fetch(port, &req).await?))
+            Ok(Reply::Whole(fetch(([127, 0, 0, 1], port).into(), &req).await?))
         })
     }
     fn stop(&self) -> Fut<'_, ()> {
@@ -118,11 +118,12 @@ impl Subsystem for Engine {
     }
 }
 
-/// One HTTP/1.1 request to the engine, answered whole (a streamed reply is
+/// One HTTP/1.1 request to a loopback upstream, answered whole (a streamed reply is
 /// gathered; callers that need the stream use the loopback view, which is
 /// proxied byte for byte).
-pub async fn fetch(port: u16, req: &Request) -> io::Result<Response> {
-    let mut s = TcpStream::connect(("127.0.0.1", port)).await?;
+pub async fn fetch(addr: std::net::SocketAddr, req: &Request) -> io::Result<Response> {
+    let port = addr.port();
+    let mut s = TcpStream::connect(addr).await?;
     let mut head = format!("{} {} HTTP/1.1\r\nHost: 127.0.0.1:{port}\r\nConnection: close\r\nContent-Length: {}\r\n", req.method, req.target, req.body.len());
     for (k, v) in &req.headers {
         if !matches!(k.to_ascii_lowercase().as_str(), "host" | "content-length" | "connection" | "transfer-encoding" | "authorization") {

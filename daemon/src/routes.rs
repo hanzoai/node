@@ -10,6 +10,37 @@ use std::sync::{Arc, OnceLock};
 /// `GET /v1/hanzod`: what this daemon is and which prefixes it serves.
 pub struct Hanzod {
     pub table: Arc<OnceLock<Arc<Table>>>,
+    pub upstream: crate::cloud::Upstream,
+    pub ledger: Arc<crate::ledger::Ledger>,
+}
+
+impl Hanzod {
+    /// `PUT /v1/hanzod/upstream {"addr": "127.0.0.1:PORT"}` registers a cloud
+    /// that something else serves; `DELETE` withdraws it. Loopback addresses
+    /// only, and socket-only (the daemon refuses it on the HTTP view).
+    fn register(&self, who: &str, req: &Request) -> Response {
+        match req.method.as_str() {
+            "PUT" => {
+                let addr = serde_json::from_slice::<serde_json::Value>(&req.body)
+                    .ok()
+                    .and_then(|v| v.get("addr")?.as_str()?.parse::<std::net::SocketAddr>().ok());
+                match addr {
+                    Some(a) if a.ip().is_loopback() => {
+                        self.ledger.record(who, "register", &format!("cloud upstream {a}"));
+                        *self.upstream.lock().unwrap() = Some(a);
+                        Response::json(200, &json!({ "upstream": a.to_string() }))
+                    }
+                    _ => Response::error(400, "body must be {\"addr\": \"127.0.0.1:PORT\"}, a loopback address"),
+                }
+            }
+            "DELETE" => {
+                self.ledger.record(who, "withdraw", "cloud upstream");
+                *self.upstream.lock().unwrap() = None;
+                Response::json(200, &json!({ "upstream": null }))
+            }
+            _ => Response::error(405, "PUT or DELETE"),
+        }
+    }
 }
 
 impl Subsystem for Hanzod {
@@ -25,8 +56,11 @@ impl Subsystem for Hanzod {
     fn start(&self) -> Fut<'_, io::Result<()>> {
         Box::pin(async { Ok(()) })
     }
-    fn frame<'a>(&'a self, _who: &'a str, _req: Request) -> Fut<'a, io::Result<Reply>> {
+    fn frame<'a>(&'a self, who: &'a str, req: Request) -> Fut<'a, io::Result<Reply>> {
         Box::pin(async move {
+            if req.path() == "/v1/hanzod/upstream" {
+                return Ok(Reply::Whole(self.register(who, &req)));
+            }
             let routes: Vec<_> = self
                 .table
                 .get()

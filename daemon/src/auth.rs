@@ -1,12 +1,12 @@
 //! Bearer verification. A caller's IAM access token is checked against the
 //! issuer's published keys before anything is routed for it.
 //!
-//! The issuer and key set come from OIDC discovery, never from a configured or
-//! compiled host: discovery is read at `<origin>/.well-known/openid-configuration`
-//! where the origin is `signin_origin` in `<data>/hanzo/hanzod.json` when set,
-//! and otherwise the `iss` the machine's own active token names. With neither,
-//! every bearer is refused. Redirects are never followed, and the key set is
-//! cached for ten minutes.
+//! The issuer and key set come from OIDC discovery, never from a compiled
+//! issuer: discovery is read at `<origin>/.well-known/openid-configuration`
+//! where the origin is the sign-in origin (`signin_origin` in
+//! `<data>/hanzo/hanzod.json`, `https://hanzo.ai` when unset). Whatever issuer
+//! discovery advertises is the issuer tokens must carry. Redirects are never
+//! followed, and the key set is cached for ten minutes.
 
 use jsonwebtoken::jwk::JwkSet;
 use jsonwebtoken::{decode, decode_header, Algorithm, DecodingKey, Validation};
@@ -30,7 +30,7 @@ struct Cached {
 }
 
 pub struct Verifier {
-    configured: Option<String>,
+    origin: String,
     cache: Mutex<Option<Cached>>,
 }
 
@@ -45,13 +45,8 @@ fn secure(url: &str) -> bool {
 }
 
 impl Verifier {
-    pub fn new(configured: Option<String>) -> Verifier {
-        Verifier { configured, cache: Mutex::new(None) }
-    }
-
-    /// The origin discovery is read from, given the machine's active token.
-    fn origin(&self, active_token: Option<&str>) -> Option<String> {
-        self.configured.clone().or_else(|| hanzo_identity::identity::issuer(active_token?))
+    pub fn new(origin: String) -> Verifier {
+        Verifier { origin, cache: Mutex::new(None) }
     }
 
     fn keys(&self, origin: &str) -> Result<(String, JwkSet), String> {
@@ -77,8 +72,8 @@ impl Verifier {
 
     /// Verify `bearer` and return its principal, `owner/name`. Blocking: call it
     /// from `spawn_blocking`.
-    pub fn verify(&self, bearer: &str, active_token: Option<&str>) -> Result<String, String> {
-        let origin = self.origin(active_token).ok_or("no sign-in origin: nobody is signed in on this machine")?;
+    pub fn verify(&self, bearer: &str) -> Result<String, String> {
+        let origin = self.origin.clone();
         let header = decode_header(bearer).map_err(|_| "malformed token")?;
         let (issuer, keys) = self.keys(&origin)?;
         let jwk = match &header.kid {
@@ -112,17 +107,17 @@ mod tests {
     use super::*;
 
     #[test]
-    fn with_nobody_signed_in_and_no_origin_every_bearer_is_refused() {
-        let v = Verifier::new(None);
-        assert!(v.verify("a.b.c", None).unwrap_err().contains("no sign-in origin"));
+    fn a_malformed_bearer_is_refused_before_any_fetch() {
+        let v = Verifier::new("https://iam.invalid".into());
+        assert!(v.verify("a.b.c").unwrap_err().contains("malformed"));
     }
 
     #[test]
     fn a_non_https_origin_is_refused_before_any_fetch() {
-        let v = Verifier::new(Some("http://iam.example".into()));
+        let v = Verifier::new("http://iam.example".into());
         // header decodes (alg none-ish garbage fails first), so use a real header
         let h = "eyJhbGciOiJSUzI1NiIsImtpZCI6ImsifQ.e30.c2ln";
-        assert!(v.verify(h, None).unwrap_err().contains("not https"));
+        assert!(v.verify(h).unwrap_err().contains("not https"));
     }
 
     #[test]
