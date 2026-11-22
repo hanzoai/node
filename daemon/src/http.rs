@@ -78,14 +78,26 @@ pub fn local_origin(o: &str) -> bool {
 fn status_line(s: u16) -> &'static str {
     match s {
         200 => "200 OK",
+        201 => "201 Created",
+        202 => "202 Accepted",
         204 => "204 No Content",
+        304 => "304 Not Modified",
         400 => "400 Bad Request",
         401 => "401 Unauthorized",
         403 => "403 Forbidden",
         404 => "404 Not Found",
         405 => "405 Method Not Allowed",
+        408 => "408 Request Timeout",
+        409 => "409 Conflict",
+        410 => "410 Gone",
+        413 => "413 Payload Too Large",
         421 => "421 Misdirected Request",
+        422 => "422 Unprocessable Entity",
+        429 => "429 Too Many Requests",
+        501 => "501 Not Implemented",
         502 => "502 Bad Gateway",
+        503 => "503 Service Unavailable",
+        504 => "504 Gateway Timeout",
         _ => "500 Internal Server Error",
     }
 }
@@ -219,5 +231,39 @@ mod tests {
         assert!(local_origin("tauri://localhost"));
         assert!(!local_origin("https://evil.example"));
         assert!(!local_origin("http://localhost.evil.example"));
+    }
+
+    #[test]
+    fn status_line_preserves_created_and_conflict() {
+        assert_eq!(status_line(200), "200 OK");
+        assert_eq!(status_line(201), "201 Created");
+        assert_eq!(status_line(202), "202 Accepted");
+        assert_eq!(status_line(204), "204 No Content");
+        assert_eq!(status_line(409), "409 Conflict");
+        assert_eq!(status_line(410), "410 Gone");
+        assert_eq!(status_line(422), "422 Unprocessable Entity");
+        assert_eq!(status_line(429), "429 Too Many Requests");
+        assert_eq!(status_line(501), "501 Not Implemented");
+        assert_eq!(status_line(503), "503 Service Unavailable");
+        assert_eq!(status_line(504), "504 Gateway Timeout");
+        assert_eq!(status_line(599), "500 Internal Server Error");
+    }
+
+    #[tokio::test]
+    async fn respond_writes_201_created_and_409_conflict_wire_lines() {
+        for (code, want_prefix) in [(201u16, "HTTP/1.1 201 Created\r\n"), (409u16, "HTTP/1.1 409 Conflict\r\n")] {
+            let l = TcpListener::bind("127.0.0.1:0").await.unwrap();
+            let a = l.local_addr().unwrap();
+            let srv = tokio::spawn(async move {
+                let (mut s, _) = l.accept().await.unwrap();
+                respond(&mut s, &Response::json(code, &serde_json::json!({ "ok": code < 400 }))).await.unwrap();
+            });
+            let mut client = TcpStream::connect(a).await.unwrap();
+            let mut buf = Vec::new();
+            client.read_to_end(&mut buf).await.unwrap();
+            srv.await.unwrap();
+            let raw = String::from_utf8(buf).unwrap();
+            assert!(raw.starts_with(want_prefix), "got {raw:?}, want prefix {want_prefix:?}");
+        }
     }
 }
