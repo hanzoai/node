@@ -76,6 +76,7 @@ impl Subsystem for Hanzod {
                     "version": env!("CARGO_PKG_VERSION"),
                     "capabilities": {
                         "dev": "rust-native",
+                        "research": "rust-native",
                         "chain": if cfg!(feature = "embedded-chain") { "embedded" } else { "steward" },
                         "engine": "managed",
                         "cloud": true,

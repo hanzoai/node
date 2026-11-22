@@ -27,6 +27,7 @@ mod me;
 mod paths;
 mod pins;
 mod proc;
+mod research;
 mod routes;
 mod socket;
 mod table;
@@ -172,6 +173,7 @@ async fn run() -> std::io::Result<()> {
         Arc::new(routes::Identity),
         Arc::new(cloud::Cloud::new(pins.clone(), upstream)),
         Arc::new(dev::Dev::new(ledger.clone(), Some(engine.clone()))),
+        Arc::new(research::Research::new(ledger.clone())),
         engine.clone(),
         Arc::new(catalog::Catalog::new(engine.clone(), ledger.clone())),
         Arc::new(chain::Chain {

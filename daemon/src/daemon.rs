@@ -58,8 +58,17 @@ impl Daemon {
         if path == "/healthz" {
             return (Reply::Whole(Response::json(200, &serde_json::json!({ "ok": true }))), None);
         }
+        if req.method == "GET" && path == "/.well-known/hanzo-standard.json" {
+            let doc: serde_json::Value = serde_json::from_str(crate::research::STANDARD_JSON)
+                .unwrap_or_else(|_| serde_json::json!({}));
+            return (Reply::Whole(Response::json(200, &doc)), None);
+        }
         let local_inference = path == "/v1/engine" || path.starts_with("/v1/engine/");
-        let local_probe = req.method == "GET" && (path == "/v1/hanzod" || path == "/v1/dev/health");
+        let local_probe = req.method == "GET"
+            && matches!(
+                path.as_str(),
+                "/v1/hanzod" | "/v1/dev/health" | "/v1/research/health" | "/v1/research/standard"
+            );
         let who = match req.bearer() {
             Some(b) => match self.who(b).await {
                 Ok(p) => p,

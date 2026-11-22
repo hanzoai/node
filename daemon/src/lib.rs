@@ -18,6 +18,7 @@ mod me;
 mod paths;
 mod pins;
 mod proc;
+mod research;
 mod routes;
 mod socket;
 mod table;
@@ -128,6 +129,7 @@ pub extern "C" fn hanzod_ffi_start(data_dir: *const c_char, port: u16) -> c_int 
                     Arc::new(routes::Identity),
                     Arc::new(cloud::Cloud::new(pins.clone(), upstream)),
                     Arc::new(dev::Dev::new(ledger.clone(), Some(engine.clone()))),
+                    Arc::new(research::Research::new(ledger.clone())),
                     engine.clone(),
                     Arc::new(catalog::Catalog::new(engine, ledger.clone())),
                     Arc::new(chain::Chain { steward, ledger }),
@@ -222,12 +224,13 @@ pub extern "C" fn hanzod_ffi_status_json() -> *mut c_char {
         "dataDir": data_dir,
         "capabilities": {
             "dev": "rust-native",
+            "research": "rust-native",
             "chain": if cfg!(feature = "embedded-chain") { "embedded" } else { "steward" },
             "engine": "managed",
             "cloud": true,
             "zap": true
         },
-        "routes": ["/healthz", "/v1/hanzod", "/v1/identity", "/v1/dev", "/v1/chain", "/v1/engine", "/v1/engine/catalog"],
+        "routes": ["/healthz", "/.well-known/hanzo-standard.json", "/v1/hanzod", "/v1/identity", "/v1/dev", "/v1/research", "/v1/chain", "/v1/engine", "/v1/engine/catalog"],
     });
     match CString::new(payload.to_string()) {
         Ok(cs) => cs.into_raw(),
