@@ -59,12 +59,13 @@ impl Daemon {
             return (Reply::Whole(Response::json(200, &serde_json::json!({ "ok": true }))), None);
         }
         let local_inference = path == "/v1/engine" || path.starts_with("/v1/engine/");
+        let local_probe = req.method == "GET" && (path == "/v1/hanzod" || path == "/v1/dev/health");
         let who = match req.bearer() {
             Some(b) => match self.who(b).await {
                 Ok(p) => p,
                 Err((s, e)) => return refuse(s, &e),
             },
-            None if via == Via::Http && !local_inference => return refuse(401, "a bearer is required"),
+            None if via == Via::Http && !local_inference && !local_probe => return refuse(401, "a bearer is required"),
             None => me::active().map(|id| me::label(&id)).unwrap_or_default(),
         };
         if via == Via::Http && (path == "/v1/identity/token" || path == "/v1/hanzod/upstream") {

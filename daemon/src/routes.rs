@@ -69,7 +69,21 @@ impl Subsystem for Hanzod {
                 .into_iter()
                 .map(|(prefix, name, running)| json!({ "prefix": prefix, "name": name, "running": running }))
                 .collect();
-            Ok(Reply::Whole(Response::json(200, &json!({ "name": "hanzod", "version": env!("CARGO_PKG_VERSION"), "routes": routes }))))
+            Ok(Reply::Whole(Response::json(
+                200,
+                &json!({
+                    "name": "hanzod",
+                    "version": env!("CARGO_PKG_VERSION"),
+                    "capabilities": {
+                        "dev": "rust-native",
+                        "chain": if cfg!(feature = "embedded-chain") { "embedded" } else { "steward" },
+                        "engine": "managed",
+                        "cloud": true,
+                        "zap": true
+                    },
+                    "routes": routes
+                }),
+            )))
         })
     }
     fn stop(&self) -> Fut<'_, ()> {

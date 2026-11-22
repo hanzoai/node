@@ -61,6 +61,9 @@ pub struct Steward {
     pub pins: Pins,
     pub rpc: SocketAddr,
     pub mesh: SocketAddr,
+    /// When set, `hanzod` itself embeds `hanzo-chain` and launches `<exe> chain ...`
+    /// directly from the single unified binary instead of fetching a second binary.
+    pub embedded_exe: Option<PathBuf>,
     child: Mutex<Option<Child>>,
 }
 
@@ -103,8 +106,16 @@ impl Steward {
             pins,
             rpc: ([127, 0, 0, 1], 9630).into(),
             mesh: ([127, 0, 0, 1], 9631).into(),
+            embedded_exe: None,
             child: Mutex::new(None),
         }
+    }
+
+    /// Use the unified `hanzod` binary itself (`<exe> chain ...`) rather than a
+    /// separate `hanzo-chain` binary.
+    pub fn with_embedded_exe(mut self, exe: PathBuf) -> Self {
+        self.embedded_exe = Some(exe);
+        self
     }
 
     fn binary(&self) -> PathBuf {
@@ -149,6 +160,7 @@ impl Steward {
             "running": running,
             "network": network,
             "version": self.pins.version(),
+            "embedded": self.embedded_exe.is_some(),
         });
         if running {
             s["height"] = self.height().map_or(Value::Null, Value::from);
@@ -186,11 +198,15 @@ impl Steward {
         if !["mainnet", "testnet", "devnet"].contains(&network) {
             return refuse(400, format!("unknown network {network:?}"));
         }
-        let (tarball, binary) = match self.pins.target(&target()) {
-            Some(t) => t,
-            None => return refuse(422, format!("no pinned digest for {}", target())),
+        let external_pin = if self.embedded_exe.is_none() {
+            let (tarball, binary) = match self.pins.target(&target()) {
+                Some(t) => t,
+                None => return refuse(422, format!("no pinned digest for {}", target())),
+            };
+            Some((self.pins.version().unwrap_or_default(), tarball, binary))
+        } else {
+            None
         };
-        let version = self.pins.version().unwrap_or_default();
         let net = match self.pins.network(network) {
             Some(n) => n,
             None => return refuse(422, format!("no pinned network {network}")),
@@ -210,13 +226,27 @@ impl Steward {
         let Some(pchain) = net.get("pchain").and_then(Value::as_str) else {
             return refuse(422, format!("no committee source pinned for {network}"));
         };
-        if let Err(e) = self.fetch(version, tarball, binary) {
-            return refuse(e.0, e.1);
+        if let Some((version, tarball, binary)) = external_pin {
+            if let Err(e) = self.fetch(version, tarball, binary) {
+                return refuse(e.0, e.1);
+            }
         }
         if let Err(e) = self.private_dir() {
             return refuse(500, e);
         }
-        let mut cmd = Command::new(self.binary());
+        let mut cmd = if let Some(ref exe) = self.embedded_exe {
+            let mut c = Command::new(exe);
+            c.env("HANZOD_MODE", "chain");
+            c
+        } else {
+            let (_, _, binary) = external_pin.unwrap();
+            // The binary on disk is the one that was verified, at this exec too.
+            match std::fs::read(self.binary()) {
+                Ok(b) if sha256(&b) == binary => {}
+                _ => return refuse(422, "the installed hanzo-chain does not match its pinned digest"),
+            }
+            Command::new(self.binary())
+        };
         cmd.args(["--network", network, "--pchain", pchain])
             .arg("--data")
             .arg(&self.data)
@@ -234,11 +264,6 @@ impl Steward {
                     Ok(())
                 })
             };
-        }
-        // The binary on disk is the one that was verified, at this exec too.
-        match std::fs::read(self.binary()) {
-            Ok(b) if sha256(&b) == binary => {}
-            _ => return refuse(422, "the installed hanzo-chain does not match its pinned digest"),
         }
         let mut child = match cmd.spawn() {
             Ok(c) => c,

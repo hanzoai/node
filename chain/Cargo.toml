@@ -8,6 +8,10 @@ repository.workspace = true
 license-file = "../LICENSE"
 readme = "../README.md"
 
+[lib]
+name = "hanzo_chain"
+path = "src/lib.rs"
+
 [[bin]]
 name = "hanzo-chain"
 path = "src/main.rs"

@@ -1,26 +1,43 @@
 [package]
 name = "hanzod"
-version = "0.2.7"
+version = "0.3.0"
 edition.workspace = true
-description = "The Hanzo daemon: one per machine"
+description = "The unified Hanzo daemon: local app, native Rust Dev runtime, blockchain, and inference in one binary"
 authors.workspace = true
 repository.workspace = true
 license-file = "../LICENSE"
+
+[lib]
+name = "hanzod_ffi"
+path = "src/lib.rs"
+crate-type = ["staticlib", "rlib"]
 
 [[bin]]
 name = "hanzod"
 path = "src/main.rs"
 
+[features]
+default = []
+# Compile the Hanzo validator (`hanzo-chain` / `lux-node`) directly into the single `hanzod` binary.
+embedded-chain = ["dep:hanzo-chain"]
+
 [dependencies]
 # Who the machine is: the CLI's identity store, shared by crate, not by copy.
 hanzo-identity = { git = "https://github.com/hanzoai/cli", rev = "f6de3eca99465615030356cf8568aa965749df46" }
-# The /v1/chain route, opt-in custody of hanzo-chain.
+# Native Rust Dev engine (HIP-1330): protocol, pure session core, and pure orchestrator decide rules.
+dev-protocol = { git = "https://github.com/hanzoai/dev", rev = "9ea2907922e202a675b2b05ae2cb0515f19d84de" }
+dev-core = { git = "https://github.com/hanzoai/dev", rev = "9ea2907922e202a675b2b05ae2cb0515f19d84de" }
+dev-orchestrator = { git = "https://github.com/hanzoai/dev", rev = "9ea2907922e202a675b2b05ae2cb0515f19d84de" }
+# Persistent event-sourced SQLite store for native Dev sessions, snapshots, and action ledger.
+rusqlite = { version = "0.32", features = ["bundled"] }
+# The /v1/chain route, opt-in custody of hanzo-chain (or embedded self-exec when `embedded-chain` is enabled).
 steward = { path = "../chain/steward" }
+hanzo-chain = { path = "../chain", optional = true }
 # ZAP-HTTP frames and the router envelope.
 zaphttp = { path = "../zap" }
 tokio = { version = "1", default-features = false, features = ["rt", "net", "io-util", "process", "signal", "time", "sync", "macros"] }
 serde = { version = "1", features = ["derive"] }
-serde_json = "1"
+serde_json = { version = "1", features = ["raw_value"] }
 libc = "0.2"
 sha2 = "0.10"
 base64 = "0.22"

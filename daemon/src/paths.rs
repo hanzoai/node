@@ -4,6 +4,12 @@
 use std::path::PathBuf;
 
 pub fn data() -> PathBuf {
+    if let Ok(override_dir) = std::env::var("HANZO_DATA_DIR") {
+        let trimmed = override_dir.trim();
+        if !trimmed.is_empty() {
+            return PathBuf::from(trimmed);
+        }
+    }
     dirs::data_local_dir().unwrap_or_else(|| PathBuf::from(".")).join("hanzo")
 }
 

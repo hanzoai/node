@@ -1,6 +1,16 @@
 # node
 
-`hanzod` — the Hanzo network node. Rust. One binary.
+`hanzod` — the single unified Hanzo daemon per machine (v0.3.0, HIP-1330). Rust. One binary.
+
+`hanzod` (`daemon/`) owns `<data_local_dir>/hanzo/hanzod.zap.sock` (0600) and
+`127.0.0.1:3690`, embeds the native Rust Dev runtime (`dev-protocol` + `dev-core` +
+`dev-orchestrator` + WAL SQLite store in `daemon/src/dev_native.rs`), serves local
+inference (`/v1/engine` + `/v1/engine/catalog`), local cloud (`/v1/cloud`), outbound
+WebTransport/ZAP relay (`link.rs`), machine identity (`hanzo-identity`), mobile/iOS
+staticlib C-ABI (`hanzod_ffi`), and opt-in blockchain validator (`/v1/chain` —
+embedded directly in `hanzod` with `--features embedded-chain` via `HANZOD_MODE=chain`
+self-exec, or via `chain/steward`). `zap/` is the ZAP-HTTP codec both `hanzod` and its
+clients use.
 
 ## What this repository is
 
