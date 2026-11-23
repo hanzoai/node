@@ -23,10 +23,11 @@ use serde_json::{json, Value};
 use sha2::{Digest, Sha256};
 use std::io;
 use std::path::{Path, PathBuf};
-use std::sync::atomic::{AtomicU64, Ordering};
+use std::sync::atomic::{AtomicU64, AtomicUsize, Ordering};
 use std::sync::{Arc, Mutex};
 use std::time::{Duration, Instant, SystemTime, UNIX_EPOCH};
 use tokio::process::Command;
+use tokio::sync::Notify;
 
 pub const STANDARD_JSON: &str = include_str!("../../hanzo-standard.json");
 
@@ -206,23 +207,79 @@ pub fn discover_hanzo_vm() -> Option<PathBuf> {
     None
 }
 
+pub struct ActiveRunGuard<'a> {
+    count: &'a AtomicUsize,
+    notify: &'a Notify,
+}
+
+impl Drop for ActiveRunGuard<'_> {
+    fn drop(&mut self) {
+        if self.count.fetch_sub(1, Ordering::SeqCst) == 1 {
+            self.notify.notify_waiters();
+        }
+    }
+}
+
 pub struct Research {
     db_path: PathBuf,
     conn: Mutex<Option<Connection>>,
     ledger: Arc<Ledger>,
+    active: AtomicUsize,
+    idle_notify: Arc<Notify>,
 }
 
 impl Research {
+    #[allow(dead_code)]
     pub fn new(ledger: Arc<Ledger>) -> Self {
-        Self::with_db_path(paths::data().join("research").join("runs.sqlite"), ledger)
+        Self::with_notify(ledger, Arc::new(Notify::new()))
     }
 
+    pub fn with_notify(ledger: Arc<Ledger>, idle_notify: Arc<Notify>) -> Self {
+        Self::with_db_path_and_notify(
+            paths::data().join("research").join("runs.sqlite"),
+            ledger,
+            idle_notify,
+        )
+    }
+
+    #[allow(dead_code)]
     pub fn with_db_path(db_path: PathBuf, ledger: Arc<Ledger>) -> Self {
+        Self::with_db_path_and_notify(db_path, ledger, Arc::new(Notify::new()))
+    }
+
+    pub fn with_db_path_and_notify(
+        db_path: PathBuf,
+        ledger: Arc<Ledger>,
+        idle_notify: Arc<Notify>,
+    ) -> Self {
         Self {
             db_path,
             conn: Mutex::new(None),
             ledger,
+            active: AtomicUsize::new(0),
+            idle_notify,
         }
+    }
+
+    pub fn active_runs(&self) -> usize {
+        self.active.load(Ordering::SeqCst)
+    }
+
+    pub fn hold_active_guard(&self) -> ActiveRunGuard<'_> {
+        self.active.fetch_add(1, Ordering::SeqCst);
+        ActiveRunGuard {
+            count: &self.active,
+            notify: &self.idle_notify,
+        }
+    }
+
+    pub async fn execute_task(
+        &self,
+        who: &str,
+        req: ExecuteResearchReq,
+        bearer: Option<String>,
+    ) -> io::Result<LocalResearchRun> {
+        self.execute(who, req, bearer).await
     }
 
     fn with_db<T>(&self, f: impl FnOnce(&Connection) -> io::Result<T>) -> io::Result<T> {
@@ -331,6 +388,8 @@ impl Research {
                 "benchmark and command are required",
             ));
         }
+
+        let _active_guard = self.hold_active_guard();
 
         let run_id = req
             .id

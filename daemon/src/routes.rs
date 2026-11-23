@@ -12,6 +12,7 @@ pub struct Hanzod {
     pub table: Arc<OnceLock<Arc<Table>>>,
     pub upstream: crate::cloud::Upstream,
     pub ledger: Arc<crate::ledger::Ledger>,
+    pub tasks_worker: Arc<crate::tasks_worker::TasksWorker>,
 }
 
 impl Hanzod {
@@ -61,6 +62,29 @@ impl Subsystem for Hanzod {
             if req.path() == "/v1/hanzod/upstream" {
                 return Ok(Reply::Whole(self.register(who, &req)));
             }
+            if req.path() == "/v1/hanzod/worker" {
+                return match req.method.as_str() {
+                    "GET" => Ok(Reply::Whole(Response::json(200, &self.tasks_worker.status_json()))),
+                    "PUT" => {
+                        let patch: crate::tasks_worker::WorkerConfigPatch =
+                            match serde_json::from_slice(&req.body) {
+                                Ok(p) => p,
+                                Err(e) => {
+                                    return Ok(Reply::Whole(Response::error(
+                                        400,
+                                        &format!("invalid JSON: {e}"),
+                                    )))
+                                }
+                            };
+                        self.ledger.record(who, "worker.configure", "tasks_worker");
+                        match self.tasks_worker.apply_patch(patch, true) {
+                            Ok(st) => Ok(Reply::Whole(Response::json(200, &st))),
+                            Err(e) => Ok(Reply::Whole(Response::error(500, &e.to_string()))),
+                        }
+                    }
+                    _ => Ok(Reply::Whole(Response::error(405, "GET or PUT /v1/hanzod/worker"))),
+                };
+            }
             let routes: Vec<_> = self
                 .table
                 .get()
@@ -74,14 +98,33 @@ impl Subsystem for Hanzod {
                 &json!({
                     "name": "hanzod",
                     "version": env!("CARGO_PKG_VERSION"),
+                    "sole_desktop_backend": true,
+                    "surfaces": [
+                        "desktop",
+                        "bot",
+                        "team",
+                        "dev",
+                        "engine",
+                        "research",
+                        "tasks",
+                        "cluster",
+                        "cloud",
+                        "chain",
+                        "identity"
+                    ],
                     "capabilities": {
                         "dev": "rust-native",
                         "research": "rust-native",
+                        "bot": "rust-native",
+                        "team": "rust-native",
+                        "tasks": "linked-worker",
+                        "cluster": "k3s-orchestrator",
                         "chain": if cfg!(feature = "embedded-chain") { "embedded" } else { "steward" },
                         "engine": "managed",
                         "cloud": true,
                         "zap": true
                     },
+                    "tasks_worker": self.tasks_worker.summary_json(),
                     "routes": routes
                 }),
             )))

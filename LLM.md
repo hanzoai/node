@@ -1,16 +1,16 @@
 # node
 
-`hanzod` — the single unified Hanzo daemon per machine (v0.3.0, HIP-1330). Rust. One binary.
+`hanzod` — the single unified Hanzo daemon and sole Desktop, Bot, and Team backend per machine (v0.4.0, HIP-0106 / HIP-1330 / HIP-1400). Rust. One binary.
 
 `hanzod` (`daemon/`) owns `<data_local_dir>/hanzo/hanzod.zap.sock` (0600) and
-`127.0.0.1:3690`, embeds the native Rust Dev runtime (`dev-protocol` + `dev-core` +
-`dev-orchestrator` + WAL SQLite store in `daemon/src/dev_native.rs`), serves local
-inference (`/v1/engine` + `/v1/engine/catalog`), local cloud (`/v1/cloud`), outbound
-WebTransport/ZAP relay (`link.rs`), machine identity (`hanzo-identity`), mobile/iOS
-staticlib C-ABI (`hanzod_ffi`), and opt-in blockchain validator (`/v1/chain` —
-embedded directly in `hanzod` with `--features embedded-chain` via `HANZOD_MODE=chain`
-self-exec, or via `chain/steward`). `zap/` is the ZAP-HTTP codec both `hanzod` and its
-clients use.
+`127.0.0.1:3690` as the sole local backend for Hanzo Desktop, Hanzo Bot, and Hanzo Team:
+- Native Rust Dev runtime (`/v1/dev`, `dev-protocol` + `dev-core` + `dev-orchestrator` + WAL SQLite in `daemon/src/dev_native.rs`)
+- Native Hanzo Bot backend (`/v1/bot`, crew presets, persistent bots, scheduled `hanzoai/tasks` runs, optional `hanzo-bot` gateway proxy)
+- Native Hanzo Team backend (`/v1/team`, spaces, channels, human+bot threads, Kanban board tasks dispatched via `hanzoai/tasks`, optional `hanzo-team` transactor / Cloud sync)
+- Native Hanzo Dō research subsystem (`/v1/research`, `hanzo-vm` microVM / workspace bounded execution + SHA-256 artifacts)
+- Reactive `hanzoai/tasks` linked-machine worker (`/v1/hanzod/worker` in `daemon/src/tasks_worker.rs` — outbound SSE `/v1/workflow/events` + instant `Notify` busy-to-idle transitions + `ReleaseActivity` deferral across `dgx`, `evo`, and Desktop machines)
+- Automated local/edge Kubernetes & unified Cloud orchestrator (`/v1/cluster` & `/v1/k3s` — `hanzo-vm` k3s, native `k3s`, `hanzo-cloud`, and `tasksd`)
+- Local inference (`/v1/engine` + `/v1/engine/catalog`), outbound WebTransport/ZAP relay (`link.rs`), machine identity (`hanzo-identity`), mobile/iOS staticlib C-ABI (`hanzod_ffi`), and opt-in blockchain validator (`/v1/chain` — embedded directly with `--features embedded-chain` via `HANZOD_MODE=chain` self-exec, or via `chain/steward`). `zap/` is the ZAP-HTTP codec both `hanzod` and its clients use.
 
 ## What this repository is
 
