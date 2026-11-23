@@ -33,10 +33,11 @@ use serde::Deserialize;
 use serde_json::{json, value::RawValue};
 use std::io;
 use std::path::PathBuf;
+use std::sync::atomic::{AtomicUsize, Ordering};
 use std::sync::Arc;
 use std::time::Duration;
 use tokio::io::{AsyncReadExt, AsyncWriteExt};
-use tokio::sync::Mutex;
+use tokio::sync::{Mutex, Notify};
 
 /// What an older client registers when using an external worker.
 #[derive(Deserialize, Clone)]
@@ -58,22 +59,56 @@ struct DecideReq<'a> {
     input: &'a RawValue,
 }
 
+struct ActiveStreamGuard<'a> {
+    count: &'a AtomicUsize,
+    notify: &'a Notify,
+}
+
+impl Drop for ActiveStreamGuard<'_> {
+    fn drop(&mut self) {
+        if self.count.fetch_sub(1, Ordering::SeqCst) == 1 {
+            self.notify.notify_waiters();
+        }
+    }
+}
+
 pub struct Dev {
     pub ledger: Arc<Ledger>,
     pub native: Arc<DevNative>,
     spec: Mutex<Option<Register>>,
     worker: Mutex<Option<Worker>>,
+    active_streams: AtomicUsize,
+    idle_notify: Arc<Notify>,
 }
 
 impl Dev {
+    #[allow(dead_code)]
     pub fn new(ledger: Arc<Ledger>, engine: Option<Arc<Engine>>) -> Dev {
-        let native = Arc::new(DevNative::new(ledger.clone(), engine));
+        Self::with_notify(ledger, engine, Arc::new(Notify::new()))
+    }
+
+    pub fn with_notify(
+        ledger: Arc<Ledger>,
+        engine: Option<Arc<Engine>>,
+        idle_notify: Arc<Notify>,
+    ) -> Dev {
+        let native = Arc::new(DevNative::with_notify(
+            ledger.clone(),
+            engine,
+            idle_notify.clone(),
+        ));
         Dev {
             ledger,
             native,
             spec: Mutex::new(None),
             worker: Mutex::new(None),
+            active_streams: AtomicUsize::new(0),
+            idle_notify,
         }
+    }
+
+    pub fn active_sessions_count(&self) -> usize {
+        self.native.active_turns() + self.active_streams.load(Ordering::SeqCst)
     }
 
     async fn worker_running(&self) -> bool {
@@ -301,6 +336,11 @@ impl Subsystem for Dev {
     }
     fn stream<'a>(&'a self, first: Vec<u8>, mut conn: Conn) -> Fut<'a, io::Result<()>> {
         Box::pin(async move {
+            self.active_streams.fetch_add(1, Ordering::SeqCst);
+            let _stream_guard = ActiveStreamGuard {
+                count: &self.active_streams,
+                notify: &self.idle_notify,
+            };
             let mux = self.ensure().await?;
             let (sid, mut rx) = mux.open().await?;
             mux.send(sid, &first).await?;

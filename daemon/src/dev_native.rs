@@ -33,10 +33,11 @@ use serde::{Deserialize, Serialize};
 use serde_json::{json, value::RawValue, Value};
 use std::io;
 use std::path::{Path, PathBuf};
-use std::sync::atomic::{AtomicU64, Ordering};
+use std::sync::atomic::{AtomicU64, AtomicUsize, Ordering};
 use std::sync::{Arc, Mutex};
 use std::time::{Duration, SystemTime, UNIX_EPOCH};
 use tokio::process::Command;
+use tokio::sync::Notify;
 
 const DEFAULT_CLOUD_API: &str = "https://api.hanzo.ai";
 const MAX_TOOL_ROUNDS: usize = 24;
@@ -113,30 +114,70 @@ pub struct RunTurnReq {
     pub model: Option<String>,
 }
 
+struct ActiveTurnGuard<'a> {
+    count: &'a AtomicUsize,
+    notify: &'a Notify,
+}
+
+impl Drop for ActiveTurnGuard<'_> {
+    fn drop(&mut self) {
+        if self.count.fetch_sub(1, Ordering::SeqCst) == 1 {
+            self.notify.notify_waiters();
+        }
+    }
+}
+
 pub struct DevNative {
     db_path: PathBuf,
     conn: Mutex<Option<Connection>>,
     ledger: Arc<Ledger>,
     engine: Option<Arc<Engine>>,
+    active_turns: AtomicUsize,
+    idle_notify: Arc<Notify>,
 }
 
 impl DevNative {
+    #[allow(dead_code)]
     pub fn new(ledger: Arc<Ledger>, engine: Option<Arc<Engine>>) -> Self {
-        let db_path = paths::data().join("dev").join("state.sqlite");
-        Self::with_db_path(db_path, ledger, engine)
+        Self::with_notify(ledger, engine, Arc::new(Notify::new()))
     }
 
+    pub fn with_notify(
+        ledger: Arc<Ledger>,
+        engine: Option<Arc<Engine>>,
+        idle_notify: Arc<Notify>,
+    ) -> Self {
+        let db_path = paths::data().join("dev").join("state.sqlite");
+        Self::with_db_path_and_notify(db_path, ledger, engine, idle_notify)
+    }
+
+    #[allow(dead_code)]
     pub fn with_db_path(
         db_path: PathBuf,
         ledger: Arc<Ledger>,
         engine: Option<Arc<Engine>>,
+    ) -> Self {
+        Self::with_db_path_and_notify(db_path, ledger, engine, Arc::new(Notify::new()))
+    }
+
+    pub fn with_db_path_and_notify(
+        db_path: PathBuf,
+        ledger: Arc<Ledger>,
+        engine: Option<Arc<Engine>>,
+        idle_notify: Arc<Notify>,
     ) -> Self {
         Self {
             db_path,
             conn: Mutex::new(None),
             ledger,
             engine,
+            active_turns: AtomicUsize::new(0),
+            idle_notify,
         }
+    }
+
+    pub fn active_turns(&self) -> usize {
+        self.active_turns.load(Ordering::SeqCst)
     }
 
     fn with_db<T>(&self, f: impl FnOnce(&Connection) -> io::Result<T>) -> io::Result<T> {
@@ -516,6 +557,11 @@ impl DevNative {
         req: RunTurnReq,
         request_bearer: Option<String>,
     ) -> io::Result<TurnResult> {
+        self.active_turns.fetch_add(1, Ordering::SeqCst);
+        let _turn_guard = ActiveTurnGuard {
+            count: &self.active_turns,
+            notify: &self.idle_notify,
+        };
         let (summary, mut session) = self.load_session_row(session_id)?;
         let turn_id = summary.next_turn_id;
         let next_turn_id = turn_id + 1;

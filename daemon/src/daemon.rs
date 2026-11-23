@@ -67,7 +67,17 @@ impl Daemon {
         let local_probe = req.method == "GET"
             && matches!(
                 path.as_str(),
-                "/v1/hanzod" | "/v1/dev/health" | "/v1/research/health" | "/v1/research/standard"
+                "/v1/hanzod"
+                    | "/v1/hanzod/worker"
+                    | "/v1/dev/health"
+                    | "/v1/research/health"
+                    | "/v1/research/standard"
+                    | "/v1/bot/health"
+                    | "/v1/team/health"
+                    | "/v1/cluster"
+                    | "/v1/cluster/health"
+                    | "/v1/k3s"
+                    | "/v1/k3s/health"
             );
         let who = match req.bearer() {
             Some(b) => match self.who(b).await {

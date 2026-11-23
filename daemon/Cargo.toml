@@ -1,8 +1,8 @@
 [package]
 name = "hanzod"
-version = "0.3.1"
+version = "0.4.0"
 edition.workspace = true
-description = "The unified Hanzo daemon: local app, native Rust Dev runtime, blockchain, and inference in one binary"
+description = "The unified Hanzo daemon: sole Desktop/Bot/Team backend, native Dev, tasks worker, k3s/cloud, chain, and inference"
 authors.workspace = true
 repository.workspace = true
 license-file = "../LICENSE"

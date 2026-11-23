@@ -4,9 +4,11 @@
 //! In-process C-ABI library entry points for embedding `hanzod` inside iOS / mobile / desktop apps.
 
 mod auth;
+mod bot;
 mod catalog;
 mod chain;
 mod cloud;
+mod cluster;
 mod daemon;
 mod dev;
 mod dev_native;
@@ -22,6 +24,8 @@ mod research;
 mod routes;
 mod socket;
 mod table;
+mod tasks_worker;
+mod team;
 mod worker;
 
 use std::ffi::{CStr, CString};
@@ -120,22 +124,58 @@ pub extern "C" fn hanzod_ffi_start(data_dir: *const c_char, port: u16) -> c_int 
                 }
                 let steward = Arc::new(steward_inner);
                 let engine = Arc::new(engine::Engine::new(pins.clone()));
+                let idle_notify = Arc::new(tokio::sync::Notify::new());
+                let dev_sub = Arc::new(dev::Dev::with_notify(
+                    ledger.clone(),
+                    Some(engine.clone()),
+                    idle_notify.clone(),
+                ));
+                let research_sub = Arc::new(research::Research::with_notify(
+                    ledger.clone(),
+                    idle_notify.clone(),
+                ));
+                let bot_sub = Arc::new(bot::Bot::new(ledger.clone(), engine.clone()));
+                let team_sub = Arc::new(team::Team::new(ledger.clone(), upstream.clone()));
+                let cluster_core = cluster::ClusterCore::new(ledger.clone(), upstream.clone());
+                let tasks_worker = tasks_worker::TasksWorker::new(
+                    dev_sub.clone(),
+                    research_sub.clone(),
+                    bot_sub.clone(),
+                    team_sub.clone(),
+                    engine.clone(),
+                    cluster_core.clone(),
+                    idle_notify,
+                );
                 let subs: Vec<Arc<dyn table::Subsystem>> = vec![
                     Arc::new(routes::Hanzod {
                         table: table_cell.clone(),
                         upstream: upstream.clone(),
                         ledger: ledger.clone(),
+                        tasks_worker: tasks_worker.clone(),
                     }),
                     Arc::new(routes::Identity),
                     Arc::new(cloud::Cloud::new(pins.clone(), upstream)),
-                    Arc::new(dev::Dev::new(ledger.clone(), Some(engine.clone()))),
-                    Arc::new(research::Research::new(ledger.clone())),
+                    dev_sub,
+                    research_sub,
+                    bot_sub,
+                    team_sub,
+                    Arc::new(cluster::ClusterSub {
+                        core: cluster_core.clone(),
+                        prefix: "/v1/cluster",
+                        name: "cluster",
+                    }),
+                    Arc::new(cluster::ClusterSub {
+                        core: cluster_core,
+                        prefix: "/v1/k3s",
+                        name: "k3s",
+                    }),
                     engine.clone(),
                     Arc::new(catalog::Catalog::new(engine, ledger.clone())),
                     Arc::new(chain::Chain { steward, ledger }),
                 ];
                 let table = Arc::new(table::Table::new(subs));
                 let _ = table_cell.set(table.clone());
+                let _worker_handle = tasks_worker.spawn();
 
                 let origin = config()
                     .get("signin_origin")
@@ -164,6 +204,7 @@ pub extern "C" fn hanzod_ffi_start(data_dir: *const c_char, port: u16) -> c_int 
                 }
 
                 let _ = rx.await;
+                tasks_worker.shutdown();
                 table.stop_all().await;
                 let _ = std::fs::remove_file(paths::socket());
                 RUNNING.store(false, Ordering::SeqCst);
@@ -222,15 +263,20 @@ pub extern "C" fn hanzod_ffi_status_json() -> *mut c_char {
         "version": env!("CARGO_PKG_VERSION"),
         "port": port,
         "dataDir": data_dir,
+        "sole_desktop_backend": true,
         "capabilities": {
             "dev": "rust-native",
             "research": "rust-native",
+            "bot": "rust-native",
+            "team": "rust-native",
+            "tasks": "linked-worker",
+            "cluster": "k3s-orchestrator",
             "chain": if cfg!(feature = "embedded-chain") { "embedded" } else { "steward" },
             "engine": "managed",
             "cloud": true,
             "zap": true
         },
-        "routes": ["/healthz", "/.well-known/hanzo-standard.json", "/v1/hanzod", "/v1/identity", "/v1/dev", "/v1/research", "/v1/chain", "/v1/engine", "/v1/engine/catalog"],
+        "routes": ["/healthz", "/.well-known/hanzo-standard.json", "/v1/hanzod", "/v1/hanzod/worker", "/v1/identity", "/v1/dev", "/v1/research", "/v1/bot", "/v1/team", "/v1/cluster", "/v1/k3s", "/v1/chain", "/v1/engine", "/v1/engine/catalog"],
     });
     match CString::new(payload.to_string()) {
         Ok(cs) => cs.into_raw(),

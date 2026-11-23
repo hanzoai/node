@@ -13,9 +13,11 @@
 //! Owns `<data>/hanzo/hanzod.zap.sock` (0600) and loopback view `127.0.0.1:3690`.
 
 mod auth;
+mod bot;
 mod catalog;
 mod chain;
 mod cloud;
+mod cluster;
 mod daemon;
 mod dev;
 mod dev_native;
@@ -31,6 +33,8 @@ mod research;
 mod routes;
 mod socket;
 mod table;
+mod tasks_worker;
+mod team;
 mod worker;
 
 use std::process::ExitCode;
@@ -164,16 +168,52 @@ async fn run() -> std::io::Result<()> {
     let steward = Arc::new(steward_inner);
 
     let engine = Arc::new(engine::Engine::new(pins.clone()));
+    let idle_notify = Arc::new(tokio::sync::Notify::new());
+    let dev_sub = Arc::new(dev::Dev::with_notify(
+        ledger.clone(),
+        Some(engine.clone()),
+        idle_notify.clone(),
+    ));
+    let research_sub = Arc::new(research::Research::with_notify(
+        ledger.clone(),
+        idle_notify.clone(),
+    ));
+    let bot_sub = Arc::new(bot::Bot::new(ledger.clone(), engine.clone()));
+    let team_sub = Arc::new(team::Team::new(ledger.clone(), upstream.clone()));
+    let cluster_core = cluster::ClusterCore::new(ledger.clone(), upstream.clone());
+    let tasks_worker = tasks_worker::TasksWorker::new(
+        dev_sub.clone(),
+        research_sub.clone(),
+        bot_sub.clone(),
+        team_sub.clone(),
+        engine.clone(),
+        cluster_core.clone(),
+        idle_notify,
+    );
+
     let subs: Vec<Arc<dyn table::Subsystem>> = vec![
         Arc::new(routes::Hanzod {
             table: table_cell.clone(),
             upstream: upstream.clone(),
             ledger: ledger.clone(),
+            tasks_worker: tasks_worker.clone(),
         }),
         Arc::new(routes::Identity),
         Arc::new(cloud::Cloud::new(pins.clone(), upstream)),
-        Arc::new(dev::Dev::new(ledger.clone(), Some(engine.clone()))),
-        Arc::new(research::Research::new(ledger.clone())),
+        dev_sub,
+        research_sub,
+        bot_sub,
+        team_sub,
+        Arc::new(cluster::ClusterSub {
+            core: cluster_core.clone(),
+            prefix: "/v1/cluster",
+            name: "cluster",
+        }),
+        Arc::new(cluster::ClusterSub {
+            core: cluster_core,
+            prefix: "/v1/k3s",
+            name: "k3s",
+        }),
         engine.clone(),
         Arc::new(catalog::Catalog::new(engine.clone(), ledger.clone())),
         Arc::new(chain::Chain {
@@ -183,6 +223,7 @@ async fn run() -> std::io::Result<()> {
     ];
     let table = Arc::new(table::Table::new(subs));
     let _ = table_cell.set(table.clone());
+    let _worker_handle = tasks_worker.spawn();
 
     let origin = config()
         .get("signin_origin")
@@ -222,6 +263,7 @@ async fn run() -> std::io::Result<()> {
         _ = term.recv() => {}
         _ = int.recv() => {}
     }
+    tasks_worker.shutdown();
     table.stop_all().await;
     let _ = std::fs::remove_file(paths::socket());
     let _ = std::fs::remove_file(pidfile);
