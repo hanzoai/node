@@ -148,6 +148,7 @@ pub struct TasksWorker {
     wake_notify: Arc<Notify>,
     stopped: AtomicBool,
     token_override: Mutex<Option<String>>,
+    cached_cli_token: Mutex<Option<(String, i64)>>,
     gpu_lock_path: PathBuf,
     gpu_util_cache: Mutex<Option<(Instant, Option<f64>)>>,
 }
@@ -454,6 +455,11 @@ fn load_worker_config(hw: &HardwareInventory) -> WorkerConfig {
         .ok()
         .filter(|s| !s.trim().is_empty())
         .or_else(|| {
+            std::env::var("HANZO_WORKER_NAME")
+                .ok()
+                .filter(|s| !s.trim().is_empty())
+        })
+        .or_else(|| {
             tw.get("worker_id")
                 .or_else(|| file_cfg.get("worker_id"))
                 .and_then(Value::as_str)
@@ -548,6 +554,7 @@ impl TasksWorker {
             wake_notify: Arc::new(Notify::new()),
             stopped: AtomicBool::new(false),
             token_override: Mutex::new(None),
+            cached_cli_token: Mutex::new(None),
             gpu_lock_path,
             gpu_util_cache: Mutex::new(None),
         })
@@ -582,6 +589,7 @@ impl TasksWorker {
             wake_notify: Arc::new(Notify::new()),
             stopped: AtomicBool::new(false),
             token_override: Mutex::new(Some(token.to_string())),
+            cached_cli_token: Mutex::new(None),
             gpu_lock_path,
             gpu_util_cache: Mutex::new(None),
         })
@@ -599,25 +607,58 @@ impl TasksWorker {
 
     fn active_token(&self) -> Option<String> {
         if let Some(ref tok) = *self.token_override.lock().unwrap() {
-            if !tok.trim().is_empty() {
-                return Some(tok.clone());
-            }
+            let trimmed = tok.trim();
+            return if trimmed.is_empty() {
+                None
+            } else {
+                Some(trimmed.to_string())
+            };
         }
         if let Ok(env_tok) = std::env::var("HANZOD_TASKS_TOKEN") {
             if !env_tok.trim().is_empty() {
                 return Some(env_tok.trim().to_string());
             }
         }
-        let (_, t) = me::tokens()?;
-        if t.access_token.trim().is_empty() {
-            return None;
-        }
-        if let Some(exp) = me::expiry(&t.access_token) {
-            if exp <= now_secs() as i64 + 30 {
-                return None;
+        let now = now_secs() as i64;
+        if let Some((_, t)) = me::tokens() {
+            let tok = t.access_token.trim();
+            if !tok.is_empty() && me::expiry(tok).map_or(true, |exp| exp > now + 30) {
+                return Some(tok.to_string());
             }
         }
-        Some(t.access_token)
+        if let Some((ref tok, exp)) = *self.cached_cli_token.lock().unwrap() {
+            if exp > now + 60 {
+                return Some(tok.clone());
+            }
+        }
+        let refreshed = std::env::var("HANZO_TOKEN_COMMAND")
+            .ok()
+            .filter(|s| !s.trim().is_empty())
+            .and_then(|cmd| {
+                std::process::Command::new("sh")
+                    .arg("-c")
+                    .arg(cmd)
+                    .output()
+                    .ok()
+            })
+            .filter(|o| o.status.success())
+            .or_else(|| {
+                let cli_bin = dirs::home_dir()
+                    .map(|h| h.join(".local/bin/hanzo"))
+                    .filter(|p| p.is_file())
+                    .unwrap_or_else(|| PathBuf::from("hanzo"));
+                std::process::Command::new(cli_bin)
+                    .args(["auth", "token"])
+                    .output()
+                    .ok()
+                    .filter(|o| o.status.success())
+            })
+            .and_then(|o| String::from_utf8(o.stdout).ok())
+            .map(|s| s.trim().to_string())
+            .filter(|s| !s.is_empty())?;
+        let exp = me::expiry(&refreshed).unwrap_or(now + 900);
+        *self.cached_cli_token.lock().unwrap() = Some((refreshed.clone(), exp));
+        Some(refreshed)
     }
 
     pub fn capabilities(&self) -> Vec<String> {
