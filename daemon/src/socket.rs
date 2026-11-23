@@ -9,32 +9,47 @@ use crate::paths;
 use crate::table::Reply;
 use crate::zap::{self, FRAME_ROUTER};
 use std::io;
+#[cfg(unix)]
 use std::os::unix::fs::PermissionsExt;
 use std::sync::Arc;
 use tokio::io::{AsyncReadExt, AsyncWriteExt};
-use tokio::net::{UnixListener, UnixStream};
+#[cfg(unix)]
+use tokio::net::{UnixListener as Listener, UnixStream as Stream};
+#[cfg(not(unix))]
+use tokio::net::{TcpListener as Listener, TcpStream as Stream};
 
 /// Bind the socket, refusing if another hanzod already answers on it.
-pub async fn bind() -> io::Result<UnixListener> {
+#[cfg(unix)]
+pub async fn bind() -> io::Result<Listener> {
     let path = paths::socket();
     if let Some(dir) = path.parent() {
         std::fs::create_dir_all(dir)?;
         std::fs::set_permissions(dir, std::fs::Permissions::from_mode(0o700)).ok();
     }
-    if UnixStream::connect(&path).await.is_ok() {
+    if Stream::connect(&path).await.is_ok() {
         return Err(io::Error::new(io::ErrorKind::AddrInUse, "another hanzod is already serving this socket"));
     }
     let _ = std::fs::remove_file(&path);
     // No window in which the socket exists with looser permissions.
     let old = unsafe { libc::umask(0o177) };
-    let l = UnixListener::bind(&path);
+    let l = Listener::bind(&path);
     unsafe { libc::umask(old) };
     let l = l?;
     std::fs::set_permissions(&path, std::fs::Permissions::from_mode(0o600))?;
     Ok(l)
 }
 
-pub async fn serve(l: UnixListener, d: Arc<Daemon>) {
+#[cfg(not(unix))]
+pub async fn bind() -> io::Result<Listener> {
+    let path = paths::socket();
+    if let Some(dir) = path.parent() {
+        std::fs::create_dir_all(dir)?;
+    }
+    Listener::bind("127.0.0.1:0").await
+}
+
+#[cfg(unix)]
+pub async fn serve(l: Listener, d: Arc<Daemon>) {
     let me = unsafe { libc::geteuid() };
     loop {
         let Ok((conn, _)) = l.accept().await else { continue };
@@ -49,7 +64,18 @@ pub async fn serve(l: UnixListener, d: Arc<Daemon>) {
     }
 }
 
-async fn connection(mut conn: UnixStream, d: Arc<Daemon>) -> io::Result<()> {
+#[cfg(not(unix))]
+pub async fn serve(l: Listener, d: Arc<Daemon>) {
+    loop {
+        let Ok((conn, _)) = l.accept().await else { continue };
+        let d = d.clone();
+        tokio::spawn(async move {
+            let _ = connection(conn, d).await;
+        });
+    }
+}
+
+async fn connection(mut conn: Stream, d: Arc<Daemon>) -> io::Result<()> {
     let mut head = [0u8; 4 + zap::HEADER];
     match conn.read_exact(&mut head).await {
         Ok(_) => {}
@@ -95,7 +121,7 @@ async fn connection(mut conn: UnixStream, d: Arc<Daemon>) -> io::Result<()> {
 
 /// A Dev session: the first envelope's cap is the caller's bearer, checked
 /// before a byte reaches the worker.
-async fn session(mut conn: UnixStream, head: [u8; 4 + zap::HEADER], d: Arc<Daemon>) -> io::Result<()> {
+async fn session(mut conn: Stream, head: [u8; 4 + zap::HEADER], d: Arc<Daemon>) -> io::Result<()> {
     let n = u32::from_le_bytes(head[0..4].try_into().unwrap());
     if n < zap::HEADER as u32 || n > 32 << 20 {
         return Ok(());

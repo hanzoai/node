@@ -90,7 +90,15 @@ impl ClusterCore {
         let Ok(pid) = txt.trim().parse::<i32>() else {
             return false;
         };
-        pid > 0 && unsafe { libc::kill(pid, 0) == 0 }
+        #[cfg(unix)]
+        {
+            pid > 0 && unsafe { libc::kill(pid, 0) == 0 }
+        }
+        #[cfg(not(unix))]
+        {
+            let _ = pid;
+            false
+        }
     }
 
     fn detect_external_up() -> (Option<&'static str>, Option<&'static str>, bool) {

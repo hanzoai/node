@@ -40,6 +40,7 @@ mod worker;
 use std::process::ExitCode;
 use std::sync::{Arc, OnceLock};
 use tokio::net::TcpListener;
+#[cfg(unix)]
 use tokio::signal::unix::{signal, SignalKind};
 use zaphttp as zap;
 
@@ -257,11 +258,18 @@ async fn run() -> std::io::Result<()> {
         move || s.resume()
     });
 
-    let mut term = signal(SignalKind::terminate())?;
-    let mut int = signal(SignalKind::interrupt())?;
-    tokio::select! {
-        _ = term.recv() => {}
-        _ = int.recv() => {}
+    #[cfg(unix)]
+    {
+        let mut term = signal(SignalKind::terminate())?;
+        let mut int = signal(SignalKind::interrupt())?;
+        tokio::select! {
+            _ = term.recv() => {}
+            _ = int.recv() => {}
+        }
+    }
+    #[cfg(not(unix))]
+    {
+        let _ = tokio::signal::ctrl_c().await;
     }
     tasks_worker.shutdown();
     table.stop_all().await;

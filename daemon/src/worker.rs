@@ -8,15 +8,22 @@
 
 use std::collections::HashMap;
 use std::io;
+#[cfg(unix)]
 use std::os::fd::{FromRawFd, RawFd};
 use std::path::PathBuf;
+#[cfg(unix)]
 use std::process::Stdio;
 use std::sync::atomic::{AtomicU32, Ordering};
 use std::sync::{Arc, Mutex};
+#[cfg(unix)]
 use tokio::io::{AsyncReadExt, AsyncWriteExt};
+#[cfg(unix)]
 use tokio::net::unix::OwnedWriteHalf;
+#[cfg(unix)]
 use tokio::net::UnixStream;
-use tokio::process::{Child, Command};
+use tokio::process::Child;
+#[cfg(unix)]
+use tokio::process::Command;
 use tokio::sync::{mpsc, watch};
 
 pub const KIND_DATA: u8 = 0;
@@ -25,7 +32,9 @@ pub const KIND_CLOSE: u8 = 2;
 /// The session id the worker uses to speak to hanzod itself: `{"link": "<zap address>"}`.
 pub const CONTROL: u32 = 0;
 /// The descriptor number a worker finds its end of the pair on.
+#[cfg(unix)]
 pub const WORKER_FD: RawFd = 3;
+#[cfg(unix)]
 const MAX_RECORD: u32 = 33 << 20;
 
 pub struct Spec {
@@ -53,6 +62,7 @@ impl Drop for Worker {
 }
 
 pub struct Mux {
+    #[cfg(unix)]
     write: tokio::sync::Mutex<OwnedWriteHalf>,
     sessions: Mutex<HashMap<u32, mpsc::Sender<Vec<u8>>>>,
     next: AtomicU32,
@@ -60,6 +70,7 @@ pub struct Mux {
     announced: watch::Sender<Option<String>>,
 }
 
+#[cfg(unix)]
 pub fn spawn(spec: &Spec) -> io::Result<Worker> {
     let mut fds = [0 as RawFd; 2];
     if unsafe { libc::socketpair(libc::AF_UNIX, libc::SOCK_STREAM, 0, fds.as_mut_ptr()) } != 0 {
@@ -163,12 +174,21 @@ pub fn spawn(spec: &Spec) -> io::Result<Worker> {
     Ok(Worker { child, mux, link: None })
 }
 
+#[cfg(not(unix))]
+pub fn spawn(_spec: &Spec) -> io::Result<Worker> {
+    Err(io::Error::new(
+        io::ErrorKind::Unsupported,
+        "fd-passing workers require unix",
+    ))
+}
+
 impl Mux {
     /// Follows the address the worker announces for its source.
     pub fn announcements(&self) -> watch::Receiver<Option<String>> {
         self.announced.subscribe()
     }
 
+    #[cfg(unix)]
     async fn record(&self, sid: u32, kind: u8, payload: &[u8]) -> io::Result<()> {
         let mut w = self.write.lock().await;
         let mut head = [0u8; 9];
@@ -178,6 +198,14 @@ impl Mux {
         w.write_all(&head).await?;
         w.write_all(payload).await?;
         w.flush().await
+    }
+
+    #[cfg(not(unix))]
+    async fn record(&self, _sid: u32, _kind: u8, _payload: &[u8]) -> io::Result<()> {
+        Err(io::Error::new(
+            io::ErrorKind::Unsupported,
+            "fd-passing workers require unix",
+        ))
     }
 
     /// Open a session. The receiver yields the worker's bytes and ends when the
@@ -203,7 +231,7 @@ impl Mux {
     }
 }
 
-#[cfg(test)]
+#[cfg(all(test, unix))]
 mod tests {
     use super::*;
 

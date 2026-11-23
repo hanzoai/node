@@ -16,8 +16,13 @@ pub fn free_port() -> io::Result<u16> {
 /// SIGTERM, then SIGKILL after `grace`. SIGTERM is what lets a child drain its
 /// own children; SIGKILL is what orphans them.
 pub async fn terminate(child: &mut Child, grace: Duration) {
+    #[cfg(unix)]
     if let Some(pid) = child.id() {
         unsafe { libc::kill(pid as i32, libc::SIGTERM) };
+    }
+    #[cfg(not(unix))]
+    {
+        let _ = child.kill().await;
     }
     if tokio::time::timeout(grace, child.wait()).await.is_err() {
         let _ = child.kill().await;
@@ -26,12 +31,25 @@ pub async fn terminate(child: &mut Child, grace: Duration) {
 
 /// `~/.hanzo/bin/<name>`, else beside this executable.
 pub fn find(name: &str) -> Option<PathBuf> {
-    let a = crate::paths::bin().join(name);
-    if a.is_file() {
-        return Some(a);
+    let candidates: Vec<String> = if cfg!(windows) && !name.ends_with(".exe") {
+        vec![format!("{name}.exe"), name.to_string()]
+    } else {
+        vec![name.to_string()]
+    };
+    for cand in &candidates {
+        let a = crate::paths::bin().join(cand);
+        if a.is_file() {
+            return Some(a);
+        }
     }
-    let b = std::env::current_exe().ok()?.parent()?.join(name);
-    b.is_file().then_some(b)
+    let dir = std::env::current_exe().ok()?.parent()?.to_path_buf();
+    for cand in &candidates {
+        let b = dir.join(cand);
+        if b.is_file() {
+            return Some(b);
+        }
+    }
+    None
 }
 
 /// A program another user could replace is not run, whatever its digest was.

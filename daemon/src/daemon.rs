@@ -72,6 +72,7 @@ impl Daemon {
                     | "/v1/dev/health"
                     | "/v1/research/health"
                     | "/v1/research/standard"
+                    | "/v1/research/runs"
                     | "/v1/bot/health"
                     | "/v1/team/health"
                     | "/v1/cluster"

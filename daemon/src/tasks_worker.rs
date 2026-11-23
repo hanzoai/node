@@ -178,8 +178,52 @@ pub fn sanitize_hostname(raw: &str) -> String {
     }
 }
 
+fn silent_cmd(program: &str) -> std::process::Command {
+    let mut cmd = std::process::Command::new(program);
+    #[cfg(windows)]
+    {
+        use std::os::windows::process::CommandExt as _;
+        cmd.creation_flags(0x0800_0000); // CREATE_NO_WINDOW
+    }
+    cmd
+}
+
+#[cfg(windows)]
+fn windows_total_memory_bytes() -> u64 {
+    #[repr(C)]
+    struct MemoryStatusEx {
+        dw_length: u32,
+        dw_memory_load: u32,
+        ull_total_phys: u64,
+        ull_avail_phys: u64,
+        ull_total_page_file: u64,
+        ull_avail_page_file: u64,
+        ull_total_virtual: u64,
+        ull_avail_virtual: u64,
+        ull_avail_extended_virtual: u64,
+    }
+    extern "system" {
+        fn GlobalMemoryStatusEx(lp_buffer: *mut MemoryStatusEx) -> i32;
+    }
+    let mut mem = MemoryStatusEx {
+        dw_length: std::mem::size_of::<MemoryStatusEx>() as u32,
+        dw_memory_load: 0,
+        ull_total_phys: 0,
+        ull_avail_phys: 0,
+        ull_total_page_file: 0,
+        ull_avail_page_file: 0,
+        ull_total_virtual: 0,
+        ull_avail_virtual: 0,
+        ull_avail_extended_virtual: 0,
+    };
+    // SAFETY: `mem` is a valid initialized `MEMORYSTATUSEX` with `dwLength` set.
+    let ok = unsafe { GlobalMemoryStatusEx(&mut mem) };
+    if ok != 0 { mem.ull_total_phys } else { 0 }
+}
+
 fn detect_short_hostname() -> String {
-    if let Ok(out) = std::process::Command::new("hostname").arg("-s").output() {
+    #[cfg(not(windows))]
+    if let Ok(out) = silent_cmd("hostname").arg("-s").output() {
         if out.status.success() {
             let s = sanitize_hostname(&String::from_utf8_lossy(&out.stdout));
             if !s.is_empty() {
@@ -187,10 +231,20 @@ fn detect_short_hostname() -> String {
             }
         }
     }
-    if let Ok(h) = std::env::var("HOSTNAME") {
-        let s = sanitize_hostname(&h);
-        if !s.is_empty() {
-            return s;
+    if let Ok(out) = silent_cmd("hostname").output() {
+        if out.status.success() {
+            let s = sanitize_hostname(&String::from_utf8_lossy(&out.stdout));
+            if !s.is_empty() {
+                return s;
+            }
+        }
+    }
+    for key in ["HOSTNAME", "COMPUTERNAME"] {
+        if let Ok(h) = std::env::var(key) {
+            let s = sanitize_hostname(&h);
+            if !s.is_empty() {
+                return s;
+            }
         }
     }
     "machine".to_string()
@@ -236,7 +290,7 @@ pub fn detect_hardware() -> HardwareInventory {
         "macos" => "darwin".to_string(),
         other => other.to_string(),
     };
-    let arch = std::process::Command::new("uname")
+    let arch = silent_cmd("uname")
         .arg("-m")
         .output()
         .ok()
@@ -307,6 +361,37 @@ pub fn detect_hardware() -> HardwareInventory {
                 }
             }
         }
+    } else if cfg!(target_os = "windows") {
+        #[cfg(windows)]
+        {
+            memory_bytes = windows_total_memory_bytes();
+        }
+        if let Ok(o) = silent_cmd("reg")
+            .args([
+                "query",
+                r"HKLM\HARDWARE\Description\System\CentralProcessor\0",
+                "/v",
+                "ProcessorNameString",
+            ])
+            .output()
+        {
+            if o.status.success() {
+                for line in String::from_utf8_lossy(&o.stdout).lines() {
+                    if let Some((_, rhs)) = line.split_once("REG_SZ") {
+                        let v = rhs.trim();
+                        if !v.is_empty() {
+                            cpu_model = v.to_string();
+                            break;
+                        }
+                    }
+                }
+            }
+        }
+        if cpu_model.is_empty() {
+            if let Ok(id) = std::env::var("PROCESSOR_IDENTIFIER") {
+                cpu_model = id.trim().to_string();
+            }
+        }
     }
 
     let mut gpus = Vec::new();
@@ -315,7 +400,7 @@ pub fn detect_hardware() -> HardwareInventory {
     let mut rocm = String::new();
     let mut backends = vec!["CPU".to_string()];
 
-    if let Ok(o) = std::process::Command::new("nvidia-smi")
+    if let Ok(o) = silent_cmd("nvidia-smi")
         .args([
             "--query-gpu=name,memory.total,compute_cap,driver_version",
             "--format=csv,noheader",
@@ -350,7 +435,7 @@ pub fn detect_hardware() -> HardwareInventory {
             if !gpus.is_empty() {
                 backends.push("CUDA".to_string());
                 backends.push("VULKAN".to_string());
-                if let Ok(hdr) = std::process::Command::new("nvidia-smi").output() {
+                if let Ok(hdr) = silent_cmd("nvidia-smi").output() {
                     let txt = String::from_utf8_lossy(&hdr.stdout);
                     if let Some(pos) = txt.find("CUDA Version:") {
                         let after = &txt[pos + "CUDA Version:".len()..];
@@ -406,6 +491,62 @@ pub fn detect_hardware() -> HardwareInventory {
                     backends.push("ROCM".to_string());
                     backends.push("VULKAN".to_string());
                     break;
+                }
+            }
+        }
+    }
+
+    if gpus.is_empty() {
+        if let Ok(o) = silent_cmd("vulkaninfo").arg("--summary").output() {
+            if o.status.success() {
+                let mut cur_name = String::new();
+                let mut cur_type = String::new();
+                let mut cur_driver = String::new();
+                let flush_gpu = |gpus: &mut Vec<GpuInventory>,
+                                 driver_out: &mut String,
+                                 name: &mut String,
+                                 dtype: &mut String,
+                                 drv: &mut String| {
+                    let n = name.trim();
+                    if !n.is_empty() && !dtype.contains("CPU") && !n.to_ascii_lowercase().contains("llvmpipe") {
+                        let unified = dtype.contains("INTEGRATED_GPU");
+                        let memory_total = if unified && memory_bytes > 0 {
+                            format!("{} MiB", memory_bytes >> 20)
+                        } else {
+                            String::new()
+                        };
+                        if driver_out.is_empty() && !drv.trim().is_empty() {
+                            *driver_out = drv.trim().to_string();
+                        }
+                        gpus.push(GpuInventory {
+                            name: n.to_string(),
+                            memory_total,
+                            arch: "vulkan".to_string(),
+                            unified,
+                        });
+                    }
+                    name.clear();
+                    dtype.clear();
+                    drv.clear();
+                };
+                for line in String::from_utf8_lossy(&o.stdout).lines() {
+                    let trimmed = line.trim();
+                    if trimmed.starts_with("GPU") && trimmed.ends_with(':') {
+                        flush_gpu(&mut gpus, &mut driver, &mut cur_name, &mut cur_type, &mut cur_driver);
+                        continue;
+                    }
+                    if let Some((k, v)) = trimmed.split_once('=') {
+                        match k.trim() {
+                            "deviceName" => cur_name = v.trim().to_string(),
+                            "deviceType" => cur_type = v.trim().to_string(),
+                            "driverInfo" => cur_driver = v.trim().to_string(),
+                            _ => {}
+                        }
+                    }
+                }
+                flush_gpu(&mut gpus, &mut driver, &mut cur_name, &mut cur_type, &mut cur_driver);
+                if !gpus.is_empty() && !backends.iter().any(|b| b == "VULKAN") {
+                    backends.push("VULKAN".to_string());
                 }
             }
         }
@@ -643,11 +784,12 @@ impl TasksWorker {
             })
             .filter(|o| o.status.success())
             .or_else(|| {
+                let bin_name = if cfg!(windows) { "hanzo.exe" } else { "hanzo" };
                 let cli_bin = dirs::home_dir()
-                    .map(|h| h.join(".local/bin/hanzo"))
+                    .map(|h| h.join(".local/bin").join(bin_name))
                     .filter(|p| p.is_file())
-                    .unwrap_or_else(|| PathBuf::from("hanzo"));
-                std::process::Command::new(cli_bin)
+                    .unwrap_or_else(|| PathBuf::from(bin_name));
+                silent_cmd(&cli_bin.to_string_lossy())
                     .args(["auth", "token"])
                     .output()
                     .ok()

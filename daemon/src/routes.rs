@@ -65,7 +65,7 @@ impl Subsystem for Hanzod {
             if req.path() == "/v1/hanzod/worker" {
                 return match req.method.as_str() {
                     "GET" => Ok(Reply::Whole(Response::json(200, &self.tasks_worker.status_json()))),
-                    "PUT" => {
+                    "PUT" | "PATCH" => {
                         let patch: crate::tasks_worker::WorkerConfigPatch =
                             match serde_json::from_slice(&req.body) {
                                 Ok(p) => p,

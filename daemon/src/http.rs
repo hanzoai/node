@@ -71,7 +71,13 @@ pub fn loopback_host(h: &str) -> bool {
 
 /// An origin that is a local page or one of the apps' own webviews.
 pub fn local_origin(o: &str) -> bool {
-    let rest = o.strip_prefix("http://").or_else(|| o.strip_prefix("https://")).or_else(|| o.strip_prefix("tauri://"));
+    if matches!(o, "http://tauri.localhost" | "https://tauri.localhost") {
+        return true;
+    }
+    let rest = o
+        .strip_prefix("http://")
+        .or_else(|| o.strip_prefix("https://"))
+        .or_else(|| o.strip_prefix("tauri://"));
     rest.is_some_and(loopback_host)
 }
 
@@ -103,9 +109,25 @@ fn status_line(s: u16) -> &'static str {
 }
 
 async fn respond(c: &mut TcpStream, r: &Response) -> io::Result<()> {
+    respond_with_cors(c, r, None).await
+}
+
+async fn respond_with_cors(c: &mut TcpStream, r: &Response, cors_origin: Option<&str>) -> io::Result<()> {
     let mut out = format!("HTTP/1.1 {}\r\nConnection: close\r\nContent-Length: {}\r\n", status_line(r.status), r.body.len());
+    if let Some(origin) = cors_origin {
+        if !origin.contains(['\r', '\n']) {
+            out.push_str(&format!(
+                "Access-Control-Allow-Origin: {origin}\r\nVary: Origin\r\nAccess-Control-Allow-Methods: GET, POST, PUT, PATCH, DELETE, OPTIONS\r\nAccess-Control-Allow-Headers: authorization, content-type, x-org-id, x-project-id, x-hanzo-org\r\nAccess-Control-Max-Age: 600\r\n"
+            ));
+        }
+    }
     for (k, v) in &r.headers {
-        if !k.eq_ignore_ascii_case("content-length") && !k.eq_ignore_ascii_case("connection") && !k.contains(['\r', '\n']) && !v.contains(['\r', '\n']) {
+        if !k.eq_ignore_ascii_case("content-length")
+            && !k.eq_ignore_ascii_case("connection")
+            && !k.eq_ignore_ascii_case("access-control-allow-origin")
+            && !k.contains(['\r', '\n'])
+            && !v.contains(['\r', '\n'])
+        {
             out.push_str(&format!("{k}: {v}\r\n"));
         }
     }
@@ -120,15 +142,21 @@ async fn connection(mut c: TcpStream, d: Arc<Daemon>) -> io::Result<()> {
     if !header(&head.headers, "host").is_some_and(loopback_host) {
         return respond(&mut c, &Response::error(421, "this daemon answers on loopback only")).await;
     }
-    if header(&head.headers, "origin").is_some_and(|o| !local_origin(o)) {
-        return respond(&mut c, &Response::error(403, "cross-origin requests are refused")).await;
+    let cors_origin = match header(&head.headers, "origin") {
+        Some(o) if local_origin(o) => Some(o.to_string()),
+        Some(_) => return respond(&mut c, &Response::error(403, "cross-origin requests are refused")).await,
+        None => None,
+    };
+    if head.method.eq_ignore_ascii_case("OPTIONS") && cors_origin.is_some() {
+        let preflight = Response { status: 204, headers: vec![], body: vec![] };
+        return respond_with_cors(&mut c, &preflight, cors_origin.as_deref()).await;
     }
     if header(&head.headers, "transfer-encoding").is_some() {
-        return respond(&mut c, &Response::error(400, "send a Content-Length body")).await;
+        return respond_with_cors(&mut c, &Response::error(400, "send a Content-Length body"), cors_origin.as_deref()).await;
     }
     let want: usize = header(&head.headers, "content-length").and_then(|v| v.parse().ok()).unwrap_or(0);
     if want > MAX_BODY {
-        return respond(&mut c, &Response::error(400, "body too large")).await;
+        return respond_with_cors(&mut c, &Response::error(400, "body too large"), cors_origin.as_deref()).await;
     }
 
     // A streamed upstream (the engine) is proxied byte for byte, once the same
@@ -143,7 +171,7 @@ async fn connection(mut c: TcpStream, d: Arc<Daemon>) -> io::Result<()> {
         let _hold = busy;
         if let Reply::Whole(r) = &reply {
             if r.status >= 400 && r.status != 404 {
-                return respond(&mut c, r).await;
+                return respond_with_cors(&mut c, r, cors_origin.as_deref()).await;
             }
         }
         if let Ok((sub, _b)) = d.table.route(path).await {
@@ -152,8 +180,8 @@ async fn connection(mut c: TcpStream, d: Arc<Daemon>) -> io::Result<()> {
             }
         }
         return match reply {
-            Reply::Whole(r) => respond(&mut c, &r).await,
-            Reply::Frames(_) => respond(&mut c, &Response::error(502, "no stream")).await,
+            Reply::Whole(r) => respond_with_cors(&mut c, &r, cors_origin.as_deref()).await,
+            Reply::Frames(_) => respond_with_cors(&mut c, &Response::error(502, "no stream"), cors_origin.as_deref()).await,
         };
     }
 
@@ -173,7 +201,7 @@ async fn connection(mut c: TcpStream, d: Arc<Daemon>) -> io::Result<()> {
         Reply::Whole(r) => r,
         Reply::Frames(mut rx) => collect(&mut rx).await,
     };
-    respond(&mut c, &r).await
+    respond_with_cors(&mut c, &r, cors_origin.as_deref()).await
 }
 
 /// Gather a streamed ZAP-HTTP reply (head, data, end) into one response.
@@ -228,7 +256,10 @@ mod tests {
         assert!(!loopback_host("evil.example:3690"));
         assert!(!loopback_host("127.0.0.1.evil.example"));
         assert!(local_origin("http://localhost:1420"));
+        assert!(local_origin("http://127.0.0.1:1420"));
         assert!(local_origin("tauri://localhost"));
+        assert!(local_origin("http://tauri.localhost"));
+        assert!(local_origin("https://tauri.localhost"));
         assert!(!local_origin("https://evil.example"));
         assert!(!local_origin("http://localhost.evil.example"));
     }

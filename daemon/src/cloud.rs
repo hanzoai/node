@@ -13,11 +13,14 @@ use crate::proc;
 use crate::table::{Fut, Reply, Subsystem};
 use crate::zap::{self, Request};
 use base64::Engine;
-use std::io::{self, Read};
+use std::io;
+#[cfg(unix)]
+use std::io::Read;
 use std::path::PathBuf;
 use std::process::Stdio;
 use std::sync::Arc;
 use std::time::Duration;
+#[cfg(unix)]
 use tokio::net::UnixStream;
 use tokio::process::{Child, Command};
 use tokio::sync::{mpsc, Mutex};
@@ -56,7 +59,21 @@ fn install_key(state: &std::path::Path) -> io::Result<String> {
     let path = state.join("master.key");
     if !path.exists() {
         let mut bytes = [0u8; 32];
+        #[cfg(unix)]
         std::fs::File::open("/dev/urandom")?.read_exact(&mut bytes)?;
+        #[cfg(not(unix))]
+        {
+            use sha2::{Digest, Sha256};
+            use std::collections::hash_map::RandomState;
+            use std::hash::{BuildHasher, Hasher};
+            let mut h = Sha256::new();
+            for i in 0..8u64 {
+                let mut rs = RandomState::new().build_hasher();
+                rs.write_u64(i);
+                h.update(rs.finish().to_le_bytes());
+            }
+            bytes.copy_from_slice(&h.finalize());
+        }
         let key = base64::engine::general_purpose::STANDARD.encode(bytes);
         let mut o = std::fs::OpenOptions::new();
         o.write(true).create_new(true);
@@ -157,10 +174,18 @@ impl Subsystem for Cloud {
                     }
                 };
             }
-            if !self.running_child().await {
-                self.start().await?;
+            #[cfg(not(unix))]
+            {
+                let fallback: std::net::SocketAddr = "127.0.0.1:3693".parse().unwrap();
+                return Ok(Reply::Whole(crate::engine::fetch(fallback, &req).await?));
             }
-            Ok(Reply::Frames(exchange(&req).await?))
+            #[cfg(unix)]
+            {
+                if !self.running_child().await {
+                    self.start().await?;
+                }
+                Ok(Reply::Frames(exchange(&req).await?))
+            }
         })
     }
     fn stop(&self) -> Fut<'_, ()> {
@@ -174,6 +199,7 @@ impl Subsystem for Cloud {
 
 /// Send one request to the host and relay its frames: one response frame, or a
 /// head, data frames and an end.
+#[cfg(unix)]
 async fn exchange(req: &Request) -> io::Result<mpsc::Receiver<Vec<u8>>> {
     let mut conn = UnixStream::connect(paths::cloud_socket()).await?;
     zap::write_frame(&mut conn, &zap::encode_request(req)).await?;
@@ -187,4 +213,12 @@ async fn exchange(req: &Request) -> io::Result<mpsc::Receiver<Vec<u8>>> {
         }
     });
     Ok(rx)
+}
+
+#[cfg(not(unix))]
+async fn exchange(_req: &Request) -> io::Result<mpsc::Receiver<Vec<u8>>> {
+    Err(io::Error::new(
+        io::ErrorKind::Unsupported,
+        "unix socket cloud relay requires unix",
+    ))
 }
