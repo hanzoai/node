@@ -117,7 +117,7 @@ async fn respond_with_cors(c: &mut TcpStream, r: &Response, cors_origin: Option<
     if let Some(origin) = cors_origin {
         if !origin.contains(['\r', '\n']) {
             out.push_str(&format!(
-                "Access-Control-Allow-Origin: {origin}\r\nVary: Origin\r\nAccess-Control-Allow-Methods: GET, POST, PUT, PATCH, DELETE, OPTIONS\r\nAccess-Control-Allow-Headers: authorization, content-type, x-org-id, x-project-id, x-hanzo-org\r\nAccess-Control-Max-Age: 600\r\n"
+                "Access-Control-Allow-Origin: {origin}\r\nVary: Origin\r\nAccess-Control-Allow-Methods: GET, POST, PUT, PATCH, DELETE, OPTIONS\r\nAccess-Control-Allow-Headers: authorization, content-type, accept, idempotency-key, x-org-id, x-project-id, x-hanzo-org\r\nAccess-Control-Max-Age: 600\r\n"
             ));
         }
     }
@@ -147,7 +147,7 @@ async fn connection(mut c: TcpStream, d: Arc<Daemon>) -> io::Result<()> {
         Some(_) => return respond(&mut c, &Response::error(403, "cross-origin requests are refused")).await,
         None => None,
     };
-    if head.method.eq_ignore_ascii_case("OPTIONS") && cors_origin.is_some() {
+    if head.method.eq_ignore_ascii_case("OPTIONS") {
         let preflight = Response { status: 204, headers: vec![], body: vec![] };
         return respond_with_cors(&mut c, &preflight, cors_origin.as_deref()).await;
     }
@@ -296,5 +296,33 @@ mod tests {
             let raw = String::from_utf8(buf).unwrap();
             assert!(raw.starts_with(want_prefix), "got {raw:?}, want prefix {want_prefix:?}");
         }
+    }
+
+    #[tokio::test]
+    async fn options_preflight_returns_204_with_tauri_cors_headers() {
+        let d = Arc::new(Daemon {
+            table: Arc::new(crate::table::Table::new(vec![])),
+            verifier: Arc::new(crate::auth::Verifier::new("https://hanzo.ai".into())),
+        });
+        let l = TcpListener::bind("127.0.0.1:0").await.unwrap();
+        let a = l.local_addr().unwrap();
+        let srv = tokio::spawn(async move {
+            let (s, _) = l.accept().await.unwrap();
+            connection(s, d).await.unwrap();
+        });
+        let mut client = TcpStream::connect(a).await.unwrap();
+        client
+            .write_all(
+                b"OPTIONS /v1/agent/coding HTTP/1.1\r\nHost: 127.0.0.1:3690\r\nOrigin: tauri://localhost\r\n\r\n",
+            )
+            .await
+            .unwrap();
+        let mut buf = Vec::new();
+        client.read_to_end(&mut buf).await.unwrap();
+        srv.await.unwrap();
+        let raw = String::from_utf8(buf).unwrap();
+        assert!(raw.starts_with("HTTP/1.1 204 No Content\r\n"), "{raw}");
+        assert!(raw.contains("Access-Control-Allow-Origin: tauri://localhost\r\n"), "{raw}");
+        assert!(raw.contains("Access-Control-Allow-Methods: GET, POST, PUT, PATCH, DELETE, OPTIONS\r\n"), "{raw}");
     }
 }
