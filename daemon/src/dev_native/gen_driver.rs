@@ -57,6 +57,16 @@ impl DevNative {
         request_bearer: Option<String>,
     ) -> (Arc<dyn Host>, Option<String>) {
         let model_trimmed = chosen_model.map(str::trim).filter(|s| !s.is_empty());
+        if let Some(raw) = model_trimmed.filter(|m| m.starts_with("http://") || m.starts_with("https://")) {
+            let (url_part, frag_model) = match raw.split_once('#') {
+                Some((u, m)) => (u.trim().trim_end_matches('/'), Some(m.trim()).filter(|s| !s.is_empty())),
+                None => (raw.trim_end_matches('/'), None),
+            };
+            let host = StaticHost::local(url_part)
+                .with_hanzo_key(std::env::var("HANZO_API_KEY").ok());
+            return (Arc::new(host), frag_model.map(String::from));
+        }
+
         let is_local = model_trimmed.is_some_and(|m| {
             m.starts_with("local:") || catalog::find(m).is_some()
         });
