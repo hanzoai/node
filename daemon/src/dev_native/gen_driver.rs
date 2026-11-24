@@ -65,10 +65,14 @@ impl DevNative {
             let clean_model = model_trimmed.map(|m| {
                 m.strip_prefix("local:").unwrap_or(m).to_string()
             });
-            let engine_base_url = match self.engine.as_ref().and_then(|e| e.port()) {
-                Some(port) => format!("http://127.0.0.1:{port}"),
-                None => format!("http://{}/v1/engine", paths::HTTP_ADDR),
-            };
+            let engine_base_url = std::env::var("HANZOD_LOCAL_ENGINE_URL")
+                .ok()
+                .map(|s| s.trim().trim_end_matches('/').to_string())
+                .filter(|s| !s.is_empty())
+                .unwrap_or_else(|| match self.engine.as_ref().and_then(|e| e.port()) {
+                    Some(port) => format!("http://127.0.0.1:{port}"),
+                    None => format!("http://{}/v1/engine", paths::HTTP_ADDR),
+                });
             return (Arc::new(StaticHost::local(engine_base_url)), clean_model);
         }
 
@@ -76,18 +80,17 @@ impl DevNative {
             .ok()
             .filter(|s| !s.trim().is_empty())
             .unwrap_or_else(|| DEFAULT_CLOUD_API.to_string());
-        let (owner, name) = me::active()
+        let (owner, name) = me::effective_identity()
             .map(|id| (id.owner, id.name))
             .unwrap_or_else(|| split_principal(who));
 
         let req_tok = request_bearer
             .map(|s| s.trim().to_string())
-            .filter(|s| !s.is_empty());
-        let token_fn: TokenFn = Arc::new(move || req_tok.clone().or_else(me::fresh_token));
+            .filter(|s| !s.is_empty() && !me::is_worker_only_jwt(s));
+        let token_fn: TokenFn =
+            Arc::new(move || req_tok.clone().or_else(me::fresh_inference_token));
 
-        let refresh_cmd = hanzo_gen::exe::find_for_root(root, "hanzo")
-            .map(|bin| vec![bin.display().to_string(), "auth".into(), "token".into()])
-            .unwrap_or_default();
+        let refresh_cmd = me::refresh_command(hanzo_gen::exe::find_for_root(root, "hanzo"));
 
         let host = StaticHost::cloud(cloud_api, owner.clone(), name, token_fn)
             .with_org(Some(owner))

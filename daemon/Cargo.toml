@@ -25,7 +25,7 @@ embedded-chain = ["dep:hanzo-chain"]
 # Who the machine is: the CLI's identity store, shared by crate, not by copy.
 hanzo-identity = { git = "https://github.com/hanzoai/cli", rev = "287bcbd78185b382a4561eabaccf620d7c05781f" }
 # Canonical in-process agentic harness: MCP + hanzoskills + gateway/local routing + target runner.
-hanzo-gen = { git = "https://github.com/hanzoai/gen", rev = "fece46bf873bb42ec3f9ba2243f47c75b227ccc4" }
+hanzo-gen = { git = "https://github.com/hanzoai/gen", rev = "04540ad47b956e7cab021cf91f52b34cc7fde6c5" }
 # Native Rust Dev engine (HIP-1330): protocol, pure session core, and pure orchestrator decide rules.
 dev-protocol = { git = "https://github.com/hanzoai/dev", rev = "9ea2907922e202a675b2b05ae2cb0515f19d84de" }
 dev-core = { git = "https://github.com/hanzoai/dev", rev = "9ea2907922e202a675b2b05ae2cb0515f19d84de" }

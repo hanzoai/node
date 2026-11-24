@@ -42,7 +42,7 @@ impl Daemon {
         let bearer = bearer.to_string();
         let r = tokio::task::spawn_blocking(move || {
             let principal = v.verify(&bearer)?;
-            match me::active() {
+            match me::effective_identity() {
                 Some(id) if me::label(&id) != principal => Err(format!("{principal} is not the person signed in on this machine")),
                 Some(_) => Ok(principal),
                 None => Err("nobody is signed in on this machine".to_string()),
@@ -88,7 +88,7 @@ impl Daemon {
                 Err((s, e)) => return refuse(s, &e),
             },
             None if via == Via::Http && !local_inference && !local_probe => return refuse(401, "a bearer is required"),
-            None => me::active().map(|id| me::label(&id)).unwrap_or_default(),
+            None => me::effective_identity().map(|id| me::label(&id)).unwrap_or_default(),
         };
         if via == Via::Http && (path == "/v1/identity/token" || path == "/v1/hanzod/upstream") {
             return refuse(403, "this route is served on the socket only");

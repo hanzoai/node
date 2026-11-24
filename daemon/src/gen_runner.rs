@@ -69,7 +69,7 @@ pub fn maybe_spawn_target_runner() -> Option<TargetRunnerGuard> {
 
     let handle = tokio::spawn(async move {
         let id = loop {
-            if let Some(active) = me::active() {
+            if let Some(active) = me::effective_identity() {
                 break active;
             }
             tokio::time::sleep(Duration::from_secs(15)).await;
@@ -77,9 +77,7 @@ pub fn maybe_spawn_target_runner() -> Option<TargetRunnerGuard> {
 
         let root = Root::user().unwrap_or_else(|| Root::at(paths::data()));
         let cloud_api = configured_cloud_api();
-        let refresh_cmd = hanzo_gen::exe::find_for_root(&root, "hanzo")
-            .map(|bin| vec![bin.display().to_string(), "auth".into(), "token".into()])
-            .unwrap_or_default();
+        let refresh_cmd = me::refresh_command(hanzo_gen::exe::find_for_root(&root, "hanzo"));
 
         let host = Arc::new(
             StaticHost::cloud(cloud_api.clone(), id.owner.clone(), id.name, Arc::new(me::fresh_token))
