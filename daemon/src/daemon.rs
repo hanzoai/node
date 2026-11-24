@@ -70,6 +70,8 @@ impl Daemon {
                 "/v1/hanzod"
                     | "/v1/hanzod/worker"
                     | "/v1/dev/health"
+                    | "/v1/agent/health"
+                    | "/v1/agents/health"
                     | "/v1/research/health"
                     | "/v1/research/standard"
                     | "/v1/research/runs"

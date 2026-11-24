@@ -18,10 +18,12 @@ mod catalog;
 mod chain;
 mod cloud;
 mod cluster;
+mod coding;
 mod daemon;
 mod dev;
 mod dev_native;
 mod engine;
+mod gen_runner;
 mod http;
 mod ledger;
 mod link;
@@ -76,8 +78,11 @@ fn main() -> ExitCode {
     match arg1.as_deref() {
         Some("--version") | Some("-V") | Some("version") => {
             println!(
-                "hanzod {} (dev=rust-native chain={} engine=managed)",
+                "hanzod {} (dev={} harness={}/{} chain={} engine=managed)",
                 env!("CARGO_PKG_VERSION"),
+                dev_native::HARNESS_NAME,
+                dev_native::HARNESS_NAME,
+                dev_native::HARNESS_VERSION,
                 if cfg!(feature = "embedded-chain") { "embedded" } else { "steward" }
             );
             return ExitCode::SUCCESS;
@@ -182,6 +187,7 @@ async fn run() -> std::io::Result<()> {
     let bot_sub = Arc::new(bot::Bot::new(ledger.clone(), engine.clone()));
     let team_sub = Arc::new(team::Team::new(ledger.clone(), upstream.clone()));
     let cluster_core = cluster::ClusterCore::new(ledger.clone(), upstream.clone());
+    let coding_core = coding::CodingCore::new(dev_sub.clone(), ledger.clone());
     let tasks_worker = tasks_worker::TasksWorker::new(
         dev_sub.clone(),
         research_sub.clone(),
@@ -202,6 +208,16 @@ async fn run() -> std::io::Result<()> {
         Arc::new(routes::Identity),
         Arc::new(cloud::Cloud::new(pins.clone(), upstream)),
         dev_sub,
+        Arc::new(coding::CodingSub {
+            core: coding_core.clone(),
+            prefix: "/v1/agent",
+            name: "agent",
+        }),
+        Arc::new(coding::CodingSub {
+            core: coding_core,
+            prefix: "/v1/agents",
+            name: "agents",
+        }),
         research_sub,
         bot_sub,
         team_sub,
@@ -225,6 +241,7 @@ async fn run() -> std::io::Result<()> {
     let table = Arc::new(table::Table::new(subs));
     let _ = table_cell.set(table.clone());
     let _worker_handle = tasks_worker.spawn();
+    let target_runner = gen_runner::maybe_spawn_target_runner();
 
     let origin = config()
         .get("signin_origin")
@@ -270,6 +287,9 @@ async fn run() -> std::io::Result<()> {
     #[cfg(not(unix))]
     {
         let _ = tokio::signal::ctrl_c().await;
+    }
+    if let Some(tr) = target_runner {
+        tr.shutdown();
     }
     tasks_worker.shutdown();
     table.stop_all().await;

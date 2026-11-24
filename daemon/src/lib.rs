@@ -9,10 +9,12 @@ mod catalog;
 mod chain;
 mod cloud;
 mod cluster;
+mod coding;
 mod daemon;
 mod dev;
 mod dev_native;
 mod engine;
+mod gen_runner;
 mod http;
 mod ledger;
 mod link;
@@ -137,6 +139,7 @@ pub extern "C" fn hanzod_ffi_start(data_dir: *const c_char, port: u16) -> c_int 
                 let bot_sub = Arc::new(bot::Bot::new(ledger.clone(), engine.clone()));
                 let team_sub = Arc::new(team::Team::new(ledger.clone(), upstream.clone()));
                 let cluster_core = cluster::ClusterCore::new(ledger.clone(), upstream.clone());
+                let coding_core = coding::CodingCore::new(dev_sub.clone(), ledger.clone());
                 let tasks_worker = tasks_worker::TasksWorker::new(
                     dev_sub.clone(),
                     research_sub.clone(),
@@ -156,6 +159,16 @@ pub extern "C" fn hanzod_ffi_start(data_dir: *const c_char, port: u16) -> c_int 
                     Arc::new(routes::Identity),
                     Arc::new(cloud::Cloud::new(pins.clone(), upstream)),
                     dev_sub,
+                    Arc::new(coding::CodingSub {
+                        core: coding_core.clone(),
+                        prefix: "/v1/agent",
+                        name: "agent",
+                    }),
+                    Arc::new(coding::CodingSub {
+                        core: coding_core,
+                        prefix: "/v1/agents",
+                        name: "agents",
+                    }),
                     research_sub,
                     bot_sub,
                     team_sub,
@@ -176,6 +189,7 @@ pub extern "C" fn hanzod_ffi_start(data_dir: *const c_char, port: u16) -> c_int 
                 let table = Arc::new(table::Table::new(subs));
                 let _ = table_cell.set(table.clone());
                 let _worker_handle = tasks_worker.spawn();
+                let target_runner = gen_runner::maybe_spawn_target_runner();
 
                 let origin = config()
                     .get("signin_origin")
@@ -204,6 +218,9 @@ pub extern "C" fn hanzod_ffi_start(data_dir: *const c_char, port: u16) -> c_int 
                 }
 
                 let _ = rx.await;
+                if let Some(tr) = target_runner {
+                    tr.shutdown();
+                }
                 tasks_worker.shutdown();
                 table.stop_all().await;
                 let _ = std::fs::remove_file(paths::socket());
@@ -261,11 +278,14 @@ pub extern "C" fn hanzod_ffi_status_json() -> *mut c_char {
     let payload = serde_json::json!({
         "running": RUNNING.load(Ordering::SeqCst),
         "version": env!("CARGO_PKG_VERSION"),
+        "harness": dev_native::HARNESS_NAME,
+        "harness_version": dev_native::HARNESS_VERSION,
         "port": port,
         "dataDir": data_dir,
         "sole_desktop_backend": true,
         "capabilities": {
-            "dev": "rust-native",
+            "dev": dev_native::HARNESS_NAME,
+            "coding": dev_native::HARNESS_NAME,
             "research": "rust-native",
             "bot": "rust-native",
             "team": "rust-native",
@@ -276,7 +296,7 @@ pub extern "C" fn hanzod_ffi_status_json() -> *mut c_char {
             "cloud": true,
             "zap": true
         },
-        "routes": ["/healthz", "/.well-known/hanzo-standard.json", "/v1/hanzod", "/v1/hanzod/worker", "/v1/identity", "/v1/dev", "/v1/research", "/v1/bot", "/v1/team", "/v1/cluster", "/v1/k3s", "/v1/chain", "/v1/engine", "/v1/engine/catalog"],
+        "routes": ["/healthz", "/.well-known/hanzo-standard.json", "/v1/hanzod", "/v1/hanzod/worker", "/v1/identity", "/v1/dev", "/v1/agent", "/v1/agents", "/v1/research", "/v1/bot", "/v1/team", "/v1/cluster", "/v1/k3s", "/v1/chain", "/v1/engine", "/v1/engine/catalog"],
     });
     match CString::new(payload.to_string()) {
         Ok(cs) => cs.into_raw(),

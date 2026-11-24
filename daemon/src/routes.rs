@@ -98,12 +98,16 @@ impl Subsystem for Hanzod {
                 &json!({
                     "name": "hanzod",
                     "version": env!("CARGO_PKG_VERSION"),
+                    "harness": crate::dev_native::HARNESS_NAME,
+                    "harness_version": crate::dev_native::HARNESS_VERSION,
                     "sole_desktop_backend": true,
                     "surfaces": [
                         "desktop",
                         "bot",
                         "team",
                         "dev",
+                        "coding",
+                        "agent",
                         "engine",
                         "research",
                         "tasks",
@@ -113,7 +117,8 @@ impl Subsystem for Hanzod {
                         "identity"
                     ],
                     "capabilities": {
-                        "dev": "rust-native",
+                        "dev": crate::dev_native::HARNESS_NAME,
+                        "coding": crate::dev_native::HARNESS_NAME,
                         "research": "rust-native",
                         "bot": "rust-native",
                         "team": "rust-native",

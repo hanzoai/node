@@ -16,6 +16,8 @@
 mod core_fallback;
 mod gen_driver;
 mod store;
+#[cfg(test)]
+mod tests;
 
 use crate::engine::Engine;
 use crate::ledger::Ledger;
