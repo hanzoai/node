@@ -1882,6 +1882,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "b1f9e3d69d39e4862ffed03ed071a76f9a13ba1d9109d355b0f0aa6b15e393c4"
 dependencies = [
  "futures-core",
+ "futures-sink",
 ]
 
 [[package]]
@@ -1889,6 +1890,12 @@ name = "futures-core"
 version = "0.3.34"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "92d699e522242e69e3003b94ecc1f960f3a5e015aa7c5d7486e65ad01dd94f5e"
+
+[[package]]
+name = "futures-io"
+version = "0.3.34"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "53c0fa8157de1303bfffdaa1cc2a673bfffb60102f76b0ef4441659124373fed"
 
 [[package]]
 name = "futures-sink"
@@ -1909,7 +1916,10 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "0d50a92467f8ba5dd6e3ee5d4bd04d73ab2e4e1c44474a0674821dfce14b79bc"
 dependencies = [
  "futures-core",
+ "futures-io",
+ "futures-sink",
  "futures-task",
+ "memchr",
  "pin-project-lite",
  "slab",
 ]
@@ -2010,6 +2020,21 @@ dependencies = [
 [[package]]
 name = "hanzo-client"
 version = "0.1.1"
+source = "git+https://github.com/hanzoai/cli?rev=287bcbd78185b382a4561eabaccf620d7c05781f#287bcbd78185b382a4561eabaccf620d7c05781f"
+dependencies = [
+ "httpdate",
+ "rand 0.8.8",
+ "reqwest",
+ "rustls-native-certs",
+ "serde",
+ "serde_json",
+ "thiserror 2.0.20",
+ "tokio",
+]
+
+[[package]]
+name = "hanzo-client"
+version = "0.1.1"
 source = "git+https://github.com/hanzoai/cli?rev=695b57aae6abc21dcdfc3bf6a6d61ed965be8af3#695b57aae6abc21dcdfc3bf6a6d61ed965be8af3"
 dependencies = [
  "reqwest",
@@ -2020,21 +2045,49 @@ dependencies = [
 
 [[package]]
 name = "hanzo-gen"
-version = "0.1.2"
-source = "git+https://github.com/hanzoai/gen?rev=785b9c01f3c333cae6d4d99b6861737f40765ce5#785b9c01f3c333cae6d4d99b6861737f40765ce5"
+version = "0.1.3"
+source = "git+https://github.com/hanzoai/gen?rev=f9af5e4d94bc807f86085de5e180cc056abcea6c#f9af5e4d94bc807f86085de5e180cc056abcea6c"
 dependencies = [
  "anyhow",
  "base64 0.22.1",
  "chrono",
  "clap",
  "colored",
- "hanzo-client",
+ "flate2",
+ "hanzo-client 0.1.1 (git+https://github.com/hanzoai/cli?rev=695b57aae6abc21dcdfc3bf6a6d61ed965be8af3)",
  "libc",
  "rand 0.8.8",
  "reqwest",
  "serde",
  "serde_json",
  "sha2 0.10.9",
+ "tar",
+ "tempfile",
+ "tokio",
+ "toml",
+ "tracing",
+ "which",
+]
+
+[[package]]
+name = "hanzo-gen"
+version = "0.2.0"
+source = "git+https://github.com/hanzoai/gen?rev=fece46bf873bb42ec3f9ba2243f47c75b227ccc4#fece46bf873bb42ec3f9ba2243f47c75b227ccc4"
+dependencies = [
+ "anyhow",
+ "base64 0.22.1",
+ "chrono",
+ "clap",
+ "colored",
+ "flate2",
+ "hanzo-client 0.1.1 (git+https://github.com/hanzoai/cli?rev=287bcbd78185b382a4561eabaccf620d7c05781f)",
+ "libc",
+ "rand 0.8.8",
+ "reqwest",
+ "serde",
+ "serde_json",
+ "sha2 0.10.9",
+ "tar",
  "tempfile",
  "tokio",
  "toml",
@@ -2045,12 +2098,13 @@ dependencies = [
 [[package]]
 name = "hanzo-identity"
 version = "0.1.0"
-source = "git+https://github.com/hanzoai/cli?rev=f6de3eca99465615030356cf8568aa965749df46#f6de3eca99465615030356cf8568aa965749df46"
+source = "git+https://github.com/hanzoai/cli?rev=287bcbd78185b382a4561eabaccf620d7c05781f#287bcbd78185b382a4561eabaccf620d7c05781f"
 dependencies = [
  "anyhow",
  "base64 0.22.1",
  "dirs",
- "hanzo-gen",
+ "hanzo-gen 0.1.3",
+ "reqwest",
  "serde",
  "serde_json",
  "toml",
@@ -2058,7 +2112,7 @@ dependencies = [
 
 [[package]]
 name = "hanzod"
-version = "0.4.0"
+version = "0.5.0"
 dependencies = [
  "base64 0.22.1",
  "dev-core",
@@ -2066,6 +2120,7 @@ dependencies = [
  "dev-protocol",
  "dirs",
  "hanzo-chain",
+ "hanzo-gen 0.2.0",
  "hanzo-identity",
  "jsonwebtoken",
  "libc",
@@ -2224,6 +2279,12 @@ name = "httparse"
 version = "1.10.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "6dbf3de79e51f3d586ab4cb9d5c3e2c14aa28ed23d180cf89b4df0454a69cc87"
+
+[[package]]
+name = "httpdate"
+version = "1.0.3"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "df3b46402a9d5adb4c86a0cf463f42e19994e3ee891101b1841f30a545cb49a9"
 
 [[package]]
 name = "hybrid-array"
@@ -3620,7 +3681,9 @@ dependencies = [
  "base64 0.22.1",
  "bytes",
  "encoding_rs",
+ "futures-channel",
  "futures-core",
+ "futures-util",
  "h2",
  "http",
  "http-body",

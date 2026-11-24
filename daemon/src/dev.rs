@@ -97,6 +97,14 @@ impl Dev {
             engine,
             idle_notify.clone(),
         ));
+        Self::with_native(ledger, native, idle_notify)
+    }
+
+    pub fn with_native(
+        ledger: Arc<Ledger>,
+        native: Arc<DevNative>,
+        idle_notify: Arc<Notify>,
+    ) -> Dev {
         Dev {
             ledger,
             native,
