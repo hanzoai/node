@@ -83,6 +83,11 @@ impl Daemon {
                     | "/v1/k3s/health"
             );
         let who = match req.bearer() {
+            Some(b) if via == Via::Socket && (b.starts_with("sk-") || b.starts_with("hk-")) => {
+                me::effective_identity()
+                    .map(|id| me::label(&id))
+                    .unwrap_or_else(|| "local/key".into())
+            }
             Some(b) => match self.who(b).await {
                 Ok(p) => p,
                 Err((s, e)) => return refuse(s, &e),
