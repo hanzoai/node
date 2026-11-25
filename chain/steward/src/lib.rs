@@ -265,6 +265,11 @@ impl Steward {
                 })
             };
         }
+        #[cfg(target_os = "windows")]
+        {
+            use std::os::windows::process::CommandExt as _;
+            cmd.creation_flags(0x0800_0000);
+        }
         let mut child = match cmd.spawn() {
             Ok(c) => c,
             Err(e) => return refuse(500, format!("starting hanzo-chain: {e}")),

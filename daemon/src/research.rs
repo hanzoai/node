@@ -14,6 +14,7 @@
 use crate::ledger::Ledger;
 use crate::me;
 use crate::paths;
+use crate::proc;
 use crate::table::{Fut, Reply, Subsystem};
 use crate::zap::{Request, Response};
 use base64::Engine as _;
@@ -26,7 +27,6 @@ use std::path::{Path, PathBuf};
 use std::sync::atomic::{AtomicU64, AtomicUsize, Ordering};
 use std::sync::{Arc, Mutex};
 use std::time::{Duration, Instant, SystemTime, UNIX_EPOCH};
-use tokio::process::Command;
 use tokio::sync::Notify;
 
 pub const STANDARD_JSON: &str = include_str!("../../hanzo-standard.json");
@@ -649,7 +649,7 @@ impl Subsystem for Research {
 }
 
 async fn detect_git_head(workspace: &Path) -> String {
-    let out = Command::new("git")
+    let out = proc::bg_tokio_cmd("git")
         .arg("rev-parse")
         .arg("HEAD")
         .current_dir(workspace)
@@ -670,7 +670,7 @@ async fn run_command_bounded(
     if let Some(vm) = vm_bin {
         let vm_try = tokio::time::timeout(
             Duration::from_secs(max_secs),
-            Command::new(vm)
+            proc::bg_tokio_cmd(vm)
                 .arg("exec")
                 .arg("--workdir")
                 .arg(workspace)
@@ -703,11 +703,11 @@ async fn run_command_bounded(
     }
 
     let mut cmd = if cfg!(windows) {
-        let mut c = Command::new("powershell");
-        c.arg("-NoProfile").arg("-Command").arg(command);
+        let mut c = proc::bg_tokio_cmd("powershell");
+        c.args(["-NoProfile", "-NonInteractive", "-WindowStyle", "Hidden", "-Command", command]);
         c
     } else {
-        let mut c = Command::new("sh");
+        let mut c = proc::bg_tokio_cmd("sh");
         c.arg("-lc").arg(command);
         c
     };

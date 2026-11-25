@@ -118,7 +118,7 @@ fn git_stdout(cwd: &Path, args: &[&str]) -> Option<String> {
     if !cwd.join(".git").exists() && !cwd.is_dir() {
         return None;
     }
-    std::process::Command::new("git")
+    crate::proc::bg_std_cmd("git")
         .args(args)
         .current_dir(cwd)
         .output()

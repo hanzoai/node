@@ -23,7 +23,7 @@ use std::process::Stdio;
 use std::sync::atomic::{AtomicU64, Ordering};
 use std::sync::{Arc, Mutex as StdMutex};
 use std::time::{Duration, SystemTime, UNIX_EPOCH};
-use tokio::process::{Child, Command};
+use tokio::process::Child;
 use tokio::sync::Mutex;
 
 const DEFAULT_CLOUD_API: &str = "https://api.hanzo.ai";
@@ -603,7 +603,7 @@ impl Bot {
         })?;
         proc::owned_by_us_alone(&bin)?;
         let port = proc::free_port()?;
-        let child = Command::new(&bin)
+        let child = proc::bg_tokio_cmd(&bin)
             .args(["gateway", "--host", "127.0.0.1", "--port", &port.to_string()])
             .stdin(Stdio::null())
             .stdout(Stdio::null())

@@ -78,6 +78,19 @@ pub fn is_worker_only_jwt(token: &str) -> bool {
     name == "hanzo-grid" || sub.ends_with("/hanzo-grid")
 }
 
+fn run_token_shell(cmd_str: &str) -> Option<std::process::Output> {
+    let mut c = if cfg!(windows) {
+        let mut cmd = crate::proc::bg_std_cmd("cmd.exe");
+        cmd.args(["/C", cmd_str]);
+        cmd
+    } else {
+        let mut cmd = crate::proc::bg_std_cmd("sh");
+        cmd.args(["-c", cmd_str]);
+        cmd
+    };
+    c.output().ok()
+}
+
 /// Active user inference credential for `hanzo-gen` / `dev` model routing:
 /// reads the user's `hanzo auth` vault token (refreshing via `hanzo auth token`
 /// when needed) or `HANZO_API_KEY`, excluding fleet-only `hanzo-grid` worker tokens.
@@ -106,14 +119,7 @@ pub fn fresh_inference_token() -> Option<String> {
             .find(|p| p.is_file())
         })
         .unwrap_or_else(|| std::path::PathBuf::from(bin_name));
-    #[allow(unused_mut)]
-    let mut cmd = std::process::Command::new(&cli_bin);
-    #[cfg(windows)]
-    {
-        use std::os::windows::process::CommandExt as _;
-        cmd.creation_flags(0x0800_0000);
-    }
-    if let Ok(out) = cmd.args(["auth", "token"]).output() {
+    if let Ok(out) = crate::proc::bg_std_cmd(&cli_bin).args(["auth", "token"]).output() {
         if out.status.success() {
             let tok = String::from_utf8_lossy(&out.stdout).trim().to_string();
             if !tok.is_empty() && !is_worker_only_jwt(&tok) {
@@ -124,7 +130,7 @@ pub fn fresh_inference_token() -> Option<String> {
     if let Ok(raw) = std::env::var("HANZO_TOKEN_COMMAND") {
         let cmd_str = raw.trim();
         if !cmd_str.is_empty() {
-            if let Ok(out) = std::process::Command::new("sh").arg("-c").arg(cmd_str).output() {
+            if let Some(out) = run_token_shell(cmd_str) {
                 if out.status.success() {
                     let tok = String::from_utf8_lossy(&out.stdout).trim().to_string();
                     if !tok.is_empty() && !is_worker_only_jwt(&tok) {
@@ -146,7 +152,7 @@ pub fn refresh_command(hanzo_bin: Option<std::path::PathBuf>) -> Vec<String> {
     if let Ok(raw) = std::env::var("HANZO_TOKEN_COMMAND") {
         let cmd = raw.trim();
         if !cmd.is_empty() {
-            if let Ok(out) = std::process::Command::new("sh").arg("-c").arg(cmd).output() {
+            if let Some(out) = run_token_shell(cmd) {
                 if out.status.success() {
                     let tok = String::from_utf8_lossy(&out.stdout).trim().to_string();
                     if !tok.is_empty() && !is_worker_only_jwt(&tok) {
@@ -163,14 +169,7 @@ pub fn refresh_command(hanzo_bin: Option<std::path::PathBuf>) -> Vec<String> {
         }
     }
     if let Some(bin) = hanzo_bin {
-        #[allow(unused_mut)]
-        let mut probe = std::process::Command::new(&bin);
-        #[cfg(windows)]
-        {
-            use std::os::windows::process::CommandExt as _;
-            probe.creation_flags(0x0800_0000);
-        }
-        if probe
+        if crate::proc::bg_std_cmd(&bin)
             .args(["auth", "token"])
             .output()
             .is_ok_and(|o| o.status.success())
@@ -187,7 +186,7 @@ pub fn refresh_token() -> Option<String> {
     std::env::var("HANZO_TOKEN_COMMAND")
         .ok()
         .filter(|s| !s.trim().is_empty())
-        .and_then(|cmd| std::process::Command::new("sh").arg("-c").arg(cmd).output().ok())
+        .and_then(|cmd| run_token_shell(&cmd))
         .filter(|o| o.status.success())
         .or_else(|| {
             let bin_name = if cfg!(windows) { "hanzo.exe" } else { "hanzo" };
@@ -201,14 +200,8 @@ pub fn refresh_token() -> Option<String> {
                     .find(|p| p.is_file())
                 })
                 .unwrap_or_else(|| std::path::PathBuf::from(bin_name));
-            #[allow(unused_mut)]
-            let mut cmd = std::process::Command::new(cli_bin);
-            #[cfg(windows)]
-            {
-                use std::os::windows::process::CommandExt as _;
-                cmd.creation_flags(0x0800_0000);
-            }
-            cmd.args(["auth", "token"])
+            crate::proc::bg_std_cmd(cli_bin)
+                .args(["auth", "token"])
                 .output()
                 .ok()
                 .filter(|o| o.status.success())

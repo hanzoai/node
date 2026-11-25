@@ -22,7 +22,7 @@ use std::sync::Arc;
 use std::time::Duration;
 #[cfg(unix)]
 use tokio::net::UnixStream;
-use tokio::process::{Child, Command};
+use tokio::process::Child;
 use tokio::sync::{mpsc, Mutex};
 
 const MASTER_ENV: &str = "CLOUD_KMS_MASTER_KEY_REF";
@@ -124,7 +124,7 @@ impl Subsystem for Cloud {
             let _ = std::fs::remove_file(&sock);
             let (http, health) = (proc::free_port()?, proc::free_port()?);
             let log = std::fs::File::create(state.join("host.log"))?;
-            let child = Command::new(&bin)
+            let child = proc::bg_tokio_cmd(&bin)
                 .arg("-listen")
                 .arg(format!("127.0.0.1:{http}"))
                 .arg("-zap")

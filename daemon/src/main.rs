@@ -100,7 +100,7 @@ fn main() -> ExitCode {
                     }
                 };
                 let rest: Vec<String> = std::env::args().skip(2).collect();
-                let status = std::process::Command::new(exe)
+                let status = proc::bg_std_cmd(exe)
                     .env("HANZOD_MODE", "chain")
                     .args(rest)
                     .status();
@@ -140,6 +140,8 @@ fn main() -> ExitCode {
         }
         _ => {}
     }
+
+    proc::detach_standalone_console();
 
     let rt = tokio::runtime::Builder::new_current_thread()
         .enable_all()

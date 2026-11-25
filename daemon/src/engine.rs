@@ -28,7 +28,7 @@ use std::sync::{Arc, Mutex as StdMutex};
 use std::time::Duration;
 use tokio::io::{AsyncReadExt, AsyncWriteExt};
 use tokio::net::TcpStream;
-use tokio::process::{Child, Command};
+use tokio::process::Child;
 use tokio::sync::Mutex;
 
 pub struct Engine {
@@ -132,7 +132,7 @@ impl Subsystem for Engine {
             let model = self.model().ok_or_else(|| io::Error::new(io::ErrorKind::NotFound, "no local model is installed; POST /v1/engine/catalog/pull {\"id\"} first"))?;
             let port = proc::free_port()?;
             *self.port.lock().unwrap() = None;
-            let child = Command::new(&bin)
+            let child = proc::bg_tokio_cmd(&bin)
                 .args(args(model, port))
                 .env_clear()
                 .env("PATH", "/usr/bin:/bin")

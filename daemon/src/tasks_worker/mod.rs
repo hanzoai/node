@@ -399,7 +399,7 @@ impl TasksWorker {
         }
         let out = tokio::time::timeout(
             Duration::from_secs(2),
-            tokio::process::Command::new("nvidia-smi")
+            crate::proc::bg_tokio_cmd("nvidia-smi")
                 .args(["--query-gpu=utilization.gpu", "--format=csv,noheader,nounits"])
                 .kill_on_drop(true)
                 .output(),

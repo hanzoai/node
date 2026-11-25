@@ -18,7 +18,7 @@ use std::path::{Path, PathBuf};
 use std::process::Stdio;
 use std::sync::{Arc, Mutex as StdMutex};
 use std::time::Duration;
-use tokio::process::{Child, Command};
+use tokio::process::Child;
 use tokio::sync::Mutex;
 
 #[derive(Debug, Deserialize, Default)]
@@ -198,7 +198,7 @@ impl ClusterCore {
         let data_dir = paths::data().join("tasks-data");
         std::fs::create_dir_all(&data_dir)?;
         let _ = std::fs::remove_file(&sock);
-        let child = Command::new(&bin)
+        let child = proc::bg_tokio_cmd(&bin)
             .args([
                 "--zap",
                 &sock.display().to_string(),
@@ -253,7 +253,7 @@ impl ClusterCore {
                 if let Err(e) = proc::owned_by_us_alone(&hanzo_bin) {
                     return Response::error(403, &e.to_string());
                 }
-                let mut cmd = Command::new(&hanzo_bin);
+                let mut cmd = proc::bg_tokio_cmd(&hanzo_bin);
                 cmd.arg("up");
                 if let Some(cpus) = req.cpus {
                     cmd.args(["--cpus", &cpus.to_string()]);
@@ -291,7 +291,7 @@ impl ClusterCore {
                 if let Some(p) = kube.parent() {
                     let _ = std::fs::create_dir_all(p);
                 }
-                let mut cmd = Command::new(&k3s_bin);
+                let mut cmd = proc::bg_tokio_cmd(&k3s_bin);
                 if let Some(ref server_url) = req.join_server {
                     cmd.args([
                         "agent",
@@ -337,7 +337,7 @@ impl ClusterCore {
                     return Response::error(403, &e.to_string());
                 }
                 let port = req.upstream_port.or_else(|| proc::free_port().ok()).unwrap_or(8000);
-                let mut cmd = Command::new(&cloud_bin);
+                let mut cmd = proc::bg_tokio_cmd(&cloud_bin);
                 cmd.env("PORT", port.to_string())
                     .env("TASKS_ADDR", Self::tasksd_socket_path().display().to_string())
                     .stdin(Stdio::null())
@@ -421,7 +421,7 @@ impl ClusterCore {
         };
         let out = tokio::time::timeout(
             Duration::from_secs(5),
-            Command::new(&kubectl)
+            proc::bg_tokio_cmd(&kubectl)
                 .args([
                     "--kubeconfig",
                     &kube.display().to_string(),

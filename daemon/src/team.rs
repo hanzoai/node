@@ -26,7 +26,7 @@ use std::process::Stdio;
 use std::sync::atomic::{AtomicU64, Ordering};
 use std::sync::{Arc, Mutex as StdMutex};
 use std::time::{Duration, SystemTime, UNIX_EPOCH};
-use tokio::process::{Child, Command};
+use tokio::process::Child;
 use tokio::sync::Mutex;
 
 const DEFAULT_CLOUD_API: &str = "https://api.hanzo.ai";
@@ -282,7 +282,7 @@ impl Team {
         let port = proc::free_port().ok()?;
         let data_dir = paths::data().join("team");
         let _ = std::fs::create_dir_all(&data_dir);
-        let child = Command::new(&bin)
+        let child = proc::bg_tokio_cmd(&bin)
             .args([
                 "serve",
                 "--http",

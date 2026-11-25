@@ -22,8 +22,6 @@ use tokio::net::unix::OwnedWriteHalf;
 #[cfg(unix)]
 use tokio::net::UnixStream;
 use tokio::process::Child;
-#[cfg(unix)]
-use tokio::process::Command;
 use tokio::sync::{mpsc, watch};
 
 pub const KIND_DATA: u8 = 0;
@@ -80,7 +78,7 @@ pub fn spawn(spec: &Spec) -> io::Result<Worker> {
     for fd in [ours, theirs] {
         unsafe { libc::fcntl(fd, libc::F_SETFD, libc::FD_CLOEXEC) };
     }
-    let mut cmd = Command::new(&spec.program);
+    let mut cmd = crate::proc::bg_tokio_cmd(&spec.program);
     cmd.args(&spec.args)
         .env_clear()
         .envs(spec.env.iter().map(|(k, v)| (k, v)))

@@ -57,14 +57,7 @@ pub fn sanitize_hostname(raw: &str) -> String {
 }
 
 pub(super) fn silent_cmd(program: &str) -> std::process::Command {
-    #[allow(unused_mut)]
-    let mut cmd = std::process::Command::new(program);
-    #[cfg(windows)]
-    {
-        use std::os::windows::process::CommandExt as _;
-        cmd.creation_flags(0x0800_0000); // CREATE_NO_WINDOW
-    }
-    cmd
+    crate::proc::bg_std_cmd(program)
 }
 
 #[cfg(windows)]
@@ -130,7 +123,7 @@ pub(super) fn detect_short_hostname() -> String {
 
 pub(crate) fn companion_hanzo_link_running() -> bool {
     if cfg!(target_os = "linux") {
-        if let Ok(out) = std::process::Command::new("systemctl")
+        if let Ok(out) = silent_cmd("systemctl")
             .args(["--user", "is-active", "hanzo-node.service"])
             .output()
         {
@@ -187,13 +180,13 @@ pub fn detect_hardware() -> HardwareInventory {
     let mut memory_bytes: u64 = 0;
 
     if cfg!(target_os = "macos") {
-        if let Ok(o) = std::process::Command::new("sysctl")
+        if let Ok(o) = silent_cmd("sysctl")
             .args(["-n", "machdep.cpu.brand_string"])
             .output()
         {
             cpu_model = String::from_utf8_lossy(&o.stdout).trim().to_string();
         }
-        if let Ok(o) = std::process::Command::new("sysctl")
+        if let Ok(o) = silent_cmd("sysctl")
             .args(["-n", "hw.memsize"])
             .output()
         {
@@ -230,7 +223,7 @@ pub fn detect_hardware() -> HardwareInventory {
             }
         }
         if cpu_model.is_empty() {
-            if let Ok(o) = std::process::Command::new("lscpu").output() {
+            if let Ok(o) = silent_cmd("lscpu").output() {
                 for line in String::from_utf8_lossy(&o.stdout).lines() {
                     if let Some(rest) = line.strip_prefix("Model name:") {
                         let v = rest.trim();

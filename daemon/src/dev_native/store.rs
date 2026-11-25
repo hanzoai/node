@@ -451,7 +451,7 @@ impl DevNative {
         if !workspace.join(".git").exists() {
             return;
         }
-        let rev = std::process::Command::new("git")
+        let rev = crate::proc::bg_std_cmd("git")
             .args(["rev-parse", "HEAD"])
             .current_dir(workspace)
             .output()
@@ -460,7 +460,7 @@ impl DevNative {
             .map(|o| String::from_utf8_lossy(&o.stdout).trim().to_string());
         if let Some(sha) = rev.filter(|s| !s.is_empty()) {
             let ref_name = format!("refs/hanzo/checkpoints/{session_id}/{seq}");
-            let _ = std::process::Command::new("git")
+            let _ = crate::proc::bg_std_cmd("git")
                 .args(["update-ref", &ref_name, &sha])
                 .current_dir(workspace)
                 .output();

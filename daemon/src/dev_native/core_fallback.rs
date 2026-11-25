@@ -16,7 +16,6 @@ use serde_json::{json, Value};
 use std::io;
 use std::path::{Path, PathBuf};
 use std::time::Duration;
-use tokio::process::Command;
 use tokio::sync::watch;
 
 pub(super) const MAX_TOOL_ROUNDS: usize = 64;
@@ -397,7 +396,7 @@ fn exec_patch(workspace: &Path, p: &Patch) -> (String, bool) {
         Err(e) => return (e, true),
     };
     if p.diff.contains("@@") {
-        let mut child = match std::process::Command::new("git")
+        let mut child = match crate::proc::bg_std_cmd("git")
             .args(["apply", "--whitespace=nowarn", "-"])
             .current_dir(workspace)
             .stdin(std::process::Stdio::piped())
@@ -439,7 +438,7 @@ async fn exec_cmd(workspace: &Path, e: &Exec) -> (String, bool) {
         },
         None => workspace.to_path_buf(),
     };
-    let fut = Command::new(prog).args(args).current_dir(&cwd).output();
+    let fut = crate::proc::bg_tokio_cmd(prog).args(args).current_dir(&cwd).output();
     match tokio::time::timeout(EXEC_TIMEOUT, fut).await {
         Ok(Ok(out)) => {
             let mut text = String::from_utf8_lossy(&out.stdout).to_string();
@@ -458,7 +457,7 @@ async fn exec_cmd(workspace: &Path, e: &Exec) -> (String, bool) {
 }
 
 async fn exec_git(workspace: &Path, g: &Git) -> (String, bool) {
-    let fut = Command::new("git").args(&g.argv).current_dir(workspace).output();
+    let fut = crate::proc::bg_tokio_cmd("git").args(&g.argv).current_dir(workspace).output();
     match tokio::time::timeout(GIT_TIMEOUT, fut).await {
         Ok(Ok(out)) => {
             let mut text = String::from_utf8_lossy(&out.stdout).to_string();
