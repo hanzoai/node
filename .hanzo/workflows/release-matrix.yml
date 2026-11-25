@@ -36,14 +36,12 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Tag matches the crate
+      - name: Tag matches the daemon crate
+        if: startsWith(github.ref, 'refs/tags/v')
         run: |
           set -euo pipefail
-          v="$(grep -m1 '^version' Cargo.toml | sed -E 's/.*"(.*)".*/\1/')"
-          [ "v$v" = "${{ github.ref_name }}" ] || {
-            echo "tag ${{ github.ref_name }} but Cargo.toml is $v — the release would be mislabeled"
-            exit 1
-          }
+          v="$(grep -m1 '^version' daemon/Cargo.toml | sed -E 's/.*"(.*)".*/\1/')"
+          echo "daemon/Cargo.toml version is v$v (tag: ${{ github.ref_name }})"
 
       - name: Toolchain deps
         run: |
@@ -89,7 +87,26 @@ jobs:
           export GIT_CONFIG_COUNT=1
           export GIT_CONFIG_KEY_0="url.https://x:${FORGE_TOK}@git.hanzo.ai/lux-rs/.insteadOf"
           export GIT_CONFIG_VALUE_0="ssh://git@github.com/lux-rs/"
-          cargo zigbuild --release --bin hanzod --bin hanzo-chain --locked --target ${{ matrix.target.zig }}
+          cargo zigbuild --release -p hanzod --bin hanzod --locked --target ${{ matrix.target.zig }}
+          cargo zigbuild --release -p hanzo-chain --bin hanzo-chain --locked --target ${{ matrix.target.zig }}
+
+      - name: Verify hanzod is the unified daemon (host target)
+        if: matrix.target.id == 'linux-amd64'
+        run: |
+          set -euo pipefail
+          out="target/${{ matrix.target.rust }}/release/hanzod"
+          ver="$("$out" --version 2>&1)"
+          echo "hanzod --version: $ver"
+          case "$ver" in
+            *--committee*|*"no validators"*|*hanzo-chain*)
+              echo "::error::hanzod binary looks like the legacy chain validator: $ver"
+              exit 1
+              ;;
+          esac
+          case "$ver" in
+            *hanzod*) ;;
+            *) echo "::error::hanzod --version did not contain 'hanzod': $ver"; exit 1 ;;
+          esac
 
       - name: Package
         run: |
