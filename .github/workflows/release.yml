@@ -1,0 +1,209 @@
+name: Release (hanzod + hanzo-chain)
+
+# Builds and publishes checksummed native release tarballs for BOTH:
+#   - hanzod-<os>-<arch>.tar.gz (+ .sha256)       from daemon/ (unified HIP-1330 daemon)
+#   - hanzo-chain-<os>-<arch>.tar.gz (+ .sha256)  from chain/  (L1 validator)
+#
+# Runs on GitHub Actions (standard hosted runners) when a v* tag is pushed or
+# triggered manually via workflow_dispatch. Guarded on github.server_url so
+# git.hanzo.ai (which runs .hanzo/workflows/release-matrix.yml on its own pool)
+# skips this workflow cleanly.
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: 'Release tag to create or update (defaults to v<daemon/Cargo.toml version>)'
+        required: false
+        type: string
+
+permissions:
+  contents: write
+
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
+env:
+  CARGO_TERM_COLOR: always
+  CARGO_NET_GIT_FETCH_WITH_CLI: 'true'
+
+jobs:
+  build:
+    name: Build (${{ matrix.id }})
+    if: github.server_url == 'https://github.com'
+    runs-on: ${{ matrix.runner }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - id: linux-amd64
+            runner: ubuntu-latest
+            rust: x86_64-unknown-linux-gnu
+          - id: linux-arm64
+            runner: ubuntu-24.04-arm
+            rust: aarch64-unknown-linux-gnu
+          - id: darwin-arm64
+            runner: macos-15
+            rust: aarch64-apple-darwin
+          - id: darwin-amd64
+            runner: macos-15-intel
+            rust: x86_64-apple-darwin
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: ${{ matrix.rust }}
+
+      - name: Install Linux build dependencies
+        if: runner.os == 'Linux'
+        run: |
+          set -euo pipefail
+          missing=""
+          for tool in cc cmake git tar; do
+            command -v "$tool" >/dev/null 2>&1 || missing="$missing $tool"
+          done
+          if [ -n "$missing" ]; then
+            sudo apt-get update
+            sudo apt-get install -y --no-install-recommends build-essential cmake git tar ca-certificates
+          fi
+
+      - name: Configure git auth for private lux-node dependency
+        env:
+          GIT_TOKEN: ${{ secrets.GH_PAT || secrets.GIT_TOKEN || github.token }}
+        run: |
+          set -euo pipefail
+          if [ -n "${GIT_TOKEN:-}" ]; then
+            git config --global --add \
+              "url.https://x-access-token:${GIT_TOKEN}@github.com/.insteadOf" \
+              "ssh://git@github.com/"
+          fi
+
+      - name: Build hanzod (daemon/) and hanzo-chain (chain/)
+        run: |
+          set -euo pipefail
+          cargo build --release --locked --target "${{ matrix.rust }}" -p hanzod --bin hanzod
+          cargo build --release --locked --target "${{ matrix.rust }}" -p hanzo-chain --bin hanzo-chain
+
+      - name: Verify hanzod is the unified daemon (not legacy chain validator)
+        run: |
+          set -euo pipefail
+          hanzod_bin="target/${{ matrix.rust }}/release/hanzod"
+          chain_bin="target/${{ matrix.rust }}/release/hanzo-chain"
+          test -x "$hanzod_bin"
+          test -x "$chain_bin"
+
+          set +e
+          ver_out="$("$hanzod_bin" --version 2>&1)"
+          ver_rc=$?
+          set -e
+          echo "hanzod --version (exit ${ver_rc}): ${ver_out}"
+          if [ "$ver_rc" -ne 0 ]; then
+            echo "::error::hanzod --version failed with exit code ${ver_rc}"
+            exit 1
+          fi
+          case "$ver_out" in
+            *--committee*|*"no validators"*|*hanzo-chain*)
+              echo "::error::built hanzod binary emitted chain-validator output: ${ver_out}"
+              exit 1
+              ;;
+          esac
+          case "$ver_out" in
+            *hanzod*) ;;
+            *)
+              echo "::error::hanzod --version did not contain 'hanzod': ${ver_out}"
+              exit 1
+              ;;
+          esac
+          case "$ver_out" in
+            *dev=*|*engine=*|*daemon*) ;;
+            *)
+              echo "::error::hanzod --version is missing unified daemon markers (dev=/engine=): ${ver_out}"
+              exit 1
+              ;;
+          esac
+
+          chain_ver="$("$chain_bin" --version 2>&1)"
+          echo "hanzo-chain --version: ${chain_ver}"
+
+      - name: Package tarballs and SHA-256 checksums
+        run: |
+          set -euo pipefail
+          mkdir -p dist
+          bin_dir="target/${{ matrix.rust }}/release"
+          for bin in hanzod hanzo-chain; do
+            asset="${bin}-${{ matrix.id }}.tar.gz"
+            tar -czf "dist/${asset}" -C "${bin_dir}" "${bin}"
+            if command -v sha256sum >/dev/null 2>&1; then
+              (cd dist && sha256sum "${asset}" > "${asset}.sha256")
+            else
+              (cd dist && shasum -a 256 "${asset}" > "${asset}.sha256")
+            fi
+          done
+          ls -la dist/
+          cat dist/*.sha256
+
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: release-${{ matrix.id }}
+          path: dist/*
+          if-no-files-found: error
+
+  release:
+    name: Publish GitHub Release
+    if: github.server_url == 'https://github.com'
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Download all platform artifacts
+        uses: actions/download-artifact@v4
+        with:
+          pattern: release-*
+          merge-multiple: true
+          path: dist
+
+      - name: Verify all expected platform assets exist
+        run: |
+          set -euo pipefail
+          for target in linux-amd64 linux-arm64 darwin-arm64 darwin-amd64; do
+            for bin in hanzod hanzo-chain; do
+              test -s "dist/${bin}-${target}.tar.gz"
+              test -s "dist/${bin}-${target}.tar.gz.sha256"
+            done
+          done
+          ls -la dist/
+
+      - name: Create or update GitHub Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          INPUT_TAG: ${{ inputs.tag }}
+        run: |
+          set -euo pipefail
+          if [[ "${GITHUB_REF}" == refs/tags/v* ]]; then
+            TAG="${GITHUB_REF_NAME}"
+          elif [ -n "${INPUT_TAG:-}" ]; then
+            TAG="${INPUT_TAG}"
+          else
+            ver="$(grep -m1 '^version' daemon/Cargo.toml | sed -E 's/.*"(.*)".*/\1/')"
+            TAG="v${ver}"
+          fi
+          echo "Publishing release ${TAG} for ${GITHUB_REPOSITORY}"
+
+          if gh release view "${TAG}" >/dev/null 2>&1; then
+            gh release upload "${TAG}" dist/* --clobber
+            gh release edit "${TAG}" --draft=false --latest
+          else
+            gh release create "${TAG}" dist/* \
+              --title "${TAG}" \
+              --generate-notes \
+              --latest
+          fi
