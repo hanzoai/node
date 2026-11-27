@@ -26,6 +26,12 @@ embedded-chain = ["dep:hanzo-chain"]
 hanzo-identity = { git = "https://github.com/hanzoai/cli", rev = "287bcbd78185b382a4561eabaccf620d7c05781f" }
 # Canonical in-process agentic harness: MCP + hanzoskills + gateway/local routing + target runner.
 hanzo-gen = { git = "https://github.com/hanzoai/gen", rev = "be1946c17b05d7beb97e9768345b5969455d67dc" }
+# Native desktop control for /v1/computer. The computer tool is already public in
+# hanzo-mcp; hanzod reuses that exact backend and adds policy and audit around it.
+hanzo-mcp = { git = "https://github.com/hanzoai/mcp.git", rev = "5ac75825bbdbce909f89abc3793d981ca0535b5d", default-features = false }
+# tree-sitter-rust accepts `>=0.20`; pin the runtime to the version hanzo-mcp's AST
+# code is written against so one grammar cannot select a newer incompatible tree-sitter.
+tree-sitter = "=0.20.10"
 # Native Rust Dev engine (HIP-1330): protocol, pure session core, and pure orchestrator decide rules.
 dev-protocol = { git = "https://github.com/hanzoai/dev", rev = "9ea2907922e202a675b2b05ae2cb0515f19d84de" }
 dev-core = { git = "https://github.com/hanzoai/dev", rev = "9ea2907922e202a675b2b05ae2cb0515f19d84de" }

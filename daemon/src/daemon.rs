@@ -8,8 +8,10 @@
 //! * On the socket (mode 0600, peer uid checked) no bearer is needed for hanzod's
 //!   own routes; cloud's own routes enforce IAM themselves.
 //! * On the loopback port (reachable by any local process, and by a web page)
-//!   every route needs a verified bearer, except `/v1/engine`, which is local
-//!   inference and is guarded by Host and Origin checks in `http`.
+//!   every route needs a verified bearer, except `/v1/engine` (local inference)
+//!   and `/v1/computer` (the local desktop backend). Both are guarded by Host
+//!   and Origin checks in `http`; computer control additionally demands approval
+//!   evidence per act op and audits every call in its own subsystem.
 //! * The access token route is socket-only.
 
 use crate::me;
@@ -64,6 +66,10 @@ impl Daemon {
             return (Reply::Whole(Response::json(200, &doc)), None);
         }
         let local_inference = path == "/v1/engine" || path.starts_with("/v1/engine/");
+        // Desktop control is local by definition: the app needs it without a
+        // cloud sign-in. Reads are open; act ops carry their own approval and
+        // audit trail inside the subsystem, which is the same on either door.
+        let local_computer = path == "/v1/computer" || path.starts_with("/v1/computer/");
         let local_probe = req.method == "GET"
             && matches!(
                 path.as_str(),
@@ -96,7 +102,9 @@ impl Daemon {
                 Ok(p) => p,
                 Err((s, e)) => return refuse(s, &e),
             },
-            None if via == Via::Http && !local_inference && !local_probe => return refuse(401, "a bearer is required"),
+            None if via == Via::Http && !local_inference && !local_computer && !local_probe => {
+                return refuse(401, "a bearer is required")
+            }
             None => me::effective_identity().map(|id| me::label(&id)).unwrap_or_default(),
         };
         if via == Via::Http && (path == "/v1/identity/token" || path == "/v1/hanzod/upstream") {

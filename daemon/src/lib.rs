@@ -10,6 +10,7 @@ mod chain;
 mod cloud;
 mod cluster;
 mod coding;
+mod computer;
 mod daemon;
 mod dev;
 mod dev_native;
@@ -165,6 +166,7 @@ pub extern "C" fn hanzod_ffi_start(data_dir: *const c_char, port: u16) -> c_int 
                         tasks_worker: tasks_worker.clone(),
                     }),
                     Arc::new(routes::Identity),
+                    Arc::new(computer::Computer::new()),
                     lifecycle_sub,
                     Arc::new(cloud::Cloud::new(pins.clone(), upstream)),
                     dev_sub,

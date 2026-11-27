@@ -2,6 +2,12 @@
 resolver = "2"
 members = ["chain", "chain/steward", "daemon", "zap"]
 
+# hanzo-mcp's in-process search engine pulls tgrep-core, which asks for a newer
+# git rusqlite. hanzod's Dev store links libsqlite3-sys 0.30; a second SQLite
+# cannot be linked into one binary, so resolve both to the same rusqlite.
+[patch."https://github.com/rusqlite/rusqlite.git"]
+rusqlite = "=0.32.1"
+
 [workspace.package]
 edition = "2021"
 authors = ["Hanzo AI, Inc."]

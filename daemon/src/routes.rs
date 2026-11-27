@@ -103,6 +103,7 @@ impl Subsystem for Hanzod {
                     "sole_desktop_backend": true,
                     "surfaces": [
                         "desktop",
+                        "computer",
                         "bot",
                         "team",
                         "dev",
@@ -119,6 +120,7 @@ impl Subsystem for Hanzod {
                     ],
                     "capabilities": {
                         "dev": crate::dev_native::HARNESS_NAME,
+                        "computer": "hanzo-mcp native",
                         "coding": crate::dev_native::HARNESS_NAME,
                         "research": "rust-native",
                         "bot": "rust-native",
