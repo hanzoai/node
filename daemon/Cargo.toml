@@ -1,6 +1,6 @@
 [package]
 name = "hanzod"
-version = "0.5.1"
+version = "0.5.2"
 edition.workspace = true
 description = "The unified Hanzo daemon: sole Desktop/Bot/Team backend, unified hanzo-gen harness (/v1/dev + /v1/agent/coding), tasks worker, k3s/cloud, chain, and inference"
 authors.workspace = true
