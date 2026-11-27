@@ -3,9 +3,8 @@
 
 test:
   # Locked, so the gate resolves the same tree the Dockerfile does.
-  # lux-node is locked via ssh://git@github.com/lux-rs/node.git; hand the fetch
-  # to git CLI and add the ssh:// -> https:// rewrite alongside hanzoai/ci's
-  # https:// rewrite, matching Dockerfile without mutating Cargo.lock.
+  # lux-node and lux-evm are locked to public luxfi mirrors, so Cargo's libgit2
+  # fetch works without a git CLI credential or an SSH -> HTTPS rewrite.
   - name: build
     run: |
       set -e
@@ -16,7 +15,7 @@ test:
           url."https://x-access-token:${GIT_TOKEN}@github.com/".insteadOf "ssh://git@github.com/"
         export GIT_CONFIG_GLOBAL="$cfg" GIT_CONFIG_NOSYSTEM=1
       fi
-      CARGO_NET_GIT_FETCH_WITH_CLI=true cargo build --release --locked
+      cargo build --release --locked
       test -s target/release/hanzod
       test -s target/release/hanzo-chain
 
