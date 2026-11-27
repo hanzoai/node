@@ -3805,7 +3805,7 @@ dependencies = [
 [[package]]
 name = "lux-evm"
 version = "0.1.2"
-source = "git+https://github.com/lux-rs/evm.git?tag=v0.1.2#1f54eeec53b24887c349c89d73347c8e4ab59cad"
+source = "git+https://git.hanzo.ai/lux-rs/evm.git?tag=v0.1.2#1f54eeec53b24887c349c89d73347c8e4ab59cad"
 dependencies = [
  "alloy-consensus",
  "alloy-eips 2.4.2",
