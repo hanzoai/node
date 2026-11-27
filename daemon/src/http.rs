@@ -117,7 +117,7 @@ async fn respond_with_cors(c: &mut TcpStream, r: &Response, cors_origin: Option<
     if let Some(origin) = cors_origin {
         if !origin.contains(['\r', '\n']) {
             out.push_str(&format!(
-                "Access-Control-Allow-Origin: {origin}\r\nVary: Origin\r\nAccess-Control-Allow-Methods: GET, POST, PUT, PATCH, DELETE, OPTIONS\r\nAccess-Control-Allow-Headers: authorization, content-type, accept, idempotency-key, x-org-id, x-project-id, x-hanzo-org\r\nAccess-Control-Max-Age: 600\r\n"
+                "Access-Control-Allow-Origin: {origin}\r\nVary: Origin\r\nAccess-Control-Allow-Methods: GET, POST, PUT, PATCH, DELETE, OPTIONS\r\nAccess-Control-Allow-Headers: authorization, content-type, accept, idempotency-key, x-org-id, x-project-id, x-hanzo-org, x-hanzo-approve\r\nAccess-Control-Max-Age: 600\r\n"
             ));
         }
     }
