@@ -8,10 +8,12 @@ members = ["chain", "chain/steward", "daemon", "zap"]
 [patch."https://github.com/rusqlite/rusqlite.git"]
 rusqlite = "=0.32.1"
 
-# CI runners have no SSH credential for lux-rs; resolve the transitive EVM dep
-# over public HTTPS. Same tag and commit as the upstream declaration.
+# CI runners have no GitHub credential for the private lux-rs/evm. The forge
+# mirror holds the exact same tag and commit; resolve it there instead.
 [patch."ssh://git@github.com/lux-rs/evm.git"]
-lux-evm = { git = "https://github.com/lux-rs/evm.git", tag = "v0.1.2" }
+lux-evm = { git = "https://git.hanzo.ai/lux-rs/evm.git", tag = "v0.1.2" }
+[patch."https://github.com/lux-rs/evm.git"]
+lux-evm = { git = "https://git.hanzo.ai/lux-rs/evm.git", tag = "v0.1.2" }
 
 [workspace.package]
 edition = "2021"
