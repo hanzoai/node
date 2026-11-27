@@ -1,0 +1,123 @@
+[package]
+name = "lux-node"
+version = "0.2.2"
+edition = "2021"
+description = "A running Lux consensus node in Rust — a validator mesh over ZAP, driving the finality rule"
+license-file = "LICENSE"
+repository = "https://github.com/lux-rs/node"
+homepage = "https://lux.network"
+readme = "README.md"
+keywords = ["consensus", "node", "validator", "lux", "quasar"]
+categories = ["network-programming"]
+authors = ["Lux Industries Inc."]
+
+[dependencies]
+# The rule. node holds none of its own — and there is one crate that states it.
+#
+# 1.23.0 IS the audited line: byte-identical, all six modules, to
+# `luxfi/consensus/pkg/rust` at v1.36.91. What it adds over 1.22.7 is the
+# derived-threshold clause — `CertError::ThresholdNotDerived` — which is why a
+# certificate can no longer declare a quorum of its own choosing.
+#
+# There is a THIRD thing called `lux-rs/consensus` on this machine, also
+# numbered 1.23.0, which is a stale filtered copy with no `cert`/`pop` and an
+# older `zap`. It is `publish = false` and was never released; it is not this
+# crate and must never become a path dependency here.
+lux-consensus = "1.23.1"
+
+# The signature a validator makes. Same version consensus verifies under, and
+# the same domain tag — a second BLS in one process is a second network.
+blst = "0.3"
+
+# The EVM, at one release: lux-evm 0.1.2, the header rule Go derives. The node
+# and the chain it runs move together, so the pin is what says which chain this
+# node is: two nodes on one network resolve the same one or they do not agree
+# about what a block means. A pin is also what lets a downstream network take
+# this crate as a dependency instead of a path.
+lux-evm = { git = "ssh://git@github.com/lux-rs/evm.git", tag = "v0.1.2" }
+
+# The encodings a chain is defined over, named here so this crate can say
+# `Address` and `B256` without going through the EVM for them.
+alloy-consensus = { version = "2.4", default-features = false, features = ["k256"] }
+alloy-eips = { version = "2.4", default-features = false }
+alloy-primitives = "1.6"
+alloy-rlp = "0.3"
+revm = "36"
+
+# ML-DSA-65 (FIPS 204) and ML-KEM-768/1024 (FIPS 203). Not optional and not
+# behind a feature: a link that could fall back to an unauthenticated greeting
+# is a link an attacker chooses the weaker half of.
+#
+# These rather than `libluxcrypto`, because the peer handshake is DEFINED over
+# two controls that library's Rust wrapper does not expose: the FIPS 204
+# context string a signature is made under, and deterministic signing. Its C
+# ABI grew `mldsa65_sign_ctx` for the C++ node and the Rust wrapper never
+# followed, so a handshake built on it signs a different message and cannot be
+# checked against a fixed vector. It also asks for a static archive that is not
+# a published artifact.
+ml-dsa = { version = "0.1", default-features = false, features = ["alloc", "getrandom"] }
+ml-kem = { version = "0.3", features = ["getrandom"] }
+
+# cSHAKE256 with a function name — SP 800-185. The transcript commitment is
+# cSHAKE256("TupleHash", "NODE_TRANSCRIPT_V1") and the session key is
+# cSHAKE256("KEMDerive", "NODE_AEAD_V1"); 0.11 keeps only the bare SHAKEs, and
+# a cSHAKE written here would be a Keccak nobody audited.
+sha3 = "0.10"
+
+# The plugin link's seal. Standard ChaCha20-Poly1305, keyed from the secret the
+# post-quantum handshake already establishes — the link carries user
+# transactions before they are in a block, and an AEAD written here would be an
+# AEAD nobody audited.
+chacha20poly1305 = "0.10"
+
+# SHA-256, because Go hashes the validator set with it and a root computed with
+# anything else is a vote every Go peer refuses.
+sha2 = "0.10"
+
+# Joining a luxd network. TLS 1.3 with X25519MLKEM768 is the ONLY group luxd
+# offers, so the provider has to be one that has it; `aws-lc-rs` does and the
+# ring default does not.
+rustls = { version = "0.23", default-features = false, features = ["aws-lc-rs", "std", "tls12"] }
+rcgen = "0.13"
+# The staking certificate's key, and the signature over the peer's own address.
+p256 = { version = "0.13", features = ["ecdsa", "pkcs8"] }
+# luxd compresses most messages by default; a peer that cannot read zstd reads
+# almost nothing.
+zstd = "0.13"
+# The node id luxd derives from a staking certificate is hash160 — RIPEMD-160
+# of SHA-256 — and every id it prints is CB58.
+ripemd = "0.1"
+bs58 = "0.5"
+
+# JSON-RPC is a boundary, and a hand-written parser at a boundary is a
+# vulnerability with a schedule. serde_json is the one that is already in this
+# workspace's tree.
+serde_json = "1"
+
+# Signals, and `flock`. `SIGTERM` has to reach a flag the loops can read, and a
+# chain's ledger has to refuse a second process writing it; the standard library
+# exposes neither.
+libc = "0.2"
+
+[[bin]]
+name = "luxd"
+path = "src/main.rs"
+
+[dev-dependencies]
+blst = "0.3"
+
+# The conformance vectors are keyed by seed, and reproducing them means
+# deriving the same keys and encapsulating under the same randomness the Go
+# node used. Test-only: a node that encapsulated deterministically in
+# production would hand every session the same secret.
+ml-kem = { version = "0.3", features = ["getrandom", "hazmat"] }
+
+# Signing a test transaction, from the curve already in the tree.
+k256 = { version = "0.13", features = ["ecdsa"] }
+
+# The tests run whole validators on real sockets — ML-DSA, BLS, revm — and
+# their timing is the network's: a settle window is 150 ms whatever the build.
+# Dependencies are built optimized in test builds so a test measures this
+# engine, not an unoptimized signature. The crate itself stays a debug build.
+[profile.dev.package."*"]
+opt-level = 3
