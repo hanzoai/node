@@ -1,0 +1,239 @@
+{
+  "_comment": "Localnet upgrade.json — single-node dev (networkID=1337). Everything active from genesis. No PQ-strict gate (localnet is a 1-of-1 testbed).",
+  "networkUpgradeOverrides": {
+    "evmTimestamp": 0,
+    "durangoTimestamp": 0,
+    "quasarTimestamp": 0,
+    "fortunaTimestamp": 0,
+    "graniteTimestamp": 0
+  },
+  "precompileUpgrades": [
+    {
+      "warpConfig": {
+        "blockTimestamp": 0,
+        "quorumNumerator": 67,
+        "requirePrimaryNetworkSigners": false
+      }
+    },
+    {
+      "aiMiningConfig": {
+        "blockTimestamp": 0
+      }
+    },
+    {
+      "blake3Config": {
+        "blockTimestamp": 0
+      }
+    },
+    {
+      "cggmp21Verify": {
+        "blockTimestamp": 0
+      }
+    },
+    {
+      "deadZeroConfig": {
+        "blockTimestamp": 0
+      }
+    },
+    {
+      "deadConfig": {
+        "blockTimestamp": 0
+      }
+    },
+    {
+      "deadFullConfig": {
+        "blockTimestamp": 0
+      }
+    },
+    {
+      "routerConfig": {
+        "blockTimestamp": 0,
+        "v3QuoterAddress": "0x0000000000000000000000000000000000000000",
+        "v3FactoryAddress": "0x0000000000000000000000000000000000000000",
+        "v2RouterAddress": "0x0000000000000000000000000000000000000000",
+        "v2FactoryAddress": "0x0000000000000000000000000000000000000000"
+      }
+    },
+    {
+      "fheConfig": {
+        "blockTimestamp": 0
+      }
+    },
+    {
+      "frostVerify": {
+        "blockTimestamp": 0
+      }
+    },
+    {
+      "graphConfig": {
+        "blockTimestamp": 0
+      }
+    },
+    {
+      "hpkeConfig": {
+        "blockTimestamp": 0
+      }
+    },
+    {
+      "mldsaVerify": {
+        "blockTimestamp": 0
+      }
+    },
+    {
+      "mlkemConfig": {
+        "blockTimestamp": 0
+      }
+    },
+    {
+      "ringConfig": {
+        "blockTimestamp": 0
+      }
+    },
+    {
+      "slhdsaVerify": {
+        "blockTimestamp": 0
+      }
+    },
+    {
+      "zkConfig": {
+        "blockTimestamp": 0
+      }
+    },
+    {
+      "pulsarVerify": {
+        "blockTimestamp": 0
+      }
+    },
+    {
+      "magnetarVerify": {
+        "blockTimestamp": 0
+      }
+    },
+    {
+      "p3qVerify": {
+        "blockTimestamp": 0
+      }
+    },
+    {
+      "coronaThreshold": {
+        "blockTimestamp": 0
+      }
+    },
+    {
+      "hqcEncapsulate": {
+        "blockTimestamp": 0
+      }
+    },
+    {
+      "bls12381G1AddConfig": {
+        "blockTimestamp": 0
+      }
+    },
+    {
+      "bls12381G1MulConfig": {
+        "blockTimestamp": 0
+      }
+    },
+    {
+      "bls12381G1MSMConfig": {
+        "blockTimestamp": 0
+      }
+    },
+    {
+      "bls12381G2AddConfig": {
+        "blockTimestamp": 0
+      }
+    },
+    {
+      "bls12381G2MulConfig": {
+        "blockTimestamp": 0
+      }
+    },
+    {
+      "bls12381G2MSMConfig": {
+        "blockTimestamp": 0
+      }
+    },
+    {
+      "bls12381PairingConfig": {
+        "blockTimestamp": 0
+      }
+    },
+    {
+      "curve25519Config": {
+        "blockTimestamp": 0
+      }
+    },
+    {
+      "x25519Config": {
+        "blockTimestamp": 0
+      }
+    },
+    {
+      "sr25519Verify": {
+        "blockTimestamp": 0
+      }
+    },
+    {
+      "babyjubjubConfig": {
+        "blockTimestamp": 0
+      }
+    },
+    {
+      "pedersenConfig": {
+        "blockTimestamp": 0
+      }
+    },
+    {
+      "poseidonConfig": {
+        "blockTimestamp": 0
+      }
+    },
+    {
+      "pastaConfig": {
+        "blockTimestamp": 0
+      }
+    },
+    {
+      "xwingConfig": {
+        "blockTimestamp": 0
+      }
+    },
+    {
+      "computeMarketConfig": {
+        "blockTimestamp": 0
+      }
+    },
+    {
+      "bridgeRegistrarConfig": {
+        "blockTimestamp": 0
+      }
+    },
+    {
+      "stableSwapConfig": {
+        "blockTimestamp": 0
+      }
+    },
+    {
+      "vrfConfig": {
+        "blockTimestamp": 0
+      }
+    },
+    {
+      "attestationConfig": {
+        "blockTimestamp": 0
+      }
+    },
+    {
+      "anchorConfig": {
+        "blockTimestamp": 0
+      }
+    },
+    {
+      "fixedPointMathConfig": {
+        "blockTimestamp": 0
+      }
+    }
+  ],
+  "stateUpgrades": []
+}

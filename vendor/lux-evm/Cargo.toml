@@ -1,0 +1,46 @@
+[package]
+name = "lux-evm"
+version = "0.1.2"
+edition = "2021"
+description = "The Lux EVM in Rust. revm as the machine; the Lux rules as values on top of it."
+license = "BSD-3-Clause"
+repository = "https://github.com/lux-rs/evm"
+publish = false
+
+[dependencies]
+# The machine. Not forked: a fork of an interpreter is a second interpreter to
+# keep in step with two other languages. Everything Lux changes is reachable
+# through revm's own seams — a PrecompileProvider and two Handler methods.
+# The three `optional_*` features are what `eth_call` needs and nothing else
+# does. They add fields that default to false, so consensus execution is
+# untouched; `block::Checks` is the only thing that ever sets them, and it can
+# only be reached through `block::call`, which takes the world by value.
+revm = { version = "36", features = [
+    "optional_balance_check",
+    "optional_no_base_fee",
+    "optional_eip3607",
+] }
+
+# The encodings the network is defined over. A header is keccak of its RLP and
+# a root is a Merkle-Patricia trie; both are already written down correctly in
+# alloy, and writing them again would only be a third place to be wrong.
+alloy-primitives = "1.6"
+alloy-rlp = "0.3"
+# `k256` is what makes a signature recoverable: a node that cannot derive the
+# sender from a signed transaction cannot execute one, and deriving it any
+# other way would be a second implementation of secp256k1.
+alloy-consensus = { version = "2.4", default-features = false, features = ["k256"] }
+
+# The 2718 envelope. A typed transaction and its receipt are committed to in
+# this encoding, so the trie and the wire must read it from one place.
+alloy-eips = { version = "2.4", default-features = false }
+alloy-trie = { version = "0.9", features = ["ethereum"] }
+
+[dev-dependencies]
+serde_json = "1"
+
+# Signing a test transaction. Already in the tree under alloy's `k256`
+# feature, so this names what is there rather than adding to it.
+k256 = { version = "0.13", features = ["ecdsa"] }
+
+[workspace]

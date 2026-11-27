@@ -11,9 +11,9 @@ rusqlite = "=0.32.1"
 # CI runners have no credential for the private lux-rs repos. Public mirrors
 # under luxfi hold the exact same tags and commits; resolve them there.
 [patch."ssh://git@github.com/lux-rs/evm.git"]
-lux-evm = { git = "https://github.com/luxfi/hanzod-evm.git", tag = "v0.1.2" }
+lux-evm = { path = "vendor/lux-evm" }
 [patch."https://github.com/lux-rs/evm.git"]
-lux-evm = { git = "https://github.com/luxfi/hanzod-evm.git", tag = "v0.1.2" }
+lux-evm = { path = "vendor/lux-evm" }
 
 [workspace.package]
 edition = "2021"
@@ -24,3 +24,6 @@ license-file = "LICENSE"
 [profile.release]
 lto = true
 strip = true
+
+[patch."https://github.com/luxfi/hanzod-node.git"]
+lux-node = { path = "vendor/lux-node" }
