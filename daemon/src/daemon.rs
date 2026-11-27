@@ -81,6 +81,10 @@ impl Daemon {
                     | "/v1/cluster/health"
                     | "/v1/k3s"
                     | "/v1/k3s/health"
+                    | "/v1/lifecycle"
+                    | "/v1/lifecycle/status"
+                    | "/v1/lifecycle/ps"
+                    | "/v1/lifecycle/doctor"
             );
         let who = match req.bearer() {
             Some(b) if via == Via::Socket && (b.starts_with("sk-") || b.starts_with("hk-")) => {

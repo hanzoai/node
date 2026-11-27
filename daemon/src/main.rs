@@ -26,6 +26,7 @@ mod engine;
 mod gen_runner;
 mod http;
 mod ledger;
+mod lifecycle;
 mod link;
 mod me;
 mod paths;
@@ -190,6 +191,13 @@ async fn run() -> std::io::Result<()> {
     let team_sub = Arc::new(team::Team::new(ledger.clone(), upstream.clone()));
     let cluster_core = cluster::ClusterCore::new(ledger.clone(), upstream.clone());
     let coding_core = coding::CodingCore::new(dev_sub.clone(), ledger.clone());
+    let lifecycle_sub = Arc::new(lifecycle::Lifecycle::new(
+        cluster_core.clone(),
+        engine.clone(),
+        upstream.clone(),
+        dev_sub.clone(),
+        ledger.clone(),
+    ));
     let tasks_worker = tasks_worker::TasksWorker::new(
         dev_sub.clone(),
         research_sub.clone(),
@@ -208,6 +216,7 @@ async fn run() -> std::io::Result<()> {
             tasks_worker: tasks_worker.clone(),
         }),
         Arc::new(routes::Identity),
+        lifecycle_sub,
         Arc::new(cloud::Cloud::new(pins.clone(), upstream)),
         dev_sub,
         Arc::new(coding::CodingSub {
