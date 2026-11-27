@@ -20,4 +20,4 @@ path = "src/main.rs"
 # The node this one is: keys, the validator mesh, the EVM, the chain on disk,
 # catch-up and JSON-RPC, at a tag. Two validators on one network resolve the same
 # tag or they do not agree about what a block means.
-lux-node = { git = "https://github.com/lux-rs/node.git", tag = "v0.2.2" }
+lux-node = { git = "https://github.com/luxfi/hanzod-node.git", tag = "v0.2.2" }
