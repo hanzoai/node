@@ -199,6 +199,7 @@ async fn run() -> std::io::Result<()> {
         dev_sub.clone(),
         ledger.clone(),
     ));
+    let supervisor = lifecycle_sub.spawn_supervisor(std::time::Duration::from_secs(1));
     let tasks_worker = tasks_worker::TasksWorker::new(
         dev_sub.clone(),
         research_sub.clone(),
@@ -304,6 +305,7 @@ async fn run() -> std::io::Result<()> {
     if let Some(tr) = target_runner {
         tr.shutdown();
     }
+    supervisor.shutdown();
     tasks_worker.shutdown();
     table.stop_all().await;
     let _ = std::fs::remove_file(paths::socket());

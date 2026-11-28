@@ -149,6 +149,7 @@ pub extern "C" fn hanzod_ffi_start(data_dir: *const c_char, port: u16) -> c_int 
                     dev_sub.clone(),
                     ledger.clone(),
                 ));
+                let supervisor = lifecycle_sub.spawn_supervisor(std::time::Duration::from_secs(1));
                 let tasks_worker = tasks_worker::TasksWorker::new(
                     dev_sub.clone(),
                     research_sub.clone(),
@@ -232,6 +233,7 @@ pub extern "C" fn hanzod_ffi_start(data_dir: *const c_char, port: u16) -> c_int 
                 if let Some(tr) = target_runner {
                     tr.shutdown();
                 }
+                supervisor.shutdown();
                 tasks_worker.shutdown();
                 table.stop_all().await;
                 let _ = std::fs::remove_file(paths::socket());

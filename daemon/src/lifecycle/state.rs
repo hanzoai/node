@@ -224,6 +224,31 @@ impl PlatformState {
     }
 }
 
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub struct BackoffPolicy {
+    pub initial: Duration,
+    pub max: Duration,
+    pub reset_after: Duration,
+}
+
+impl Default for BackoffPolicy {
+    fn default() -> Self {
+        Self {
+            initial: Duration::from_secs(1),
+            max: Duration::from_secs(30),
+            reset_after: Duration::from_secs(60),
+        }
+    }
+}
+
+impl BackoffPolicy {
+    /// Bounded exponential backoff: `min(initial * 2^attempt, max)`.
+    pub fn delay_for(&self, attempt: u32) -> Duration {
+        let factor = 1u32.checked_shl(attempt.min(16)).unwrap_or(u32::MAX);
+        self.initial.saturating_mul(factor).min(self.max)
+    }
+}
+
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct AppState {
     pub slug: String,
@@ -233,12 +258,18 @@ pub struct AppState {
     pub manifest_kind: String,
     pub desired: String,
     pub actual: String,
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub command: Vec<String>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub port: Option<u16>,
     #[serde(default)]
     pub endpoints: Vec<String>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub pid: Option<u32>,
+    #[serde(default)]
+    pub restart_count: u32,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub last_exit: Option<String>,
     pub updated_at: i64,
 }
 
@@ -465,11 +496,16 @@ pub fn build_ps_rows(st: &LifecycleState, dev_status: &str, dev_detail: Option<S
     }
 
     for app in st.applications.values() {
+        let status = match app.actual.as_str() {
+            "running" => "Running",
+            "crashed" => "Crashed",
+            _ => "Stopped",
+        };
         rows.push(PsRow {
             component: app.name.clone(),
             layer: "application".to_string(),
             desired: app.desired.clone(),
-            status: if app.actual == "running" { "Running" } else { "Stopped" }.to_string(),
+            status: status.to_string(),
             namespace: Some(app.namespace.clone()),
             endpoint: app.endpoints.first().cloned(),
             detail: Some(format!("slug={} kind={}", app.slug, app.manifest_kind)),

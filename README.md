@@ -190,9 +190,27 @@ hanzo-chain: --rpc and --mesh cannot be one address
   --help               print this text, and exit
 ```
 
+## Daemon (`hanzod`)
+
+`hanzod` (`daemon/`) is the local machine daemon exposing HTTP (`127.0.0.1:3690`) and ZAP-HTTP Unix socket routes (`/healthz`, `/v1/hanzod`, `/v1/lifecycle`, `/v1/engine`, `/v1/chain`).
+
+### Build Prerequisites
+
+- Rust 1.85+ (`cargo`, `rustc`)
+- C/C++ compiler toolchain + `cmake` (`aws-lc-rs` and bundled `rusqlite`)
+- On Windows (`x86_64-pc-windows-msvc`): `nasm` (when building `aws-lc-rs` assembly targets)
+
+```bash
+cargo build --locked -p hanzod
+./target/debug/hanzod --version
+```
+
+The lifecycle supervisor (`POST /v1/lifecycle/reconcile` and the background 1s tick) monitors managed workloads and reconciles unexpected child exits back to desired state using bounded exponential backoff (`1s` initial, `30s` cap, `60s` healthy reset).
+
 ## Test
 
 ```
+cargo test --locked -p hanzod -p steward -p zaphttp
 cargo test --release
 ```
 

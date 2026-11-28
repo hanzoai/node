@@ -26,6 +26,7 @@ pub struct DiscoveredApp {
     pub namespace: String,
     pub manifest_kind: String,
     pub preferred_port: Option<u16>,
+    pub command: Vec<String>,
 }
 
 impl DiscoveredApp {
@@ -108,16 +109,15 @@ pub fn discover_project(dir: &Path) -> Option<DetectedRepo> {
         .and_then(|n| n.to_str())
         .unwrap_or("app");
 
-    let (manifest_kind, raw_slug, raw_display, preferred_port) =
+    let (manifest_kind, raw_slug, raw_display, preferred_port, command) =
         if canon.join("hanzo.toml").is_file() {
-            let (s, n, p) = inspect_hanzo_toml(&canon.join("hanzo.toml"));
-            ("hanzo.toml", s, n, p)
+            inspect_hanzo_toml(&canon.join("hanzo.toml"))
         } else if canon.join("hanzo.yaml").is_file() {
             let (s, n, p) = inspect_yaml_like(&canon.join("hanzo.yaml"));
-            ("hanzo.yaml", s, n, p)
+            ("hanzo.yaml", s, n, p, Vec::new())
         } else if canon.join("hanzo.yml").is_file() {
             let (s, n, p) = inspect_yaml_like(&canon.join("hanzo.yml"));
-            ("hanzo.yaml", s, n, p)
+            ("hanzo.yaml", s, n, p, Vec::new())
         } else if let Some(cfg_path) = find_first_file(
             &canon,
             &[
@@ -128,7 +128,7 @@ pub fn discover_project(dir: &Path) -> Option<DetectedRepo> {
             ],
         ) {
             let (s, n, p) = inspect_hanzo_config(&cfg_path);
-            ("hanzo.config", s, n, p)
+            ("hanzo.config", s, n, p, Vec::new())
         } else if let Some(comp_path) = find_first_file(
             &canon,
             &[
@@ -139,19 +139,19 @@ pub fn discover_project(dir: &Path) -> Option<DetectedRepo> {
             ],
         ) {
             let (s, n, p) = inspect_compose(&comp_path);
-            ("compose", s, n, p)
+            ("compose", s, n, p, Vec::new())
         } else if let Some(df_path) = find_first_file(&canon, &["Dockerfile", "Containerfile"]) {
             let p = inspect_dockerfile_port(&df_path);
-            ("dockerfile", None, None, p)
+            ("dockerfile", None, None, p, Vec::new())
         } else if canon.join("package.json").is_file() {
             let (s, n, p) = inspect_package_json(&canon.join("package.json"));
-            ("node", s, n, p)
+            ("node", s, n, p, Vec::new())
         } else if canon.join("Cargo.toml").is_file() {
             let (s, p) = inspect_cargo_toml(&canon.join("Cargo.toml"));
-            ("rust", s, None, p)
+            ("rust", s, None, p, Vec::new())
         } else if canon.join("go.mod").is_file() {
             let s = inspect_go_mod(&canon.join("go.mod"));
-            ("go", s, None, None)
+            ("go", s, None, None, Vec::new())
         } else {
             return None;
         };
@@ -177,6 +177,7 @@ pub fn discover_project(dir: &Path) -> Option<DetectedRepo> {
         namespace,
         manifest_kind: manifest_kind.to_string(),
         preferred_port,
+        command,
     }))
 }
 
@@ -332,12 +333,14 @@ pub fn find_app_by_dir(apps: &BTreeMap<String, AppState>, dir: &Path) -> Option<
     None
 }
 
-fn inspect_hanzo_toml(path: &Path) -> (Option<String>, Option<String>, Option<u16>) {
+fn inspect_hanzo_toml(
+    path: &Path,
+) -> (&'static str, Option<String>, Option<String>, Option<u16>, Vec<String>) {
     let Ok(raw) = std::fs::read_to_string(path) else {
-        return (None, None, None);
+        return ("hanzo.toml", None, None, None, Vec::new());
     };
     let Ok(tbl) = raw.parse::<toml::Table>() else {
-        return (None, None, None);
+        return ("hanzo.toml", None, None, None, Vec::new());
     };
     let section = tbl.get("project").or_else(|| tbl.get("app"));
     let slug = section
@@ -356,7 +359,18 @@ fn inspect_hanzo_toml(path: &Path) -> (Option<String>, Option<String>, Option<u1
         .or_else(|| tbl.get("server").and_then(|s| s.get("port")))
         .and_then(|v| v.as_integer())
         .and_then(|n| u16::try_from(n).ok());
-    (slug.or_else(|| name.clone()), name, port)
+    let command = section
+        .and_then(|s| s.get("command"))
+        .or_else(|| tbl.get("command"))
+        .and_then(|v| v.as_array())
+        .map(|arr| {
+            arr.iter()
+                .filter_map(|v| v.as_str().map(str::trim).filter(|s| !s.is_empty()))
+                .map(str::to_string)
+                .collect::<Vec<String>>()
+        })
+        .unwrap_or_default();
+    ("hanzo.toml", slug.or_else(|| name.clone()), name, port, command)
 }
 
 fn inspect_yaml_like(path: &Path) -> (Option<String>, Option<String>, Option<u16>) {

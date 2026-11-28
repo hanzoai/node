@@ -46,6 +46,25 @@ impl Engine {
     pub fn port(&self) -> Option<u16> {
         *self.port.lock().unwrap()
     }
+
+    /// Verify whether the managed child process is still alive and clear stale port state on exit.
+    pub async fn refresh_liveness(&self) -> Option<u16> {
+        let exited = {
+            let mut slot = self.child.lock().await;
+            match slot.as_mut().map(|c| c.try_wait()) {
+                Some(Ok(None)) => false,
+                Some(_) => {
+                    *slot = None;
+                    true
+                }
+                None => false,
+            }
+        };
+        if exited {
+            *self.port.lock().unwrap() = None;
+        }
+        self.port()
+    }
 }
 
 fn config() -> serde_json::Value {

@@ -3,6 +3,7 @@
 
 //! Desired-state reconciler and 3-layer lifecycle state machine.
 
+use super::backoff::BackoffTracker;
 use super::project::{
     canonical_dir, discover_project, find_app_by_dir, resolve_app_slug, DetectedRepo, DiscoveredApp,
 };
@@ -12,9 +13,9 @@ pub use super::state::{
 };
 use super::state::{
     build_doctor_checks, build_ps_rows, canonical_service_name, default_service_endpoint,
-    effective_cloud_image, format_ps_table, now_unix, AppState, CachePreservation, LifecycleState,
-    PlatformState, RuntimeComponents, RuntimeState, SandboxState, StateStore, StorePaths,
-    DEFAULT_SANDBOX_IMAGE, PLATFORM_SERVICES,
+    effective_cloud_image, format_ps_table, now_unix, AppState, BackoffPolicy, CachePreservation,
+    LifecycleState, PlatformState, RuntimeComponents, RuntimeState, SandboxState, StateStore,
+    StorePaths, DEFAULT_SANDBOX_IMAGE, PLATFORM_SERVICES,
 };
 use crate::ledger::Ledger;
 use crate::table::Fut;
@@ -26,6 +27,13 @@ use std::sync::Arc;
 use tokio::sync::Mutex;
 
 #[derive(Debug, Clone, Default)]
+pub struct AppProcessObs {
+    pub alive: bool,
+    pub pid: Option<u32>,
+    pub exit_reason: Option<String>,
+}
+
+#[derive(Debug, Clone, Default)]
 pub struct Observation {
     pub runtime_running: Option<bool>,
     pub components: Option<RuntimeComponents>,
@@ -35,6 +43,7 @@ pub struct Observation {
     pub engine_endpoint: Option<String>,
     pub dev_status: &'static str,
     pub dev_detail: Option<String>,
+    pub app_processes: BTreeMap<String, AppProcessObs>,
 }
 
 #[derive(Debug, Clone)]
@@ -91,18 +100,35 @@ pub trait LifecycleExecutor: Send + Sync {
 
 pub struct Reconciler {
     pub store: StateStore,
-    state: Mutex<LifecycleState>,
-    executor: Arc<dyn LifecycleExecutor>,
-    ledger: Arc<Ledger>,
+    pub(super) state: Mutex<LifecycleState>,
+    pub(super) executor: Arc<dyn LifecycleExecutor>,
+    pub(super) ledger: Arc<Ledger>,
+    pub(super) backoff: BackoffTracker,
 }
 
 impl Reconciler {
     pub fn new(store: StateStore, executor: Arc<dyn LifecycleExecutor>, ledger: Arc<Ledger>) -> Self {
-        let initial = store.load();
-        Self { store, state: Mutex::new(initial), executor, ledger }
+        Self::with_backoff(store, executor, ledger, BackoffPolicy::default())
     }
 
-    async fn sync_locked(&self, st: &mut LifecycleState) {
+    pub fn with_backoff(
+        store: StateStore,
+        executor: Arc<dyn LifecycleExecutor>,
+        ledger: Arc<Ledger>,
+        policy: BackoffPolicy,
+    ) -> Self {
+        let initial = store.load();
+        Self {
+            store,
+            state: Mutex::new(initial),
+            executor,
+            ledger,
+            backoff: BackoffTracker::new(policy),
+        }
+    }
+
+    pub(super) async fn sync_locked(&self, st: &mut LifecycleState) -> bool {
+        let mut drifted = false;
         let ext = self.store.paths.inspect_external();
         let obs = self.executor.observe(st).await;
 
@@ -126,7 +152,10 @@ impl Reconciler {
         } else if let Some(running) = obs.runtime_running {
             if running {
                 st.runtime.actual = "running".to_string();
-            } else if st.runtime.desired == "stopped" {
+            } else {
+                if st.runtime.actual != "stopped" {
+                    drifted = true;
+                }
                 st.runtime.actual = "stopped".to_string();
             }
             if let Some(comp) = obs.components {
@@ -134,25 +163,56 @@ impl Reconciler {
             }
         }
 
-        if obs.cloud_running == Some(true) {
+        if let Some(cloud_up) = obs.cloud_running {
             if let Some(svc) = st.platform.services.get_mut("cloud") {
-                svc.actual = "running".to_string();
-                if obs.cloud_endpoint.is_some() {
-                    svc.endpoint = obs.cloud_endpoint;
+                if cloud_up {
+                    svc.actual = "running".to_string();
+                    if obs.cloud_endpoint.is_some() {
+                        svc.endpoint = obs.cloud_endpoint;
+                    }
+                } else if svc.actual == "running" {
+                    svc.actual = "stopped".to_string();
+                    svc.endpoint = None;
+                    drifted = true;
                 }
             }
         }
-        if obs.engine_running == Some(true) {
+        if let Some(eng_up) = obs.engine_running {
             if let Some(svc) = st.platform.services.get_mut("engine") {
-                svc.actual = "running".to_string();
-                if obs.engine_endpoint.is_some() {
-                    svc.endpoint = obs.engine_endpoint;
+                if eng_up {
+                    svc.actual = "running".to_string();
+                    if obs.engine_endpoint.is_some() {
+                        svc.endpoint = obs.engine_endpoint;
+                    }
+                } else if svc.actual == "running" {
+                    svc.actual = "stopped".to_string();
+                    svc.endpoint = None;
+                    drifted = true;
                 }
             }
         }
+
+        for (slug, proc_obs) in &obs.app_processes {
+            if let Some(app) = st.applications.get_mut(slug) {
+                if proc_obs.alive {
+                    app.pid = proc_obs.pid.or(app.pid);
+                    if app.desired == "running" {
+                        app.actual = "running".to_string();
+                    }
+                } else if app.actual == "running" {
+                    app.actual = "crashed".to_string();
+                    app.pid = None;
+                    app.last_exit = proc_obs.exit_reason.clone();
+                    app.updated_at = now_unix();
+                    drifted = true;
+                }
+            }
+        }
+
+        drifted
     }
 
-    async fn ensure_runtime_running_locked(
+    pub(super) async fn ensure_runtime_running_locked(
         &self,
         who: &str,
         st: &mut LifecycleState,
@@ -268,6 +328,7 @@ impl Reconciler {
 
         match req.action.trim() {
             "start" => {
+                self.backoff.clear_key("runtime");
                 self.ensure_runtime_running_locked(who, &mut st).await?;
             }
             "stop" => {
@@ -281,6 +342,7 @@ impl Reconciler {
                     .await
                     .map_err(|e| (502, format!("runtime stop failed: {e}")))?;
                 mark_all_stopped_after_drain(&mut st);
+                self.backoff.clear_all();
                 self.ledger.record(who, "lifecycle.runtime.stop", "drained-and-stopped");
             }
             "restart" => {
@@ -491,11 +553,15 @@ impl Reconciler {
                             app.updated_at = now_unix();
                         }
                     }
+                    self.backoff.clear_key(&format!("app:{slug}"));
                     self.ledger.record(who, "lifecycle.environment.down", &format!("project:{slug}"));
                 } else if scope == "project" {
                     return Err((400, "scope 'project' requires a user application project_dir".to_string()));
                 } else {
                     st.platform.desired = "down".to_string();
+                    for name in PLATFORM_SERVICES {
+                        self.backoff.clear_key(&format!("service:{name}"));
+                    }
                     for svc in st.platform.services.values_mut() {
                         svc.desired = "stopped".to_string();
                     }
@@ -522,6 +588,7 @@ impl Reconciler {
                                     app.updated_at = now_unix();
                                 }
                             }
+                            self.backoff.clear_key(&format!("app:{slug}"));
                         }
                         let sb_names: Vec<String> = st.sandboxes.keys().cloned().collect();
                         for name in sb_names {
@@ -578,6 +645,7 @@ impl Reconciler {
             other => return Err((400, format!("unknown service action '{other}'"))),
         };
 
+        self.backoff.clear_key(&format!("service:{canon}"));
         if desired == "running" {
             self.ensure_runtime_running_locked(who, &mut st).await?;
         }
@@ -638,9 +706,11 @@ impl Reconciler {
 
         match action {
             "start" => {
+                self.backoff.clear_key(&format!("app:{slug}"));
                 self.ensure_runtime_running_locked(who, &mut st).await?;
                 if let Some(app) = st.applications.get_mut(&slug) {
                     app.desired = "running".to_string();
+                    app.last_exit = None;
                 }
                 let app_clone = st.applications.get(&slug).cloned().unwrap();
                 let out = self
@@ -656,6 +726,7 @@ impl Reconciler {
                 self.ledger.record(who, "lifecycle.app.start", &slug);
             }
             "stop" => {
+                self.backoff.clear_key(&format!("app:{slug}"));
                 if let Some(app) = st.applications.get_mut(&slug) {
                     app.desired = "stopped".to_string();
                 }
@@ -802,6 +873,7 @@ impl Reconciler {
             fresh.caches.kube_system_preserved = false;
         }
         *st = fresh;
+        self.backoff.clear_all();
         self.store.save(&mut st).map_err(|e| (500, format!("persist reset state: {e}")))?;
         self.ledger.record(who, "lifecycle.reset", if req.all { "all" } else { "state-and-runtime" });
         drop(st);
@@ -865,15 +937,19 @@ fn upsert_discovered_app(st: &mut LifecycleState, disc: DiscoveredApp) -> String
         manifest_kind: disc_with_port.manifest_kind.clone(),
         desired: "running".to_string(),
         actual: "stopped".to_string(),
+        command: disc_with_port.command.clone(),
         port: Some(port),
         endpoints: endpoints.clone(),
         pid: None,
+        restart_count: 0,
+        last_exit: None,
         updated_at: now_unix(),
     });
     entry.name = disc_with_port.name;
     entry.project_dir = dir_str;
     entry.namespace = disc_with_port.namespace;
     entry.manifest_kind = disc_with_port.manifest_kind;
+    entry.command = disc_with_port.command;
     entry.desired = "running".to_string();
     entry.port = Some(port);
     entry.endpoints = endpoints;
