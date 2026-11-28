@@ -8,6 +8,7 @@
 //! 2. Platform (`Hanzo Cloud` — OSS Cloud, IAM, Engine, Datastore, Analytics, Insights, Storage, Commerce, Search)
 //! 3. Workloads / Applications (`hanzo-app-<slug>` multi-project isolation + Sandboxes + Dev)
 
+mod backoff;
 pub mod project;
 pub mod reconciler;
 pub mod state;
@@ -23,8 +24,9 @@ use crate::proc;
 use crate::table::{Fut, Reply, Subsystem};
 use crate::zap::{Request, Response};
 use reconciler::{
-    AppActionReq, AppExecOutcome, BootOutcome, EnvironmentActionReq, LifecycleExecutor,
-    Observation, Reconciler, ResetReq, RuntimeActionReq, SandboxActionReq, ServiceActionReq,
+    AppActionReq, AppExecOutcome, AppProcessObs, BootOutcome, EnvironmentActionReq,
+    LifecycleExecutor, Observation, Reconciler, ResetReq, RuntimeActionReq, SandboxActionReq,
+    ServiceActionReq,
 };
 use serde::de::DeserializeOwned;
 use serde_json::json;
@@ -36,6 +38,7 @@ use std::collections::BTreeMap;
 use std::io::{self, Write};
 use std::path::{Path, PathBuf};
 use std::process::Stdio;
+use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::Arc;
 use std::time::Duration;
 use tokio::process::Child;
@@ -48,6 +51,7 @@ pub struct SystemExecutor {
     dev: Arc<Dev>,
     paths: StorePaths,
     app_children: Mutex<BTreeMap<String, Child>>,
+    engine_was_alive: AtomicBool,
 }
 
 impl SystemExecutor {
@@ -65,7 +69,20 @@ impl SystemExecutor {
             dev,
             paths,
             app_children: Mutex::new(BTreeMap::new()),
+            engine_was_alive: AtomicBool::new(false),
         })
+    }
+
+    #[cfg(test)]
+    pub async fn kill_app_child(&self, slug: &str) -> bool {
+        let mut children = self.app_children.lock().await;
+        if let Some(child) = children.get_mut(slug) {
+            let _ = child.start_kill();
+            let _ = tokio::time::timeout(Duration::from_secs(2), child.wait()).await;
+            true
+        } else {
+            false
+        }
     }
 
     fn find_host_bin(name: &str) -> Option<PathBuf> {
@@ -142,7 +159,7 @@ impl SystemExecutor {
 }
 
 impl LifecycleExecutor for SystemExecutor {
-    fn observe<'a>(&'a self, _state: &'a LifecycleState) -> Fut<'a, Observation> {
+    fn observe<'a>(&'a self, state: &'a LifecycleState) -> Fut<'a, Observation> {
         Box::pin(async move {
             let ext = self.paths.inspect_external();
             let runtime_running = if ext.vm_alive
@@ -179,9 +196,13 @@ impl LifecycleExecutor for SystemExecutor {
                 None => (None, None),
             };
 
-            let eng_port = self.engine.port();
+            let eng_port = self.engine.refresh_liveness().await;
             let (engine_running, engine_endpoint) = match eng_port {
-                Some(p) => (Some(true), Some(format!("http://127.0.0.1:{p}/v1"))),
+                Some(p) => {
+                    self.engine_was_alive.store(true, Ordering::SeqCst);
+                    (Some(true), Some(format!("http://127.0.0.1:{p}/v1")))
+                }
+                None if self.engine_was_alive.swap(false, Ordering::SeqCst) => (Some(false), None),
                 None => (None, None),
             };
 
@@ -201,6 +222,59 @@ impl LifecycleExecutor for SystemExecutor {
                 )
             };
 
+            let mut app_processes = BTreeMap::new();
+            let mut exited_logs: Vec<(String, String)> = Vec::new();
+            {
+                let mut children = self.app_children.lock().await;
+                let slugs: Vec<String> = children.keys().cloned().collect();
+                for slug in slugs {
+                    let outcome = match children.get_mut(&slug).map(|c| c.try_wait()) {
+                        Some(Ok(None)) => {
+                            let pid = children.get(&slug).and_then(|c| c.id());
+                            app_processes.insert(
+                                slug.clone(),
+                                AppProcessObs { alive: true, pid, exit_reason: None },
+                            );
+                            None
+                        }
+                        Some(Ok(Some(status))) => Some(status.to_string()),
+                        Some(Err(e)) => Some(e.to_string()),
+                        None => None,
+                    };
+                    if let Some(reason) = outcome {
+                        children.remove(&slug);
+                        exited_logs.push((slug.clone(), reason.clone()));
+                        app_processes.insert(
+                            slug,
+                            AppProcessObs {
+                                alive: false,
+                                pid: None,
+                                exit_reason: Some(reason),
+                            },
+                        );
+                    }
+                }
+            }
+            for (slug, reason) in exited_logs {
+                self.append_app_log(&slug, &format!("managed child exited unexpectedly: {reason}"));
+            }
+            for (slug, app) in &state.applications {
+                if !app.command.is_empty()
+                    && app.desired == "running"
+                    && app.actual == "running"
+                    && !app_processes.contains_key(slug)
+                {
+                    app_processes.insert(
+                        slug.clone(),
+                        AppProcessObs {
+                            alive: false,
+                            pid: None,
+                            exit_reason: Some("managed process handle missing".to_string()),
+                        },
+                    );
+                }
+            }
+
             Observation {
                 runtime_running,
                 components,
@@ -210,6 +284,7 @@ impl LifecycleExecutor for SystemExecutor {
                 engine_endpoint,
                 dev_status,
                 dev_detail,
+                app_processes,
             }
         })
     }
@@ -493,6 +568,56 @@ impl LifecycleExecutor for SystemExecutor {
                 });
             }
 
+            if let Some((bin, rest)) = app.command.split_first() {
+                let mut children = self.app_children.lock().await;
+                if let Some(existing) = children.get_mut(&app.slug) {
+                    if matches!(existing.try_wait(), Ok(None)) {
+                        return Ok(AppExecOutcome {
+                            actual: "running".to_string(),
+                            pid: existing.id(),
+                        });
+                    }
+                    children.remove(&app.slug);
+                }
+
+                let _ = std::fs::create_dir_all(&self.paths.logs_dir);
+                let log_path = self.paths.logs_dir.join(format!("{}.log", app.slug));
+                let (stdout_cfg, stderr_cfg) = match std::fs::OpenOptions::new()
+                    .create(true)
+                    .append(true)
+                    .open(&log_path)
+                {
+                    Ok(out) => match out.try_clone() {
+                        Ok(err) => (Stdio::from(out), Stdio::from(err)),
+                        Err(_) => (Stdio::from(out), Stdio::null()),
+                    },
+                    Err(_) => (Stdio::null(), Stdio::null()),
+                };
+
+                let mut cmd = proc::bg_tokio_cmd(bin);
+                cmd.args(rest)
+                    .stdin(Stdio::null())
+                    .stdout(stdout_cfg)
+                    .stderr(stderr_cfg)
+                    .kill_on_drop(true);
+                if Path::new(&app.project_dir).is_dir() {
+                    cmd.current_dir(&app.project_dir);
+                }
+                let child = cmd.spawn()?;
+                let pid = child.id();
+                children.insert(app.slug.clone(), child);
+                drop(children);
+
+                self.append_app_log(
+                    &app.slug,
+                    &format!("started managed child {} (pid={pid:?})", bin),
+                );
+                return Ok(AppExecOutcome {
+                    actual: "running".to_string(),
+                    pid,
+                });
+            }
+
             let _ = self
                 .kubectl_if_ready(&["create", "namespace", &app.namespace])
                 .await;
@@ -570,6 +695,20 @@ impl LifecycleExecutor for SystemExecutor {
     }
 }
 
+pub struct SupervisorGuard(tokio::task::JoinHandle<()>);
+
+impl SupervisorGuard {
+    pub fn shutdown(self) {
+        self.0.abort();
+    }
+}
+
+impl Drop for SupervisorGuard {
+    fn drop(&mut self) {
+        self.0.abort();
+    }
+}
+
 pub struct Lifecycle {
     pub reconciler: Arc<Reconciler>,
 }
@@ -588,6 +727,20 @@ impl Lifecycle {
         Self {
             reconciler: Arc::new(Reconciler::new(store, executor, ledger)),
         }
+    }
+
+    pub fn spawn_supervisor(&self, interval: Duration) -> SupervisorGuard {
+        let reconciler = self.reconciler.clone();
+        let handle = tokio::spawn(async move {
+            let mut ticker = tokio::time::interval(interval);
+            ticker.set_missed_tick_behavior(tokio::time::MissedTickBehavior::Delay);
+            ticker.tick().await;
+            loop {
+                ticker.tick().await;
+                let _ = reconciler.reconcile_once("system/supervisor").await;
+            }
+        });
+        SupervisorGuard(handle)
     }
 
     #[cfg(test)]
@@ -673,9 +826,10 @@ impl Lifecycle {
                     Err(resp) => resp,
                 }
             }
+            ("POST", "reconcile") => into_response(self.reconciler.reconcile_once(who).await),
             _ => Response::error(
                 404,
-                "use GET /v1/lifecycle/{status,ps,doctor} or POST /v1/lifecycle/{runtime,environment,service,app,sandbox,reset}",
+                "use GET /v1/lifecycle/{status,ps,doctor} or POST /v1/lifecycle/{runtime,environment,service,app,sandbox,reset,reconcile}",
             ),
         }
     }

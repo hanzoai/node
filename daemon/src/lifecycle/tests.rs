@@ -5,17 +5,23 @@
 
 use super::project::{discover_project, resolve_app_slug, DetectedRepo};
 use super::reconciler::{
-    AppActionReq, AppExecOutcome, BootOutcome, EnvironmentActionReq, LifecycleExecutor,
-    Observation, Reconciler, ResetReq, RuntimeActionReq, SandboxActionReq, ServiceActionReq,
+    AppActionReq, AppExecOutcome, AppProcessObs, BootOutcome, EnvironmentActionReq,
+    LifecycleExecutor, Observation, Reconciler, ResetReq, RuntimeActionReq, SandboxActionReq,
+    ServiceActionReq,
 };
 use super::state::{
-    default_service_endpoint, AppState, LifecycleState, PlatformState, RuntimeComponents,
-    RuntimeState, SandboxState, StateStore, StorePaths, DEFAULT_CLOUD_IMAGE, STRICT_CLOUD_IMAGE,
+    default_service_endpoint, AppState, BackoffPolicy, LifecycleState, PlatformState,
+    RuntimeComponents, RuntimeState, SandboxState, StateStore, StorePaths, DEFAULT_CLOUD_IMAGE,
+    STRICT_CLOUD_IMAGE,
 };
-use super::Lifecycle;
+use super::{Lifecycle, SystemExecutor};
 use crate::auth::Verifier;
+use crate::cluster::ClusterCore;
 use crate::daemon::{Daemon, Via};
+use crate::dev::Dev;
+use crate::engine::Engine;
 use crate::ledger::Ledger;
+use crate::pins::Pins;
 use crate::table::{Fut, Reply, Table};
 use crate::zap::Request;
 use serde_json::Value;
@@ -24,6 +30,7 @@ use std::io;
 use std::net::TcpListener;
 use std::path::Path;
 use std::sync::{Arc, Mutex};
+use std::time::Duration;
 
 #[derive(Default)]
 struct MockWorld {
@@ -39,6 +46,8 @@ struct MockWorld {
     service_starts: BTreeMap<String, usize>,
     service_in_place_reconciles: BTreeMap<String, usize>,
     running_apps: BTreeSet<String>,
+    app_crashes: BTreeMap<String, String>,
+    next_pid: u32,
     running_sandboxes: BTreeSet<String>,
     app_logs: BTreeMap<String, Vec<String>>,
     image_cache_warm: bool,
@@ -54,12 +63,24 @@ impl MockExecutor {
     fn new() -> Arc<Self> {
         Arc::new(Self {
             world: Mutex::new(MockWorld {
+                next_pid: 42000,
                 image_cache_warm: true,
                 volumes_preserved: true,
                 model_weights_preserved: true,
                 ..MockWorld::default()
             }),
         })
+    }
+
+    fn kill_app(&self, slug: &str, reason: &str) {
+        let mut w = self.world.lock().unwrap();
+        w.running_apps.remove(slug);
+        w.app_crashes.insert(slug.to_string(), reason.to_string());
+    }
+
+    fn kill_service(&self, name: &str) {
+        let mut w = self.world.lock().unwrap();
+        w.running_services.remove(name);
     }
 
     fn snapshot(&self) -> (usize, usize, usize, usize, BTreeSet<String>, BTreeSet<String>) {
@@ -92,6 +113,23 @@ impl LifecycleExecutor for MockExecutor {
     fn observe<'a>(&'a self, _state: &'a LifecycleState) -> Fut<'a, Observation> {
         Box::pin(async move {
             let w = self.world.lock().unwrap();
+            let mut app_processes = BTreeMap::new();
+            for slug in &w.running_apps {
+                app_processes.insert(
+                    slug.clone(),
+                    AppProcessObs { alive: true, pid: Some(w.next_pid), exit_reason: None },
+                );
+            }
+            for (slug, reason) in &w.app_crashes {
+                app_processes.insert(
+                    slug.clone(),
+                    AppProcessObs {
+                        alive: false,
+                        pid: None,
+                        exit_reason: Some(reason.clone()),
+                    },
+                );
+            }
             Observation {
                 runtime_running: Some(w.runtime_up),
                 components: Some(if w.runtime_up {
@@ -105,6 +143,7 @@ impl LifecycleExecutor for MockExecutor {
                 engine_endpoint: w.running_services.contains("engine").then(|| "http://127.0.0.1:3690/v1/engine".to_string()),
                 dev_status: "Ready",
                 dev_detail: Some("native harness (hanzo-gen)".to_string()),
+                app_processes,
             }
         })
     }
@@ -204,12 +243,16 @@ impl LifecycleExecutor for MockExecutor {
             let mut w = self.world.lock().unwrap();
             if desired == "stopped" {
                 w.running_apps.remove(&app.slug);
+                w.app_crashes.remove(&app.slug);
                 w.app_logs.entry(app.slug.clone()).or_default().push(format!("stopped {}", app.namespace));
                 Ok(AppExecOutcome { actual: "stopped".to_string(), pid: None })
             } else {
+                w.next_pid += 1;
+                let pid = w.next_pid;
                 w.running_apps.insert(app.slug.clone());
-                w.app_logs.entry(app.slug.clone()).or_default().push(format!("started {} on {:?}", app.namespace, app.port));
-                Ok(AppExecOutcome { actual: "running".to_string(), pid: Some(42000) })
+                w.app_crashes.remove(&app.slug);
+                w.app_logs.entry(app.slug.clone()).or_default().push(format!("started {} on {:?} pid={pid}", app.namespace, app.port));
+                Ok(AppExecOutcome { actual: "running".to_string(), pid: Some(pid) })
             }
         })
     }
@@ -555,9 +598,209 @@ async fn service_app_prefix_sandbox_ps_doctor_reset_external_sync_and_http_probe
         map.insert(s.to_string(), AppState {
             slug: s.to_string(), name: s.to_string(), project_dir: "/tmp".into(),
             namespace: format!("hanzo-app-{s}"), manifest_kind: "hanzo.toml".into(),
-            desired: "stopped".into(), actual: "stopped".into(), port: None, endpoints: vec![], pid: None, updated_at: 0,
+            desired: "stopped".into(), actual: "stopped".into(), command: Vec::new(), port: None, endpoints: vec![], pid: None, restart_count: 0, last_exit: None, updated_at: 0,
         });
     }
     assert!(resolve_app_slug(&map, "solar").is_err());
     assert_eq!(resolve_app_slug(&map, "solar-crm").unwrap(), "solar-crm");
+}
+
+#[tokio::test]
+async fn killed_workload_reconciles_with_bounded_backoff() {
+    let policy = BackoffPolicy {
+        initial: Duration::from_millis(150),
+        max: Duration::from_millis(360),
+        reset_after: Duration::from_millis(550),
+    };
+    assert_eq!(policy.delay_for(0), Duration::from_millis(150));
+    assert_eq!(policy.delay_for(1), Duration::from_millis(300));
+    assert_eq!(policy.delay_for(2), Duration::from_millis(360));
+    assert_eq!(policy.delay_for(5), Duration::from_millis(360));
+
+    let tmp = tempfile::tempdir().unwrap();
+    let paths = StorePaths::for_root(tmp.path(), dead_probe_port());
+    let exec = MockExecutor::new();
+    let ledger = Arc::new(Ledger::open(tmp.path().join("ledger")));
+    let rec = Arc::new(Reconciler::with_backoff(
+        StateStore::new(paths),
+        exec.clone(),
+        ledger,
+        policy,
+    ));
+
+    let solar_dir = create_app_repo(
+        tmp.path(),
+        "solar-crm",
+        "hanzo.toml",
+        "[project]\nname = \"Solar CRM\"\nslug = \"solar-crm\"\n",
+    );
+    let started = rec
+        .environment_action(
+            "hanzo/z",
+            EnvironmentActionReq {
+                action: "up".into(),
+                project_dir: Some(solar_dir),
+                ..Default::default()
+            },
+        )
+        .await
+        .unwrap();
+    let pid0 = started["workloads"]["applications"]["solar-crm"]["pid"].as_u64();
+    assert!(pid0.is_some());
+
+    // Simulate unexpected app process crash (`desired == "running"`, child gone)
+    exec.kill_app("solar-crm", "SIGKILL (9)");
+    let r1 = rec.reconcile_once("supervisor").await.unwrap();
+    assert!(r1["recovered"].as_array().unwrap().is_empty());
+    assert_eq!(r1["deferred"].as_array().unwrap()[0]["target"], "app:solar-crm");
+    assert_eq!(r1["failures"]["app:solar-crm"], 1);
+
+    // Still inside `initial` (150ms) backoff window -> restart stays deferred
+    tokio::time::sleep(Duration::from_millis(15)).await;
+    let r2 = rec.reconcile_once("supervisor").await.unwrap();
+    assert!(r2["recovered"].as_array().unwrap().is_empty());
+
+    let st_crashed = rec.status_json().await;
+    assert_eq!(st_crashed["workloads"]["applications"]["solar-crm"]["actual"], "crashed");
+    assert_eq!(st_crashed["workloads"]["applications"]["solar-crm"]["last_exit"], "SIGKILL (9)");
+    let doc = rec.doctor_json().await;
+    assert_eq!(doc["drift_detected"], true);
+    let ps = rec.ps_json().await;
+    assert_eq!(
+        ps["rows"].as_array().unwrap().iter().find(|r| r["component"] == "Solar CRM").unwrap()["status"],
+        "Crashed"
+    );
+
+    // Past 150ms backoff window -> app reconciles back to running with new PID
+    tokio::time::sleep(Duration::from_millis(165)).await;
+    let r3 = rec.reconcile_once("supervisor").await.unwrap();
+    assert_eq!(r3["recovered"], serde_json::json!(["app:solar-crm"]));
+    let st_rec1 = rec.status_json().await;
+    assert_eq!(st_rec1["workloads"]["applications"]["solar-crm"]["actual"], "running");
+    assert_eq!(st_rec1["workloads"]["applications"]["solar-crm"]["restart_count"], 1);
+    let pid1 = st_rec1["workloads"]["applications"]["solar-crm"]["pid"].as_u64();
+    assert!(pid1.is_some() && pid1 != pid0);
+
+    // Second crash doubles backoff to 300ms
+    exec.kill_app("solar-crm", "exit code 137");
+    let r4 = rec.reconcile_once("supervisor").await.unwrap();
+    assert_eq!(r4["failures"]["app:solar-crm"], 2);
+    tokio::time::sleep(Duration::from_millis(20)).await;
+    let r5 = rec.reconcile_once("supervisor").await.unwrap();
+    assert!(r5["recovered"].as_array().unwrap().is_empty());
+    tokio::time::sleep(Duration::from_millis(300)).await;
+    let r6 = rec.reconcile_once("supervisor").await.unwrap();
+    assert_eq!(r6["recovered"], serde_json::json!(["app:solar-crm"]));
+
+    // Repeated crashes cap strictly at `max = 360ms`
+    for expected_failures in 3u32..=4u32 {
+        exec.kill_app("solar-crm", "SIGTERM");
+        let arm = rec.reconcile_once("supervisor").await.unwrap();
+        assert_eq!(arm["failures"]["app:solar-crm"], expected_failures);
+        let retry_ms = arm["deferred"][0]["retry_in_ms"].as_u64().unwrap();
+        assert!(retry_ms <= 360, "backoff exceeded cap: {retry_ms}ms");
+        tokio::time::sleep(Duration::from_millis(380)).await;
+        let rec_done = rec.reconcile_once("supervisor").await.unwrap();
+        assert_eq!(rec_done["recovered"], serde_json::json!(["app:solar-crm"]));
+    }
+
+    // Remaining healthy >= `reset_after` (550ms) resets consecutive failure count back to 0
+    tokio::time::sleep(Duration::from_millis(580)).await;
+    let after_reset = rec.reconcile_once("supervisor").await.unwrap();
+    assert_eq!(after_reset["failures"]["app:solar-crm"], 0);
+
+    // Also verify killed platform service recovers via HTTP/Socket `POST /v1/lifecycle/reconcile`
+    exec.kill_service("cloud");
+    let sub: Arc<dyn crate::table::Subsystem> = Arc::new(Lifecycle::with_reconciler(rec.clone()));
+    let daemon = Daemon { table: Arc::new(Table::new(vec![sub])), verifier: Arc::new(Verifier::new("https://hanzo.ai".into())) };
+    let _ = daemon.handle(Via::Socket, Request { method: "POST".into(), target: "/v1/lifecycle/reconcile".into(), headers: vec![], body: vec![] }).await;
+    tokio::time::sleep(Duration::from_millis(175)).await;
+    let (reply, _) = daemon.handle(Via::Socket, Request { method: "POST".into(), target: "/v1/lifecycle/reconcile".into(), headers: vec![], body: vec![] }).await;
+    match reply {
+        Reply::Whole(resp) => {
+            assert_eq!(resp.status, 200);
+            let v: Value = serde_json::from_slice(&resp.body).unwrap();
+            assert!(v["recovered"].as_array().unwrap().iter().any(|x| x == "service:cloud"));
+        }
+        _ => panic!("expected whole reply from POST /v1/lifecycle/reconcile"),
+    }
+
+    // Explicit stop clears desired state so reconcile does NOT restart intentionally stopped workloads
+    rec.app_action("hanzo/z", AppActionReq { action: "stop".into(), name: Some("solar-crm".into()), ..Default::default() }).await.unwrap();
+    let idle = rec.reconcile_once("supervisor").await.unwrap();
+    assert!(idle["recovered"].as_array().unwrap().is_empty());
+    let final_st = rec.status_json().await;
+    assert_eq!(final_st["workloads"]["applications"]["solar-crm"]["actual"], "stopped");
+}
+
+#[tokio::test]
+async fn system_executor_recovers_killed_os_child_process() {
+    let tmp = tempfile::tempdir().unwrap();
+    let paths = StorePaths::for_root(tmp.path(), dead_probe_port());
+    let ledger = Arc::new(Ledger::open(tmp.path().join("ledger")));
+    let pins = Arc::new(Pins::load(&tmp.path().join("pins.json")));
+    let upstream: crate::cloud::Upstream = Arc::new(Mutex::new(None));
+    let engine = Arc::new(Engine::new(pins));
+    let cluster = ClusterCore::new(ledger.clone(), upstream.clone());
+    let dev = Arc::new(Dev::new(ledger.clone(), Some(engine.clone())));
+    let sys_exec = SystemExecutor::new(cluster, engine, upstream, dev, paths.clone());
+
+    let policy = BackoffPolicy {
+        initial: Duration::from_millis(80),
+        max: Duration::from_millis(240),
+        reset_after: Duration::from_secs(5),
+    };
+    let rec = Arc::new(Reconciler::with_backoff(
+        StateStore::new(paths.clone()),
+        sys_exec.clone(),
+        ledger,
+        policy,
+    ));
+
+    let cmd_toml = if cfg!(target_os = "windows") {
+        "[project]\nname = \"Sleeper App\"\nslug = \"sleeper-app\"\ncommand = [\"cmd.exe\", \"/C\", \"ping\", \"-n\", \"30\", \"127.0.0.1\"]\n"
+    } else {
+        "[project]\nname = \"Sleeper App\"\nslug = \"sleeper-app\"\ncommand = [\"sh\", \"-c\", \"sleep 30\"]\n"
+    };
+    let app_dir = create_app_repo(tmp.path(), "sleeper-app", "hanzo.toml", cmd_toml);
+
+    let started = rec
+        .app_action(
+            "hanzo/z",
+            AppActionReq { action: "start".into(), project_dir: Some(app_dir), ..Default::default() },
+        )
+        .await
+        .unwrap();
+    let pid1 = started["application"]["pid"].as_u64().expect("OS child PID");
+    assert_eq!(started["application"]["actual"], "running");
+
+    // Kill the real OS child process unexpectedly
+    assert!(sys_exec.kill_app_child("sleeper-app").await);
+
+    // First reconcile observes exit, marks crashed, and arms bounded backoff
+    let arm = rec.reconcile_once("supervisor").await.unwrap();
+    assert_eq!(arm["deferred"].as_array().unwrap()[0]["target"], "app:sleeper-app");
+    let crashed = rec.status_json().await;
+    assert_eq!(crashed["workloads"]["applications"]["sleeper-app"]["actual"], "crashed");
+    assert!(crashed["workloads"]["applications"]["sleeper-app"]["pid"].is_null());
+
+    // After backoff expires, real OS child respawns under a fresh PID
+    tokio::time::sleep(Duration::from_millis(115)).await;
+    let recovered = rec.reconcile_once("supervisor").await.unwrap();
+    assert_eq!(recovered["recovered"], serde_json::json!(["app:sleeper-app"]));
+    let post = rec.status_json().await;
+    let pid2 = post["workloads"]["applications"]["sleeper-app"]["pid"].as_u64().expect("respawned OS child PID");
+    assert_ne!(pid1, pid2);
+    assert_eq!(post["workloads"]["applications"]["sleeper-app"]["restart_count"], 1);
+    assert_eq!(post["workloads"]["applications"]["sleeper-app"]["actual"], "running");
+
+    let logs = rec
+        .app_action("hanzo/z", AppActionReq { action: "logs".into(), name: Some("sleeper-app".into()), tail: Some(20), ..Default::default() })
+        .await
+        .unwrap();
+    let log_lines: Vec<&str> = logs["logs"].as_array().unwrap().iter().filter_map(|v| v.as_str()).collect();
+    assert!(log_lines.iter().any(|l| l.contains("exited unexpectedly")));
+
+    // Cleanly terminate respawned child process
+    rec.app_action("hanzo/z", AppActionReq { action: "stop".into(), name: Some("sleeper-app".into()), ..Default::default() }).await.unwrap();
 }
